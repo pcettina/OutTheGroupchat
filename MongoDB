@@ -1,0 +1,122 @@
+const mongoose = require('mongoose');
+
+const rewardsProgramSchema = new mongoose.Schema({
+  programName: {
+    type: String,
+    required: true,
+  },
+  membershipId: {
+    type: String,
+    required: true,
+  },
+  membershipLevel: {
+    type: String,
+    required: false, // e.g. "Silver", "Gold", "Platinum"
+  },
+});
+
+const locationPreferenceSchema = new mongoose.Schema({
+  country: {
+    type: String,
+    required: true,
+  },
+  city: {
+    type: String,
+    required: false,
+  },
+  // Optionally store additional details like preferred weather, environment, etc.
+  // e.g. "preferredClimate", "preferredActivities", etc.
+});
+
+const userProfileSchema = new mongoose.Schema({
+  // Basic user info
+  username: {
+    type: String,
+    required: true,
+    unique: true,  
+  },
+  email: {
+    type: String,
+    required: true,
+    unique: true,  
+  },
+  password: {
+    type: String,
+    required: true,
+  },
+
+  // Budget score
+  budgetScore: {
+    type: Number,
+    default: 0,
+  },
+
+  // Location preferences
+  locationPreferences: [locationPreferenceSchema],
+
+  // Connected rewards programs
+  rewardsPrograms: [rewardsProgramSchema],
+
+  // Timestamps
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
+// Example pre-save hook for automatically updating updatedAt
+userProfileSchema.pre('save', function (next) {
+  this.updatedAt = Date.now();
+  next();
+});
+
+/**
+ * Simple method to calculate budget score based on input budget ranges.
+ * @param {Object} budgetRanges - e.g. { flight: 300, accommodation: 100, dailyExpenses: 50 }
+ */
+userProfileSchema.methods.calculateBudgetScore = function (budgetRanges) {
+  // Example scoring logic: Lower budgets → Higher score
+  // You can customize these thresholds according to your business logic.
+
+  let score = 0;
+
+  // Flight budget weighting
+  if (budgetRanges.flight <= 200) {
+    score += 3;
+  } else if (budgetRanges.flight <= 500) {
+    score += 2;
+  } else {
+    score += 1;
+  }
+
+  // Accommodation budget weighting
+  if (budgetRanges.accommodation <= 50) {
+    score += 3;
+  } else if (budgetRanges.accommodation <= 150) {
+    score += 2;
+  } else {
+    score += 1;
+  }
+
+  // Daily expenses budget weighting
+  if (budgetRanges.dailyExpenses <= 30) {
+    score += 3;
+  } else if (budgetRanges.dailyExpenses <= 60) {
+    score += 2;
+  } else {
+    score += 1;
+  }
+
+  // Normalize or cap the score if desired, e.g., a max of 9.
+  // You can also add more sophisticated weighting logic here.
+  this.budgetScore = Math.min(score, 9);
+
+  // Return the final calculated budget score
+  return this.budgetScore;
+};
+
+module.exports = mongoose.model('UserProfile', userProfileSchema);
