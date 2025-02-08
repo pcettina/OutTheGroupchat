@@ -1,6 +1,9 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const UserProfile = require('./models/userProfile');
+const authRoutes = require('./routes/auth');
+const profileRoutes = require('./routes/profile');
+const tripRoutes = require('./routes/trips');
 require('dotenv').config();
 
 const app = express();
@@ -120,4 +123,8 @@ mongoose.connect(MONGODB_URI)
   })
   .catch((err) => {
     console.error('MongoDB connection error:', err);
-  }); 
+  });
+
+app.use('/api/auth', authRoutes);
+app.use('/api/profile', profileRoutes);
+app.use('/api/trips', tripRoutes); 
