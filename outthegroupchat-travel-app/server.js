@@ -4,6 +4,7 @@ const UserProfile = require('./models/userProfile');
 const authRoutes = require('./routes/auth');
 const profileRoutes = require('./routes/profile');
 const tripRoutes = require('./routes/trips');
+const activityRoutes = require('./routes/activities');
 require('dotenv').config();
 
 const app = express();
@@ -127,4 +128,6 @@ mongoose.connect(MONGODB_URI)
 
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
-app.use('/api/trips', tripRoutes); 
+app.use('/api/trips', tripRoutes);
+app.use('/api', activityRoutes);
+
