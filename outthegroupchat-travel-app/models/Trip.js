@@ -95,6 +95,158 @@ const tripSchema = new Schema({
       type: String,
       enum: ['must-do', 'would-like', 'if-time-permits'],
       default: 'would-like'
+    },
+    sharing: {
+      status: {
+        type: String,
+        enum: ['private', 'public'],
+        default: 'private'
+      },
+      originalCreator: {
+        type: Schema.Types.ObjectId,
+        ref: 'User'
+      },
+      shareCount: {
+        type: Number,
+        default: 0
+      },
+      saves: {
+        type: Number,
+        default: 0
+      }
+    },
+    location: {
+      coordinates: {
+        lat: Number,
+        lng: Number
+      },
+      placeId: String,
+      address: String,
+      accessibilityNotes: String,
+      nearestTransit: [{
+        type: {
+          type: String,
+          enum: ['train', 'bus', 'subway']
+        },
+        name: String,
+        distance: Number,
+        directions: String
+      }]
+    },
+    category: [{
+      type: String,
+      enum: ['food', 'culture', 'shopping', 'nature', 'entertainment', 'transportation']
+    }],
+    externalLinks: {
+      bookingUrl: String,
+      websiteUrl: String,
+      priceApiEndpoint: String
+    },
+    duration: {
+      hours: Number,
+      minutes: Number
+    },
+    notes: String,
+    lastUpdated: {
+      type: Date,
+      default: Date.now
+    },
+    weatherDependent: {
+      type: Boolean,
+      default: false
+    },
+    timing: {
+      duration: {
+        hours: Number,
+        minutes: Number
+      },
+      bestTimeOfDay: [String],  // morning, afternoon, evening, night
+      seasonality: [String],    // spring, summer, fall, winter
+      crowdLevels: {
+        typical: {
+          type: String,
+          enum: ['low', 'moderate', 'high', 'very-high']
+        },
+        current: String  // For real-time updates
+      }
+    },
+    costDetails: {
+      basePrice: Number,
+      currency: {
+        type: String,
+        default: 'USD'
+      },
+      priceRange: {
+        type: String,
+        enum: ['$', '$$', '$$$', '$$$$']
+      },
+      includedItems: [String],
+      additionalCosts: [{
+        item: String,
+        cost: Number
+      }]
+    },
+    bookingInfo: {
+      status: {
+        type: String,
+        enum: ['not-needed', 'recommended', 'required']
+      },
+      advanceBookingRequired: {
+        type: Boolean,
+        default: false
+      },
+      recommendedBookingTime: String, // "2 weeks ahead", "day before", etc.
+      cancellationPolicy: String,
+      confirmationNumber: String
+    },
+    engagement: {
+      comments: [{
+        user: {
+          type: Schema.Types.ObjectId,
+          ref: 'User',
+          required: true
+        },
+        text: {
+          type: String,
+          required: true
+        },
+        date: {
+          type: Date,
+          default: Date.now
+        }
+      }],
+      ratings: {
+        average: Number,
+        count: Number
+      },
+      tags: [String],
+      reviews: [Schema.Types.Mixed],
+      photos: [Schema.Types.Mixed]
+    },
+    requirements: {
+      minimumAge: Number,
+      physicalLevel: {
+        type: String,
+        enum: ['easy', 'moderate', 'challenging']
+      },
+      requiredItems: [String],
+      recommendedItems: [String],
+      restrictions: [String],
+      accessibility: {
+        wheelchairAccessible: Boolean,
+        familyFriendly: Boolean,
+        petFriendly: Boolean
+      }
+    },
+    recommendationData: {
+      categories: [String],
+      keywords: [String],
+      similarActivities: [{
+        activityId: Schema.Types.ObjectId,
+        similarity: Number  // 0-1 score
+      }],
+      popularWith: [String],  // demographics or user types
+      userPreferences: [String]  // tags for recommendation engine
     }
   }],
   status: {
