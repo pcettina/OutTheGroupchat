@@ -1,0 +1,559 @@
+{
+  "tripSummary": {
+    "destination": "Charleston",
+    "dateRange": "July 5 - July 8, 2025",
+    "duration": "4 days",
+    "accommodation": "Cool (more expensive) Shared House (airbnb)",
+    "estimatedGroupCost": {
+      "perPersonPerDay": null,
+      "accommodation": null,
+      "food": null,
+      "activities": null,
+      "localTransport": null,
+      "totalEstimatedCost": null,
+      "notes": "Costs adjusted to align with group budget preferences"
+    },
+    "budgetBreakdown": {
+      "perPersonTotal": "$NaN",
+      "perDay": "$NaN/day",
+      "accommodation": "$NaN",
+      "food": "$NaN",
+      "activities": "$NaN",
+      "localTransport": "$NaN"
+    },
+    "notes": [
+      "Costs adjusted to align with group budget preferences"
+    ]
+  },
+  "groupPreferences": {
+    "topLocations": [
+      {
+        "location": "Charleston",
+        "weightedScore": 21,
+        "avgRanking": 2.8,
+        "topChoiceCount": 1
+      },
+      {
+        "location": "Austin",
+        "weightedScore": 19,
+        "avgRanking": 3.3,
+        "topChoiceCount": 0
+      },
+      {
+        "location": "Chicago",
+        "weightedScore": 18,
+        "avgRanking": 3.5,
+        "topChoiceCount": 0
+      }
+    ],
+    "topActivities": [
+      "Beach Stuff",
+      "Golf",
+      "Sporting Event",
+      "Casino",
+      "Outdoor activities"
+    ],
+    "preferredDining": [
+      "Sports Bars & casual (as whole group)",
+      "Group Cooking Session (Buy a bunch of steaks and chef with fellas)",
+      "High-end meal (1 time as whole group)",
+      "Group catered BBQ or similar type meal"
+    ]
+  },
+  "itinerary": [
+    {
+      "day": 1,
+      "date": "Jul 5, 2025",
+      "dayOfWeek": "Saturday",
+      "activities": [
+        {
+          "time": "9:00 AM - 12:00 PM",
+          "activity": "Arrival and Check-in"
+        },
+        {
+          "time": "12:00 PM - 1:30 PM",
+          "activity": "Lunch"
+        },
+        {
+          "time": "2:00 PM - 6:00 PM",
+          "activity": "Group Welcome Gathering"
+        },
+        {
+          "time": "7:00 PM - Late",
+          "activity": "Group Welcome Dinner"
+        }
+      ]
+    },
+    {
+      "day": 2,
+      "date": "Jul 6, 2025",
+      "dayOfWeek": "Sunday",
+      "activities": [
+        {
+          "time": "9:00 AM - 12:00 PM",
+          "activity": "Group Golf Outing"
+        },
+        {
+          "time": "12:00 PM - 1:30 PM",
+          "activity": "Lunch"
+        },
+        {
+          "time": "2:00 PM - 6:00 PM",
+          "activity": "College of Charleston Game"
+        },
+        {
+          "time": "7:00 PM - Late",
+          "activity": "King Street Bar Crawl"
+        }
+      ]
+    },
+    {
+      "day": 3,
+      "date": "Jul 7, 2025",
+      "dayOfWeek": "Monday",
+      "activities": [
+        {
+          "time": "9:00 AM - 12:00 PM",
+          "activity": "Group Golf Outing"
+        },
+        {
+          "time": "12:00 PM - 1:30 PM",
+          "activity": "Lunch"
+        },
+        {
+          "time": "2:00 PM - 6:00 PM",
+          "activity": "College of Charleston Game"
+        },
+        {
+          "time": "7:00 PM - Late",
+          "activity": "King Street Bar Crawl"
+        }
+      ]
+    },
+    {
+      "day": 4,
+      "date": "Jul 8, 2025",
+      "dayOfWeek": "Tuesday",
+      "activities": [
+        {
+          "time": "9:00 AM - 12:00 PM",
+          "activity": "Historic Charleston Walking Tour"
+        },
+        {
+          "time": "12:00 PM - 1:30 PM",
+          "activity": "Lunch"
+        },
+        {
+          "time": "2:00 PM - 6:00 PM",
+          "activity": "Local Sightseeing / Group Activity"
+        },
+        {
+          "time": "7:00 PM - Late",
+          "activity": "Final Group Dinner and Farewell"
+        }
+      ]
+    }
+  ],
+  "individualPlans": {
+    "Spencer Berson": {
+      "name": "Spencer Berson",
+      "email": "sberson45@gmail.com",
+      "phone": "2019687508",
+      "travelFrom": "NY area",
+      "budgetRange": "$700+",
+      "estimatedFlightCost": 250,
+      "totalEstimatedCost": 1000,
+      "travelNotes": "Flying from NY area to Charleston",
+      "specialNotes": []
+    },
+    "Drew Butera": {
+      "name": "Drew Butera",
+      "email": "drewbutera00@gmail.com",
+      "phone": "267-500-7820",
+      "travelFrom": "PHL",
+      "budgetRange": "$500-$700",
+      "estimatedFlightCost": 250,
+      "totalEstimatedCost": 700,
+      "travelNotes": "Flying from PHL to Charleston",
+      "specialNotes": [
+        "Offered to help with: Restaurant reservations",
+        "Special request: Music Fest would be dope"
+      ]
+    },
+    "T": {
+      "name": "T",
+      "email": "temmclaugh29@yahoo.com",
+      "phone": "2152379135",
+      "travelFrom": "PHI",
+      "budgetRange": "$700+",
+      "estimatedFlightCost": 250,
+      "totalEstimatedCost": 1000,
+      "travelNotes": "Flying from PHI to Charleston",
+      "specialNotes": [
+        "Offered to help with: Accommodation booking"
+      ]
+    },
+    "Jakob Hoffman": {
+      "name": "Jakob Hoffman",
+      "email": "Jakob.Hoffman.44@gmail.com",
+      "phone": "302-757-5219",
+      "travelFrom": "Newark, NJ",
+      "budgetRange": "$300-$500",
+      "estimatedFlightCost": 250,
+      "totalEstimatedCost": 500,
+      "travelNotes": "Flying from Newark, NJ to Charleston",
+      "specialNotes": [
+        "Consider booking flights early to stay within budget",
+        "Offered to help with: Golf outing",
+        "Has helpful connection: Good buddy plays single a ball in Myrtle ",
+        "Special request: College Baseball World Series"
+      ]
+    }
+  },
+  "rawAnalysis": {
+    "budget": {
+      "budgetRanges": {
+        "$300-$500": {
+          "min": 300,
+          "max": 500,
+          "count": 1
+        },
+        "$500-$700": {
+          "min": 500,
+          "max": 700,
+          "count": 1
+        },
+        "$700+": {
+          "min": 700,
+          "max": 1000,
+          "count": 2
+        }
+      },
+      "individualBudgets": {
+        "Spencer Berson": {
+          "range": "$700+",
+          "min": 700,
+          "max": 1000,
+          "travelingFrom": "NY area"
+        },
+        "Drew Butera": {
+          "range": "$500-$700",
+          "min": 500,
+          "max": 700,
+          "travelingFrom": "PHL"
+        },
+        "T": {
+          "range": "$700+",
+          "min": 700,
+          "max": 1000,
+          "travelingFrom": "PHI"
+        },
+        "Jakob Hoffman": {
+          "range": "$300-$500",
+          "min": 300,
+          "max": 500,
+          "travelingFrom": "Newark, NJ"
+        }
+      },
+      "groupBudget": {
+        "optimal": 675,
+        "min": 550,
+        "max": 800
+      }
+    },
+    "dates": {
+      "availabilityRanked": [],
+      "optimalDateRange": "Early July (1-15)",
+      "optimalAttendance": 0,
+      "durationPreferences": {
+        "2 Days": {
+          "count": 4,
+          "rank1": 1,
+          "rank2": 0,
+          "rank3": 3
+        },
+        "3-4 Days": {
+          "count": 4,
+          "rank1": 2,
+          "rank2": 2,
+          "rank3": 0
+        },
+        "5-7 Days": {
+          "count": 4,
+          "rank1": 1,
+          "rank2": 2,
+          "rank3": 1
+        }
+      },
+      "durationScores": [
+        {
+          "duration": "3-4 Days",
+          "score": 2.5
+        },
+        {
+          "duration": "5-7 Days",
+          "score": 2
+        },
+        {
+          "duration": "2 Days",
+          "score": 1.5
+        }
+      ],
+      "optimalDuration": "3-4 Days"
+    },
+    "locations": {
+      "rankedLocations": [
+        {
+          "location": "Charleston",
+          "weightedScore": 21,
+          "avgRanking": 2.8,
+          "topChoiceCount": 1
+        },
+        {
+          "location": "Austin",
+          "weightedScore": 19,
+          "avgRanking": 3.3,
+          "topChoiceCount": 0
+        },
+        {
+          "location": "Chicago",
+          "weightedScore": 18,
+          "avgRanking": 3.5,
+          "topChoiceCount": 0
+        },
+        {
+          "location": "Boston",
+          "weightedScore": 17,
+          "avgRanking": 3.8,
+          "topChoiceCount": 0
+        },
+        {
+          "location": "Nashville (again)",
+          "weightedScore": 13,
+          "avgRanking": 4.8,
+          "topChoiceCount": 0
+        },
+        {
+          "location": "LA",
+          "weightedScore": 13,
+          "avgRanking": 4.8,
+          "topChoiceCount": 0
+        },
+        {
+          "location": "NYC",
+          "weightedScore": 0,
+          "avgRanking": 0,
+          "topChoiceCount": 0
+        }
+      ],
+      "topLocation": "Charleston",
+      "secondLocation": "Austin",
+      "thirdLocation": "Chicago",
+      "otherSuggestions": [
+        "Bahamas",
+        "Arizona",
+        "Europe plan for 2026?"
+      ]
+    },
+    "activities": {
+      "rankedActivities": [
+        {
+          "activity": "Beach Stuff",
+          "weightedScore": 19,
+          "rankings": {
+            "1": 0,
+            "2": 1,
+            "3": 2,
+            "4": 0,
+            "5": 1,
+            "6": 0,
+            "7": 0
+          }
+        },
+        {
+          "activity": "Golf",
+          "weightedScore": 18,
+          "rankings": {
+            "1": 2,
+            "2": 0,
+            "3": 0,
+            "4": 0,
+            "5": 0,
+            "6": 2,
+            "7": 0
+          }
+        },
+        {
+          "activity": "Sporting Event",
+          "weightedScore": 18,
+          "rankings": {
+            "1": 0,
+            "2": 1,
+            "3": 1,
+            "4": 1,
+            "5": 1,
+            "6": 0,
+            "7": 0
+          }
+        },
+        {
+          "activity": "Casino",
+          "weightedScore": 17,
+          "rankings": {
+            "1": 2,
+            "2": 0,
+            "3": 0,
+            "4": 0,
+            "5": 0,
+            "6": 1,
+            "7": 1
+          }
+        },
+        {
+          "activity": "Outdoor activities",
+          "weightedScore": 14,
+          "rankings": {
+            "1": 0,
+            "2": 1,
+            "3": 0,
+            "4": 1,
+            "5": 1,
+            "6": 0,
+            "7": 1
+          }
+        },
+        {
+          "activity": "BOOZE/Bars",
+          "weightedScore": 13,
+          "rankings": {
+            "1": 0,
+            "2": 0,
+            "3": 0,
+            "4": 1,
+            "5": 3,
+            "6": 0,
+            "7": 0
+          }
+        },
+        {
+          "activity": "Concert",
+          "weightedScore": 7,
+          "rankings": {
+            "1": 0,
+            "2": 0,
+            "3": 0,
+            "4": 0,
+            "5": 1,
+            "6": 1,
+            "7": 2
+          }
+        }
+      ],
+      "topActivities": [
+        "Beach Stuff",
+        "Golf",
+        "Sporting Event",
+        "Casino",
+        "Outdoor activities",
+        "BOOZE/Bars",
+        "Concert"
+      ],
+      "otherSuggestions": [
+        {
+          "person": "Spencer Berson",
+          "suggestion": "Jelking."
+        },
+        {
+          "person": "T",
+          "suggestion": "Tbd"
+        },
+        {
+          "person": "Jakob Hoffman",
+          "suggestion": "Annual Golf tourney (scramble or otherwise)"
+        }
+      ]
+    },
+    "accommodations": {
+      "accommodationTypes": [
+        {
+          "type": "Cool (more expensive) Shared House (airbnb)",
+          "count": 2,
+          "percentage": 50
+        },
+        {
+          "type": "Cheapest Shared house (airbnb)",
+          "count": 1,
+          "percentage": 25
+        },
+        {
+          "type": "depends on trip activity",
+          "count": 0,
+          "percentage": 0
+        }
+      ],
+      "topChoice": "Cool (more expensive) Shared House (airbnb)",
+      "roomPreferences": [
+        {
+          "preference": "2 people to a room",
+          "count": 2,
+          "percentage": 50
+        },
+        {
+          "preference": "Don't care",
+          "count": 2,
+          "percentage": 50
+        },
+        {
+          "preference": "Private room",
+          "count": 0,
+          "percentage": 0
+        }
+      ],
+      "topRoomChoice": "2 people to a room",
+      "eventStructure": [
+        {
+          "structure": "Structure",
+          "count": 2,
+          "percentage": 50
+        },
+        {
+          "structure": "Planned ideas, but nothing put in reservations",
+          "count": 2,
+          "percentage": 50
+        }
+      ],
+      "preferredStructure": "Structure"
+    },
+    "dining": {
+      "rankedPreferences": [
+        {
+          "option": "Sports Bars & casual (as whole group)",
+          "count": 3,
+          "percentage": 75
+        },
+        {
+          "option": "Group Cooking Session (Buy a bunch of steaks and chef with fellas)",
+          "count": 3,
+          "percentage": 75
+        },
+        {
+          "option": "High-end meal (1 time as whole group)",
+          "count": 2,
+          "percentage": 50
+        },
+        {
+          "option": "Group catered BBQ or similar type meal",
+          "count": 1,
+          "percentage": 25
+        }
+      ],
+      "preferences": [
+        "Sports Bars & casual (as whole group)",
+        "Group Cooking Session (Buy a bunch of steaks and chef with fellas)",
+        "High-end meal (1 time as whole group)",
+        "Group catered BBQ or similar type meal"
+      ],
+      "topDiningChoice": "Sports Bars & casual (as whole group)"
+    }
+  }
+}

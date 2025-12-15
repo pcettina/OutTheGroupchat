@@ -1,0 +1,538 @@
+// OutTheGroupchat - Unified Prisma Schema
+// A collaborative travel planning app for groups
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL") // Direct connection for migrations (bypasses pooler)
+}
+
+// ============================================
+// AUTH MODELS (NextAuth.js)
+// ============================================
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ============================================
+// USER MODEL
+// ============================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  password      String?
+  name          String?
+  image         String?
+  bio           String?
+  city          String?
+  phone         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  lastActive    DateTime  @default(now())
+
+  // User Preferences (stored as JSON for flexibility)
+  preferences   Json?     // { travelStyle, interests, budgetRange, currency, language }
+  
+  // Auth Relations
+  accounts      Account[]
+  sessions      Session[]
+  
+  // Trip Relations
+  ownedTrips       Trip[]           @relation("TripOwner")
+  tripMemberships  TripMember[]
+  tripInvitations  TripInvitation[]
+  surveyResponses  SurveyResponse[]
+  
+  // Social Relations
+  followers     Follow[]  @relation("followers")
+  following     Follow[]  @relation("following")
+  
+  // Activity Relations
+  savedActivities  SavedActivity[]
+  activityComments ActivityComment[]
+  activityRatings  ActivityRating[]
+  
+  // Notifications
+  notifications    Notification[]
+  
+  // Pending invitations sent by this user
+  sentPendingInvitations PendingInvitation[] @relation("InviterRelation")
+
+  @@index([email])
+}
+
+// ============================================
+// SOCIAL MODELS
+// ============================================
+
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower    User @relation("following", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User @relation("followers", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  data      Json?            // Additional context data
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+}
+
+enum NotificationType {
+  TRIP_INVITATION
+  TRIP_UPDATE
+  ACTIVITY_COMMENT
+  ACTIVITY_RATING
+  SURVEY_REMINDER
+  VOTE_REMINDER
+  FOLLOW
+  SYSTEM
+}
+
+// ============================================
+// TRIP MODELS
+// ============================================
+
+model Trip {
+  id          String     @id @default(cuid())
+  title       String
+  description String?
+  status      TripStatus @default(PLANNING)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Destination Info (stored as JSON for flexibility)
+  destination Json // { city, country, coordinates: {lat, lng}, timezone }
+  
+  // Date Range
+  startDate   DateTime
+  endDate     DateTime
+  
+  // Budget Info
+  budget      Json?  // { total, currency, breakdown: {accommodation, food, activities, transport} }
+  
+  // Owner
+  ownerId     String
+  owner       User   @relation("TripOwner", fields: [ownerId], references: [id])
+  
+  // Group
+  members     TripMember[]
+  invitations TripInvitation[]
+  
+  // Survey & Voting
+  survey        TripSurvey?
+  votingSessions VotingSession[]
+  
+  // Content
+  activities   Activity[]
+  itinerary    ItineraryDay[]
+  
+  // Sharing Settings
+  isPublic     Boolean @default(false)
+  viewCount    Int     @default(0)
+  
+  // Pending invitations for non-existent users
+  pendingInvitations PendingInvitation[]
+
+  @@index([ownerId])
+  @@index([status])
+  @@index([startDate])
+}
+
+enum TripStatus {
+  PLANNING
+  INVITING
+  SURVEYING
+  VOTING
+  BOOKED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model TripMember {
+  id        String         @id @default(cuid())
+  tripId    String
+  userId    String
+  role      TripMemberRole @default(MEMBER)
+  joinedAt  DateTime       @default(now())
+  
+  // Individual member settings
+  budgetRange    Json?    // { min, max, currency }
+  departureCity  String?
+  flightDetails  Json?    // { estimatedCost, airline, confirmation }
+  
+  trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tripId, userId])
+  @@index([tripId])
+  @@index([userId])
+}
+
+enum TripMemberRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+model TripInvitation {
+  id        String           @id @default(cuid())
+  tripId    String
+  userId    String
+  status    InvitationStatus @default(PENDING)
+  expiresAt DateTime
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  
+  trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tripId, userId])
+  @@index([tripId])
+  @@index([userId, status])
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
+
+// Pending invitations for users who don't exist yet
+// This prevents creating placeholder users which could be abused
+model PendingInvitation {
+  id         String   @id @default(cuid())
+  email      String
+  tripId     String
+  invitedBy  String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+
+  trip       Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  inviter    User     @relation("InviterRelation", fields: [invitedBy], references: [id], onDelete: Cascade)
+
+  @@index([email])
+  @@index([tripId])
+  @@index([expiresAt])
+}
+
+// ============================================
+// SURVEY MODELS
+// ============================================
+
+model TripSurvey {
+  id        String   @id @default(cuid())
+  tripId    String   @unique
+  title     String
+  status    SurveyStatus @default(DRAFT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  expiresAt DateTime?
+  
+  // Survey configuration (questions, options)
+  questions Json // Array of question objects
+  
+  trip      Trip             @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  responses SurveyResponse[]
+}
+
+enum SurveyStatus {
+  DRAFT
+  ACTIVE
+  CLOSED
+  ANALYZED
+}
+
+model SurveyResponse {
+  id        String   @id @default(cuid())
+  surveyId  String
+  userId    String
+  answers   Json     // { questionId: answer }
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  survey TripSurvey @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  user   User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([surveyId, userId])
+  @@index([surveyId])
+}
+
+// ============================================
+// VOTING MODELS
+// ============================================
+
+model VotingSession {
+  id        String       @id @default(cuid())
+  tripId    String
+  type      VotingType
+  status    VotingStatus @default(ACTIVE)
+  title     String
+  createdAt DateTime     @default(now())
+  expiresAt DateTime
+  
+  // Voting options (destinations, activities, dates, etc.)
+  options   Json // Array of option objects
+  
+  trip  Trip   @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  votes Vote[]
+
+  @@index([tripId])
+}
+
+enum VotingType {
+  DESTINATION
+  ACTIVITY
+  DATE
+  ACCOMMODATION
+  CUSTOM
+}
+
+enum VotingStatus {
+  ACTIVE
+  CLOSED
+  CANCELLED
+}
+
+model Vote {
+  id        String   @id @default(cuid())
+  sessionId String
+  orderId   String   // Anonymous voting support (fixed typo from "oderId")
+  optionId  String
+  rank      Int?     // For ranked voting
+  createdAt DateTime @default(now())
+  
+  session VotingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, orderId, optionId])
+  @@index([sessionId])
+}
+
+// ============================================
+// ACTIVITY MODELS
+// ============================================
+
+model Activity {
+  id          String         @id @default(cuid())
+  tripId      String
+  name        String
+  description String?
+  category    ActivityCategory
+  status      ActivityStatus @default(SUGGESTED)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  
+  // Location
+  location    Json?  // { address, coordinates, placeId, nearestTransit }
+  
+  // Timing
+  date        DateTime?
+  startTime   DateTime?
+  endTime     DateTime?
+  duration    Int?   // in minutes
+  
+  // Cost
+  cost        Float?
+  currency    String @default("USD")
+  priceRange  PriceRange?
+  costDetails Json?  // { basePrice, includedItems, additionalCosts }
+  
+  // Booking
+  bookingStatus    BookingStatus @default(NOT_NEEDED)
+  bookingUrl       String?
+  confirmationCode String?
+  
+  // Requirements
+  requirements Json? // { minimumAge, physicalLevel, requiredItems, accessibility }
+  
+  // Social/Sharing
+  isPublic         Boolean @default(false)
+  originalTripId   String? // If copied from another trip
+  shareCount       Int     @default(0)
+  
+  // External Data
+  externalLinks    Json?   // { websiteUrl, ticketmasterUrl, etc. }
+  
+  trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  
+  // Engagement
+  savedBy    SavedActivity[]
+  comments   ActivityComment[]
+  ratings    ActivityRating[]
+  
+  // Itinerary
+  itineraryItems ItineraryItem[]
+
+  @@index([tripId])
+  @@index([category])
+  @@index([isPublic])
+}
+
+enum ActivityCategory {
+  FOOD
+  CULTURE
+  SHOPPING
+  NATURE
+  ENTERTAINMENT
+  SPORTS
+  NIGHTLIFE
+  TRANSPORTATION
+  ACCOMMODATION
+  OTHER
+}
+
+enum ActivityStatus {
+  SUGGESTED
+  APPROVED
+  BOOKED
+  COMPLETED
+  CANCELLED
+}
+
+enum PriceRange {
+  FREE
+  BUDGET      // $
+  MODERATE    // $$
+  EXPENSIVE   // $$$
+  LUXURY      // $$$$
+}
+
+enum BookingStatus {
+  NOT_NEEDED
+  RECOMMENDED
+  REQUIRED
+  BOOKED
+  CONFIRMED
+}
+
+model SavedActivity {
+  id         String   @id @default(cuid())
+  userId     String
+  activityId String
+  savedAt    DateTime @default(now())
+  
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, activityId])
+  @@index([userId])
+}
+
+model ActivityComment {
+  id         String   @id @default(cuid())
+  activityId String
+  userId     String
+  text       String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  
+  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([activityId])
+}
+
+model ActivityRating {
+  id         String   @id @default(cuid())
+  activityId String
+  userId     String
+  score      Int      // 1-5
+  review     String?
+  createdAt  DateTime @default(now())
+  
+  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([activityId, userId])
+  @@index([activityId])
+}
+
+// ============================================
+// ITINERARY MODELS
+// ============================================
+
+model ItineraryDay {
+  id        String   @id @default(cuid())
+  tripId    String
+  dayNumber Int
+  date      DateTime
+  notes     String?
+  
+  trip  Trip            @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  items ItineraryItem[]
+
+  @@unique([tripId, dayNumber])
+  @@index([tripId])
+}
+
+model ItineraryItem {
+  id            String   @id @default(cuid())
+  itineraryDayId String
+  activityId    String?
+  order         Int
+  startTime     String?  // "09:00"
+  endTime       String?  // "12:00"
+  customTitle   String?  // For non-activity items
+  notes         String?
+  
+  itineraryDay ItineraryDay @relation(fields: [itineraryDayId], references: [id], onDelete: Cascade)
+  activity     Activity?    @relation(fields: [activityId], references: [id])
+
+  @@index([itineraryDayId])
+}

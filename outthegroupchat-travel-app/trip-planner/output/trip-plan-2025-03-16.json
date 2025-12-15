@@ -1,0 +1,821 @@
+{
+  "tripSummary": {
+    "destination": "Charleston",
+    "dateRange": "2025-07-06 to 2025-07-09",
+    "duration": "4 days",
+    "accommodation": "Cheapest Shared house (airbnb)",
+    "estimatedGroupCost": {}
+  },
+  "groupPreferences": {
+    "topLocations": [
+      {
+        "location": "Charleston",
+        "weightedScore": 34,
+        "avgRanking": 2.3,
+        "topChoiceCount": 2
+      },
+      {
+        "location": "Austin",
+        "weightedScore": 30,
+        "avgRanking": 3,
+        "topChoiceCount": 0
+      },
+      {
+        "location": "Nashville (again)",
+        "weightedScore": 25,
+        "avgRanking": 3.8,
+        "topChoiceCount": 1
+      }
+    ],
+    "topActivities": [
+      "Golf",
+      "BOOZE/Bars",
+      "Sporting Event",
+      "Beach Stuff",
+      "Outdoor activities"
+    ],
+    "preferredDining": [
+      "Sports Bars & casual (as whole group)",
+      "High-end meal (1 time as whole group)",
+      "Group Cooking Session (Buy a bunch of steaks and chef with fellas)",
+      "Group catered BBQ or similar type meal"
+    ]
+  },
+  "itinerary": [
+    {
+      "day": 1,
+      "date": "Jul 5, 2025",
+      "dayOfWeek": "Saturday",
+      "activities": [
+        {
+          "time": "9:00 AM - 12:00 PM",
+          "activity": "Arrival and Check-in"
+        },
+        {
+          "time": "12:00 PM - 1:30 PM",
+          "activity": "Lunch"
+        },
+        {
+          "time": "2:00 PM - 6:00 PM",
+          "activity": "Group Welcome Gathering"
+        },
+        {
+          "time": "7:00 PM - Late",
+          "activity": "Group Welcome Dinner"
+        }
+      ]
+    },
+    {
+      "day": 2,
+      "date": "Jul 6, 2025",
+      "dayOfWeek": "Sunday",
+      "activities": [
+        {
+          "time": "9:00 AM - 12:00 PM",
+          "activity": "Group Golf Outing"
+        },
+        {
+          "time": "12:00 PM - 1:30 PM",
+          "activity": "Lunch"
+        },
+        {
+          "time": "2:00 PM - 6:00 PM",
+          "activity": "College of Charleston Game"
+        },
+        {
+          "time": "7:00 PM - Late",
+          "activity": "King Street Bar Crawl"
+        }
+      ]
+    },
+    {
+      "day": 3,
+      "date": "Jul 7, 2025",
+      "dayOfWeek": "Monday",
+      "activities": [
+        {
+          "time": "9:00 AM - 12:00 PM",
+          "activity": "Group Golf Outing"
+        },
+        {
+          "time": "12:00 PM - 1:30 PM",
+          "activity": "Lunch"
+        },
+        {
+          "time": "2:00 PM - 6:00 PM",
+          "activity": "College of Charleston Game"
+        },
+        {
+          "time": "7:00 PM - Late",
+          "activity": "King Street Bar Crawl"
+        }
+      ]
+    },
+    {
+      "day": 4,
+      "date": "Jul 8, 2025",
+      "dayOfWeek": "Tuesday",
+      "activities": [
+        {
+          "time": "9:00 AM - 12:00 PM",
+          "activity": "Historic Charleston Walking Tour"
+        },
+        {
+          "time": "12:00 PM - 1:30 PM",
+          "activity": "Lunch"
+        },
+        {
+          "time": "2:00 PM - 6:00 PM",
+          "activity": "Local Sightseeing / Group Activity"
+        },
+        {
+          "time": "7:00 PM - Late",
+          "activity": "Final Group Dinner and Farewell"
+        }
+      ]
+    }
+  ],
+  "individualPlans": {
+    "Spencer Berson": {
+      "name": "Spencer Berson",
+      "email": "sberson45@gmail.com",
+      "phone": "2019687508",
+      "travelDetails": {
+        "origin": "NY area",
+        "destination": "Charleston",
+        "dates": {
+          "departure": "2025-07-06",
+          "return": "2025-07-09"
+        }
+      },
+      "localCosts": null,
+      "suggestedEvents": {
+        "entertainment": [],
+        "sports": [],
+        "music": [],
+        "other": [
+          {
+            "name": "Charleston Riverdogs vs. Columbia Fireflies",
+            "type": "ticketmaster",
+            "date": "2025-07-08T23:05:00Z",
+            "venue": "Joe Riley Stadium",
+            "priceRange": null,
+            "url": "https://www.ticketmaster.com/event/Z7r9jZ1A7fJ4V"
+          },
+          {
+            "name": "Charleston Riverdogs vs. Columbia Fireflies",
+            "type": "ticketmaster",
+            "date": "2025-07-09T23:05:00Z",
+            "venue": "Joe Riley Stadium",
+            "priceRange": null,
+            "url": "https://www.ticketmaster.com/event/Z7r9jZ1A7fJ4g"
+          }
+        ]
+      },
+      "budget": {
+        "localBudget": {
+          "range": "$700+",
+          "min": 700,
+          "max": 1000,
+          "travelingFrom": "NY area"
+        },
+        "estimatedDailyCosts": {
+          "food": 60,
+          "activities": 50,
+          "transport": 30,
+          "total": 140
+        }
+      },
+      "notes": []
+    },
+    "Drew Butera": {
+      "name": "Drew Butera",
+      "email": "drewbutera00@gmail.com",
+      "phone": "267-500-7820",
+      "travelDetails": {
+        "origin": "PHL",
+        "destination": "Charleston",
+        "dates": {
+          "departure": "2025-07-06",
+          "return": "2025-07-09"
+        }
+      },
+      "localCosts": null,
+      "suggestedEvents": {
+        "entertainment": [],
+        "sports": [],
+        "music": [],
+        "other": [
+          {
+            "name": "Charleston Riverdogs vs. Columbia Fireflies",
+            "type": "ticketmaster",
+            "date": "2025-07-08T23:05:00Z",
+            "venue": "Joe Riley Stadium",
+            "priceRange": null,
+            "url": "https://www.ticketmaster.com/event/Z7r9jZ1A7fJ4V"
+          },
+          {
+            "name": "Charleston Riverdogs vs. Columbia Fireflies",
+            "type": "ticketmaster",
+            "date": "2025-07-09T23:05:00Z",
+            "venue": "Joe Riley Stadium",
+            "priceRange": null,
+            "url": "https://www.ticketmaster.com/event/Z7r9jZ1A7fJ4g"
+          }
+        ]
+      },
+      "budget": {
+        "localBudget": {
+          "range": "$500-$700",
+          "min": 500,
+          "max": 700,
+          "travelingFrom": "PHL"
+        },
+        "estimatedDailyCosts": {
+          "food": 60,
+          "activities": 50,
+          "transport": 30,
+          "total": 140
+        }
+      },
+      "notes": []
+    },
+    "T": {
+      "name": "T",
+      "email": "temmclaugh29@yahoo.com",
+      "phone": "2152379135",
+      "travelDetails": {
+        "origin": "PHI",
+        "destination": "Charleston",
+        "dates": {
+          "departure": "2025-07-06",
+          "return": "2025-07-09"
+        }
+      },
+      "localCosts": null,
+      "suggestedEvents": {
+        "entertainment": [],
+        "sports": [],
+        "music": [],
+        "other": [
+          {
+            "name": "Charleston Riverdogs vs. Columbia Fireflies",
+            "type": "ticketmaster",
+            "date": "2025-07-08T23:05:00Z",
+            "venue": "Joe Riley Stadium",
+            "priceRange": null,
+            "url": "https://www.ticketmaster.com/event/Z7r9jZ1A7fJ4V"
+          },
+          {
+            "name": "Charleston Riverdogs vs. Columbia Fireflies",
+            "type": "ticketmaster",
+            "date": "2025-07-09T23:05:00Z",
+            "venue": "Joe Riley Stadium",
+            "priceRange": null,
+            "url": "https://www.ticketmaster.com/event/Z7r9jZ1A7fJ4g"
+          }
+        ]
+      },
+      "budget": {
+        "localBudget": {
+          "range": "$700+",
+          "min": 700,
+          "max": 1000,
+          "travelingFrom": "PHI"
+        },
+        "estimatedDailyCosts": {
+          "food": 60,
+          "activities": 50,
+          "transport": 30,
+          "total": 140
+        }
+      },
+      "notes": []
+    },
+    "Jakob Hoffman": {
+      "name": "Jakob Hoffman",
+      "email": "Jakob.Hoffman.44@gmail.com",
+      "phone": "302-757-5219",
+      "travelDetails": {
+        "origin": "Newark, NJ",
+        "destination": "Charleston",
+        "dates": {
+          "departure": "2025-07-06",
+          "return": "2025-07-09"
+        }
+      },
+      "localCosts": null,
+      "suggestedEvents": {
+        "entertainment": [],
+        "sports": [],
+        "music": [],
+        "other": [
+          {
+            "name": "Charleston Riverdogs vs. Columbia Fireflies",
+            "type": "ticketmaster",
+            "date": "2025-07-08T23:05:00Z",
+            "venue": "Joe Riley Stadium",
+            "priceRange": null,
+            "url": "https://www.ticketmaster.com/event/Z7r9jZ1A7fJ4V"
+          },
+          {
+            "name": "Charleston Riverdogs vs. Columbia Fireflies",
+            "type": "ticketmaster",
+            "date": "2025-07-09T23:05:00Z",
+            "venue": "Joe Riley Stadium",
+            "priceRange": null,
+            "url": "https://www.ticketmaster.com/event/Z7r9jZ1A7fJ4g"
+          }
+        ]
+      },
+      "budget": {
+        "localBudget": {
+          "range": "$300-$500",
+          "min": 300,
+          "max": 500,
+          "travelingFrom": "Newark, NJ"
+        },
+        "estimatedDailyCosts": {
+          "food": 60,
+          "activities": 50,
+          "transport": 30,
+          "total": 140
+        }
+      },
+      "notes": []
+    },
+    "Matt": {
+      "name": "Matt",
+      "email": "Mattgluck4@gmail.com",
+      "phone": "9089142851",
+      "travelDetails": {
+        "origin": "Newark",
+        "destination": "Charleston",
+        "dates": {
+          "departure": "2025-07-06",
+          "return": "2025-07-09"
+        }
+      },
+      "localCosts": null,
+      "suggestedEvents": {
+        "entertainment": [],
+        "sports": [],
+        "music": [],
+        "other": [
+          {
+            "name": "Charleston Riverdogs vs. Columbia Fireflies",
+            "type": "ticketmaster",
+            "date": "2025-07-08T23:05:00Z",
+            "venue": "Joe Riley Stadium",
+            "priceRange": null,
+            "url": "https://www.ticketmaster.com/event/Z7r9jZ1A7fJ4V"
+          },
+          {
+            "name": "Charleston Riverdogs vs. Columbia Fireflies",
+            "type": "ticketmaster",
+            "date": "2025-07-09T23:05:00Z",
+            "venue": "Joe Riley Stadium",
+            "priceRange": null,
+            "url": "https://www.ticketmaster.com/event/Z7r9jZ1A7fJ4g"
+          }
+        ]
+      },
+      "budget": {
+        "localBudget": {
+          "range": "$700+",
+          "min": 700,
+          "max": 1000,
+          "travelingFrom": "Newark"
+        },
+        "estimatedDailyCosts": {
+          "food": 60,
+          "activities": 50,
+          "transport": 30,
+          "total": 140
+        }
+      },
+      "notes": []
+    },
+    "Robert D Falese IV": {
+      "name": "Robert D Falese IV",
+      "email": "bobbyfalese@icloud.com",
+      "phone": "6099697911",
+      "travelDetails": {
+        "origin": "Philly (subject to change wherever I get a job)",
+        "destination": "Charleston",
+        "dates": {
+          "departure": "2025-07-06",
+          "return": "2025-07-09"
+        }
+      },
+      "localCosts": null,
+      "suggestedEvents": {
+        "entertainment": [],
+        "sports": [],
+        "music": [],
+        "other": [
+          {
+            "name": "Charleston Riverdogs vs. Columbia Fireflies",
+            "type": "ticketmaster",
+            "date": "2025-07-08T23:05:00Z",
+            "venue": "Joe Riley Stadium",
+            "priceRange": null,
+            "url": "https://www.ticketmaster.com/event/Z7r9jZ1A7fJ4V"
+          },
+          {
+            "name": "Charleston Riverdogs vs. Columbia Fireflies",
+            "type": "ticketmaster",
+            "date": "2025-07-09T23:05:00Z",
+            "venue": "Joe Riley Stadium",
+            "priceRange": null,
+            "url": "https://www.ticketmaster.com/event/Z7r9jZ1A7fJ4g"
+          }
+        ]
+      },
+      "budget": {
+        "localBudget": {
+          "range": "<$300",
+          "min": 300,
+          "max": 1000,
+          "travelingFrom": "Philly (subject to change wherever I get a job)"
+        },
+        "estimatedDailyCosts": {
+          "food": 60,
+          "activities": 50,
+          "transport": 30,
+          "total": 140
+        }
+      },
+      "notes": []
+    }
+  },
+  "rawAnalysis": {
+    "budget": {
+      "budgetRanges": {
+        "$300-$500": {
+          "min": 300,
+          "max": 500,
+          "count": 1
+        },
+        "$500-$700": {
+          "min": 500,
+          "max": 700,
+          "count": 1
+        },
+        "$700+": {
+          "min": 700,
+          "max": 1000,
+          "count": 3
+        }
+      },
+      "individualBudgets": {
+        "Spencer Berson": {
+          "range": "$700+",
+          "min": 700,
+          "max": 1000,
+          "travelingFrom": "NY area"
+        },
+        "Drew Butera": {
+          "range": "$500-$700",
+          "min": 500,
+          "max": 700,
+          "travelingFrom": "PHL"
+        },
+        "T": {
+          "range": "$700+",
+          "min": 700,
+          "max": 1000,
+          "travelingFrom": "PHI"
+        },
+        "Jakob Hoffman": {
+          "range": "$300-$500",
+          "min": 300,
+          "max": 500,
+          "travelingFrom": "Newark, NJ"
+        },
+        "Matt": {
+          "range": "$700+",
+          "min": 700,
+          "max": 1000,
+          "travelingFrom": "Newark"
+        },
+        "Robert D Falese IV": {
+          "range": "<$300",
+          "min": 300,
+          "max": 1000,
+          "travelingFrom": "Philly (subject to change wherever I get a job)"
+        }
+      },
+      "groupBudget": {
+        "optimal": 592,
+        "min": 483,
+        "max": 700
+      }
+    },
+    "dates": {
+      "availabilityRanked": [],
+      "optimalDateRange": "Early July (1-15)",
+      "optimalAttendance": 0,
+      "durationPreferences": {
+        "2 Days": {
+          "count": 6,
+          "rank1": 1,
+          "rank2": 2,
+          "rank3": 3
+        },
+        "3-4 Days": {
+          "count": 6,
+          "rank1": 4,
+          "rank2": 2,
+          "rank3": 0
+        },
+        "5-7 Days": {
+          "count": 6,
+          "rank1": 1,
+          "rank2": 2,
+          "rank3": 3
+        }
+      },
+      "durationScores": [
+        {
+          "duration": "3-4 Days",
+          "score": 2.6666666666666665
+        },
+        {
+          "duration": "2 Days",
+          "score": 1.6666666666666667
+        },
+        {
+          "duration": "5-7 Days",
+          "score": 1.6666666666666667
+        }
+      ],
+      "optimalDuration": "3-4 Days"
+    },
+    "locations": {
+      "rankedLocations": [
+        {
+          "location": "Charleston",
+          "weightedScore": 34,
+          "avgRanking": 2.3,
+          "topChoiceCount": 2
+        },
+        {
+          "location": "Austin",
+          "weightedScore": 30,
+          "avgRanking": 3,
+          "topChoiceCount": 0
+        },
+        {
+          "location": "Nashville (again)",
+          "weightedScore": 25,
+          "avgRanking": 3.8,
+          "topChoiceCount": 1
+        },
+        {
+          "location": "Boston",
+          "weightedScore": 24,
+          "avgRanking": 4,
+          "topChoiceCount": 0
+        },
+        {
+          "location": "Chicago",
+          "weightedScore": 23,
+          "avgRanking": 4.2,
+          "topChoiceCount": 0
+        },
+        {
+          "location": "LA",
+          "weightedScore": 18,
+          "avgRanking": 5,
+          "topChoiceCount": 0
+        },
+        {
+          "location": "NYC",
+          "weightedScore": 0,
+          "avgRanking": 0,
+          "topChoiceCount": 0
+        }
+      ],
+      "topLocation": "Charleston",
+      "secondLocation": "Austin",
+      "thirdLocation": "Nashville (again)",
+      "otherSuggestions": [
+        "Bahamas",
+        "Arizona",
+        "Europe plan for 2026?",
+        "Scottsdale",
+        "Ibiza",
+        "Naples (free lodging)"
+      ]
+    },
+    "activities": {
+      "rankedActivities": [
+        {
+          "activity": "Golf",
+          "weightedScore": 31,
+          "rankings": {
+            "1": 3,
+            "2": 1,
+            "3": 0,
+            "4": 0,
+            "5": 0,
+            "6": 2,
+            "7": 0
+          }
+        },
+        {
+          "activity": "BOOZE/Bars",
+          "weightedScore": 26,
+          "rankings": {
+            "1": 1,
+            "2": 1,
+            "3": 0,
+            "4": 1,
+            "5": 3,
+            "6": 0,
+            "7": 0
+          }
+        },
+        {
+          "activity": "Sporting Event",
+          "weightedScore": 25,
+          "rankings": {
+            "1": 0,
+            "2": 1,
+            "3": 1,
+            "4": 2,
+            "5": 2,
+            "6": 0,
+            "7": 0
+          }
+        },
+        {
+          "activity": "Beach Stuff",
+          "weightedScore": 25,
+          "rankings": {
+            "1": 0,
+            "2": 1,
+            "3": 3,
+            "4": 0,
+            "5": 1,
+            "6": 0,
+            "7": 1
+          }
+        },
+        {
+          "activity": "Outdoor activities",
+          "weightedScore": 23,
+          "rankings": {
+            "1": 0,
+            "2": 1,
+            "3": 1,
+            "4": 2,
+            "5": 1,
+            "6": 0,
+            "7": 1
+          }
+        },
+        {
+          "activity": "Casino",
+          "weightedScore": 20,
+          "rankings": {
+            "1": 2,
+            "2": 0,
+            "3": 0,
+            "4": 0,
+            "5": 0,
+            "6": 2,
+            "7": 2
+          }
+        },
+        {
+          "activity": "Concert",
+          "weightedScore": 12,
+          "rankings": {
+            "1": 0,
+            "2": 0,
+            "3": 0,
+            "4": 0,
+            "5": 2,
+            "6": 2,
+            "7": 2
+          }
+        }
+      ],
+      "topActivities": [
+        "Golf",
+        "BOOZE/Bars",
+        "Sporting Event",
+        "Beach Stuff",
+        "Outdoor activities",
+        "Casino",
+        "Concert"
+      ],
+      "otherSuggestions": [
+        {
+          "person": "Spencer Berson",
+          "suggestion": "Jelking."
+        },
+        {
+          "person": "T",
+          "suggestion": "Tbd"
+        },
+        {
+          "person": "Jakob Hoffman",
+          "suggestion": "Annual Golf tourney (scramble or otherwise)"
+        },
+        {
+          "person": "Matt",
+          "suggestion": "No"
+        },
+        {
+          "person": "Robert D Falese IV",
+          "suggestion": " Swedish chicks"
+        }
+      ]
+    },
+    "accommodations": {
+      "accommodationTypes": [
+        {
+          "type": "Cheapest Shared house (airbnb)",
+          "count": 3,
+          "percentage": 50
+        },
+        {
+          "type": "Cool (more expensive) Shared House (airbnb)",
+          "count": 2,
+          "percentage": 33
+        },
+        {
+          "type": "depends on trip activity",
+          "count": 0,
+          "percentage": 0
+        }
+      ],
+      "topChoice": "Cheapest Shared house (airbnb)",
+      "roomPreferences": [
+        {
+          "preference": "Don't care",
+          "count": 4,
+          "percentage": 67
+        },
+        {
+          "preference": "2 people to a room",
+          "count": 2,
+          "percentage": 33
+        },
+        {
+          "preference": "Private room",
+          "count": 0,
+          "percentage": 0
+        }
+      ],
+      "topRoomChoice": "Don't care",
+      "eventStructure": [
+        {
+          "structure": "Planned ideas, but nothing put in reservations",
+          "count": 3,
+          "percentage": 50
+        },
+        {
+          "structure": "Structure",
+          "count": 2,
+          "percentage": 33
+        }
+      ],
+      "preferredStructure": "Planned ideas, but nothing put in reservations"
+    },
+    "dining": {
+      "rankedPreferences": [
+        {
+          "option": "Sports Bars & casual (as whole group)",
+          "count": 5,
+          "percentage": 83
+        },
+        {
+          "option": "High-end meal (1 time as whole group)",
+          "count": 4,
+          "percentage": 67
+        },
+        {
+          "option": "Group Cooking Session (Buy a bunch of steaks and chef with fellas)",
+          "count": 4,
+          "percentage": 67
+        },
+        {
+          "option": "Group catered BBQ or similar type meal",
+          "count": 1,
+          "percentage": 17
+        }
+      ],
+      "preferences": [
+        "Sports Bars & casual (as whole group)",
+        "High-end meal (1 time as whole group)",
+        "Group Cooking Session (Buy a bunch of steaks and chef with fellas)",
+        "Group catered BBQ or similar type meal"
+      ],
+      "topDiningChoice": "Sports Bars & casual (as whole group)"
+    }
+  }
+}

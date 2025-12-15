@@ -1,0 +1,85 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Environment files - NEVER commit these
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env*.local
+
+# Next.js build output
+.next/
+out/
+build/
+dist/
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Prisma
+prisma/*.db
+prisma/*.db-journal
+
+# Local cache
+temp-cache/
+.cache/
+*.tsbuildinfo
+.turbo
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Vercel
+.vercel
+
+# TypeScript cache
+*.tsbuildinfo
+next-env.d.ts
+
+# Miscellaneous
+*.pem
+*.key
+*.crt
+.secret
+
+# Local development data
+*.local.json
+local-*.json
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+tmp/
+temp/
+
