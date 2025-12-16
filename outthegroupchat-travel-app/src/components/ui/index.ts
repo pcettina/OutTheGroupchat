@@ -24,3 +24,13 @@ export {
 
 export { Tooltip, TooltipProvider } from './Tooltip';
 
+// New UI Primitives
+export { Avatar } from './Avatar';
+export { AvatarStack } from './AvatarStack';
+export { Badge } from './Badge';
+export { Skeleton, SkeletonText, SkeletonAvatar, SkeletonCard } from './Skeleton';
+export { EmptyState, EmptyTrips, EmptyNotifications } from './EmptyState';
+export { Tabs, TabsList, TabsTrigger, TabsContent } from './Tabs';
+export { Switch } from './Switch';
+export { Select } from './Select';
+
