@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { VotingOption } from './VotingOption';
-import { VotingResults } from './ResultsChart';
+import ResultsChart from './ResultsChart';
 import { VotingDeadline } from './VotingDeadline';
 
 interface VotingOptionData {

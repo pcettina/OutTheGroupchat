@@ -231,10 +231,10 @@ export function apiError(
   status = 400,
   details?: unknown
 ): NextResponse<ApiErrorResponse> {
-  return NextResponse.json(
-    { success: false, error, ...(details && { details }) },
-    { status }
-  );
+  const response: ApiErrorResponse = details 
+    ? { success: false, error, details }
+    : { success: false, error };
+  return NextResponse.json(response, { status });
 }
 
 /**

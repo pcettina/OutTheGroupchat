@@ -394,32 +394,33 @@ export function RichFeedItem({
         </motion.button>
       </div>
 
-      {/* Comments Section */}
-      <AnimatePresence>
-        {showComments && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden"
-          >
-            <div className="px-4 pb-4 border-t border-slate-100 dark:border-slate-700">
-              <CommentThread
-                comments={localComments}
-                onAddComment={handleAddComment}
-                onLikeComment={(commentId) => console.log('Like comment:', commentId)}
-              />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Comments Modal */}
+      <CommentThread
+        itemId={trip?.id || activity?.id || id}
+        itemType={trip ? 'trip' : 'activity'}
+        isOpen={showComments}
+        onClose={() => setShowComments(false)}
+        initialComments={localComments}
+      />
 
       {/* Share Modal */}
       <ShareModal
         isOpen={showShareModal}
         onClose={() => setShowShareModal(false)}
-        title={trip?.title || activity?.name || 'Share'}
-        url={trip ? `/trips/${trip.id}` : '#'}
+        shareData={trip ? {
+          id: trip.id,
+          type: 'trip',
+          title: trip.title,
+          destination: `${trip.destination.city}, ${trip.destination.country}`,
+          imageUrl: trip.coverImage,
+          userName: user.name || undefined,
+        } : activity ? {
+          id: activity.id,
+          type: 'activity',
+          title: activity.name,
+          description: activity.description || undefined,
+          userName: user.name || undefined,
+        } : null}
       />
     </motion.article>
   );

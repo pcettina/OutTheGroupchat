@@ -129,25 +129,28 @@ export function VotingOption({
           )}
 
           {/* Metadata */}
-          {option.metadata && (
-            <div className="flex flex-wrap gap-2 mt-2">
-              {option.metadata.price && (
-                <span className="text-xs px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded text-slate-600 dark:text-slate-400">
-                  💰 {String(option.metadata.price)}
-                </span>
-              )}
-              {option.metadata.duration && (
-                <span className="text-xs px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded text-slate-600 dark:text-slate-400">
-                  ⏱️ {String(option.metadata.duration)}
-                </span>
-              )}
-              {option.metadata.location && (
-                <span className="text-xs px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded text-slate-600 dark:text-slate-400">
-                  📍 {String(option.metadata.location)}
-                </span>
-              )}
-            </div>
-          )}
+          {option.metadata && (() => {
+            const meta = option.metadata as { price?: string | number; duration?: string; location?: string };
+            return (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {meta.price && (
+                  <span className="text-xs px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded text-slate-600 dark:text-slate-400">
+                    💰 {String(meta.price)}
+                  </span>
+                )}
+                {meta.duration && (
+                  <span className="text-xs px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded text-slate-600 dark:text-slate-400">
+                    ⏱️ {meta.duration}
+                  </span>
+                )}
+                {meta.location && (
+                  <span className="text-xs px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded text-slate-600 dark:text-slate-400">
+                    📍 {meta.location}
+                  </span>
+                )}
+              </div>
+            );
+          })()}
 
           {/* Voters */}
           {showResults && voters.length > 0 && (
