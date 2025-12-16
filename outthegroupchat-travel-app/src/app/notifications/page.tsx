@@ -13,9 +13,13 @@ export default function NotificationsPage() {
   const { data, isLoading, error } = useQuery({
     queryKey: ['notifications', filter],
     queryFn: async () => {
-      const response = await fetch(`/api/notifications?filter=${filter}`);
+      const params = new URLSearchParams();
+      if (filter === 'unread') params.set('unread', 'true');
+      const response = await fetch(`/api/notifications?${params.toString()}`);
       if (!response.ok) throw new Error('Failed to fetch notifications');
-      return response.json();
+      const result = await response.json();
+      // API returns { success: true, data: { notifications, unreadCount } }
+      return result.data || { notifications: [], unreadCount: 0 };
     },
   });
 
@@ -24,7 +28,6 @@ export default function NotificationsPage() {
       const response = await fetch('/api/notifications', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ markAllRead: true }),
       });
       if (!response.ok) throw new Error('Failed to mark all as read');
       return response.json();
@@ -34,7 +37,8 @@ export default function NotificationsPage() {
     },
   });
 
-  const unreadCount = data?.notifications?.filter((n: { read: boolean }) => !n.read).length || 0;
+  const notifications = data?.notifications || [];
+  const unreadCount = data?.unreadCount || 0;
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
@@ -126,7 +130,7 @@ export default function NotificationsPage() {
               </div>
               <p className="text-slate-600 dark:text-slate-400">Failed to load notifications</p>
             </div>
-          ) : data?.notifications?.length === 0 ? (
+          ) : notifications.length === 0 ? (
             <div className="text-center py-12">
               <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-4">
                 <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -139,7 +143,7 @@ export default function NotificationsPage() {
               </p>
             </div>
           ) : (
-            <NotificationList notifications={data.notifications} />
+            <NotificationList notifications={notifications} />
           )}
         </div>
       </div>
