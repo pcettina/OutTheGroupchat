@@ -74,7 +74,7 @@ function generateTags(kinds: string, name: string): string[] {
   const tags = kinds.split(',').map(k => k.trim().toLowerCase());
   // Add name words as tags
   const nameWords = name.toLowerCase().split(/\s+/).filter(w => w.length > 3);
-  return [...new Set([...tags, ...nameWords])];
+  return Array.from(new Set([...tags, ...nameWords]));
 }
 
 // Import places from OpenTripMap for a location
