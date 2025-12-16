@@ -1,8 +1,9 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": "nextjs",
-  "buildCommand": "cd outthegroupchat-travel-app && npm run build",
-  "installCommand": "cd outthegroupchat-travel-app && npm install",
-  "outputDirectory": "outthegroupchat-travel-app/.next"
+  "version": 2,
+  "builds": [
+    {
+      "src": "outthegroupchat-travel-app/package.json",
+      "use": "@vercel/next"
+    }
+  ]
 }
-
