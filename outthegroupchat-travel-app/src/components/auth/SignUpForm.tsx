@@ -34,8 +34,17 @@ export default function SignUpForm() {
       })
 
       if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.message || 'Something went wrong')
+        // Handle both JSON and text error responses
+        let errorMessage = 'Something went wrong';
+        try {
+          const data = await response.json();
+          errorMessage = data.error || data.message || errorMessage;
+        } catch {
+          // If JSON parsing fails, try to get text
+          const text = await response.text();
+          errorMessage = text || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
 
       // Sign in the user after successful registration
@@ -46,11 +55,12 @@ export default function SignUpForm() {
       })
 
       if (result?.error) {
-        setError('Error signing in after registration')
+        setError('Account created! Please sign in with your credentials.')
+        router.push('/auth/signin')
         return
       }
 
-      router.push('/dashboard')
+      router.push('/trips')
       router.refresh()
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An error occurred during registration')

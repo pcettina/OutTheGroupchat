@@ -536,3 +536,84 @@ model ItineraryItem {
 
   @@index([itineraryDayId])
 }
+
+// ============================================
+// EXTERNAL DATA MODELS (Open Source POIs)
+// ============================================
+
+model ExternalActivity {
+  id              String   @id @default(cuid())
+  externalId      String   // ID from source API (e.g., OpenTripMap xid)
+  source          ExternalSource
+  name            String
+  description     String?  @db.Text
+  category        String   // Food, Culture, Nightlife, etc.
+  tags            String[] // For search/filtering
+  
+  // Location
+  latitude        Float
+  longitude       Float
+  address         String?
+  city            String
+  country         String
+  
+  // Metadata
+  rating          Float?
+  ratingCount     Int?
+  priceLevel      Int?     // 1-4 ($, $$, $$$, $$$$)
+  imageUrl        String?
+  thumbnailUrl    String?
+  websiteUrl      String?
+  phoneNumber     String?
+  openingHours    Json?    // Structured hours data
+  
+  // Search optimization
+  searchText      String?  @db.Text // Combined searchable text
+  popularity      Int      @default(0) // For sorting/recommendations
+  
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  lastFetched     DateTime @default(now()) // When data was last synced
+  
+  @@unique([externalId, source])
+  @@index([city, category])
+  @@index([city, country])
+  @@index([latitude, longitude])
+}
+
+enum ExternalSource {
+  OPENTRIPMAP
+  FOURSQUARE
+  OPENSTREETMAP
+  WIKIVOYAGE
+  GOOGLE_PLACES
+  YELP
+  TRIPADVISOR
+  MANUAL
+}
+
+// Cache for destination data
+model DestinationCache {
+  id          String   @id @default(cuid())
+  city        String
+  country     String
+  
+  // Cached statistics
+  activityCount    Int      @default(0)
+  averageRating    Float?
+  topCategories    String[] // Most popular categories
+  
+  // Rich content
+  description      String?  @db.Text
+  highlights       Json?    // Key attractions
+  bestTimeToVisit  String?
+  averageBudget    Json?    // { low, mid, high }
+  
+  // Metadata
+  lastUpdated      DateTime @default(now())
+  dataQuality      Int      @default(0) // 0-100 score
+  
+  @@unique([city, country])
+  @@index([country])
+}
