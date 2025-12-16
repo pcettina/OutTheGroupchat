@@ -1,0 +1,9 @@
+﻿{
+  "version": 2,
+  "builds": [
+    {
+      "src": "outthegroupchat-travel-app/package.json",
+      "use": "@vercel/next"
+    }
+  ]
+}
