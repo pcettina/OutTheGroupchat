@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import { logger } from '@/lib/logger';
 
 export async function POST(req: Request) {
   try {
@@ -55,6 +56,57 @@ export async function POST(req: Request) {
       },
     });
 
+    // Process any pending invitations for this email
+    try {
+      const pendingInvitations = await prisma.pendingInvitation.findMany({
+        where: { 
+          email,
+          expiresAt: { gt: new Date() }, // Only non-expired invitations
+        },
+        include: {
+          trip: { select: { title: true } },
+        },
+      });
+
+      if (pendingInvitations.length > 0) {
+        // Convert pending invitations to real trip invitations
+        for (const pending of pendingInvitations) {
+          // Create real trip invitation
+          await prisma.tripInvitation.create({
+            data: {
+              tripId: pending.tripId,
+              userId: user.id,
+              status: 'PENDING',
+              expiresAt: pending.expiresAt,
+            },
+          });
+
+          // Create notification
+          await prisma.notification.create({
+            data: {
+              userId: user.id,
+              type: 'TRIP_INVITATION',
+              title: 'Trip Invitation',
+              message: `You've been invited to join "${pending.trip.title}"!`,
+              data: { tripId: pending.tripId },
+            },
+          });
+        }
+
+        // Delete processed pending invitations
+        await prisma.pendingInvitation.deleteMany({
+          where: { email },
+        });
+
+        logger.info({ userId: user.id, invitationsProcessed: pendingInvitations.length }, 
+          'Processed pending invitations for new user');
+      }
+    } catch (inviteError) {
+      // Log but don't fail signup if invitation processing fails
+      logger.error({ err: inviteError, userId: user.id }, 
+        'Failed to process pending invitations');
+    }
+
     return NextResponse.json({
       success: true,
       user: {
@@ -64,7 +116,7 @@ export async function POST(req: Request) {
       },
     });
   } catch (error) {
-    console.error('[SIGNUP] Error:', error);
+    logger.error({ err: error, context: 'SIGNUP' }, 'Error during signup');
     
     // Handle specific Prisma errors
     if (error instanceof Error) {

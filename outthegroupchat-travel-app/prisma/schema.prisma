@@ -96,6 +96,10 @@ model User {
   
   // Pending invitations sent by this user
   sentPendingInvitations PendingInvitation[] @relation("InviterRelation")
+  
+  // Trip social engagement
+  tripComments     TripComment[]
+  tripLikes        TripLike[]
 
   @@index([email])
 }
@@ -136,12 +140,48 @@ model Notification {
 enum NotificationType {
   TRIP_INVITATION
   TRIP_UPDATE
+  TRIP_COMMENT
+  TRIP_LIKE
   ACTIVITY_COMMENT
   ACTIVITY_RATING
   SURVEY_REMINDER
   VOTE_REMINDER
   FOLLOW
   SYSTEM
+}
+
+// ============================================
+// TRIP SOCIAL ENGAGEMENT MODELS
+// ============================================
+
+// Comments on trip posts in the feed
+model TripComment {
+  id        String   @id @default(cuid())
+  tripId    String
+  userId    String
+  text      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tripId])
+  @@index([userId])
+}
+
+// Likes on trip posts in the feed
+model TripLike {
+  id        String   @id @default(cuid())
+  tripId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tripId])
+  @@index([tripId])
 }
 
 // ============================================
@@ -188,6 +228,10 @@ model Trip {
   
   // Pending invitations for non-existent users
   pendingInvitations PendingInvitation[]
+  
+  // Social engagement (for feed interactions)
+  comments     TripComment[]
+  likes        TripLike[]
 
   @@index([ownerId])
   @@index([status])

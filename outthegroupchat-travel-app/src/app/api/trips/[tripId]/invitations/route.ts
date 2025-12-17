@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
+import { sendInvitationEmail, isEmailConfigured } from '@/lib/email';
+import { logger } from '@/lib/logger';
 
 const inviteSchema = z.object({
   emails: z.array(z.string().email()),
@@ -50,7 +52,7 @@ export async function GET(
 
     return NextResponse.json({ success: true, data: invitations });
   } catch (error) {
-    console.error('[INVITATIONS_GET]', error);
+    logger.error({ err: error, context: 'INVITATIONS_GET' }, 'Failed to fetch invitations');
     return NextResponse.json(
       { success: false, error: 'Failed to fetch invitations' },
       { status: 500 }
@@ -132,14 +134,45 @@ export async function POST(
             });
           }
           
-          // TODO: Queue email invitation (implement with background job service)
-          // await sendInvitationEmail(email, tripId, session.user.id);
-          
-          invitations.push({ 
-            email, 
-            status: 'email_pending',
-            message: 'User not registered. Email invitation will be sent.' 
+          // Get trip details for the email
+          const trip = await prisma.trip.findUnique({
+            where: { id: tripId },
+            select: { title: true },
           });
+
+          // Send email invitation if email service is configured
+          if (isEmailConfigured()) {
+            const emailResult = await sendInvitationEmail({
+              to: email,
+              tripTitle: trip?.title || 'a trip',
+              inviterName: session.user.name || 'Someone',
+              tripId,
+              expiresAt,
+            });
+
+            if (emailResult.success) {
+              invitations.push({ 
+                email, 
+                status: 'email_sent',
+                message: 'Invitation email sent successfully.' 
+              });
+            } else {
+              logger.warn({ email, tripId, error: emailResult.error }, 'Failed to send invitation email');
+              invitations.push({ 
+                email, 
+                status: 'email_failed',
+                message: 'Pending invitation created but email failed to send.' 
+              });
+            }
+          } else {
+            // Email service not configured - log warning
+            logger.warn({ email, tripId }, 'Email service not configured, invitation created without email');
+            invitations.push({ 
+              email, 
+              status: 'email_pending',
+              message: 'User not registered. Email service not configured.' 
+            });
+          }
           continue;
         }
 
@@ -218,7 +251,7 @@ export async function POST(
       data: { invitations, errors },
     });
   } catch (error) {
-    console.error('[INVITATIONS_POST]', error);
+    logger.error({ err: error, context: 'INVITATIONS_POST' }, 'Failed to send invitations');
     return NextResponse.json(
       { success: false, error: 'Failed to send invitations' },
       { status: 500 }

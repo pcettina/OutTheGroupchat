@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
+import { logError } from '@/lib/logger';
 
 // Handle likes/unlikes for feed items
 export async function POST(req: Request) {
@@ -59,27 +60,58 @@ export async function POST(req: Request) {
         likeCount: count,
       });
     } else if (itemType === 'trip') {
-      // For trips, we increment/decrement the viewCount as a "like" proxy
-      // In a real app, you'd want a dedicated TripLike model
+      // Use TripLike model for proper like tracking
       const trip = await prisma.trip.findUnique({
         where: { id: itemId },
-        select: { viewCount: true },
+        select: { id: true, ownerId: true, title: true },
       });
 
       if (!trip) {
         return NextResponse.json({ error: 'Trip not found' }, { status: 404 });
       }
 
-      // For now, we'll use viewCount as a like proxy
-      // In production, you'd want a proper like table
-      const updatedTrip = await prisma.trip.update({
-        where: { id: itemId },
-        data: {
-          viewCount: action === 'like' 
-            ? { increment: 1 } 
-            : { decrement: Math.min(1, trip.viewCount) },
-        },
-        select: { viewCount: true },
+      if (action === 'like') {
+        await prisma.tripLike.upsert({
+          where: {
+            userId_tripId: {
+              userId,
+              tripId: itemId,
+            },
+          },
+          update: {},
+          create: {
+            userId,
+            tripId: itemId,
+          },
+        });
+
+        // Create notification for trip owner (if not liking own trip)
+        if (trip.ownerId !== userId) {
+          await prisma.notification.create({
+            data: {
+              userId: trip.ownerId,
+              type: 'TRIP_LIKE',
+              title: 'New Like',
+              message: `${session.user.name || 'Someone'} liked your trip "${trip.title}"`,
+              data: {
+                tripId: itemId,
+                likerId: userId,
+              },
+            },
+          });
+        }
+      } else {
+        await prisma.tripLike.deleteMany({
+          where: {
+            userId,
+            tripId: itemId,
+          },
+        });
+      }
+
+      // Get updated count
+      const count = await prisma.tripLike.count({
+        where: { tripId: itemId },
       });
 
       return NextResponse.json({
@@ -87,13 +119,13 @@ export async function POST(req: Request) {
         action,
         itemType,
         itemId,
-        likeCount: updatedTrip.viewCount,
+        likeCount: count,
       });
     }
 
     return NextResponse.json({ error: 'Invalid item type' }, { status: 400 });
   } catch (error) {
-    console.error('[ENGAGEMENT_POST]', error);
+    logError('ENGAGEMENT_POST', error);
     return NextResponse.json(
       { error: 'Failed to update engagement' },
       { status: 500 }
@@ -142,24 +174,38 @@ export async function GET(req: Request) {
         isLiked: !!isLiked,
       });
     } else if (itemType === 'trip') {
-      const trip = await prisma.trip.findUnique({
-        where: { id: itemId },
-        select: { viewCount: true },
-      });
+      const [likeCount, commentCount, isLiked] = await Promise.all([
+        prisma.tripLike.count({
+          where: { tripId: itemId },
+        }),
+        prisma.tripComment.count({
+          where: { tripId: itemId },
+        }),
+        session?.user?.id
+          ? prisma.tripLike.findUnique({
+              where: {
+                userId_tripId: {
+                  userId: session.user.id,
+                  tripId: itemId,
+                },
+              },
+            })
+          : null,
+      ]);
 
       return NextResponse.json({
         success: true,
         itemId,
         itemType,
-        likeCount: trip?.viewCount || 0,
-        commentCount: 0,
-        isLiked: false,
+        likeCount,
+        commentCount,
+        isLiked: !!isLiked,
       });
     }
 
     return NextResponse.json({ error: 'Invalid item type' }, { status: 400 });
   } catch (error) {
-    console.error('[ENGAGEMENT_GET]', error);
+    logError('ENGAGEMENT_GET', error);
     return NextResponse.json(
       { error: 'Failed to get engagement' },
       { status: 500 }

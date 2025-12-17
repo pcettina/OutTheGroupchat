@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -7,7 +8,9 @@ import { format } from 'date-fns';
 import { useTrip } from '@/hooks/useTrips';
 import { TripChat } from '@/components/ai';
 import { Navigation } from '@/components/Navigation';
-import { TripHeader, TripOverview, MemberList, ItineraryTimeline } from '@/components/trips';
+import { TripHeader, TripOverview, MemberList, ItineraryTimeline, InviteModal } from '@/components/trips';
+import { ShareModal } from '@/components/feed/ShareModal';
+import { FloatingShareButton } from '@/components/ui';
 import type { Destination, TripBudget } from '@/types';
 
 export default function TripDetailPage() {
@@ -15,6 +18,10 @@ export default function TripDetailPage() {
   const router = useRouter();
   const tripId = params.tripId as string;
   const { data: trip, isLoading, error } = useTrip(tripId);
+  
+  // Modal states
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -93,8 +100,11 @@ export default function TripDetailPage() {
   };
 
   const handleInvite = () => {
-    // TODO: Open invite modal
-    console.log('Open invite modal');
+    setIsInviteModalOpen(true);
+  };
+
+  const handleShare = () => {
+    setIsShareModalOpen(true);
   };
 
   const handleAddActivity = (dayNumber: number) => {
@@ -112,24 +122,39 @@ export default function TripDetailPage() {
 
         {/* Quick Actions */}
         <div className="max-w-7xl mx-auto px-4 -mt-6 relative z-10">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             {[
               { label: 'Survey', icon: '📋', href: `/trips/${tripId}/survey`, description: 'Collect preferences' },
               { label: 'Vote', icon: '🗳️', href: `/trips/${tripId}/vote`, description: 'Decide together' },
               { label: 'Flights', icon: '✈️', href: `/trips/${tripId}/flights`, description: 'Search flights' },
-              { label: 'Share', icon: '📤', href: '#', description: 'Invite friends' },
+              { label: 'Invite', icon: '👥', onClick: handleInvite, description: 'Add members' },
+              { label: 'Share', icon: '📤', onClick: handleShare, description: 'Share trip' },
             ].map((action) => (
-              <Link key={action.label} href={action.href}>
-                <motion.div
+              action.href ? (
+                <Link key={action.label} href={action.href}>
+                  <motion.div
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-lg border border-slate-200 dark:border-slate-700 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors"
+                  >
+                    <span className="text-2xl block mb-2">{action.icon}</span>
+                    <span className="font-semibold text-slate-900 dark:text-white block">{action.label}</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400">{action.description}</span>
+                  </motion.div>
+                </Link>
+              ) : (
+                <motion.button
+                  key={action.label}
+                  onClick={action.onClick}
                   whileHover={{ scale: 1.02, y: -2 }}
                   whileTap={{ scale: 0.98 }}
-                  className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-lg border border-slate-200 dark:border-slate-700 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors"
+                  className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-lg border border-slate-200 dark:border-slate-700 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors text-left"
                 >
                   <span className="text-2xl block mb-2">{action.icon}</span>
                   <span className="font-semibold text-slate-900 dark:text-white block">{action.label}</span>
                   <span className="text-xs text-slate-500 dark:text-slate-400">{action.description}</span>
-                </motion.div>
-              </Link>
+                </motion.button>
+              )
             ))}
           </div>
         </div>
@@ -235,6 +260,35 @@ export default function TripDetailPage() {
 
       {/* AI Trip Chat */}
       <TripChat tripContext={tripContext} />
+
+      {/* Floating Share Button */}
+      <FloatingShareButton
+        shareData={{
+          title: trip.title,
+          description: destination ? `Trip to ${destination.city}, ${destination.country}` : undefined,
+        }}
+      />
+
+      {/* Invite Modal */}
+      <InviteModal
+        isOpen={isInviteModalOpen}
+        onClose={() => setIsInviteModalOpen(false)}
+        tripId={tripId}
+        tripTitle={trip.title}
+      />
+
+      {/* Share Modal */}
+      <ShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        shareData={{
+          id: tripId,
+          type: 'trip',
+          title: trip.title,
+          description: trip.description || undefined,
+          destination: destination ? `${destination.city}, ${destination.country}` : undefined,
+        }}
+      />
     </div>
   );
 }

@@ -1,13 +1,19 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 
 export default function SignUpPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Get invitation parameters from URL
+  const redirectTo = searchParams.get('redirect');
+  const isInvitation = searchParams.get('invitation') === 'true';
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -44,7 +50,25 @@ export default function SignUpPage() {
         throw new Error(data.error || 'Failed to create account');
       }
 
-      router.push('/auth/signin?registered=true');
+      // Auto sign-in after successful registration
+      const signInResult = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (signInResult?.error) {
+        // If auto sign-in fails, redirect to sign-in page with the redirect preserved
+        const signInUrl = redirectTo 
+          ? `/auth/signin?registered=true&redirect=${encodeURIComponent(redirectTo)}`
+          : '/auth/signin?registered=true';
+        router.push(signInUrl);
+        return;
+      }
+
+      // Redirect to the invitation trip or default dashboard
+      router.push(redirectTo || '/trips');
+      router.refresh();
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Failed to create account');
     } finally {
@@ -52,17 +76,39 @@ export default function SignUpPage() {
     }
   };
 
+  // Build sign-in link preserving redirect
+  const signInHref = redirectTo 
+    ? `/auth/signin?redirect=${encodeURIComponent(redirectTo)}`
+    : '/auth/signin';
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
+          {isInvitation && (
+            <div className="mb-4 rounded-md bg-green-50 p-4 border border-green-200">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <span className="text-2xl">🎉</span>
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-green-800">
+                    You&apos;ve been invited to a trip!
+                  </h3>
+                  <p className="mt-1 text-sm text-green-700">
+                    Create an account to accept your invitation and start planning together.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Create your account
+            {isInvitation ? 'Join OutTheGroupchat' : 'Create your account'}
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             Or{' '}
             <Link
-              href="/auth/signin"
+              href={signInHref}
               className="font-medium text-indigo-600 hover:text-indigo-500"
             >
               sign in to your account

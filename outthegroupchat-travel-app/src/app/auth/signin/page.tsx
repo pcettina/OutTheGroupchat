@@ -2,13 +2,18 @@
 
 import { useState } from 'react'
 import { signIn } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
 export default function SignInPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+
+  // Get redirect parameter
+  const redirectTo = searchParams.get('redirect') || '/trips'
+  const justRegistered = searchParams.get('registered') === 'true'
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -29,7 +34,7 @@ export default function SignInPage() {
       if (result?.error) {
         setError('Invalid email or password')
       } else {
-        router.push('/trips')
+        router.push(redirectTo)
         router.refresh()
       }
     } catch (error) {
@@ -43,13 +48,18 @@ export default function SignInPage() {
     setIsLoading(true)
     setError(null)
     try {
-      await signIn('google', { callbackUrl: '/trips' })
+      await signIn('google', { callbackUrl: redirectTo })
     } catch (error) {
       setError('An error occurred with Google sign in.')
     } finally {
       setIsLoading(false)
     }
   }
+
+  // Build signup link preserving redirect
+  const signUpHref = redirectTo !== '/trips'
+    ? `/auth/signup?redirect=${encodeURIComponent(redirectTo)}`
+    : '/auth/signup'
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -61,13 +71,21 @@ export default function SignInPage() {
           <p className="mt-2 text-center text-sm text-gray-600">
             Or{' '}
             <Link
-              href="/auth/signup"
+              href={signUpHref}
               className="font-medium text-indigo-600 hover:text-indigo-500"
             >
               create a new account
             </Link>
           </p>
         </div>
+
+        {justRegistered && (
+          <div className="rounded-md bg-green-50 p-4">
+            <div className="text-sm text-green-700">
+              Account created successfully! Please sign in.
+            </div>
+          </div>
+        )}
 
         {error && (
           <div className="rounded-md bg-red-50 p-4">
