@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic';
+
 // Vercel Cron Job - runs daily
 // Configure in vercel.json: { "crons": [{ "path": "/api/cron", "schedule": "0 0 * * *" }] }
 

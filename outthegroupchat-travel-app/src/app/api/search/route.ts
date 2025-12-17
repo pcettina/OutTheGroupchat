@@ -4,6 +4,9 @@ import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { logError } from '@/lib/logger';
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic';
+
 // Global search across trips, activities, and users
 export async function GET(req: Request) {
   try {

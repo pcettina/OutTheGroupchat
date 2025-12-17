@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { checkRateLimit, apiRateLimiter } from '@/lib/rate-limit';
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic';
+
 // Search for activities from both internal and external sources
 export async function GET(req: NextRequest) {
   try {
