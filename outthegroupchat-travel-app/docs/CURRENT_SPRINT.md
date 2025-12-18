@@ -662,4 +662,75 @@ model AIConversation {
 
 *Updated daily during sprint.*
 
-*Last Updated: December 17, 2025 (Day 3 Evening - Round 3 Testing Findings & Fixes)*
+---
+
+## 🐛 Production Testing Round 4 (Dec 18, 2025 - Evening)
+
+### Critical Issue Found 🔴
+
+#### Bug #12: OPENAI_API_KEY Not Set in Vercel Production
+**Status:** 🔴 **BLOCKING** - Environment Variable Missing  
+**Impact:** CRITICAL - AI chat completely non-functional  
+**Root Cause:** `OPENAI_API_KEY` environment variable is **not set** in Vercel production environment
+
+**Evidence from Vercel Logs (Dec 18, 23:00:29 UTC):**
+```json
+{
+  "level": "error",
+  "context": "AI_CHAT",
+  "err": {
+    "message": "OPENAI_API_KEY not configured"
+  },
+  "hasEnvVar": false,
+  "envVarLength": 0,
+  "envVarPrefix": "none",
+  "envVarType": "undefined",
+  "nodeEnv": "production"
+}
+```
+
+**Diagnosis:**
+- Environment variable is `undefined` at runtime
+- Variable either not set, or set for wrong environment (Preview/Development only)
+- Code validation working correctly - properly detecting missing key
+
+**Fix Required (Manual Action):**
+1. Go to [Vercel Dashboard](https://vercel.com/dashboard)
+2. Select your project: `outthegroupchat-travel-app`
+3. Navigate to **Settings** → **Environment Variables**
+4. Click **Add New**
+5. **Key:** `OPENAI_API_KEY`
+6. **Value:** Your OpenAI API key (starts with `sk-`)
+7. **CRITICAL:** Select **Production** environment (or "All Environments")
+8. Click **Save**
+9. **Redeploy** the application:
+   - Go to **Deployments** tab
+   - Click **⋯** (three dots) on latest deployment
+   - Select **Redeploy**
+
+**Getting OpenAI API Key:**
+1. Go to [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+2. Sign in to your OpenAI account
+3. Click **Create new secret key**
+4. Copy the key (starts with `sk-`)
+5. Paste into Vercel (no spaces, no quotes)
+
+**Verification Steps:**
+After redeploying, test AI chat and check logs:
+- Should see: `hasEnvVar: true`
+- Should see: `envVarLength: > 0` (typically 51+ characters)
+- Should see: `envVarPrefix: "sk-..."` (first 7 characters)
+- AI chat should work without errors
+
+**Common Mistakes to Avoid:**
+- ❌ Setting variable only for Preview/Development, not Production
+- ❌ Forgetting to redeploy after adding variable
+- ❌ Using wrong variable name (must be exactly `OPENAI_API_KEY`)
+- ❌ Copying key with extra spaces, quotes, or newlines
+- ❌ Setting in wrong Vercel project
+
+**Note:** The code validation now checks for `sk-` prefix format, so any invalid key format will also be caught and logged.
+
+---
+
+*Last Updated: December 18, 2025 (Day 4 Evening - Round 4 Critical Issue Found)*
