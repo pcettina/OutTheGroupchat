@@ -45,7 +45,7 @@ const createActivitySchema = z.object({
     })).optional(),
   }).optional(),
   bookingStatus: z.enum(['NOT_NEEDED', 'RECOMMENDED', 'REQUIRED', 'BOOKED', 'CONFIRMED']).optional(),
-  bookingUrl: z.string().url().optional(),
+  bookingUrl: z.string().optional(), // Accept any string, validate URL format on frontend if needed
   requirements: z.object({
     minimumAge: z.number().optional(),
     physicalLevel: z.enum(['easy', 'moderate', 'challenging']).optional(),

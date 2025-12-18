@@ -103,9 +103,13 @@ export function AddActivityModal({
     try {
       const payload: Record<string, unknown> = {
         name: formData.name.trim(),
-        description: formData.description.trim() || null,
         category: formData.category,
       };
+
+      // Only include description if it's not empty (Zod expects string or undefined, not null)
+      if (formData.description.trim()) {
+        payload.description = formData.description.trim();
+      }
 
       // Add optional fields
       if (formData.date) {
@@ -134,7 +138,12 @@ export function AddActivityModal({
       }
       if (formData.bookingUrl.trim()) {
         // API expects bookingUrl at root level, not in externalLinks
-        payload.bookingUrl = formData.bookingUrl.trim();
+        // Basic URL validation - if it doesn't start with http/https, add it
+        let url = formData.bookingUrl.trim();
+        if (!url.match(/^https?:\/\//i)) {
+          url = `https://${url}`;
+        }
+        payload.bookingUrl = url;
       }
 
       const response = await fetch(`/api/trips/${tripId}/activities`, {
