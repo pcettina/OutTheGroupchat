@@ -171,7 +171,21 @@ Where are you thinking of going?`;
       }
 
       if (!response.ok) {
+        // Try to get error message from response
+        const contentType = response.headers.get('content-type');
+        if (contentType?.includes('application/json')) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to get response');
+        }
         throw new Error('Failed to get response');
+      }
+
+      // Check if response is actually a stream
+      const contentType = response.headers.get('content-type');
+      if (contentType?.includes('application/json')) {
+        // API returned JSON instead of stream - likely an error
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Unexpected response format');
       }
 
       const reader = response.body?.getReader();
