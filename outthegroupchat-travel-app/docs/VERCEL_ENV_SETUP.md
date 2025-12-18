@@ -15,16 +15,18 @@ Add these in your Vercel Dashboard: **Settings** > **Environment Variables**
 
 ## Optional Environment Variables
 
-| Variable | Description |
-|----------|-------------|
-| `OPENAI_API_KEY` | For AI chat features |
-| `ANTHROPIC_API_KEY` | Alternative AI provider |
-| `PUSHER_APP_ID` | Real-time features |
-| `PUSHER_KEY` | Real-time features |
-| `PUSHER_SECRET` | Real-time features |
-| `PUSHER_CLUSTER` | Real-time features |
-| `GOOGLE_CLIENT_ID` | Google OAuth |
-| `GOOGLE_CLIENT_SECRET` | Google OAuth |
+| Variable | Description | Status |
+|----------|-------------|--------|
+| `OPENAI_API_KEY` | For AI chat features | ✅ SET Dec 17 |
+| `ANTHROPIC_API_KEY` | Alternative AI provider | Optional |
+| `RESEND_API_KEY` | Email service (Resend) | ✅ SET Dec 17 |
+| `EMAIL_FROM` | Email sender address | ✅ SET Dec 17 (onboarding@resend.dev) |
+| `PUSHER_APP_ID` | Real-time features | Not set |
+| `PUSHER_KEY` | Real-time features | Not set |
+| `PUSHER_SECRET` | Real-time features | Not set |
+| `PUSHER_CLUSTER` | Real-time features | Not set |
+| `GOOGLE_CLIENT_ID` | Google OAuth | Not set |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth | Not set |
 
 ## Getting Credentials
 
@@ -62,6 +64,26 @@ After deployment, test:
 - `https://yourapp.vercel.app/api/auth/session` - Should return session info
 - `https://yourapp.vercel.app/feed` - Should load feed page
 - `https://yourapp.vercel.app/profile` - Should show profile (if logged in)
+- `https://yourapp.vercel.app/api/ai/chat` - Should connect to OpenAI (POST)
+- Email invitations - Should send via Resend
+
+## Email Service Setup (Resend)
+
+### Getting Resend API Key
+1. Go to [resend.com](https://resend.com)
+2. Sign up or log in
+3. Navigate to **API Keys** section
+4. Create a new API key
+5. Copy the key (starts with `re_`)
+
+### Email Configuration
+- **For Testing:** Use `EMAIL_FROM=onboarding@resend.dev` (no verification needed)
+- **For Production:** Verify your domain in Resend dashboard and use `EMAIL_FROM=noreply@yourdomain.com`
+
+### Email Delivery Notes
+- Emails may go to spam folder initially
+- For production, set up SPF/DKIM records for better deliverability
+- Monitor Resend dashboard for delivery rates
 
 ## Troubleshooting
 
