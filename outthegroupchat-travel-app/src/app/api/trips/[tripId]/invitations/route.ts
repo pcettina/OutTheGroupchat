@@ -6,6 +6,9 @@ import { z } from 'zod';
 import { sendInvitationEmail, isEmailConfigured } from '@/lib/email';
 import { logger } from '@/lib/logger';
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic';
+
 const inviteSchema = z.object({
   emails: z.array(z.string().email()),
   expirationHours: z.number().min(1).max(72).default(24),
@@ -13,11 +16,11 @@ const inviteSchema = z.object({
 
 export async function GET(
   req: Request,
-  { params }: { params: { tripId: string } }
+  { params }: { params: Promise<{ tripId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
-    const { tripId } = params;
+    const { tripId } = await params;
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -62,11 +65,11 @@ export async function GET(
 
 export async function POST(
   req: Request,
-  { params }: { params: { tripId: string } }
+  { params }: { params: Promise<{ tripId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
-    const { tripId } = params;
+    const { tripId } = await params;
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

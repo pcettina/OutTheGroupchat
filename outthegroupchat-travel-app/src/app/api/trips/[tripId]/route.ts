@@ -4,6 +4,9 @@ import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic';
+
 // Validation schema for trip updates
 const updateTripSchema = z.object({
   title: z.string().min(1).optional(),
@@ -55,11 +58,11 @@ async function isTripOwner(tripId: string, userId: string): Promise<boolean> {
 
 export async function GET(
   req: Request,
-  { params }: { params: { tripId: string } }
+  { params }: { params: Promise<{ tripId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
-    const { tripId } = params;
+    const { tripId } = await params;
 
     const trip = await prisma.trip.findUnique({
       where: { id: tripId },
@@ -180,11 +183,11 @@ export async function GET(
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { tripId: string } }
+  { params }: { params: Promise<{ tripId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
-    const { tripId } = params;
+    const { tripId } = await params;
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -264,11 +267,11 @@ export async function PATCH(
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { tripId: string } }
+  { params }: { params: Promise<{ tripId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
-    const { tripId } = params;
+    const { tripId } = await params;
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

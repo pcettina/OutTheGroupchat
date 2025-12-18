@@ -416,52 +416,115 @@ model TripLike {
 - Likes work (heart icon)
 - Trip creation works
 - Built-in destination autocomplete works (Barcelona, Miami, etc.)
-- Trip displays correctly
+- **Geocoding now works for non-built-in locations** (Munich, etc.) ✅
 - Navigation works
+- Filter tabs (All, Active, Completed) work
 
-### Bugs Found 🔴
+### Bugs Found & Fixed 🟢
 
 #### Bug #1: Email Invitations Fail to Send
 **Status:** ✅ Fixed (Code) / 🟡 Pending (Config)  
 **Impact:** Can't invite users via email
-**Symptom:** Invitations generated but emails not delivered
 **Root Cause:** 
 1. API only checked TripMember, not trip owner ✅ Fixed
 2. Resend domain verification needed for production emails
-**Code Fix:** Updated invitations route to check trip owner
-**Manual Fix Needed:** Verify domain in Resend dashboard or use testing email
+**Manual Fix Needed:** 
+- Either verify `outthegroupchat.com` domain in Resend dashboard
+- OR set `EMAIL_FROM=onboarding@resend.dev` for testing
 
-#### Bug #2: Reactions Show as Likes Only
-**Status:** ✅ Fixed  
-**Impact:** Confusing UX - multiple reaction emojis but backend only supports likes
-**Fix:** Removed reaction picker popup, simplified to just heart/like button
-**File:** `src/components/feed/EngagementBar.tsx`
+#### Bug #2: Reactions Show as Likes Only - ✅ Fixed
+#### Bug #3: Geocoding Fails for Non-Built-In - ✅ Fixed  
+#### Bug #4: Add Activity Modal Not Working - ✅ Fixed
+#### Bug #5: Filter Buttons Visual Bug - ✅ Fixed
 
-#### Bug #3: Geocoding Fails for Non-Built-In Locations
-**Status:** ✅ Fixed  
-**Impact:** Can't search for cities like Munich (only popular destinations work)
-**Root Cause:** CORS issues with client-side Nominatim API calls
-**Fix:** Created server-side API route `/api/geocoding` 
-**Files:** 
-- `src/app/api/geocoding/route.ts` (new)
-- `src/components/trips/steps/DestinationStep.tsx` (updated)
+---
 
-#### Bug #4: Add Activity Modal Not Working
-**Status:** ✅ Fixed  
-**Impact:** Can't add activities to trips
-**Root Cause:** API only checked TripMember table, not trip owner
-**Fix:** Updated API to check if user is trip owner OR member
-**File:** `src/app/api/trips/[tripId]/activities/route.ts`
+## 🐛 Production Testing Round 2 (Dec 17, 2025 - Post Redeploy)
 
-#### Bug #5: Filter Buttons Visual Bug
-**Status:** ✅ Fixed  
-**Impact:** Active/Completed filter buttons look off
-**Root Cause:** `bg-primary` class not properly defined
-**Fix:** Updated to explicit emerald colors with proper dark mode support
+### What Works ✅
+- Geocoding for Munich ✅ CONFIRMED WORKING
+- Filter tabs (All, Active, Completed) ✅ CONFIRMED WORKING
+- Trip cards display correctly
+- Trip creation wizard
+
+### NEW Bugs Found 🔴
+
+#### Bug #6: "Trip not found" Error After Creation
+**Status:** 🔴 NEEDS FIX  
+**Impact:** HIGH - Users can't view trips they just created
+**Symptom:** After creating a trip, clicking on it shows "Trip not found" error, but trip appears in trips list
+**Root Cause (Suspected):** 
+1. Next.js 15 async params handling - need to await params
+2. Possible authorization check issue in GET route
+**File:** `src/app/api/trips/[tripId]/route.ts`
+
+#### Bug #7: AI Chat Assistant Error
+**Status:** 🔴 NEEDS FIX  
+**Impact:** MEDIUM - AI chat is unusable
+**Symptom:** "Sorry, I encountered an error. Please try again!" message
+**Root Cause (Possible):**
+1. `OPENAI_API_KEY` not properly set or invalid
+2. Rate limiting issues
+3. Streaming response handling
+**File:** `src/app/api/ai/chat/route.ts`
+
+#### Bug #8: Email Invitations Still Not Working  
+**Status:** 🟡 CONFIG ISSUE  
+**Impact:** HIGH - Can't invite users
+**Symptom:** Emails still not delivered
+**Root Cause:** 
+- `EMAIL_FROM=noreply@outthegroupchat.com` but domain not verified in Resend
+**Fix:** Set `EMAIL_FROM=onboarding@resend.dev` in Vercel for testing
+
+#### Feature Request #1: "Inviting" Filter Tab
+**Status:** 🟡 ENHANCEMENT  
+**Impact:** LOW - UX improvement
+**Request:** Add "Inviting" tab to filter trips with `INVITING` status
 **File:** `src/components/trips/TripList.tsx`
+
+---
+
+## 🔮 Future Development Notes
+
+### Data Acquisition for Algorithm Building
+**Priority:** Future Sprint  
+**Description:** Implement data collection infrastructure for ML/algorithm development
+
+**Requirements:**
+1. **AI Chat Logging** - Store chat conversations with labels
+   - Track user queries and AI responses
+   - Tag conversation topics (destination, budget, activities, etc.)
+   - Store user satisfaction signals (retry clicks, session length)
+
+2. **Content Tagging System**
+   - Auto-tag AI responses for content building
+   - Categorize successful trip recommendations
+   - Build destination knowledge base from interactions
+
+3. **Analytics Events**
+   - Track feature usage patterns
+   - Monitor trip planning workflows
+   - Identify popular destinations and activities
+
+**Database Schema Additions Needed:**
+```prisma
+model AIConversation {
+  id        String   @id @default(cuid())
+  userId    String
+  tripId    String?
+  messages  Json     // Array of {role, content, timestamp}
+  tags      String[] // Auto-generated topic tags
+  metadata  Json?    // Session data, user signals
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  user User  @relation(...)
+  trip Trip? @relation(...)
+}
+```
 
 ---
 
 *Updated daily during sprint.*
 
-*Last Updated: December 17, 2025 (Day 3 - Production Bug Fixes Complete, Ready for Git Push & Redeploy)*
+*Last Updated: December 17, 2025 (Day 3 Evening - Round 2 Testing Findings)*

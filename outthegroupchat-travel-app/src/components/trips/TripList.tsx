@@ -12,7 +12,15 @@ interface TripListProps {
   onCreateTrip?: () => void;
 }
 
-type FilterStatus = 'all' | 'active' | 'completed';
+type FilterStatus = 'all' | 'active' | 'inviting' | 'completed';
+
+// Labels for filter buttons
+const filterLabels: Record<FilterStatus, string> = {
+  all: 'All',
+  active: 'Active',
+  inviting: 'Inviting',
+  completed: 'Completed',
+};
 
 export default function TripList({ trips, isLoading, onCreateTrip }: TripListProps) {
   const router = useRouter();
@@ -29,6 +37,9 @@ export default function TripList({ trips, isLoading, onCreateTrip }: TripListPro
 
   const filteredTrips = trips.filter((trip) => {
     if (filter === 'all') return true;
+    if (filter === 'inviting') {
+      return trip.status === 'INVITING';
+    }
     if (filter === 'active') {
       return ['PLANNING', 'SURVEYING', 'VOTING', 'BOOKED', 'IN_PROGRESS'].includes(trip.status);
     }
@@ -57,18 +68,18 @@ export default function TripList({ trips, isLoading, onCreateTrip }: TripListPro
     <div>
       {/* Filters and view toggle */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-        <div className="flex gap-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
-          {(['all', 'active', 'completed'] as FilterStatus[]).map((status) => (
+        <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl overflow-x-auto">
+          {(['all', 'active', 'inviting', 'completed'] as FilterStatus[]).map((status) => (
             <button
               key={status}
               onClick={() => setFilter(status)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                 filter === status
                   ? 'bg-emerald-500 text-white shadow-sm'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              {status.charAt(0).toUpperCase() + status.slice(1)}
+              {filterLabels[status]}
             </button>
           ))}
         </div>
@@ -109,16 +120,26 @@ export default function TripList({ trips, isLoading, onCreateTrip }: TripListPro
           className="text-center py-16"
         >
           <div className="w-20 h-20 mx-auto mb-4 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center">
-            <svg className="w-10 h-10 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            {filter === 'inviting' ? (
+              <svg className="w-10 h-10 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            ) : (
+              <svg className="w-10 h-10 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            )}
           </div>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-            {filter === 'all' ? 'No trips yet' : `No ${filter} trips`}
+            {filter === 'all' ? 'No trips yet' : 
+             filter === 'inviting' ? 'No trips awaiting members' :
+             `No ${filter} trips`}
           </h3>
           <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-sm mx-auto">
             {filter === 'all'
               ? "Start planning your first adventure with friends!"
+              : filter === 'inviting'
+              ? "Trips that are waiting for members to join will appear here."
               : `No ${filter} trips to show. Try changing your filter.`}
           </p>
           {filter === 'all' && (

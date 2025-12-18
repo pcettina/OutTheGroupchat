@@ -4,6 +4,9 @@ import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic';
+
 const createActivitySchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
@@ -65,11 +68,11 @@ const createActivitySchema = z.object({
 
 export async function GET(
   req: Request,
-  { params }: { params: { tripId: string } }
+  { params }: { params: Promise<{ tripId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
-    const { tripId } = params;
+    const { tripId } = await params;
     const { searchParams } = new URL(req.url);
     
     const category = searchParams.get('category');
@@ -149,11 +152,11 @@ export async function GET(
 
 export async function POST(
   req: Request,
-  { params }: { params: { tripId: string } }
+  { params }: { params: Promise<{ tripId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
-    const { tripId } = params;
+    const { tripId } = await params;
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

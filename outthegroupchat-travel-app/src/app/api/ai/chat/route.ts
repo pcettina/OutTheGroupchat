@@ -2,9 +2,8 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { streamText } from 'ai';
 import { z } from 'zod';
-import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
-import { getModel } from '@/lib/ai/client';
+import { getModel, isOpenAIConfigured } from '@/lib/ai/client';
 import { aiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 import { logError } from '@/lib/logger';
 
@@ -54,6 +53,15 @@ export async function POST(req: Request) {
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Check if AI service is configured
+    if (!isOpenAIConfigured()) {
+      logError('AI_CHAT', new Error('OPENAI_API_KEY not configured'));
+      return NextResponse.json(
+        { success: false, error: 'AI service is not configured. Please contact support.' },
+        { status: 503 }
+      );
     }
 
     // Redis-based rate limiting for serverless environments
@@ -107,9 +115,27 @@ Use this context to provide relevant, specific advice about their trip to ${trip
     // Return as a plain text stream for the frontend
     return result.toTextStreamResponse();
   } catch (error) {
-    logError('AI_CHAT', error);
+    // Log detailed error for debugging
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    logError('AI_CHAT', error, { errorMessage });
+    
+    // Check for specific error types
+    if (errorMessage.includes('API key') || errorMessage.includes('authentication')) {
+      return NextResponse.json(
+        { success: false, error: 'AI service authentication failed. Please check API configuration.' },
+        { status: 503 }
+      );
+    }
+    
+    if (errorMessage.includes('rate limit') || errorMessage.includes('quota')) {
+      return NextResponse.json(
+        { success: false, error: 'AI service rate limit exceeded. Please try again later.' },
+        { status: 429 }
+      );
+    }
+    
     return NextResponse.json(
-      { success: false, error: 'Failed to process chat message' },
+      { success: false, error: 'Failed to process chat message. Please try again.' },
       { status: 500 }
     );
   }
@@ -122,6 +148,14 @@ export async function GET(req: Request) {
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Check if AI service is configured
+    if (!isOpenAIConfigured()) {
+      return NextResponse.json(
+        { success: false, error: 'AI service is not configured' },
+        { status: 503 }
+      );
     }
 
     const { searchParams } = new URL(req.url);

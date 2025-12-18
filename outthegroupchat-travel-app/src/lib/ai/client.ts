@@ -1,49 +1,81 @@
 import { createOpenAI } from '@ai-sdk/openai';
 import { createAnthropic } from '@ai-sdk/anthropic';
 
-// OpenAI client configuration
-export const openai = createOpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-  compatibility: 'strict',
-});
+// Check if API keys are configured
+export function isOpenAIConfigured(): boolean {
+  return !!process.env.OPENAI_API_KEY;
+}
 
-// Anthropic Claude client configuration
-export const anthropic = createAnthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+export function isAnthropicConfigured(): boolean {
+  return !!process.env.ANTHROPIC_API_KEY;
+}
 
-// Default models
-export const models = {
-  // Fast model for quick responses
-  fast: openai('gpt-4o-mini'),
-  
-  // High quality model for complex tasks
-  quality: openai('gpt-4o'),
-  
-  // Claude for long-form content
-  claude: anthropic('claude-3-5-sonnet-20241022'),
-  
-  // Claude Haiku for fast responses
-  claudeFast: anthropic('claude-3-haiku-20240307'),
-} as const;
+// Create clients lazily to avoid issues with missing env vars at module load
+function getOpenAIClient() {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('OPENAI_API_KEY is not configured');
+  }
+  return createOpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+    compatibility: 'strict',
+  });
+}
+
+function getAnthropicClient() {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    throw new Error('ANTHROPIC_API_KEY is not configured');
+  }
+  return createAnthropic({
+    apiKey: process.env.ANTHROPIC_API_KEY,
+  });
+}
 
 // Get the appropriate model based on task type
 export function getModel(task: 'itinerary' | 'chat' | 'suggestions' | 'analysis' | 'recommendations') {
+  // Check if OpenAI is configured (required for most tasks)
+  if (!isOpenAIConfigured()) {
+    throw new Error('AI service is not configured. Please set OPENAI_API_KEY environment variable.');
+  }
+  
+  const openai = getOpenAIClient();
+  
   switch (task) {
     case 'itinerary':
-      return models.quality;
+      return openai('gpt-4o');
     case 'chat':
-      return models.fast;
+      return openai('gpt-4o-mini');
     case 'suggestions':
-      return models.fast;
+      return openai('gpt-4o-mini');
     case 'recommendations':
-      return models.fast;
+      return openai('gpt-4o-mini');
     case 'analysis':
-      return models.quality; // Fall back to OpenAI if no Anthropic key
+      // Use Claude if available, otherwise fall back to OpenAI
+      if (isAnthropicConfigured()) {
+        const anthropic = getAnthropicClient();
+        return anthropic('claude-3-5-sonnet-20241022');
+      }
+      return openai('gpt-4o');
     default:
-      return models.fast;
+      return openai('gpt-4o-mini');
   }
 }
+
+// Legacy exports for backward compatibility
+export const openai = isOpenAIConfigured() 
+  ? createOpenAI({ apiKey: process.env.OPENAI_API_KEY, compatibility: 'strict' })
+  : null;
+
+export const anthropic = isAnthropicConfigured()
+  ? createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  : null;
+
+// Models object - lazily create models only when accessed
+export const models = {
+  get fast() { return getOpenAIClient()('gpt-4o-mini'); },
+  get quality() { return getOpenAIClient()('gpt-4o'); },
+  get claude() { return getAnthropicClient()('claude-3-5-sonnet-20241022'); },
+  get claudeFast() { return getAnthropicClient()('claude-3-haiku-20240307'); },
+};
 
 // Re-export rate limiting from centralized module
 // This provides Redis-backed rate limiting for serverless environments
