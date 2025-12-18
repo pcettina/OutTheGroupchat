@@ -484,6 +484,141 @@ model TripLike {
 
 ---
 
+## 🐛 Production Testing Round 3 (Dec 17, 2025 - Evening)
+
+### What Works ✅
+- Email delivery confirmed (emails arrive, but go to spam folder) ✅
+- Primary color system fixed - all buttons now visible ✅
+- AI chat error handling improved ✅
+
+### NEW Bugs Found & Fixed 🔴
+
+#### Bug #9: Add Activity Modal Visibility Issue
+**Status:** ✅ FIXED  
+**Impact:** HIGH - Users can't see the activity creation modal  
+**Symptom:** Modal appears at bottom of screen or is not visible when "Add Activity" button is clicked  
+**Root Cause:** 
+- Z-index conflict with other UI elements
+- Modal may have been rendered in a container with lower stacking context
+- Backdrop and modal z-index not high enough to appear above all content
+
+**Fix Applied:**
+- Increased backdrop z-index from `z-50` to `z-[9998]`
+- Increased modal z-index from `z-50` to `z-[9999]`
+- Added `onClick={(e) => e.stopPropagation()}` to prevent backdrop clicks from closing modal
+- Modal already correctly positioned with `fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2`
+
+**Files Modified:**
+- `src/components/trips/AddActivityModal.tsx`
+
+**Verification:**
+- Modal now appears centered on screen
+- Visible above all other content
+- Works on both desktop and mobile (responsive with `max-h-[90vh]`)
+
+---
+
+#### Bug #10: Invitation Acceptance Flow Failing
+**Status:** ✅ FIXED  
+**Impact:** HIGH - Users can't join trips after creating account via invitation link  
+**Symptom:** User receives email, creates account, but is not added to trip. Invitation shows as "pending" but user can't access trip.  
+**Root Cause:** 
+- Signup API creates `TripInvitation` with status `PENDING` but doesn't auto-accept
+- User is redirected to trip page but isn't a member yet
+- No automatic acceptance logic when signing up via invitation link
+- User must manually find and accept invitation (poor UX)
+
+**Fix Applied:**
+1. **Auto-accept logic in signup flow:**
+   - After successful signup and sign-in, check if user came from invitation link
+   - Extract `tripId` from redirect URL (`/trips/[tripId]`)
+   - Fetch user's pending invitations
+   - Find matching invitation for the trip
+   - Auto-accept invitation via API call to `/api/invitations/[invitationId]`
+   - User is immediately added as trip member
+
+2. **Error handling:**
+   - If auto-accept fails, user is still redirected (graceful degradation)
+   - Logs errors for debugging without blocking signup flow
+
+**Files Modified:**
+- `src/app/auth/signup/page.tsx`
+
+**Flow:**
+```
+User clicks invitation link → Signup page (with redirect param)
+  ↓
+User creates account → Signup API creates TripInvitation (PENDING)
+  ↓
+Auto sign-in → Fetch pending invitations
+  ↓
+Find matching invitation → Auto-accept via API
+  ↓
+User added as trip member → Redirect to trip page
+```
+
+**Verification:**
+- User can now join trip immediately after signup
+- No manual acceptance step required
+- Works for both email invitations and direct links
+
+---
+
+#### Bug #11: Likes Not Persisting Between Sessions
+**Status:** ✅ FIXED  
+**Impact:** MEDIUM - User engagement data lost on page refresh  
+**Symptom:** Likes appear to work when clicked, but disappear after page refresh or when switching accounts. Like counts don't persist.  
+**Root Cause:** 
+- `EngagementBar` component only used `initialLiked` and `initialLikeCount` props
+- No server-side state fetching on component mount
+- Optimistic updates not synced with server response
+- Like state only stored in component local state (lost on unmount)
+
+**Fix Applied:**
+1. **Server state fetching:**
+   - Added `useEffect` hook to fetch actual like state from `/api/feed/engagement` on mount
+   - Updates local state with server data (`isLiked`, `likeCount`)
+   - Handles loading state during fetch
+
+2. **Response synchronization:**
+   - After like/unlike API call, update state with server response
+   - Use `data.likeCount` from API response instead of optimistic calculation
+   - Ensure state matches server truth
+
+3. **Error handling:**
+   - Falls back to initial props if fetch fails
+   - Reverts optimistic updates if API call fails
+
+**Files Modified:**
+- `src/components/feed/EngagementBar.tsx`
+
+**API Endpoint Used:**
+- `GET /api/feed/engagement?itemId={id}&itemType={type}` (already existed, returns `isLiked` and `likeCount`)
+
+**Verification:**
+- Likes persist after page refresh
+- Like counts accurate across different user sessions
+- State syncs correctly between client and server
+- Works for both trips and activities
+
+---
+
+### Additional Fixes
+
+#### Email Delivery Confirmed
+**Status:** ✅ WORKING (Spam Folder)  
+**Impact:** LOW - Functional but needs deliverability improvement  
+**Finding:** Emails are being sent successfully via Resend, but are going to spam/junk folder  
+**Recommendation:** 
+- For production: Verify domain in Resend dashboard and set up SPF/DKIM records
+- For testing: Continue using `onboarding@resend.dev` (emails work but may go to spam)
+- Add email deliverability best practices to production checklist
+
+**Files Modified:**
+- `src/lib/email.ts` (improved error logging and diagnostics)
+
+---
+
 ## 🔮 Future Development Notes
 
 ### Data Acquisition for Algorithm Building
@@ -527,4 +662,4 @@ model AIConversation {
 
 *Updated daily during sprint.*
 
-*Last Updated: December 17, 2025 (Day 3 Evening - Round 2 Testing Findings)*
+*Last Updated: December 17, 2025 (Day 3 Evening - Round 3 Testing Findings & Fixes)*

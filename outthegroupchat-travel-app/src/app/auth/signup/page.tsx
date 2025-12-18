@@ -66,6 +66,45 @@ function SignUpForm() {
         return;
       }
 
+      // If coming from invitation link, try to auto-accept pending invitations
+      if (isInvitation && redirectTo) {
+        try {
+          // Extract tripId from redirect URL (format: /trips/[tripId])
+          const tripIdMatch = redirectTo.match(/\/trips\/([^/?]+)/);
+          if (tripIdMatch) {
+            const tripId = tripIdMatch[1];
+            
+            // Fetch user's pending invitations
+            const invitationsResponse = await fetch('/api/invitations');
+            if (invitationsResponse.ok) {
+              const invitationsData = await invitationsResponse.json();
+              const pendingInvitation = invitationsData.data?.find(
+                (inv: any) => inv.tripId === tripId && inv.status === 'PENDING'
+              );
+              
+              if (pendingInvitation) {
+                // Auto-accept the invitation
+                const acceptResponse = await fetch(`/api/invitations/${pendingInvitation.id}`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ action: 'accept' }),
+                });
+                
+                if (acceptResponse.ok) {
+                  // Successfully accepted, redirect to trip
+                  router.push(redirectTo);
+                  router.refresh();
+                  return;
+                }
+              }
+            }
+          }
+        } catch (inviteError) {
+          console.error('Failed to auto-accept invitation:', inviteError);
+          // Continue with normal redirect even if auto-accept fails
+        }
+      }
+
       // Redirect to the invitation trip or default dashboard
       router.push(redirectTo || '/trips');
       router.refresh();

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 
 interface EngagementBarProps {
@@ -29,6 +29,30 @@ export function EngagementBar({
   const [isLiked, setIsLiked] = useState(initialLiked);
   const [likeCount, setLikeCount] = useState(initialLikeCount);
   const [isLiking, setIsLiking] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch actual like state from server on mount
+  useEffect(() => {
+    const fetchLikeState = async () => {
+      try {
+        const response = await fetch(`/api/feed/engagement?itemId=${itemId}&itemType=${itemType}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            setIsLiked(data.isLiked || false);
+            setLikeCount(data.likeCount || 0);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch like state:', error);
+        // Fall back to initial values on error
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchLikeState();
+  }, [itemId, itemType]);
 
   const handleLike = async () => {
     if (isLiking) return;
@@ -55,6 +79,12 @@ export function EngagementBar({
         setIsLiked(!newLikedState);
         setLikeCount(prev => newLikedState ? prev - 1 : prev + 1);
       } else {
+        // Update with server response to ensure consistency
+        const data = await response.json();
+        if (data.success) {
+          setIsLiked(data.action === 'like');
+          setLikeCount(data.likeCount || 0);
+        }
         onLike?.(newLikedState);
       }
     } catch (error) {
