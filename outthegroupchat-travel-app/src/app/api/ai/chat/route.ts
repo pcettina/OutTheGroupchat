@@ -56,8 +56,13 @@ export async function POST(req: Request) {
     }
 
     // Check if AI service is configured
-    if (!isOpenAIConfigured()) {
-      logError('AI_CHAT', new Error('OPENAI_API_KEY not configured'));
+    const hasApiKey = isOpenAIConfigured();
+    if (!hasApiKey) {
+      logError('AI_CHAT', new Error('OPENAI_API_KEY not configured'), {
+        hasEnvVar: !!process.env.OPENAI_API_KEY,
+        envVarLength: process.env.OPENAI_API_KEY?.length || 0,
+        envVarPrefix: process.env.OPENAI_API_KEY?.substring(0, 7) || 'none'
+      });
       return NextResponse.json(
         { success: false, error: 'AI service is not configured. Please contact support.' },
         { status: 503 }
@@ -100,17 +105,43 @@ Use this context to provide relevant, specific advice about their trip to ${trip
 `;
     }
 
-    const model = getModel('chat');
+    let model;
+    try {
+      model = getModel('chat');
+    } catch (modelError) {
+      const errorMsg = modelError instanceof Error ? modelError.message : 'Failed to get AI model';
+      logError('AI_CHAT_MODEL', modelError, { errorMsg, hasApiKey });
+      return NextResponse.json(
+        { success: false, error: 'Failed to initialize AI service. Please check configuration.' },
+        { status: 503 }
+      );
+    }
 
     // Stream the response
-    const result = await streamText({
-      model,
-      system: tripPlannerSystemPrompt + contextPrompt,
-      messages: messages.map(msg => ({
-        role: msg.role as 'user' | 'assistant',
-        content: msg.content,
-      })),
-    });
+    let result;
+    try {
+      result = await streamText({
+        model,
+        system: tripPlannerSystemPrompt + contextPrompt,
+        messages: messages.map(msg => ({
+          role: msg.role as 'user' | 'assistant',
+          content: msg.content,
+        })),
+      });
+    } catch (streamError) {
+      const errorMsg = streamError instanceof Error ? streamError.message : 'Failed to stream response';
+      logError('AI_CHAT_STREAM', streamError, { errorMsg });
+      
+      // Check for specific OpenAI errors
+      if (errorMsg.includes('API key') || errorMsg.includes('Invalid')) {
+        return NextResponse.json(
+          { success: false, error: 'AI service authentication failed. Please check API key configuration.' },
+          { status: 503 }
+        );
+      }
+      
+      throw streamError; // Re-throw to be caught by outer catch
+    }
 
     // Return as a plain text stream for the frontend
     return result.toTextStreamResponse();

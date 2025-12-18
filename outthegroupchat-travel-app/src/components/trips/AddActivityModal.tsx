@@ -183,11 +183,11 @@ export function AddActivityModal({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ duration: 0.2 }}
-              className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[9999] w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700"
+              className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[9999] w-full max-w-lg mx-4 max-h-[90vh] bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
-              <div className="sticky top-0 bg-white dark:bg-slate-800 px-6 pt-6 pb-4 border-b border-slate-200 dark:border-slate-700">
+              <div className="flex-shrink-0 px-6 pt-6 pb-4 border-b border-slate-200 dark:border-slate-700">
                 <div className="flex items-center justify-between">
                   <h2 id="add-activity-title" className="text-xl font-semibold text-slate-900 dark:text-white">
                     Add Activity
@@ -205,8 +205,9 @@ export function AddActivityModal({
                 </div>
               </div>
 
-              {/* Form */}
-              <form onSubmit={handleSubmit} className="p-6 space-y-5">
+              {/* Scrollable Form Content */}
+              <div className="flex-1 overflow-y-auto">
+                <form onSubmit={handleSubmit} id="add-activity-form" className="p-6 space-y-5">
                 {/* Activity Name */}
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
@@ -386,8 +387,12 @@ export function AddActivityModal({
                   </motion.div>
                 )}
 
-                {/* Actions */}
-                <div className="flex gap-3 pt-2">
+                </form>
+              </div>
+
+              {/* Sticky Footer with Actions */}
+              <div className="flex-shrink-0 px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-b-2xl">
+                <div className="flex gap-3">
                   <button
                     type="button"
                     onClick={handleClose}
@@ -398,6 +403,7 @@ export function AddActivityModal({
                   </button>
                   <button
                     type="submit"
+                    form="add-activity-form"
                     disabled={isSubmitting || !formData.name.trim()}
                     className="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-medium hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
@@ -419,7 +425,7 @@ export function AddActivityModal({
                     )}
                   </button>
                 </div>
-              </form>
+              </div>
             </motion.div>
           </FocusTrap>
         </>
