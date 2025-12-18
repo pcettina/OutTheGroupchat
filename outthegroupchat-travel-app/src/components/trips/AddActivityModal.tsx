@@ -109,23 +109,32 @@ export function AddActivityModal({
 
       // Add optional fields
       if (formData.date) {
-        payload.date = new Date(formData.date).toISOString();
+        // API expects date as ISO string that will be transformed to Date
+        // Date input gives YYYY-MM-DD format, which Date constructor can parse
+        payload.date = formData.date;
       }
       if (formData.startTime && formData.date) {
-        payload.startTime = new Date(`${formData.date}T${formData.startTime}`).toISOString();
+        // Combine date and time for startTime - format: YYYY-MM-DDTHH:MM
+        // This format is parseable by Date constructor
+        payload.startTime = `${formData.date}T${formData.startTime}:00`;
       }
       if (formData.endTime && formData.date) {
-        payload.endTime = new Date(`${formData.date}T${formData.endTime}`).toISOString();
+        // Combine date and time for endTime - format: YYYY-MM-DDTHH:MM
+        payload.endTime = `${formData.date}T${formData.endTime}:00`;
       }
-      if (formData.cost) {
-        payload.cost = parseFloat(formData.cost);
-        payload.currency = formData.currency;
+      if (formData.cost && formData.cost.trim()) {
+        const costValue = parseFloat(formData.cost);
+        if (!isNaN(costValue) && costValue >= 0) {
+          payload.cost = costValue;
+          payload.currency = formData.currency;
+        }
       }
       if (formData.location.trim()) {
         payload.location = { address: formData.location.trim() };
       }
       if (formData.bookingUrl.trim()) {
-        payload.externalLinks = { bookingUrl: formData.bookingUrl.trim() };
+        // API expects bookingUrl at root level, not in externalLinks
+        payload.bookingUrl = formData.bookingUrl.trim();
       }
 
       const response = await fetch(`/api/trips/${tripId}/activities`, {
@@ -136,7 +145,19 @@ export function AddActivityModal({
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to add activity');
+        console.error('[AddActivityModal] API Error:', {
+          status: response.status,
+          error: data.error,
+          details: data.details,
+          payload,
+        });
+        
+        // Show validation errors if available
+        if (data.details) {
+          const errorMessages = Object.values(data.details.fieldErrors || {}).flat();
+          throw new Error(errorMessages.length > 0 ? errorMessages.join(', ') : data.error || 'Failed to add activity');
+        }
+        throw new Error(data.error || `Failed to add activity (${response.status})`);
       }
 
       // Reset form and close modal
