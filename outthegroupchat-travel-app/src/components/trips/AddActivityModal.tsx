@@ -75,6 +75,7 @@ export function AddActivityModal({
   }));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
 
   const handleChange = useCallback((
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -173,25 +174,49 @@ export function AddActivityModal({
             aria-hidden="true"
           />
 
-          {/* Modal - Centered with high z-index for visibility */}
+          {/* Modal - Draggable with high z-index for visibility */}
           <FocusTrap active onEscape={handleClose}>
             <motion.div
               role="dialog"
               aria-modal="true"
               aria-labelledby="add-activity-title"
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              initial={{ opacity: 0, scale: 0.95, x: 0, y: 0 }}
+              animate={{ 
+                opacity: 1, 
+                scale: 1,
+                x: position.x,
+                y: position.y,
+              }}
+              exit={{ opacity: 0, scale: 0.95 }}
               transition={{ duration: 0.2 }}
-              className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[9999] w-full max-w-lg mx-4 max-h-[90vh] bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col"
+              drag
+              dragMomentum={false}
+              dragElastic={0}
+              onDrag={(_, info) => {
+                // Constrain dragging to viewport bounds
+                const maxX = typeof window !== 'undefined' ? window.innerWidth / 2 - 200 : 0;
+                const maxY = typeof window !== 'undefined' ? window.innerHeight / 2 - 100 : 0;
+                setPosition({ 
+                  x: Math.max(-maxX, Math.min(maxX, info.offset.x)), 
+                  y: Math.max(-maxY, Math.min(maxY, info.offset.y))
+                });
+              }}
+              className="fixed left-1/2 top-1/2 z-[9999] w-full max-w-lg mx-4 max-h-[90vh] bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Header */}
-              <div className="flex-shrink-0 px-6 pt-6 pb-4 border-b border-slate-200 dark:border-slate-700">
+              {/* Header - Drag Handle */}
+              <div 
+                className="flex-shrink-0 px-6 pt-6 pb-4 border-b border-slate-200 dark:border-slate-700 cursor-move select-none"
+              >
                 <div className="flex items-center justify-between">
-                  <h2 id="add-activity-title" className="text-xl font-semibold text-slate-900 dark:text-white">
-                    Add Activity
-                  </h2>
+                  <div className="flex items-center gap-2">
+                    <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+                    </svg>
+                    <h2 id="add-activity-title" className="text-xl font-semibold text-slate-900 dark:text-white">
+                      Add Activity
+                    </h2>
+                  </div>
                   <button
                     onClick={handleClose}
                     className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"

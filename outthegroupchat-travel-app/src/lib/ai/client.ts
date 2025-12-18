@@ -3,7 +3,9 @@ import { createAnthropic } from '@ai-sdk/anthropic';
 
 // Check if API keys are configured
 export function isOpenAIConfigured(): boolean {
-  return !!process.env.OPENAI_API_KEY;
+  const apiKey = process.env.OPENAI_API_KEY;
+  // Check if key exists and is not empty, and starts with 'sk-' (OpenAI key format)
+  return !!(apiKey && apiKey.trim().length > 0 && apiKey.startsWith('sk-'));
 }
 
 export function isAnthropicConfigured(): boolean {

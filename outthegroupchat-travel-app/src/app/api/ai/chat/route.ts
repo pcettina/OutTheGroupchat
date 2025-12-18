@@ -57,11 +57,14 @@ export async function POST(req: Request) {
 
     // Check if AI service is configured
     const hasApiKey = isOpenAIConfigured();
+    const apiKeyValue = process.env.OPENAI_API_KEY;
     if (!hasApiKey) {
       logError('AI_CHAT', new Error('OPENAI_API_KEY not configured'), {
-        hasEnvVar: !!process.env.OPENAI_API_KEY,
-        envVarLength: process.env.OPENAI_API_KEY?.length || 0,
-        envVarPrefix: process.env.OPENAI_API_KEY?.substring(0, 7) || 'none'
+        hasEnvVar: !!apiKeyValue,
+        envVarLength: apiKeyValue?.length || 0,
+        envVarPrefix: apiKeyValue?.substring(0, 7) || 'none',
+        envVarType: typeof apiKeyValue,
+        nodeEnv: process.env.NODE_ENV,
       });
       return NextResponse.json(
         { success: false, error: 'AI service is not configured. Please contact support.' },
