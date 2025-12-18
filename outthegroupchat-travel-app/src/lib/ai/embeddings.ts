@@ -1,10 +1,19 @@
-import { openai } from './client';
+import { openai, isOpenAIConfigured } from './client';
 import { embed, embedMany } from 'ai';
+
+// Helper to get OpenAI client or throw
+function getOpenAIClient() {
+  if (!isOpenAIConfigured() || !openai) {
+    throw new Error('OpenAI is not configured. Please set OPENAI_API_KEY environment variable.');
+  }
+  return openai;
+}
 
 // Generate embedding for a single text
 export async function generateEmbedding(text: string): Promise<number[]> {
+  const client = getOpenAIClient();
   const { embedding } = await embed({
-    model: openai.embedding('text-embedding-3-small'),
+    model: client.embedding('text-embedding-3-small'),
     value: text,
   });
   return embedding;
@@ -12,8 +21,9 @@ export async function generateEmbedding(text: string): Promise<number[]> {
 
 // Generate embeddings for multiple texts
 export async function generateEmbeddings(texts: string[]): Promise<number[][]> {
+  const client = getOpenAIClient();
   const { embeddings } = await embedMany({
-    model: openai.embedding('text-embedding-3-small'),
+    model: client.embedding('text-embedding-3-small'),
     values: texts,
   });
   return embeddings;
