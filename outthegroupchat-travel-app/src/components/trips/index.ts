@@ -6,5 +6,6 @@ export { default as TripOverview } from './TripOverview';
 export { default as MemberList } from './MemberList';
 export { default as ItineraryTimeline } from './ItineraryTimeline';
 export { default as InviteModal } from './InviteModal';
+export { default as AddActivityModal } from './AddActivityModal';
 export * from './steps';
 

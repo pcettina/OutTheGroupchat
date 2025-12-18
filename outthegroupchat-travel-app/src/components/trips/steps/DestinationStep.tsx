@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import type { StepProps } from '../TripWizard';
 import type { Destination } from '@/types';
 
-// Popular destinations for quick selection
+// Popular destinations shown as quick-select buttons
 const popularDestinations: Destination[] = [
   { city: 'Miami', country: 'USA', coordinates: { lat: 25.7617, lng: -80.1918 } },
   { city: 'Cancun', country: 'Mexico', coordinates: { lat: 21.1619, lng: -86.8515 } },
@@ -36,7 +36,7 @@ export function DestinationStep({ data, onUpdate, onNext }: StepProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Debounced search
+  // Debounced search with server-side geocoding API
   useEffect(() => {
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
@@ -50,26 +50,35 @@ export function DestinationStep({ data, onUpdate, onNext }: StepProps) {
 
     setIsSearching(true);
     debounceRef.current = setTimeout(async () => {
-      // Mock search - in production, this would call a geocoding API
-      const query = searchQuery.toLowerCase();
-      const results = popularDestinations.filter(
-        (dest) =>
-          dest.city.toLowerCase().includes(query) ||
-          dest.country.toLowerCase().includes(query)
-      );
+      try {
+        // Use server-side geocoding API to avoid CORS issues
+        const response = await fetch(`/api/geocoding?q=${encodeURIComponent(searchQuery)}`);
+        const data = await response.json();
+        
+        let results: Destination[] = data.success ? data.data : [];
+        
+        // If no results, allow custom destination
+        if (results.length === 0 && searchQuery.length > 2) {
+          results = [{
+            city: searchQuery,
+            country: 'Custom Location',
+          }];
+        }
 
-      // Add the search query as a custom destination if no exact matches
-      if (results.length === 0 && searchQuery.length > 2) {
-        results.push({
+        setSearchResults(results);
+        setShowResults(true);
+      } catch (error) {
+        console.error('Search error:', error);
+        // Fallback to showing custom destination option
+        setSearchResults([{
           city: searchQuery,
           country: 'Custom Location',
-        });
+        }]);
+        setShowResults(true);
+      } finally {
+        setIsSearching(false);
       }
-
-      setSearchResults(results);
-      setShowResults(true);
-      setIsSearching(false);
-    }, 300);
+    }, 400);
 
     return () => {
       if (debounceRef.current) {

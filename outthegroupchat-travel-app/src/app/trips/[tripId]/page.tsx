@@ -8,7 +8,7 @@ import { format } from 'date-fns';
 import { useTrip } from '@/hooks/useTrips';
 import { TripChat } from '@/components/ai';
 import { Navigation } from '@/components/Navigation';
-import { TripHeader, TripOverview, MemberList, ItineraryTimeline, InviteModal } from '@/components/trips';
+import { TripHeader, TripOverview, MemberList, ItineraryTimeline, InviteModal, AddActivityModal } from '@/components/trips';
 import { ShareModal } from '@/components/feed/ShareModal';
 import { FloatingShareButton } from '@/components/ui';
 import type { Destination, TripBudget } from '@/types';
@@ -22,6 +22,8 @@ export default function TripDetailPage() {
   // Modal states
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isAddActivityModalOpen, setIsAddActivityModalOpen] = useState(false);
+  const [activityPreselectedDate, setActivityPreselectedDate] = useState<Date | undefined>(undefined);
 
   if (isLoading) {
     return (
@@ -108,8 +110,22 @@ export default function TripDetailPage() {
   };
 
   const handleAddActivity = (dayNumber: number) => {
-    // TODO: Open add activity modal for specific day
-    console.log('Add activity for day', dayNumber);
+    // Calculate the date for the selected day
+    const tripStart = new Date(trip.startDate);
+    const selectedDate = new Date(tripStart);
+    selectedDate.setDate(tripStart.getDate() + dayNumber - 1);
+    setActivityPreselectedDate(selectedDate);
+    setIsAddActivityModalOpen(true);
+  };
+
+  const handleOpenAddActivityModal = () => {
+    setActivityPreselectedDate(undefined);
+    setIsAddActivityModalOpen(true);
+  };
+
+  const handleActivityAdded = () => {
+    // Refresh trip data - the useTrip hook should handle this via SWR revalidation
+    // If needed, you can call mutate() from the hook here
   };
 
   return (
@@ -188,7 +204,10 @@ export default function TripDetailPage() {
                     </svg>
                     All Activities ({trip.activities?.length || 0})
                   </h3>
-                  <button className="text-sm text-emerald-600 dark:text-emerald-400 font-medium hover:underline flex items-center gap-1">
+                  <button 
+                    onClick={handleOpenAddActivityModal}
+                    className="text-sm text-emerald-600 dark:text-emerald-400 font-medium hover:underline flex items-center gap-1"
+                  >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                     </svg>
@@ -233,9 +252,15 @@ export default function TripDetailPage() {
                         </svg>
                       </div>
                       <p className="text-slate-600 dark:text-slate-400 mb-1">No activities planned yet</p>
-                      <p className="text-sm text-slate-500 dark:text-slate-500">
+                      <p className="text-sm text-slate-500 dark:text-slate-500 mb-4">
                         Add activities to build your itinerary
                       </p>
+                      <button
+                        onClick={handleOpenAddActivityModal}
+                        className="px-4 py-2 bg-emerald-500 text-white text-sm font-medium rounded-lg hover:bg-emerald-600 transition-colors"
+                      >
+                        Add First Activity
+                      </button>
                     </div>
                   )}
                 </div>
@@ -288,6 +313,15 @@ export default function TripDetailPage() {
           description: trip.description || undefined,
           destination: destination ? `${destination.city}, ${destination.country}` : undefined,
         }}
+      />
+
+      {/* Add Activity Modal */}
+      <AddActivityModal
+        isOpen={isAddActivityModalOpen}
+        onClose={() => setIsAddActivityModalOpen(false)}
+        tripId={tripId}
+        onActivityAdded={handleActivityAdded}
+        preselectedDate={activityPreselectedDate}
       />
     </div>
   );

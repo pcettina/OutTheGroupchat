@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 interface EngagementBarProps {
   itemId: string;
@@ -29,15 +29,6 @@ export function EngagementBar({
   const [isLiked, setIsLiked] = useState(initialLiked);
   const [likeCount, setLikeCount] = useState(initialLikeCount);
   const [isLiking, setIsLiking] = useState(false);
-  const [showReactions, setShowReactions] = useState(false);
-
-  const reactions = [
-    { emoji: '❤️', label: 'Love' },
-    { emoji: '🔥', label: 'Fire' },
-    { emoji: '✈️', label: 'Travel' },
-    { emoji: '🎉', label: 'Celebrate' },
-    { emoji: '😍', label: 'Amazing' },
-  ];
 
   const handleLike = async () => {
     if (isLiking) return;
@@ -76,75 +67,36 @@ export function EngagementBar({
     }
   };
 
-  const handleReaction = async (emoji: string) => {
-    setShowReactions(false);
-    if (!isLiked) {
-      handleLike();
-    }
-  };
-
   return (
     <div className="flex items-center gap-1 pt-4 border-t border-slate-100 dark:border-slate-700">
-      {/* Like Button with Reactions */}
-      <div className="relative">
-        <motion.button
-          onClick={handleLike}
-          onMouseEnter={() => setShowReactions(true)}
-          onMouseLeave={() => setShowReactions(false)}
-          disabled={isLiking}
-          className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-            isLiked
-              ? 'text-rose-500 bg-rose-50 dark:bg-rose-900/20'
-              : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
-          }`}
-          whileTap={{ scale: 0.95 }}
+      {/* Simple Like Button */}
+      <motion.button
+        onClick={handleLike}
+        disabled={isLiking}
+        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+          isLiked
+            ? 'text-rose-500 bg-rose-50 dark:bg-rose-900/20'
+            : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
+        }`}
+        whileTap={{ scale: 0.95 }}
+      >
+        <motion.svg
+          className="w-5 h-5"
+          fill={isLiked ? 'currentColor' : 'none'}
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          animate={isLiked ? { scale: [1, 1.3, 1] } : {}}
+          transition={{ duration: 0.3 }}
         >
-          <motion.svg
-            className="w-5 h-5"
-            fill={isLiked ? 'currentColor' : 'none'}
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            animate={isLiked ? { scale: [1, 1.3, 1] } : {}}
-            transition={{ duration: 0.3 }}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-            />
-          </motion.svg>
-          <span>{likeCount > 0 ? likeCount : 'Like'}</span>
-        </motion.button>
-
-        {/* Reaction Picker */}
-        <AnimatePresence>
-          {showReactions && (
-            <motion.div
-              initial={{ opacity: 0, y: 10, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 10, scale: 0.9 }}
-              transition={{ duration: 0.15 }}
-              className="absolute bottom-full left-0 mb-2 flex gap-1 p-2 bg-white dark:bg-slate-800 rounded-full shadow-xl border border-slate-200 dark:border-slate-700"
-              onMouseEnter={() => setShowReactions(true)}
-              onMouseLeave={() => setShowReactions(false)}
-            >
-              {reactions.map((reaction) => (
-                <motion.button
-                  key={reaction.emoji}
-                  onClick={() => handleReaction(reaction.emoji)}
-                  className="text-xl hover:scale-125 transition-transform p-1"
-                  whileHover={{ scale: 1.3 }}
-                  whileTap={{ scale: 0.9 }}
-                  title={reaction.label}
-                >
-                  {reaction.emoji}
-                </motion.button>
-              ))}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+          />
+        </motion.svg>
+        <span>{likeCount > 0 ? likeCount : 'Like'}</span>
+      </motion.button>
 
       {/* Comment Button */}
       <motion.button

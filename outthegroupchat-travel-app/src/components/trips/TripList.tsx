@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import TripCard from './TripCard';
 import type { TripWithRelations } from '@/types';
@@ -8,13 +9,23 @@ import type { TripWithRelations } from '@/types';
 interface TripListProps {
   trips: TripWithRelations[];
   isLoading?: boolean;
+  onCreateTrip?: () => void;
 }
 
 type FilterStatus = 'all' | 'active' | 'completed';
 
-export default function TripList({ trips, isLoading }: TripListProps) {
+export default function TripList({ trips, isLoading, onCreateTrip }: TripListProps) {
+  const router = useRouter();
   const [filter, setFilter] = useState<FilterStatus>('all');
   const [view, setView] = useState<'grid' | 'list'>('grid');
+
+  const handleCreateTrip = () => {
+    if (onCreateTrip) {
+      onCreateTrip();
+    } else {
+      router.push('/trips/new');
+    }
+  };
 
   const filteredTrips = trips.filter((trip) => {
     if (filter === 'all') return true;
@@ -46,15 +57,15 @@ export default function TripList({ trips, isLoading }: TripListProps) {
     <div>
       {/* Filters and view toggle */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-        <div className="flex gap-2">
+        <div className="flex gap-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
           {(['all', 'active', 'completed'] as FilterStatus[]).map((status) => (
             <button
               key={status}
               onClick={() => setFilter(status)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 filter === status
-                  ? 'bg-primary text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'bg-emerald-500 text-white shadow-sm'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -62,11 +73,13 @@ export default function TripList({ trips, isLoading }: TripListProps) {
           ))}
         </div>
 
-        <div className="flex gap-2 bg-gray-100 p-1 rounded-lg">
+        <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
           <button
             onClick={() => setView('grid')}
             className={`p-2 rounded-md transition-colors ${
-              view === 'grid' ? 'bg-white shadow-sm' : 'text-gray-500'
+              view === 'grid' 
+                ? 'bg-white dark:bg-slate-700 shadow-sm text-emerald-600 dark:text-emerald-400' 
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
             }`}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -76,7 +89,9 @@ export default function TripList({ trips, isLoading }: TripListProps) {
           <button
             onClick={() => setView('list')}
             className={`p-2 rounded-md transition-colors ${
-              view === 'list' ? 'bg-white shadow-sm' : 'text-gray-500'
+              view === 'list' 
+                ? 'bg-white dark:bg-slate-700 shadow-sm text-emerald-600 dark:text-emerald-400' 
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
             }`}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -93,17 +108,32 @@ export default function TripList({ trips, isLoading }: TripListProps) {
           animate={{ opacity: 1 }}
           className="text-center py-16"
         >
-          <div className="w-20 h-20 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-            <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+          <div className="w-20 h-20 mx-auto mb-4 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center">
+            <svg className="w-10 h-10 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No trips found</h3>
-          <p className="text-gray-500 mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+            {filter === 'all' ? 'No trips yet' : `No ${filter} trips`}
+          </h3>
+          <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-sm mx-auto">
             {filter === 'all'
-              ? "You haven't planned any trips yet. Start your adventure!"
-              : `No ${filter} trips to show.`}
+              ? "Start planning your first adventure with friends!"
+              : `No ${filter} trips to show. Try changing your filter.`}
           </p>
+          {filter === 'all' && (
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleCreateTrip}
+              className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all inline-flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Create Your First Trip
+            </motion.button>
+          )}
         </motion.div>
       )}
 

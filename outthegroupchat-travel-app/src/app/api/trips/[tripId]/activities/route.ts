@@ -159,12 +159,26 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check if user is a member
-    const isMember = await prisma.tripMember.findFirst({
-      where: { tripId, userId: session.user.id },
-    });
+    // Check if user is owner or member
+    const [trip, isMember] = await Promise.all([
+      prisma.trip.findUnique({
+        where: { id: tripId },
+        select: { ownerId: true },
+      }),
+      prisma.tripMember.findFirst({
+        where: { tripId, userId: session.user.id },
+      }),
+    ]);
 
-    if (!isMember) {
+    if (!trip) {
+      return NextResponse.json(
+        { success: false, error: 'Trip not found' },
+        { status: 404 }
+      );
+    }
+
+    const isOwner = trip.ownerId === session.user.id;
+    if (!isOwner && !isMember) {
       return NextResponse.json(
         { success: false, error: 'Not a member of this trip' },
         { status: 403 }

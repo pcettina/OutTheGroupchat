@@ -72,16 +72,30 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check if user is owner or admin
-    const membership = await prisma.tripMember.findFirst({
-      where: {
-        tripId,
-        userId: session.user.id,
-        role: { in: ['OWNER', 'ADMIN'] },
-      },
-    });
+    // Check if user is trip owner OR admin member
+    const [trip, membership] = await Promise.all([
+      prisma.trip.findUnique({
+        where: { id: tripId },
+        select: { ownerId: true, title: true },
+      }),
+      prisma.tripMember.findFirst({
+        where: {
+          tripId,
+          userId: session.user.id,
+          role: { in: ['OWNER', 'ADMIN'] },
+        },
+      }),
+    ]);
 
-    if (!membership) {
+    if (!trip) {
+      return NextResponse.json(
+        { success: false, error: 'Trip not found' },
+        { status: 404 }
+      );
+    }
+
+    const isOwner = trip.ownerId === session.user.id;
+    if (!isOwner && !membership) {
       return NextResponse.json(
         { success: false, error: 'Not authorized to invite members' },
         { status: 403 }
