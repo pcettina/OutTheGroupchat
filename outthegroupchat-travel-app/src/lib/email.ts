@@ -50,6 +50,22 @@ export async function sendInvitationEmail(params: {
     : '';
 
   try {
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(to)) {
+      logError('EMAIL_SEND', new Error('Invalid email format'), { to, tripId });
+      return { success: false, error: 'Invalid email address format' };
+    }
+
+    // Log email attempt with configuration details
+    logSuccess('EMAIL_SEND', 'Attempting to send invitation email', { 
+      to, 
+      tripId,
+      from: DEFAULT_FROM,
+      hasApiKey: !!process.env.RESEND_API_KEY,
+      apiKeyPrefix: process.env.RESEND_API_KEY?.substring(0, 7) + '...'
+    });
+
     const { data, error } = await resend.emails.send({
       from: DEFAULT_FROM,
       to: [to],
@@ -69,22 +85,47 @@ export async function sendInvitationEmail(params: {
     });
 
     if (error) {
-      logError('EMAIL_SEND', error, { to, tripId });
-      return { success: false, error: error.message };
+      logError('EMAIL_SEND', error, { 
+        to, 
+        tripId, 
+        errorMessage: error.message,
+        errorName: error.name,
+        errorDetails: JSON.stringify(error)
+      });
+      return { success: false, error: error.message || 'Failed to send email' };
     }
 
-    logSuccess('EMAIL_SEND', 'Invitation email sent', { 
+    // Validate that we got a message ID
+    if (!data?.id) {
+      logError('EMAIL_SEND', new Error('No message ID returned from Resend'), { 
+        to, 
+        tripId,
+        responseData: JSON.stringify(data)
+      });
+      return { success: false, error: 'Email service returned no message ID' };
+    }
+
+    logSuccess('EMAIL_SEND', 'Invitation email sent successfully', { 
       to, 
       tripId, 
-      messageId: data?.id 
+      messageId: data.id,
+      from: DEFAULT_FROM
     });
     
-    return { success: true, messageId: data?.id };
+    return { success: true, messageId: data.id };
   } catch (error) {
-    logError('EMAIL_SEND', error, { to, tripId });
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    logError('EMAIL_SEND', error, { 
+      to, 
+      tripId,
+      errorMessage,
+      errorStack,
+      from: DEFAULT_FROM
+    });
     return { 
       success: false, 
-      error: error instanceof Error ? error.message : 'Failed to send email' 
+      error: errorMessage
     };
   }
 }
