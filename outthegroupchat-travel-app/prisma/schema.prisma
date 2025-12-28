@@ -69,6 +69,13 @@ model User {
   updatedAt     DateTime  @updatedAt
   lastActive    DateTime  @default(now())
 
+  // Beta & Newsletter Fields
+  betaSignupDate         DateTime?
+  newsletterSubscribed   Boolean   @default(false)
+  newsletterSubscribedAt DateTime?
+  passwordInitialized    Boolean   @default(false)
+  betaLaunchEmailSent    Boolean   @default(false)
+
   // User Preferences (stored as JSON for flexibility)
   preferences   Json?     // { travelStyle, interests, budgetRange, currency, language }
   

@@ -38,6 +38,83 @@ export async function POST(req: Request) {
     });
 
     if (existingUser) {
+      // If user exists but has no password (beta signup), allow setting password
+      if (!existingUser.password) {
+        // Hash password
+        const hashedPassword = await bcrypt.hash(password, 12);
+        
+        // Update user with password
+        const updatedUser = await prisma.user.update({
+          where: { id: existingUser.id },
+          data: {
+            password: hashedPassword,
+            name: name || existingUser.name,
+            passwordInitialized: true,
+          },
+        });
+
+        // Process any pending invitations for this email
+        try {
+          const pendingInvitations = await prisma.pendingInvitation.findMany({
+            where: { 
+              email,
+              expiresAt: { gt: new Date() }, // Only non-expired invitations
+            },
+            include: {
+              trip: { select: { title: true } },
+            },
+          });
+
+          if (pendingInvitations.length > 0) {
+            // Convert pending invitations to real trip invitations
+            for (const pending of pendingInvitations) {
+              // Create real trip invitation
+              await prisma.tripInvitation.create({
+                data: {
+                  tripId: pending.tripId,
+                  userId: updatedUser.id,
+                  status: 'PENDING',
+                  expiresAt: pending.expiresAt,
+                },
+              });
+
+              // Create notification
+              await prisma.notification.create({
+                data: {
+                  userId: updatedUser.id,
+                  type: 'TRIP_INVITATION',
+                  title: 'Trip Invitation',
+                  message: `You've been invited to join "${pending.trip.title}"!`,
+                  data: { tripId: pending.tripId },
+                },
+              });
+            }
+
+            // Delete processed pending invitations
+            await prisma.pendingInvitation.deleteMany({
+              where: { email },
+            });
+
+            logger.info({ userId: updatedUser.id, invitationsProcessed: pendingInvitations.length }, 
+              'Processed pending invitations for beta user setting password');
+          }
+        } catch (inviteError) {
+          // Log but don't fail signup if invitation processing fails
+          logger.error({ err: inviteError, userId: updatedUser.id }, 
+            'Failed to process pending invitations');
+        }
+
+        return NextResponse.json({
+          success: true,
+          user: {
+            id: updatedUser.id,
+            name: updatedUser.name,
+            email: updatedUser.email,
+          },
+        });
+      }
+      
+      // User exists and already has password
       return NextResponse.json(
         { error: 'An account with this email already exists' },
         { status: 400 }

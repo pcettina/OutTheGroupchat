@@ -21,6 +21,7 @@ Add these in your Vercel Dashboard: **Settings** > **Environment Variables**
 | `ANTHROPIC_API_KEY` | Alternative AI provider | Optional |
 | `RESEND_API_KEY` | Email service (Resend) | ✅ SET Dec 17 |
 | `EMAIL_FROM` | Email sender address | ✅ SET Dec 17 (onboarding@resend.dev) |
+| `N8N_API_KEY` | n8n workflow authentication for beta/newsletter endpoints | ⚠️ **REQUIRED FOR N8N** - See N8N_DEPLOYMENT_CHECKLIST.md |
 | `PUSHER_APP_ID` | Real-time features | Not set |
 | `PUSHER_KEY` | Real-time features | Not set |
 | `PUSHER_SECRET` | Real-time features | Not set |
