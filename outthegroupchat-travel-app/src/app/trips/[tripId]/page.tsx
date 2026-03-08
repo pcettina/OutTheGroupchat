@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useSession } from 'next-auth/react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -16,6 +17,7 @@ import type { Destination, TripBudget } from '@/types';
 export default function TripDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { data: session } = useSession();
   const tripId = params.tripId as string;
   const { data: trip, isLoading, error } = useTrip(tripId);
   
@@ -276,7 +278,7 @@ export default function TripDetailPage() {
               <MemberList
                 members={trip.members || []}
                 onInvite={handleInvite}
-                isOwner={true} // TODO: Check actual ownership
+                isOwner={session?.user?.id === trip.ownerId}
               />
             </div>
           </div>
