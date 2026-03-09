@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import type { StepProps } from '../TripWizard';
 import type { Destination } from '@/types';
+import { ImagePicker } from '@/components/ui/ImagePicker';
 
 // Popular destinations shown as quick-select buttons
 const popularDestinations: Destination[] = [
@@ -193,6 +194,20 @@ export function DestinationStep({ data, onUpdate, onNext }: StepProps) {
             </button>
           </div>
         </motion.div>
+      )}
+
+      {/* Cover Image Picker (shown after destination is selected) */}
+      {data.destination && (
+        <div>
+          <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+            Cover Image (optional)
+          </h3>
+          <ImagePicker
+            initialQuery={data.destination.city}
+            selectedUrl={data.coverImage || undefined}
+            onSelect={(url) => onUpdate({ coverImage: url })}
+          />
+        </div>
       )}
 
       {/* Popular Destinations */}

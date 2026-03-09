@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Plane, Sparkles, Search, Newspaper, Bell, User, Globe, Heart, Mail, LogOut, Menu, X, ChevronDown } from 'lucide-react';
 
 export function Navigation() {
   const { data: session, status } = useSession();
@@ -31,10 +32,10 @@ export function Navigation() {
   };
 
   const navLinks = [
-    { href: '/trips', label: 'My Trips', icon: '✈️' },
-    { href: '/inspiration', label: 'Inspiration', icon: '✨' },
-    { href: '/discover', label: 'Discover', icon: '🔍' },
-    { href: '/feed', label: 'Feed', icon: '📰' },
+    { href: '/trips', label: 'My Trips', icon: <Plane className="w-4 h-4" /> },
+    { href: '/inspiration', label: 'Inspiration', icon: <Sparkles className="w-4 h-4" /> },
+    { href: '/discover', label: 'Discover', icon: <Search className="w-4 h-4" /> },
+    { href: '/feed', label: 'Feed', icon: <Newspaper className="w-4 h-4" /> },
   ];
 
   return (
@@ -61,7 +62,7 @@ export function Navigation() {
                   href={link.href}
                   className="nav-link font-medium flex items-center gap-1.5"
                 >
-                  <span className="text-sm">{link.icon}</span>
+                  {link.icon}
                   {link.label}
                 </Link>
               ))}
@@ -78,9 +79,7 @@ export function Navigation() {
                     href="/notifications"
                     className="relative p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                   >
-                    <svg className="w-6 h-6 text-slate-600 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                    </svg>
+                    <Bell className="w-6 h-6 text-slate-600 dark:text-slate-400" />
                     {notificationCount > 0 && (
                       <span className="absolute top-0.5 right-0.5 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
                         {notificationCount > 9 ? '9+' : notificationCount}
@@ -105,14 +104,7 @@ export function Navigation() {
                           <span>{session.user?.name?.[0] || 'U'}</span>
                         )}
                       </div>
-                      <svg
-                        className={`w-4 h-4 text-slate-500 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`}
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
+                      <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
                     </button>
 
                     <AnimatePresence>
@@ -138,9 +130,7 @@ export function Navigation() {
                               className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                               onClick={() => setIsProfileOpen(false)}
                             >
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                              </svg>
+                              <User className="w-4 h-4" />
                               Profile
                             </Link>
                             <Link
@@ -148,9 +138,7 @@ export function Navigation() {
                               className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                               onClick={() => setIsProfileOpen(false)}
                             >
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
-                              </svg>
+                              <Globe className="w-4 h-4" />
                               My Trips
                             </Link>
                             <Link
@@ -158,9 +146,7 @@ export function Navigation() {
                               className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                               onClick={() => setIsProfileOpen(false)}
                             >
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                              </svg>
+                              <Heart className="w-4 h-4" />
                               Saved Activities
                             </Link>
                             <Link
@@ -168,9 +154,7 @@ export function Navigation() {
                               className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                               onClick={() => setIsProfileOpen(false)}
                             >
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                              </svg>
+                              <Mail className="w-4 h-4" />
                               Invitations
                             </Link>
                           </div>
@@ -179,9 +163,7 @@ export function Navigation() {
                               onClick={() => signOut({ callbackUrl: '/' })}
                               className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                             >
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                              </svg>
+                              <LogOut className="w-4 h-4" />
                               Sign Out
                             </button>
                           </div>
@@ -206,13 +188,11 @@ export function Navigation() {
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className="md:hidden p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               >
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  {isMobileMenuOpen ? (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  ) : (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  )}
-                </svg>
+                {isMobileMenuOpen ? (
+                  <X className="w-6 h-6" />
+                ) : (
+                  <Menu className="w-6 h-6" />
+                )}
               </button>
             </div>
           </div>

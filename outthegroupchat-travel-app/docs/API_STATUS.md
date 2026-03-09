@@ -1,5 +1,7 @@
 # 📡 API & Integration Status
 
+> **Last updated: 2026-03-08 by nightly build**
+>
 > **Last Audit:** December 2024  
 > **Overall Status:** 70% Complete  
 > **Target:** 100% for Beta Launch
@@ -119,6 +121,9 @@ No fix needed - code was already correct
 | `/api/discover/recommendations` | GET | ✅ | 🔶 | Working |
 | `/api/discover/import` | POST | 🔶 | ⏳ | OpenTripMap import |
 | `/api/search` | GET | ⚠️ | 🔶 | **Exposes email addresses** |
+| `/api/geocoding` | GET | ✅ | 🔶 | Auth guard added 2026-03-08 |
+| `/api/inspiration` | GET | ✅ | 🔶 | Auth guard added 2026-03-08 |
+| `/api/images/search` | GET | ✅ | 🔶 | New endpoint; requires UNSPLASH_ACCESS_KEY |
 
 ### Search Issues to Fix
 ```
@@ -184,6 +189,17 @@ BLOCKED - Need Environment Variables:
 |----------|--------|--------|-------------------|-------|
 | `/api/cron` | GET | ✅ | N/A | Background jobs |
 | `/api/health` | GET | ⏳ | ⏳ | Not implemented |
+
+---
+
+## 🚀 Beta & Newsletter APIs
+
+| Endpoint | Method | Status | Frontend Connected | Notes |
+|----------|--------|--------|-------------------|-------|
+| `/api/beta/signup` | POST | ✅ | ✅ | Beta waitlist signup |
+| `/api/beta/status` | GET | ✅ | ✅ | Check beta access status |
+| `/api/beta/initialize-password` | POST | ✅ | ✅ | Beta user password init |
+| `/api/newsletter/subscribe` | POST | ✅ | ✅ | Newsletter subscription |
 
 ---
 

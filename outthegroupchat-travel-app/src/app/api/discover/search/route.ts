@@ -168,7 +168,6 @@ export async function GET(req: NextRequest) {
         }));
       } catch {
         // ExternalActivity table might not exist yet - that's okay
-        console.log('[DISCOVER/SEARCH] ExternalActivity table not available yet');
       }
     }
 

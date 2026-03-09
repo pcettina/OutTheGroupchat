@@ -1,6 +1,7 @@
 'use client';
 
 import { forwardRef } from 'react';
+import Image from 'next/image';
 
 interface AvatarProps {
   src?: string | null;
@@ -41,16 +42,15 @@ export const Avatar = forwardRef<HTMLDivElement, AvatarProps>(
     return (
       <div ref={ref} className={`relative inline-block ${className}`}>
         <div
-          className={`${sizeClasses[size]} rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white font-semibold overflow-hidden`}
+          className={`${sizeClasses[size]} relative rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white font-semibold overflow-hidden`}
         >
           {src ? (
-            <img
+            <Image
               src={src}
               alt={alt}
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
-              }}
+              fill
+              className="object-cover"
+              sizes="48px"
             />
           ) : (
             initials

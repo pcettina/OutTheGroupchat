@@ -30,6 +30,8 @@ npx prisma generate
 **What this does:**
 - Adds `betaSignupDate`, `newsletterSubscribed`, `newsletterSubscribedAt`, `passwordInitialized`, `betaLaunchEmailSent` to User table
 
+**Note:** The Prisma schema uses `@@map("users")` to map the `User` model to the `users` table in the database (the table was renamed from `"User"` to `users` in Supabase).
+
 ---
 
 ### 2. Environment Variables

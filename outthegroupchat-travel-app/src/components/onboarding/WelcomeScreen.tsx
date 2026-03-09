@@ -76,7 +76,7 @@ export function WelcomeScreen({ userName, onGetStarted }: WelcomeScreenProps) {
             transition={{ delay: 0.4 }}
             className="text-slate-600 dark:text-slate-400"
           >
-            Let's set up your profile and get you ready for your next adventure
+            Let&apos;s set up your profile and get you ready for your next adventure
           </motion.p>
         </div>
 

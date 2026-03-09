@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { logError } from '@/lib/logger';
+import type { JsonValue } from '@prisma/client/runtime/library';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -28,10 +29,44 @@ export async function GET(req: Request) {
       });
     }
 
+    type TripResult = {
+      id: string;
+      title: string;
+      description: string | null;
+      destination: JsonValue;
+      startDate: Date | null;
+      endDate: Date | null;
+      status: string;
+      isPublic: boolean;
+      owner: { id: string; name: string | null; image: string | null };
+      _count: { members: number };
+    };
+
+    type ActivityResult = {
+      id: string;
+      name: string;
+      description: string | null;
+      category: string;
+      location: JsonValue;
+      cost: number | null;
+      priceRange: string | null;
+      trip: { id: string; title: string; destination: JsonValue };
+      _count: { savedBy: number; ratings: number };
+    };
+
+    type UserResult = {
+      id: string;
+      name: string | null;
+      image: string | null;
+      city: string | null;
+      bio: string | null;
+      _count: { followers: number; ownedTrips: number };
+    };
+
     const results: {
-      trips?: any[];
-      activities?: any[];
-      users?: any[];
+      trips?: TripResult[];
+      activities?: ActivityResult[];
+      users?: UserResult[];
     } = {};
 
     // Search trips

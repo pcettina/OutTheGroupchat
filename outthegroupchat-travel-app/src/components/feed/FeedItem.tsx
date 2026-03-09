@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import { formatDistanceToNow } from 'date-fns';
 import { EngagementBar } from './EngagementBar';
 import { MediaGallery } from './MediaGallery';
@@ -138,8 +139,23 @@ export function FeedItem({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-slate-200 dark:border-slate-700 overflow-hidden"
+      className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-slate-200 dark:border-slate-700 overflow-hidden group"
     >
+      {/* Cover Image (Pinterest-style hero at top) */}
+      {trip?.coverImage && (
+        <a href={`/trips/${trip.id}`} className="block relative overflow-hidden">
+          <Image
+            src={trip.coverImage}
+            alt={trip.title}
+            width={600}
+            height={400}
+            className="w-full object-cover group-hover:scale-105 transition-transform duration-300"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+        </a>
+      )}
+
       <div className="p-5">
         {/* Header */}
         <div className="flex items-start gap-3 mb-4">
@@ -223,16 +239,7 @@ export function FeedItem({
           </div>
         )}
 
-        {/* Trip Cover Image (fallback if no media) */}
-        {trip?.coverImage && (!media || media.length === 0) && (
-          <div className="mt-3 rounded-xl overflow-hidden">
-            <img 
-              src={trip.coverImage} 
-              alt={trip.title}
-              className="w-full h-48 object-cover"
-            />
-          </div>
-        )}
+        {/* Trip Cover Image (fallback if no media and no hero image shown above) */}
 
         {/* Activity Details */}
         {activity && type === 'activity_added' && (

@@ -109,6 +109,7 @@ model User {
   tripLikes        TripLike[]
 
   @@index([email])
+  @@map("users")
 }
 
 // ============================================
@@ -229,6 +230,9 @@ model Trip {
   activities   Activity[]
   itinerary    ItineraryDay[]
   
+  // Cover Image (Unsplash URL)
+  coverImage   String?
+
   // Sharing Settings
   isPublic     Boolean @default(false)
   viewCount    Int     @default(0)

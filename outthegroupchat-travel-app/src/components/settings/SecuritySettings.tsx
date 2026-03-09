@@ -250,7 +250,7 @@ export function SecuritySettings({
               Sign out all devices?
             </h3>
             <p className="text-slate-600 dark:text-slate-400 mb-6">
-              This will sign you out of all devices except this one. You'll need to sign in again on those devices.
+              This will sign you out of all devices except this one. You&apos;ll need to sign in again on those devices.
             </p>
             <div className="flex gap-3">
               <button

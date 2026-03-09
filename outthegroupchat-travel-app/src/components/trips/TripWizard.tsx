@@ -19,6 +19,7 @@ export interface WizardData {
   description: string;
   memberEmails: string[];
   isPublic: boolean;
+  coverImage: string | null;
 }
 
 export interface StepProps {
@@ -90,6 +91,7 @@ const initialData: WizardData = {
   description: '',
   memberEmails: [],
   isPublic: false,
+  coverImage: null,
 };
 
 export default function TripWizard() {
@@ -137,6 +139,7 @@ export default function TripWizard() {
           budget: data.budget,
           isPublic: data.isPublic,
           memberEmails: data.memberEmails,
+          coverImage: data.coverImage,
         }),
       });
 
