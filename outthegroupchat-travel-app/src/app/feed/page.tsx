@@ -21,6 +21,7 @@ interface FeedItemData {
     title: string;
     destination: { city: string; country: string };
     status: string;
+    coverImage?: string;
   };
   activity?: {
     id: string;
@@ -147,7 +148,7 @@ export default function FeedPage() {
       <Navigation />
       
       <main className="pt-20 pb-16">
-        <div className="max-w-2xl mx-auto px-4">
+        <div className="max-w-6xl mx-auto px-4">
           
           {/* Header */}
           <motion.div
@@ -233,13 +234,14 @@ export default function FeedPage() {
             </motion.div>
           ) : (
             <>
-              <div className="space-y-4">
+              <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4">
                 {feedItems.map((item, index) => (
                   <motion.div
                     key={item.id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: Math.min(index * 0.05, 0.3) }}
+                    className="break-inside-avoid"
                   >
                     <FeedItem
                       {...item}

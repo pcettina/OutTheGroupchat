@@ -48,7 +48,7 @@
     
     /* Typography */
     --font-sans: 'Outfit', 'Poppins', system-ui, -apple-system, sans-serif;
-    --font-display: 'Clash Display', 'Outfit', sans-serif;
+    --font-display: 'Outfit', sans-serif;
     --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
     
     /* Border Radius */

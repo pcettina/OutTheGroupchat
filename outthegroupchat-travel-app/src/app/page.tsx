@@ -287,7 +287,7 @@ export default function Home() {
               <span className="text-gradient">Plan Together</span>
             </h2>
             <p className="text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
-              From idea to itinerary, we've got you covered with powerful tools designed for group travel.
+              From idea to itinerary, we&apos;ve got you covered with powerful tools designed for group travel.
             </p>
           </motion.div>
 
@@ -331,7 +331,7 @@ export default function Home() {
                 Ready to Start Planning?
               </h2>
               <p className="text-xl text-slate-600 dark:text-slate-300 mb-8 max-w-xl mx-auto">
-                Create your first trip in minutes and invite your friends. It's free to get started!
+                Create your first trip in minutes and invite your friends. It&apos;s free to get started!
               </p>
               <Link
                 href={status === 'authenticated' ? '/trips/new' : '/auth/signup'}

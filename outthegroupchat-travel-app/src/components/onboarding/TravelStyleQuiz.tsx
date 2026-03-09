@@ -163,7 +163,7 @@ export function TravelStyleQuiz({ onComplete, onBack }: TravelStyleQuizProps) {
               exit={{ opacity: 0, x: -20 }}
             >
               <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2 text-center">
-                What's your travel style?
+                What&apos;s your travel style?
               </h2>
               <p className="text-slate-600 dark:text-slate-400 mb-8 text-center">
                 Pick the one that best describes you

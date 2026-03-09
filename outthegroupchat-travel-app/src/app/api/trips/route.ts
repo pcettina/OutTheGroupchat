@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
 import { Prisma, TripStatus } from '@prisma/client';
 import { logError } from '@/lib/logger';
+import { processInvitations } from '@/lib/invitations';
 
 // Route segment config - limit request body size to prevent memory exhaustion
 export const maxDuration = 30; // seconds
@@ -36,6 +37,8 @@ const createTripSchema = z.object({
     }).optional(),
   }).optional(),
   isPublic: z.boolean().default(false),
+  memberEmails: z.array(z.string().email()).optional().default([]),
+  coverImage: z.string().url().optional().nullable(),
 });
 
 export async function GET(req: Request) {
@@ -128,7 +131,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { title, description, destination, startDate, endDate, budget, isPublic } = validationResult.data;
+    const { title, description, destination, startDate, endDate, budget, isPublic, memberEmails, coverImage } = validationResult.data;
 
     // Create trip with owner as first member
     // Use Prisma.InputJsonValue for proper type safety with JSON fields
@@ -141,6 +144,7 @@ export async function POST(req: Request) {
         endDate,
         budget: budget as Prisma.InputJsonValue,
         isPublic,
+        coverImage: coverImage || undefined,
         ownerId: session.user.id,
         status: 'PLANNING',
         members: {
@@ -172,7 +176,22 @@ export async function POST(req: Request) {
       },
     });
 
-    return NextResponse.json({ success: true, data: trip }, { status: 201 });
+    // Process member invitations if any emails were provided
+    let invitationResults = null;
+    if (memberEmails.length > 0) {
+      invitationResults = await processInvitations({
+        tripId: trip.id,
+        tripTitle: title,
+        emails: memberEmails,
+        inviterId: session.user.id,
+        inviterName: session.user.name || 'Someone',
+      });
+    }
+
+    return NextResponse.json(
+      { success: true, data: trip, invitations: invitationResults },
+      { status: 201 }
+    );
   } catch (error) {
     logError('TRIPS_POST', error);
     return NextResponse.json(

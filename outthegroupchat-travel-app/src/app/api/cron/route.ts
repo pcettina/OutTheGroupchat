@@ -182,8 +182,6 @@ export async function GET(req: Request) {
       data: { status: 'COMPLETED' },
     });
 
-    console.log('[CRON] Background jobs completed:', results);
-
     return NextResponse.json({
       success: true,
       message: 'Background jobs completed',

@@ -83,6 +83,28 @@ async function getAmadeusToken(): Promise<string> {
   }
 }
 
+interface AmadeusSegmentRaw {
+  departure: { iataCode: string; terminal?: string; at: string; cityName?: string };
+  arrival: { iataCode: string; terminal?: string; at: string; cityName?: string };
+  carrierCode: string;
+  number: string;
+  aircraft: { code: string };
+  duration: string;
+  id: string;
+}
+
+interface AmadeusItineraryRaw {
+  duration: string;
+  segments: AmadeusSegmentRaw[];
+}
+
+interface AmadeusOfferRaw {
+  id: string;
+  itineraries: AmadeusItineraryRaw[];
+  price: { currency: string; total: string; base: string };
+  numberOfBookableSeats: number;
+}
+
 export interface FlightSearchParams {
   originLocationCode: string;
   destinationLocationCode: string;
@@ -123,7 +145,7 @@ export async function searchFlights({
       },
     });
 
-    return response.data.data.map((offer: any) => ({
+    return response.data.data.map((offer: AmadeusOfferRaw) => ({
       id: offer.id,
       source: {
         iataCode: offer.itineraries[0].segments[0].departure.iataCode,
@@ -133,9 +155,9 @@ export async function searchFlights({
         iataCode: offer.itineraries[0].segments[0].arrival.iataCode,
         cityName: offer.itineraries[0].segments[0].arrival.cityName || '',
       },
-      itineraries: offer.itineraries.map((itinerary: any) => ({
+      itineraries: offer.itineraries.map((itinerary: AmadeusItineraryRaw) => ({
         duration: itinerary.duration,
-        segments: itinerary.segments.map((segment: any) => ({
+        segments: itinerary.segments.map((segment: AmadeusSegmentRaw) => ({
           departure: {
             iataCode: segment.departure.iataCode,
             terminal: segment.departure.terminal,

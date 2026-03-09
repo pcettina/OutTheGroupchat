@@ -28,6 +28,7 @@ Add these in your Vercel Dashboard: **Settings** > **Environment Variables**
 | `PUSHER_CLUSTER` | Real-time features | Not set |
 | `GOOGLE_CLIENT_ID` | Google OAuth | Not set |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth | Not set |
+| `UNSPLASH_ACCESS_KEY` | Destination image search via Unsplash API | Not set |
 
 ## Getting Credentials
 
@@ -48,6 +49,19 @@ Add these in your Vercel Dashboard: **Settings** > **Environment Variables**
 Generate with:
 ```bash
 openssl rand -base64 32
+```
+
+### Unsplash (Image Search)
+1. Go to [unsplash.com/developers](https://unsplash.com/developers)
+2. Create a new application
+3. Copy the **Access Key** (not the Secret Key)
+4. Set as `UNSPLASH_ACCESS_KEY` in Vercel
+
+```env
+UNSPLASH_ACCESS_KEY=your_unsplash_access_key_here
+# Optional: Enables destination image search via Unsplash API
+# Get key at: https://unsplash.com/developers
+# Free tier: 50 requests/hour. Without this key, image search is disabled.
 ```
 
 ## Vercel Configuration Steps

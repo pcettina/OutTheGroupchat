@@ -41,7 +41,8 @@ export async function GET(req: Request) {
 
     const { city, startDate, endDate, type, categories } = validationResult.data;
 
-    let data: any = {};
+    type DiscoverData = Record<string, unknown>;
+    let data: DiscoverData = {};
 
     switch (type) {
       case 'events':

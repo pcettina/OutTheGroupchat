@@ -116,7 +116,6 @@ export function ShareModal({ isOpen, onClose, shareData }: ShareModalProps) {
         });
       } catch (err) {
         // User cancelled share
-        console.log('Share cancelled');
       }
     }
   };

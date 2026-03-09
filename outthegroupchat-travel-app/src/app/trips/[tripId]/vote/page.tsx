@@ -1,9 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useSession } from 'next-auth/react';
 import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { VotingCard, ResultsChart } from '@/components/voting';
+import { CreateVotingModal } from '@/components/voting/CreateVotingModal';
 import type { VotingOption, VotingResults } from '@/types';
 
 interface VotingSession {
@@ -20,6 +22,7 @@ interface VotingSession {
 export default function VotePage() {
   const params = useParams();
   const router = useRouter();
+  const { data: session } = useSession();
   const tripId = params.tripId as string;
 
   const [sessions, setSessions] = useState<VotingSession[]>([]);
@@ -29,29 +32,55 @@ export default function VotePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isOwnerOrAdmin, setIsOwnerOrAdmin] = useState(false);
+
+  const fetchVotingSessions = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/trips/${tripId}/voting`);
+      if (!res.ok) throw new Error('Failed to fetch voting sessions');
+      const data = await res.json();
+      setSessions(data.data || []);
+      if (data.data?.[0]) {
+        setActiveSession(data.data[0]);
+        if (data.data[0].userVote) {
+          setSelectedOptions(data.data[0].userVote);
+          setShowResults(true);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load voting sessions:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [tripId]);
 
   useEffect(() => {
-    async function fetchVotingSessions() {
+    fetchVotingSessions();
+  }, [fetchVotingSessions]);
+
+  // Check if current user is owner/admin
+  useEffect(() => {
+    async function checkRole() {
+      if (!session?.user?.id) return;
       try {
-        const res = await fetch(`/api/trips/${tripId}/voting`);
-        if (!res.ok) throw new Error('Failed to fetch voting sessions');
+        const res = await fetch(`/api/trips/${tripId}`);
+        if (!res.ok) return;
         const data = await res.json();
-        setSessions(data.data || []);
-        if (data.data?.[0]) {
-          setActiveSession(data.data[0]);
-          if (data.data[0].userVote) {
-            setSelectedOptions(data.data[0].userVote);
-            setShowResults(true);
-          }
-        }
-      } catch (err) {
-        console.error('Failed to load voting sessions:', err);
-      } finally {
-        setIsLoading(false);
+        const trip = data.data;
+        if (!trip) return;
+        const isOwner = trip.ownerId === session.user.id;
+        const isAdmin = trip.members?.some(
+          (m: { userId: string; role: string }) =>
+            m.userId === session.user.id && (m.role === 'OWNER' || m.role === 'ADMIN')
+        );
+        setIsOwnerOrAdmin(isOwner || isAdmin);
+      } catch {
+        // ignore
       }
     }
-    fetchVotingSessions();
-  }, [tripId]);
+    checkRole();
+  }, [tripId, session?.user?.id]);
 
   const handleVote = (optionId: string) => {
     if (showResults || !activeSession) return;
@@ -82,7 +111,7 @@ export default function VotePage() {
       });
 
       if (!res.ok) throw new Error('Failed to submit vote');
-      
+
       const data = await res.json();
       setResults(data.data);
       setShowResults(true);
@@ -93,18 +122,23 @@ export default function VotePage() {
     }
   };
 
+  const handleVoteCreated = () => {
+    setIsLoading(true);
+    fetchVotingSessions();
+  };
+
   // Calculate time remaining
   const getTimeRemaining = () => {
     if (!activeSession?.expiresAt) return null;
     const now = new Date();
     const expires = new Date(activeSession.expiresAt);
     const diff = expires.getTime() - now.getTime();
-    
+
     if (diff <= 0) return 'Expired';
-    
+
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    
+
     if (hours > 24) {
       const days = Math.floor(hours / 24);
       return `${days} day${days > 1 ? 's' : ''} left`;
@@ -130,17 +164,44 @@ export default function VotePage() {
   if (sessions.length === 0) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-2xl">
-        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 text-center">
-          <span className="text-4xl mb-4 block">🗳️</span>
-          <h2 className="text-xl font-semibold text-yellow-700 mb-2">No Active Votes</h2>
-          <p className="text-yellow-600 mb-4">There are no voting sessions for this trip yet.</p>
-          <button
-            onClick={() => router.back()}
-            className="text-primary font-medium hover:underline"
-          >
-            Go back to trip
-          </button>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 text-center">
+          <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">No Active Votes</h2>
+          <p className="text-slate-600 dark:text-slate-400 mb-6">
+            {isOwnerOrAdmin
+              ? 'Create a vote to let your group decide together.'
+              : "There are no voting sessions yet. Check back later!"}
+          </p>
+
+          {isOwnerOrAdmin && (
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all"
+            >
+              Create a Vote
+            </button>
+          )}
+
+          <div className="mt-4">
+            <button
+              onClick={() => router.back()}
+              className="text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+            >
+              Back to trip
+            </button>
+          </div>
         </div>
+
+        <CreateVotingModal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          tripId={tripId}
+          onCreated={handleVoteCreated}
+        />
       </div>
     );
   }
@@ -153,15 +214,29 @@ export default function VotePage() {
         animate={{ opacity: 1, y: 0 }}
         className="mb-8"
       >
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-          </svg>
-          Back
-        </button>
+        <div className="flex items-center justify-between mb-4">
+          <button
+            onClick={() => router.back()}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back
+          </button>
+
+          {isOwnerOrAdmin && (
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="px-4 py-2 bg-emerald-500 text-white text-sm font-medium rounded-lg hover:bg-emerald-600 transition-colors flex items-center gap-1.5"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              New Vote
+            </button>
+          )}
+        </div>
 
         {activeSession && (
           <div className="flex items-start justify-between gap-4">
@@ -173,7 +248,7 @@ export default function VotePage() {
             </div>
             {getTimeRemaining() && (
               <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-sm font-medium whitespace-nowrap">
-                ⏱️ {getTimeRemaining()}
+                {getTimeRemaining()}
               </span>
             )}
           </div>
@@ -183,22 +258,22 @@ export default function VotePage() {
       {/* Session tabs if multiple */}
       {sessions.length > 1 && (
         <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-          {sessions.map((session) => (
+          {sessions.map((s) => (
             <button
-              key={session.id}
+              key={s.id}
               onClick={() => {
-                setActiveSession(session);
-                setSelectedOptions(session.userVote || []);
-                setShowResults(!!session.userVote);
+                setActiveSession(s);
+                setSelectedOptions(s.userVote || []);
+                setShowResults(!!s.userVote);
                 setResults(null);
               }}
               className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                activeSession?.id === session.id
+                activeSession?.id === s.id
                   ? 'bg-primary text-white'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
-              {session.title}
+              {s.title}
             </button>
           ))}
         </div>
@@ -267,10 +342,16 @@ export default function VotePage() {
       {/* Already voted message */}
       {showResults && (
         <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-xl text-center">
-          <p className="text-green-700 font-medium">✓ You've submitted your vote</p>
+          <p className="text-green-700 font-medium">You&apos;ve submitted your vote</p>
         </div>
       )}
+
+      <CreateVotingModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        tripId={tripId}
+        onCreated={handleVoteCreated}
+      />
     </div>
   );
 }
-

@@ -3,4 +3,5 @@ export { default as ResultsChart } from './ResultsChart';
 export { VotingSession } from './VotingSession';
 export { VotingOption } from './VotingOption';
 export { VotingDeadline, VotingDeadlineCompact } from './VotingDeadline';
+export { CreateVotingModal } from './CreateVotingModal';
 

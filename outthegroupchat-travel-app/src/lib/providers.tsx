@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SessionProvider } from 'next-auth/react';
 import { useState, type ReactNode } from 'react';
 import { RealtimeProvider } from '@/contexts/RealtimeContext';
+import { ToastProvider } from '@/contexts/ToastContext';
 
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
@@ -22,7 +23,9 @@ export function Providers({ children }: { children: ReactNode }) {
     <SessionProvider>
       <QueryClientProvider client={queryClient}>
         <RealtimeProvider>
-          {children}
+          <ToastProvider>
+            {children}
+          </ToastProvider>
         </RealtimeProvider>
       </QueryClientProvider>
     </SessionProvider>

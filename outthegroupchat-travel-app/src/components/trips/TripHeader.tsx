@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 import Link from 'next/link';
+import Image from 'next/image';
 import type { TripWithRelations, Destination, TripBudget } from '@/types';
 
 interface TripHeaderProps {
@@ -37,20 +38,34 @@ export default function TripHeader({ trip, onInvite }: TripHeaderProps) {
       animate={{ opacity: 1, y: 0 }}
       className="relative overflow-hidden"
     >
-      {/* Background Gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600" />
-      
-      {/* Pattern Overlay */}
-      <div className="absolute inset-0 opacity-10">
-        <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" strokeWidth="1"/>
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#grid)" />
-        </svg>
-      </div>
+      {/* Background: Cover Image or Gradient */}
+      {trip.coverImage ? (
+        <>
+          <Image
+            src={trip.coverImage}
+            alt={trip.title}
+            fill
+            className="object-cover"
+            priority
+            sizes="100vw"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-black/20" />
+        </>
+      ) : (
+        <>
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600" />
+          <div className="absolute inset-0 opacity-10">
+            <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                  <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" strokeWidth="1"/>
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#grid)" />
+            </svg>
+          </div>
+        </>
+      )}
 
       {/* Content */}
       <div className="relative z-10 px-6 py-8 md:px-8 md:py-12">

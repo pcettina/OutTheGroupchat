@@ -187,7 +187,7 @@ export default function DiscoverPage() {
         <AnimatePresence>
           <motion.div
             layout
-            className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
+            className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 space-y-4"
           >
             {activities.map((activity, index) => (
               <motion.div
@@ -197,6 +197,7 @@ export default function DiscoverPage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ delay: index * 0.05 }}
+                className="break-inside-avoid"
               >
                 <ActivityCard
                   activity={activity}

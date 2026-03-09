@@ -1,6 +1,11 @@
 // Survey Service - Handles survey creation, templates, and analysis
 import { prisma } from '@/lib/prisma';
+import type { Prisma } from '@prisma/client';
 import type { SurveyQuestion, SurveyAnalysis, SurveyAnswers } from '@/types';
+
+type SurveyResponseWithUser = Prisma.SurveyResponseGetPayload<{
+  include: { user: true };
+}>;
 
 // Default survey templates
 export const INITIAL_USER_SURVEY: SurveyQuestion[] = [
@@ -222,7 +227,7 @@ export class SurveyService {
     };
   }
 
-  private static analyzeBudgets(responses: any[]): SurveyAnalysis['budgetAnalysis'] {
+  private static analyzeBudgets(responses: SurveyResponseWithUser[]): SurveyAnalysis['budgetAnalysis'] {
     const budgets = responses
       .map(r => {
         const answers = r.answers as SurveyAnswers;
@@ -247,7 +252,7 @@ export class SurveyService {
     return { groupOptimal, min, max };
   }
 
-  private static analyzeDatePreferences(responses: any[]): SurveyAnalysis['dateAnalysis'] {
+  private static analyzeDatePreferences(responses: SurveyResponseWithUser[]): SurveyAnalysis['dateAnalysis'] {
     const availabilityCount: Record<string, number> = {};
 
     responses.forEach(r => {
@@ -282,7 +287,7 @@ export class SurveyService {
     };
   }
 
-  private static analyzeLocationPreferences(responses: any[]): SurveyAnalysis['locationPreferences'] {
+  private static analyzeLocationPreferences(responses: SurveyResponseWithUser[]): SurveyAnalysis['locationPreferences'] {
     const locationScores: Record<string, { total: number; topChoice: number }> = {};
     const locations = ['Nashville', 'NYC', 'Chicago', 'LA', 'Austin', 'Boston', 'Charleston'];
 
@@ -316,7 +321,7 @@ export class SurveyService {
       .sort((a, b) => b.score - a.score);
   }
 
-  private static analyzeActivityPreferences(responses: any[]): SurveyAnalysis['activityPreferences'] {
+  private static analyzeActivityPreferences(responses: SurveyResponseWithUser[]): SurveyAnalysis['activityPreferences'] {
     const activityScores: Record<string, number> = {};
     const activities = ['Golf', 'Concert', 'Sporting Event', 'Beach Activities', 'Outdoor Adventures', 'Casino', 'Bars/Nightlife'];
 

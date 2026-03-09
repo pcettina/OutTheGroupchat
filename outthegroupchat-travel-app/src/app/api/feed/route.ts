@@ -26,6 +26,7 @@ interface FeedItem {
     title: string;
     destination: { city: string; country: string };
     status: string;
+    coverImage?: string | null;
   };
   activity?: {
     id: string;
@@ -101,6 +102,7 @@ export async function GET(req: Request) {
           title: trip.title,
           destination,
           status: trip.status,
+          coverImage: trip.coverImage,
         },
         metadata: {
           memberCount: trip._count.members,
