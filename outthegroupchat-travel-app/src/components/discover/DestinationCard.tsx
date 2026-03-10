@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface DestinationCardProps {
   id: string;
@@ -38,10 +39,12 @@ export function DestinationCard({
         {/* Background Image */}
         <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 to-teal-500">
           {image && (
-            <img
+            <Image
               src={image}
               alt={`${city}, ${country}`}
-              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+              fill
+              style={{ objectFit: 'cover' }}
+              className="group-hover:scale-110 transition-transform duration-500"
             />
           )}
         </div>

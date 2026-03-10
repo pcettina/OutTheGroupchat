@@ -2,7 +2,9 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 import type { TripMember, User } from '@prisma/client';
+import type { MemberBudgetRange } from '@/types';
 
 interface MemberWithUser extends TripMember {
   user: User;
@@ -76,9 +78,11 @@ export default function MemberList({ members, onInvite, onRemoveMember, isOwner 
                 <div className="relative">
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white font-semibold">
                     {member.user.image ? (
-                      <img
+                      <Image
                         src={member.user.image}
                         alt={member.user.name || ''}
+                        width={40}
+                        height={40}
                         className="w-full h-full rounded-full object-cover"
                       />
                     ) : (
@@ -145,7 +149,7 @@ export default function MemberList({ members, onInvite, onRemoveMember, isOwner 
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
-                          Budget: ${(member.budgetRange as any)?.min?.toLocaleString()} - ${(member.budgetRange as any)?.max?.toLocaleString()}
+                          Budget: ${(member.budgetRange as unknown as MemberBudgetRange | null)?.min?.toLocaleString()} - ${(member.budgetRange as unknown as MemberBudgetRange | null)?.max?.toLocaleString()}
                         </div>
                       )}
 

@@ -94,8 +94,7 @@ export async function GET(
         userResponse: userResponse?.answers,
       },
     });
-  } catch (error) {
-    console.error('[SURVEY_GET]', error);
+  } catch {
     return NextResponse.json(
       { success: false, error: 'Failed to fetch survey' },
       { status: 500 }
@@ -188,8 +187,7 @@ export async function POST(
     });
 
     return NextResponse.json({ success: true, data: survey }, { status: 201 });
-  } catch (error) {
-    console.error('[SURVEY_POST]', error);
+  } catch {
     return NextResponse.json(
       { success: false, error: 'Failed to create survey' },
       { status: 500 }
@@ -291,8 +289,7 @@ export async function PUT(
     }
 
     return NextResponse.json({ success: true, data: response });
-  } catch (error) {
-    console.error('[SURVEY_PUT]', error);
+  } catch {
     return NextResponse.json(
       { success: false, error: 'Failed to submit response' },
       { status: 500 }

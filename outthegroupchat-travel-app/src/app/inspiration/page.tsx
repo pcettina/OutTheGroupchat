@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import { Navigation } from '@/components/Navigation';
 
 interface Template {
@@ -56,11 +57,7 @@ export default function InspirationPage() {
   const [trendingActivities, setTrendingActivities] = useState<TrendingActivity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    fetchInspiration();
-  }, [searchQuery, selectedType, selectedDestination]);
-
-  const fetchInspiration = async () => {
+  const fetchInspiration = useCallback(async () => {
     setIsLoading(true);
     try {
       const params = new URLSearchParams();
@@ -81,7 +78,11 @@ export default function InspirationPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [searchQuery, selectedType, selectedDestination]);
+
+  useEffect(() => {
+    fetchInspiration();
+  }, [fetchInspiration]);
 
   const clearFilters = () => {
     setSearchQuery('');
@@ -240,10 +241,12 @@ export default function InspirationPage() {
                   >
                     {/* Image */}
                     <div className="relative h-48 overflow-hidden">
-                      <img
+                      <Image
                         src={template.image}
                         alt={template.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        fill
+                        style={{ objectFit: 'cover' }}
+                        className="group-hover:scale-105 transition-transform duration-500"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                       <div className="absolute bottom-3 left-3 right-3">

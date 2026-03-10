@@ -1,7 +1,7 @@
 'use client';
 
 import { forwardRef } from 'react';
-import { motion } from 'framer-motion';
+import { motion, type HTMLMotionProps } from 'framer-motion';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'accent' | 'ghost' | 'outline' | 'danger';
@@ -45,11 +45,11 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     return (
       <motion.button
-        ref={ref as any}
+        ref={ref}
         whileTap={{ scale: 0.98 }}
         className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
         disabled={disabled || isLoading}
-        {...(props as any)}
+        {...(props as HTMLMotionProps<'button'>)}
       >
         {isLoading ? (
           <svg

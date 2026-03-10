@@ -70,8 +70,8 @@ export class EventsService {
           url: event.url,
         });
       }
-    } catch (error) {
-      console.error('Error fetching Ticketmaster events:', error);
+    } catch {
+      // Ticketmaster errors are non-fatal; continue with empty results
     }
 
     // Filter by category if specified
@@ -140,8 +140,8 @@ export class EventsService {
         });
 
         results.push(...places.slice(0, Math.ceil(limit / queries.length)));
-      } catch (error) {
-        console.error(`Error searching places for "${query}":`, error);
+      } catch {
+        // Place search errors are non-fatal; skip this query
       }
     }
 
@@ -175,7 +175,6 @@ export class EventsService {
       const destCode = await getAirportCode(destination);
 
       if (!originCode || !destCode) {
-        console.error('Could not find airport codes for origin/destination');
         return [];
       }
 
@@ -196,8 +195,7 @@ export class EventsService {
         },
         itineraries: flight.itineraries,
       }));
-    } catch (error) {
-      console.error('Error searching flights:', error);
+    } catch {
       return [];
     }
   }

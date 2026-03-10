@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useSession, signOut } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -95,9 +96,11 @@ export function Navigation() {
                     >
                       <div className="avatar avatar-md">
                         {session.user?.image ? (
-                          <img
+                          <Image
                             src={session.user.image}
                             alt={session.user.name || 'User'}
+                            width={40}
+                            height={40}
                             className="w-full h-full object-cover"
                           />
                         ) : (

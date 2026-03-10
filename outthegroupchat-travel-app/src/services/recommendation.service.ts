@@ -3,6 +3,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { SurveyService } from './survey.service';
+import type { Prisma } from '@prisma/client';
 import type { 
   TripRecommendation, 
   Destination, 
@@ -10,6 +11,10 @@ import type {
   ItineraryDayData,
   SurveyAnalysis 
 } from '@/types';
+
+type TripMemberWithUser = Prisma.TripMemberGetPayload<{
+  include: { user: { select: { id: true; name: true; city: true; preferences: true } } };
+}>;
 
 // Destination database with cost info
 const DESTINATIONS: Record<string, {
@@ -432,7 +437,7 @@ export class RecommendationService {
   }
 
   private static async calculateIndividualCosts(
-    members: any[],
+    members: TripMemberWithUser[],
     destInfo: typeof DESTINATIONS[string],
     budget: TripBudget,
     durationDays: number
@@ -507,10 +512,10 @@ export class RecommendationService {
     await prisma.trip.update({
       where: { id: tripId },
       data: {
-        destination: recommendation.destination as any,
+        destination: recommendation.destination as unknown as Prisma.InputJsonValue,
         startDate: recommendation.suggestedDates.start,
         endDate: recommendation.suggestedDates.end,
-        budget: recommendation.estimatedBudget as any,
+        budget: recommendation.estimatedBudget as unknown as Prisma.InputJsonValue,
         status: 'VOTING',
       },
     });
@@ -548,7 +553,7 @@ export class RecommendationService {
         data: {
           flightDetails: {
             estimatedCost: cost.flightCost,
-          } as any,
+          } as unknown as Prisma.InputJsonValue,
         },
       });
     }

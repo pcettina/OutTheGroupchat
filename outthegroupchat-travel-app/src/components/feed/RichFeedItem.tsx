@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
+import Image from 'next/image';
 import Link from 'next/link';
 import { ReactionPicker } from './ReactionPicker';
 import { MediaGallery } from './MediaGallery';
@@ -156,7 +157,7 @@ export function RichFeedItem({
               className="w-11 h-11 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white font-semibold overflow-hidden flex-shrink-0"
             >
               {user.image ? (
-                <img src={user.image} alt={user.name || ''} className="w-full h-full object-cover" />
+                <Image src={user.image} alt={user.name || ''} width={44} height={44} className="w-full h-full object-cover" />
               ) : (
                 user.name?.charAt(0) || '?'
               )}
@@ -235,10 +236,12 @@ export function RichFeedItem({
             {/* Cover Image */}
             {trip.coverImage && (
               <div className="h-36 relative">
-                <img
+                <Image
                   src={trip.coverImage}
                   alt={trip.title}
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 600px"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                 <div className="absolute bottom-3 left-3 right-3">

@@ -13,6 +13,8 @@
     "db:generate": "prisma generate",
     "db:studio": "prisma studio",
     "db:seed": "npx tsx prisma/seed/index.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "test:system": "npx tsx tests/system-check.ts",
     "test:api": "npx tsx tests/api-check.ts"
   },
@@ -67,6 +69,7 @@
     "postcss": "^8.4.35",
     "prisma": "^5.22.0",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5.4.2"
+    "typescript": "^5.4.2",
+    "vitest": "^4.0.18"
   }
 }

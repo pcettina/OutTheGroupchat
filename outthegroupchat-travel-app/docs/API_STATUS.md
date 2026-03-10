@@ -1,9 +1,9 @@
 # 📡 API & Integration Status
 
-> **Last updated: 2026-03-08 by nightly build**
+> **Last updated: 2026-03-09**
 >
-> **Last Audit:** December 2024  
-> **Overall Status:** 70% Complete  
+> **Last Audit:** March 2026
+> **Overall Status:** 72% Complete
 > **Target:** 100% for Beta Launch
 
 ---
@@ -121,9 +121,9 @@ No fix needed - code was already correct
 | `/api/discover/recommendations` | GET | ✅ | 🔶 | Working |
 | `/api/discover/import` | POST | 🔶 | ⏳ | OpenTripMap import |
 | `/api/search` | GET | ⚠️ | 🔶 | **Exposes email addresses** |
-| `/api/geocoding` | GET | ✅ | 🔶 | Auth guard added 2026-03-08 |
+| `/api/geocoding` | GET | ✅ | 🔶 | Geocoding for destination search via Nominatim |
 | `/api/inspiration` | GET | ✅ | 🔶 | Auth guard added 2026-03-08 |
-| `/api/images/search` | GET | ✅ | 🔶 | New endpoint; requires UNSPLASH_ACCESS_KEY |
+| `/api/images/search` | GET | ✅ | 🔶 | Image search via Unsplash API; requires UNSPLASH_ACCESS_KEY |
 
 ### Search Issues to Fix
 ```
@@ -319,4 +319,4 @@ EMAIL_FROM=             # Email sender (onboarding@resend.dev) ✅
 
 *Review and update after each API change.*
 
-*Last Updated: December 17, 2025 - Production Testing Round 3*
+*Last Updated: 2026-03-09 - Added /api/images/search and /api/geocoding entries*

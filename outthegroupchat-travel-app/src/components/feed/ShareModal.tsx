@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface ShareData {
@@ -173,11 +174,12 @@ export function ShareModal({ isOpen, onClose, shareData }: ShareModalProps) {
               <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-600">
                 {/* Preview Image */}
                 {shareData.imageUrl ? (
-                  <div className="h-32 bg-gradient-to-br from-emerald-400 to-teal-500">
-                    <img 
+                  <div className="h-32 bg-gradient-to-br from-emerald-400 to-teal-500 relative">
+                    <Image 
                       src={shareData.imageUrl} 
                       alt={shareData.title}
-                      className="w-full h-full object-cover"
+                      fill
+                      className="object-cover"
                     />
                   </div>
                 ) : (

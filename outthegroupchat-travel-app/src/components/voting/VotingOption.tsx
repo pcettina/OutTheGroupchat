@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 
 interface Voter {
   id: string;
@@ -89,11 +90,12 @@ export function VotingOption({
 
         {/* Option Image */}
         {option.imageUrl && (
-          <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden bg-slate-200 dark:bg-slate-700">
-            <img
+          <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden bg-slate-200 dark:bg-slate-700 relative">
+            <Image
               src={option.imageUrl}
               alt={option.title}
-              className="w-full h-full object-cover"
+              fill
+              className="object-cover"
             />
           </div>
         )}
@@ -163,7 +165,7 @@ export function VotingOption({
                     title={voter.name}
                   >
                     {voter.image ? (
-                      <img src={voter.image} alt={voter.name} className="w-full h-full rounded-full object-cover" />
+                      <Image src={voter.image} alt={voter.name} width={24} height={24} className="w-full h-full rounded-full object-cover" />
                     ) : (
                       voter.name.charAt(0)
                     )}

@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Skeleton, SkeletonCard } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 
@@ -137,7 +138,7 @@ function SearchResultItem({
         {/* Image */}
         <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 overflow-hidden flex-shrink-0">
           {result.image ? (
-            <img src={result.image} alt={result.title} className="w-full h-full object-cover" />
+            <Image src={result.image} alt={result.title} width={56} height={56} className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-white text-xl">
               {result.type === 'trip' ? '✈️' : result.type === 'activity' ? '📍' : result.title.charAt(0)}

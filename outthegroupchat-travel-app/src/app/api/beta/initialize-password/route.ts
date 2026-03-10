@@ -1,26 +1,26 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { logger } from '@/lib/logger';
 
+const InitializePasswordSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+  token: z.string().optional(),
+});
+
 export async function POST(req: Request) {
   try {
-    const { email, password, token } = await req.json();
-
-    if (!email || !password) {
+    const body = await req.json();
+    const parseResult = InitializePasswordSchema.safeParse(body);
+    if (!parseResult.success) {
       return NextResponse.json(
-        { error: 'Email and password are required' },
+        { error: 'Invalid input', details: parseResult.error.issues },
         { status: 400 }
       );
     }
-
-    // Validate password strength
-    if (password.length < 6) {
-      return NextResponse.json(
-        { error: 'Password must be at least 6 characters' },
-        { status: 400 }
-      );
-    }
+    const { email, password, token } = parseResult.data;
 
     // Find user
     const user = await prisma.user.findUnique({

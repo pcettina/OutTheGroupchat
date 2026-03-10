@@ -160,9 +160,9 @@ export function FeedItem({
         {/* Header */}
         <div className="flex items-start gap-3 mb-4">
           {/* Avatar */}
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white font-semibold overflow-hidden flex-shrink-0">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white font-semibold overflow-hidden flex-shrink-0 relative">
             {user.image ? (
-              <img src={user.image} alt={user.name || ''} className="w-full h-full object-cover" />
+              <Image src={user.image} alt={user.name || ''} fill style={{ objectFit: 'cover' }} />
             ) : (
               user.name?.charAt(0) || '?'
             )}
