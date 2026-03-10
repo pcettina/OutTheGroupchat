@@ -172,8 +172,7 @@ export async function GET(
     }
 
     return NextResponse.json({ success: true, data: trip });
-  } catch (error) {
-    console.error('[TRIP_GET]', error);
+  } catch {
     return NextResponse.json(
       { success: false, error: 'Failed to fetch trip' },
       { status: 500 }
@@ -256,8 +255,7 @@ export async function PATCH(
     });
 
     return NextResponse.json({ success: true, data: trip });
-  } catch (error) {
-    console.error('[TRIP_PATCH]', error);
+  } catch {
     return NextResponse.json(
       { success: false, error: 'Failed to update trip' },
       { status: 500 }
@@ -291,8 +289,7 @@ export async function DELETE(
     });
 
     return NextResponse.json({ success: true, message: 'Trip deleted successfully' });
-  } catch (error) {
-    console.error('[TRIP_DELETE]', error);
+  } catch {
     return NextResponse.json(
       { success: false, error: 'Failed to delete trip' },
       { status: 500 }

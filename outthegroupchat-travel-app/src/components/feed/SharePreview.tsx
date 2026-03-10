@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 
 interface SharePreviewProps {
   title: string;
@@ -53,10 +54,11 @@ export function SharePreview({
       {/* Header Image */}
       {image ? (
         <div className="relative h-40 overflow-hidden">
-          <img
+          <Image
             src={image}
             alt={title}
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
           <div className={`absolute top-3 left-3 px-2 py-1 rounded-full bg-gradient-to-r ${config.gradient} text-white text-xs font-medium flex items-center gap-1`}>
@@ -157,7 +159,7 @@ export function SocialShareCard({
       {/* Background Image */}
       {image && (
         <div className="absolute inset-0">
-          <img src={image} alt="" className="w-full h-full object-cover opacity-30" />
+          <Image src={image} alt="" fill className="object-cover opacity-30" />
         </div>
       )}
 

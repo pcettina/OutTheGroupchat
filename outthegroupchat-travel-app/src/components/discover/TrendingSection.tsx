@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface TrendingItem {
   id: string;
@@ -78,7 +79,7 @@ export function TrendingSection({
                 {/* Image */}
                 <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 overflow-hidden flex-shrink-0">
                   {item.image ? (
-                    <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+                    <Image src={item.image} alt={item.title} width={56} height={56} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-2xl text-white">
                       {item.type === 'destination' ? '📍' : item.type === 'trip' ? '✈️' : '🎯'}

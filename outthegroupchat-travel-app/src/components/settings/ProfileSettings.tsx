@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import { Switch } from '@/components/ui/Switch';
 
 interface ProfileSettingsProps {
@@ -57,7 +58,7 @@ export function ProfileSettings({ user, onSave }: ProfileSettingsProps) {
         <div className="flex items-center gap-6">
           <div className="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white text-2xl font-bold overflow-hidden">
             {user.image ? (
-              <img src={user.image} alt={user.name} className="w-full h-full object-cover" />
+              <Image src={user.image} alt={user.name} width={80} height={80} className="w-full h-full object-cover" />
             ) : (
               user.name?.charAt(0) || '?'
             )}

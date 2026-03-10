@@ -168,9 +168,11 @@ export function MediaGallery({ media, maxDisplay = 4, className = '' }: MediaGal
               onClick={(e) => e.stopPropagation()}
             >
               {selectedMedia.type === 'image' ? (
-                <img
+                <Image
                   src={selectedMedia.url}
                   alt={selectedMedia.alt || 'Media'}
+                  width={1200}
+                  height={900}
                   className="max-w-full max-h-[90vh] object-contain"
                 />
               ) : (

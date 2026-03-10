@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import type { VotingOption } from '@/types';
 
 interface VotingCardProps {
@@ -78,11 +79,12 @@ export default function VotingCard({
 
         {/* Image if present */}
         {option.imageUrl && (
-          <div className="mt-4 rounded-xl overflow-hidden h-40">
-            <img
+          <div className="mt-4 rounded-xl overflow-hidden h-40 relative">
+            <Image
               src={option.imageUrl}
               alt={option.title}
-              className="w-full h-full object-cover"
+              fill
+              className="object-cover"
             />
           </div>
         )}

@@ -51,8 +51,7 @@ export async function GET(
     });
 
     return NextResponse.json({ success: true, data: members });
-  } catch (error) {
-    console.error('[MEMBERS_GET]', error);
+  } catch {
     return NextResponse.json(
       { success: false, error: 'Failed to fetch members' },
       { status: 500 }
@@ -147,8 +146,7 @@ export async function PATCH(
     });
 
     return NextResponse.json({ success: true, data: updatedMember });
-  } catch (error) {
-    console.error('[MEMBERS_PATCH]', error);
+  } catch {
     return NextResponse.json(
       { success: false, error: 'Failed to update member' },
       { status: 500 }
@@ -224,8 +222,7 @@ export async function DELETE(
     });
 
     return NextResponse.json({ success: true, message: 'Member removed' });
-  } catch (error) {
-    console.error('[MEMBERS_DELETE]', error);
+  } catch {
     return NextResponse.json(
       { success: false, error: 'Failed to remove member' },
       { status: 500 }

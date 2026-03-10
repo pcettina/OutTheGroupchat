@@ -91,8 +91,7 @@ export async function GET(
     });
 
     return NextResponse.json({ success: true, data: sessionsWithResults });
-  } catch (error) {
-    console.error('[VOTING_GET]', error);
+  } catch {
     return NextResponse.json(
       { success: false, error: 'Failed to fetch voting sessions' },
       { status: 500 }
@@ -174,8 +173,7 @@ export async function POST(
     });
 
     return NextResponse.json({ success: true, data: votingSession }, { status: 201 });
-  } catch (error) {
-    console.error('[VOTING_POST]', error);
+  } catch {
     return NextResponse.json(
       { success: false, error: 'Failed to create voting session' },
       { status: 500 }
@@ -295,8 +293,7 @@ export async function PUT(
     }
 
     return NextResponse.json({ success: true, data: vote });
-  } catch (error) {
-    console.error('[VOTING_PUT]', error);
+  } catch {
     return NextResponse.json(
       { success: false, error: 'Failed to submit vote' },
       { status: 500 }

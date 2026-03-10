@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
+
+const BetaSignupSchema = z.object({
+  email: z.string().email(),
+  name: z.string().min(1).optional(),
+});
 
 // API Key validation (set in environment variables)
 const N8N_API_KEY = process.env.N8N_API_KEY;
@@ -20,24 +26,15 @@ export async function POST(req: Request) {
       );
     }
 
-    const { email, name } = await req.json();
-
-    // Validate input
-    if (!email) {
+    const body = await req.json();
+    const parseResult = BetaSignupSchema.safeParse(body);
+    if (!parseResult.success) {
       return NextResponse.json(
-        { error: 'Email is required' },
+        { error: 'Invalid input', details: parseResult.error.issues },
         { status: 400 }
       );
     }
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { error: 'Invalid email format' },
-        { status: 400 }
-      );
-    }
+    const { email, name } = parseResult.data;
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({

@@ -101,8 +101,8 @@ export function RealtimeProvider({ children }: RealtimeProviderProps) {
         const data = await res.json();
         setNotifications(data.notifications || []);
       }
-    } catch (error) {
-      console.error('Failed to fetch notifications:', error);
+    } catch {
+      // Notification fetch failure is non-fatal; UI shows empty state
     }
   };
 
@@ -177,8 +177,8 @@ export function RealtimeProvider({ children }: RealtimeProviderProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ read: true }),
       });
-    } catch (error) {
-      console.error('Failed to mark notification as read:', error);
+    } catch {
+      // Optimistic update already applied; ignore sync failure
     }
   }, []);
 
@@ -188,8 +188,8 @@ export function RealtimeProvider({ children }: RealtimeProviderProps) {
 
     try {
       await fetch('/api/notifications/read-all', { method: 'POST' });
-    } catch (error) {
-      console.error('Failed to mark all as read:', error);
+    } catch {
+      // Optimistic update already applied; ignore sync failure
     }
   }, []);
 

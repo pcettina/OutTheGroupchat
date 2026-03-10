@@ -12,7 +12,6 @@ export function getPusherServer() {
       !process.env.PUSHER_SECRET ||
       !process.env.PUSHER_CLUSTER
     ) {
-      console.warn('Pusher environment variables not configured');
       return null;
     }
 
@@ -40,7 +39,6 @@ export function getPusherClient() {
     const cluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER;
 
     if (!key || !cluster) {
-      console.warn('Pusher client environment variables not configured');
       return null;
     }
 
@@ -91,8 +89,8 @@ export async function broadcastToTrip(tripId: string, event: string, data: unkno
 
   try {
     await pusher.trigger(channels.trip(tripId), event, data);
-  } catch (error) {
-    console.error('Failed to broadcast to trip:', error);
+  } catch {
+    // Broadcast failures are non-fatal
   }
 }
 
@@ -103,8 +101,8 @@ export async function broadcastToUser(userId: string, event: string, data: unkno
 
   try {
     await pusher.trigger(channels.user(userId), event, data);
-  } catch (error) {
-    console.error('Failed to broadcast to user:', error);
+  } catch {
+    // Broadcast failures are non-fatal
   }
 }
 

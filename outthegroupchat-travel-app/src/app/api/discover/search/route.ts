@@ -1,6 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { checkRateLimit, apiRateLimiter } from '@/lib/rate-limit';
+
+const DiscoverSearchSchema = z.object({
+  q: z.string().max(200).optional().default(''),
+  city: z.string().max(100).optional().default(''),
+  country: z.string().max(100).optional().default(''),
+  category: z.string().max(100).optional().default(''),
+  source: z.enum(['internal', 'external', '']).optional().default(''),
+  limit: z.coerce.number().int().min(1).max(50).optional().default(20),
+  offset: z.coerce.number().int().min(0).optional().default(0),
+});
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -19,13 +30,23 @@ export async function GET(req: NextRequest) {
     }
 
     const { searchParams } = new URL(req.url);
-    const query = searchParams.get('q') || '';
-    const city = searchParams.get('city') || '';
-    const country = searchParams.get('country') || '';
-    const category = searchParams.get('category') || '';
-    const source = searchParams.get('source') || ''; // 'internal', 'external', or '' for both
-    const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 50);
-    const offset = parseInt(searchParams.get('offset') || '0');
+    const rawParams = {
+      q: searchParams.get('q') ?? undefined,
+      city: searchParams.get('city') ?? undefined,
+      country: searchParams.get('country') ?? undefined,
+      category: searchParams.get('category') ?? undefined,
+      source: searchParams.get('source') ?? undefined,
+      limit: searchParams.get('limit') ?? undefined,
+      offset: searchParams.get('offset') ?? undefined,
+    };
+    const parseResult = DiscoverSearchSchema.safeParse(rawParams);
+    if (!parseResult.success) {
+      return NextResponse.json(
+        { error: 'Invalid query parameters', details: parseResult.error.issues },
+        { status: 400 }
+      );
+    }
+    const { q: query, city, country, category, source, limit, offset } = parseResult.data;
 
     const results: {
       internal: unknown[];

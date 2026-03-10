@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
 import Link from 'next/link';
@@ -126,9 +127,11 @@ export function NotificationItem({
           <div className="relative">
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white font-semibold">
               {notification.sender.image ? (
-                <img
+                <Image
                   src={notification.sender.image}
                   alt={notification.sender.name}
+                  width={40}
+                  height={40}
                   className="w-full h-full rounded-full object-cover"
                 />
               ) : (

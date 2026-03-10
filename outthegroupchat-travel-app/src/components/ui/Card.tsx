@@ -1,7 +1,7 @@
 'use client';
 
 import { forwardRef } from 'react';
-import { motion } from 'framer-motion';
+import { motion, type HTMLMotionProps } from 'framer-motion';
 
 interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: 'default' | 'gradient' | 'glass';
@@ -40,11 +40,11 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
 
     return (
       <motion.div
-        ref={ref as any}
+        ref={ref}
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         className={`${baseClasses} ${variantClasses[variant]} ${paddingClasses[padding]} ${hoverClasses} ${className}`}
-        {...(props as any)}
+        {...(props as HTMLMotionProps<'div'>)}
       >
         {children}
       </motion.div>

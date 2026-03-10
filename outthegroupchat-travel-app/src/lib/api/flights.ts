@@ -77,8 +77,7 @@ async function getAmadeusToken(): Promise<string> {
     };
 
     return amadeusToken.access_token;
-  } catch (error) {
-    console.error('Error getting Amadeus token:', error);
+  } catch {
     throw new Error('Failed to authenticate with Amadeus API');
   }
 }
@@ -184,8 +183,7 @@ export async function searchFlights({
       },
       numberOfBookableSeats: offer.numberOfBookableSeats,
     }));
-  } catch (error) {
-    console.error('Error searching flights:', error);
+  } catch {
     return [];
   }
 }
@@ -212,8 +210,7 @@ export async function getAirportCode(cityName: string): Promise<string | null> {
     }
 
     return null;
-  } catch (error) {
-    console.error('Error getting airport code:', error);
+  } catch {
     return null;
   }
 } 

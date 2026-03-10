@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { Navigation } from '@/components/Navigation';
 
@@ -179,12 +180,13 @@ export default function ProfilePage() {
               <div className="flex flex-col sm:flex-row items-center sm:items-end gap-4">
                 {/* Avatar */}
                 <div className="w-32 h-32 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 p-1 shadow-xl">
-                  <div className="w-full h-full rounded-xl bg-white dark:bg-slate-800 flex items-center justify-center overflow-hidden">
+                  <div className="w-full h-full rounded-xl bg-white dark:bg-slate-800 flex items-center justify-center overflow-hidden relative">
                     {profile.image ? (
-                      <img
+                      <Image
                         src={profile.image}
                         alt={profile.name}
-                        className="w-full h-full object-cover"
+                        fill
+                        style={{ objectFit: 'cover' }}
                       />
                     ) : (
                       <span className="text-4xl font-bold text-emerald-500">

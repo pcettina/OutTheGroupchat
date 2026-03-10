@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import type { UserWithRelations } from '@/types';
 
 interface ProfileHeaderProps {
@@ -64,9 +65,11 @@ export function ProfileHeader({
               >
                 <div className="w-32 h-32 md:w-40 md:h-40 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white text-5xl font-bold border-4 border-white dark:border-slate-800 shadow-xl overflow-hidden">
                   {user.image ? (
-                    <img
+                    <Image
                       src={user.image}
                       alt={user.name || ''}
+                      width={160}
+                      height={160}
                       className="w-full h-full object-cover"
                     />
                   ) : (

@@ -1,6 +1,6 @@
 // Survey Service - Handles survey creation, templates, and analysis
 import { prisma } from '@/lib/prisma';
-import type { Prisma } from '@prisma/client';
+import type { Prisma, TripSurvey } from '@prisma/client';
 import type { SurveyQuestion, SurveyAnalysis, SurveyAnswers } from '@/types';
 
 type SurveyResponseWithUser = Prisma.SurveyResponseGetPayload<{
@@ -360,14 +360,14 @@ export class SurveyService {
   /**
    * Create a default trip planning survey for a trip
    */
-  static async createTripSurvey(tripId: string, expirationHours: number = 48): Promise<any> {
+  static async createTripSurvey(tripId: string, expirationHours: number = 48): Promise<TripSurvey> {
     const expiresAt = new Date(Date.now() + expirationHours * 60 * 60 * 1000);
 
     return prisma.tripSurvey.create({
       data: {
         tripId,
         title: 'Trip Planning Survey',
-        questions: TRIP_PLANNING_SURVEY as any,
+        questions: TRIP_PLANNING_SURVEY as unknown as Prisma.InputJsonValue,
         status: 'ACTIVE',
         expiresAt,
       },

@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
+import Image from 'next/image';
 
 interface Comment {
   id: string;
@@ -41,21 +42,7 @@ export function CommentThread({
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const commentsEndRef = useRef<HTMLDivElement>(null);
 
-  // Fetch comments when opened
-  useEffect(() => {
-    if (isOpen && comments.length === 0) {
-      fetchComments();
-    }
-  }, [isOpen]);
-
-  // Auto-focus input when opened
-  useEffect(() => {
-    if (isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 100);
-    }
-  }, [isOpen]);
-
-  const fetchComments = async () => {
+  const fetchComments = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
@@ -70,11 +57,24 @@ export function CommentThread({
       setComments(data.comments || []);
     } catch (err) {
       setError('Failed to load comments');
-      console.error('Error fetching comments:', err);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [itemId, itemType]);
+
+  // Fetch comments when opened
+  useEffect(() => {
+    if (isOpen && comments.length === 0) {
+      fetchComments();
+    }
+  }, [isOpen, comments.length, fetchComments]);
+
+  // Auto-focus input when opened
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -127,7 +127,6 @@ export function CommentThread({
       setComments((prev) => prev.filter((c) => c.id !== optimisticComment.id));
       setNewComment(optimisticComment.text);
       setError('Failed to post comment');
-      console.error('Error posting comment:', err);
     } finally {
       setIsSubmitting(false);
     }
@@ -168,7 +167,6 @@ export function CommentThread({
       setReplyText('');
     } catch (err) {
       setError('Failed to post reply');
-      console.error('Error posting reply:', err);
     } finally {
       setIsSubmitting(false);
     }
@@ -182,12 +180,13 @@ export function CommentThread({
       className={`flex gap-3 ${isReply ? 'ml-10 mt-3' : ''}`}
     >
       {/* Avatar */}
-      <div className={`${isReply ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white font-semibold overflow-hidden flex-shrink-0`}>
+      <div className={`${isReply ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white font-semibold overflow-hidden flex-shrink-0 relative`}>
         {comment.user.image ? (
-          <img
+          <Image
             src={comment.user.image}
             alt={comment.user.name || ''}
-            className="w-full h-full object-cover"
+            fill
+            style={{ objectFit: 'cover' }}
           />
         ) : (
           <span className={isReply ? 'text-xs' : 'text-sm'}>
