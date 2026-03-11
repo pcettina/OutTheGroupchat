@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
+import type { Prisma } from '@prisma/client';
 
 const updateMemberSchema = z.object({
   role: z.enum(['ADMIN', 'MEMBER']).optional(),
@@ -129,9 +130,9 @@ export async function PATCH(
       where: { id: memberId },
       data: {
         ...(role && { role }),
-        ...(budgetRange && { budgetRange: budgetRange as any }),
+        ...(budgetRange && { budgetRange: budgetRange as unknown as Prisma.InputJsonValue }),
         ...(departureCity !== undefined && { departureCity }),
-        ...(flightDetails && { flightDetails: flightDetails as any }),
+        ...(flightDetails && { flightDetails: flightDetails as unknown as Prisma.InputJsonValue }),
       },
       include: {
         user: {

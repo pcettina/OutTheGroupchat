@@ -1,5 +1,11 @@
-// Trip Recommendation Service
-// Generates trip recommendations based on survey analysis
+/**
+ * Trip Recommendation Service
+ *
+ * Generates AI-assisted trip recommendations based on survey analysis,
+ * member preferences, and budget constraints.
+ *
+ * @module recommendation.service
+ */
 
 import { prisma } from '@/lib/prisma';
 import { SurveyService } from './survey.service';

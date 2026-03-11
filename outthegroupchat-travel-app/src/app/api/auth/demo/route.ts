@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import { logError } from '@/lib/logger';
 
 // Demo credentials from environment variables (security improvement)
 const DEMO_EMAIL = process.env.DEMO_USER_EMAIL || 'alex@demo.com';
@@ -80,7 +81,7 @@ export async function POST() {
       message: 'Demo account ready. Use these credentials to sign in.',
     });
   } catch (error) {
-    console.error('[DEMO_AUTH]', error);
+    logError('DEMO_AUTH', error);
     return NextResponse.json(
       { success: false, error: 'Failed to setup demo account' },
       { status: 500 }

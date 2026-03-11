@@ -1,4 +1,12 @@
-// Survey Service - Handles survey creation, templates, and analysis
+/**
+ * Survey Service
+ *
+ * Handles survey template creation, response collection, and answer analysis
+ * for group trip planning. Provides default templates (INITIAL_USER_SURVEY,
+ * TRIP_PLANNING_SURVEY) and the SurveyService class for DB operations.
+ *
+ * @module survey.service
+ */
 import { prisma } from '@/lib/prisma';
 import type { Prisma, TripSurvey } from '@prisma/client';
 import type { SurveyQuestion, SurveyAnalysis, SurveyAnswers } from '@/types';

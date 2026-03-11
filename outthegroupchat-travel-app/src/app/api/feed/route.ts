@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
+import { logError } from '@/lib/logger';
 
 // Feed item types for different activities
 type FeedItemType = 
@@ -262,7 +263,7 @@ export async function GET(req: Request) {
       },
     });
   } catch (error) {
-    console.error('[FEED_GET]', error);
+    logError('FEED_GET', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch feed' },
       { status: 500 }
@@ -311,7 +312,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, action });
   } catch (error) {
-    console.error('[FEED_POST]', error);
+    logError('FEED_POST', error);
     return NextResponse.json(
       { error: 'Failed to save activity' },
       { status: 500 }

@@ -1,3 +1,6 @@
+// @ts-check
+const { withSentryConfig } = require("@sentry/nextjs");
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -124,4 +127,17 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+// Sentry webpack plugin options.
+// https://github.com/getsentry/sentry-webpack-plugin#options
+const sentryWebpackPluginOptions = {
+  // Suppress sourcemap upload logs during builds.
+  silent: true,
+
+  // Hides source maps from generated client bundles.
+  hideSourceMaps: true,
+
+  // Tree-shake the Sentry logger out of the production bundle.
+  disableLogger: true,
+};
+
+module.exports = withSentryConfig(nextConfig, sentryWebpackPluginOptions);

@@ -7,6 +7,7 @@ import { authOptions } from '@/lib/auth';
 import { getModel } from '@/lib/ai/client';
 import { aiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 import { itinerarySystemPrompt, buildItineraryPrompt } from '@/lib/ai/prompts';
+import { logError } from '@/lib/logger';
 import type { AIGeneratedItinerary, TripPreferences } from '@/types';
 
 // Route segment config for AI itinerary generation
@@ -137,7 +138,7 @@ export async function POST(req: Request) {
       }
       itinerary = JSON.parse(jsonMatch[0]);
     } catch (parseError) {
-      console.error('[ITINERARY_PARSE_ERROR]', parseError);
+      logError('ITINERARY_PARSE_ERROR', parseError);
       return NextResponse.json(
         { success: false, error: 'Failed to parse AI response', rawResponse: text },
         { status: 500 }
@@ -199,7 +200,7 @@ export async function POST(req: Request) {
       },
     });
   } catch (error) {
-    console.error('[AI_GENERATE_ITINERARY]', error);
+    logError('AI_GENERATE_ITINERARY', error);
     return NextResponse.json(
       { success: false, error: 'Failed to generate itinerary' },
       { status: 500 }

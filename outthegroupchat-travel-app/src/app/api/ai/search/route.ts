@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth';
 import { generateEmbedding, cosineSimilarity, buildActivityText } from '@/lib/ai/embeddings';
 import { z } from 'zod';
 import { ActivityCategory, PriceRange } from '@prisma/client';
+import { logError } from '@/lib/logger';
 
 const semanticSearchSchema = z.object({
   query: z.string().min(1).max(500),
@@ -128,7 +129,7 @@ export async function POST(req: Request) {
       },
     });
   } catch (error) {
-    console.error('[AI_SEMANTIC_SEARCH]', error);
+    logError('AI_SEMANTIC_SEARCH', error);
     return NextResponse.json(
       { success: false, error: 'Semantic search failed' },
       { status: 500 }

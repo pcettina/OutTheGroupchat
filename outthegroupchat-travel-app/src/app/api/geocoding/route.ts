@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import type { Destination } from '@/types';
+import { logError } from '@/lib/logger';
 
 // Rate limiting for Nominatim
 let lastRequestTime = 0;
@@ -159,7 +160,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ success: true, data: finalResults });
   } catch (error) {
-    console.error('Geocoding error:', error);
+    logError('GEOCODING', error);
     // Return popular matches as fallback
     return NextResponse.json({ 
       success: true, 
