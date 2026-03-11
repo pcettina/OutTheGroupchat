@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
+import type { Prisma } from '@prisma/client';
 
 const respondSchema = z.object({
   action: z.enum(['accept', 'decline']),
@@ -89,7 +90,7 @@ export async function POST(
           tripId: invitation.tripId,
           userId: session.user.id,
           role: 'MEMBER',
-          budgetRange: budgetRange as any,
+          budgetRange: budgetRange as unknown as Prisma.InputJsonValue,
           departureCity,
         },
       });

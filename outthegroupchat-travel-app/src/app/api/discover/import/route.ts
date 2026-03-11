@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { logError } from '@/lib/logger';
 
 // OpenTripMap API integration
 const OPENTRIPMAP_API_KEY = process.env.OPENTRIPMAP_API_KEY || '';
@@ -204,7 +205,7 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('[DISCOVER/IMPORT] Error:', error);
+    logError('DISCOVER_IMPORT', error);
     return NextResponse.json(
       { error: 'Failed to import activities' },
       { status: 500 }

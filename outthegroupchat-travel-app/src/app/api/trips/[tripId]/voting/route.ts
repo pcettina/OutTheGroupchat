@@ -3,6 +3,15 @@ import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
+import type { Prisma } from '@prisma/client';
+
+interface VotingOption {
+  id: string;
+  title: string;
+  description?: string;
+  imageUrl?: string;
+  metadata?: Record<string, unknown>;
+}
 
 const createVotingSchema = z.object({
   type: z.enum(['DESTINATION', 'ACTIVITY', 'DATE', 'ACCOMMODATION', 'CUSTOM']),
@@ -60,7 +69,7 @@ export async function GET(
 
     // Calculate results for each session
     const sessionsWithResults = votingSessions.map(vs => {
-      const options = vs.options as any[];
+      const options = vs.options as unknown as VotingOption[];
       const voteCounts: Record<string, number> = {};
       
       options.forEach(opt => {
@@ -145,7 +154,7 @@ export async function POST(
         tripId,
         type,
         title,
-        options: options as any,
+        options: options as unknown as Prisma.InputJsonValue,
         status: 'ACTIVE',
         expiresAt,
       },
@@ -249,7 +258,7 @@ export async function PUT(
     }
 
     // Validate option exists
-    const options = votingSession.options as any[];
+    const options = votingSession.options as unknown as VotingOption[];
     if (!options.find(o => o.id === optionId)) {
       return NextResponse.json(
         { success: false, error: 'Invalid option' },

@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
+import type { Prisma, ActivityCategory, ActivityStatus } from '@prisma/client';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -108,8 +109,8 @@ export async function GET(
     const activities = await prisma.activity.findMany({
       where: {
         tripId,
-        ...(category ? { category: category as any } : {}),
-        ...(status ? { status: status as any } : {}),
+        ...(category ? { category: category as ActivityCategory } : {}),
+        ...(status ? { status: status as ActivityStatus } : {}),
       },
       include: {
         _count: {
@@ -207,7 +208,7 @@ export async function POST(
         description: data.description,
         category: data.category,
         status: 'SUGGESTED',
-        location: data.location as any,
+        location: data.location as unknown as Prisma.InputJsonValue,
         date: data.date,
         startTime: data.startTime,
         endTime: data.endTime,
@@ -215,11 +216,11 @@ export async function POST(
         cost: data.cost,
         currency: data.currency,
         priceRange: data.priceRange,
-        costDetails: data.costDetails as any,
+        costDetails: data.costDetails as unknown as Prisma.InputJsonValue,
         bookingStatus: data.bookingStatus || 'NOT_NEEDED',
         bookingUrl: data.bookingUrl,
-        requirements: data.requirements as any,
-        externalLinks: data.externalLinks as any,
+        requirements: data.requirements as unknown as Prisma.InputJsonValue,
+        externalLinks: data.externalLinks as unknown as Prisma.InputJsonValue,
         isPublic: data.isPublic,
       },
       include: {

@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { checkRateLimit, apiRateLimiter } from '@/lib/rate-limit';
+import { logError } from '@/lib/logger';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -162,7 +163,6 @@ export async function GET(req: NextRequest) {
       }));
     } catch {
       // ExternalActivity table might not exist yet
-      console.log('[RECOMMENDATIONS] ExternalActivity table not available');
     }
 
     // Format internal recommendations
@@ -208,7 +208,7 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('[RECOMMENDATIONS] Error:', error);
+    logError('RECOMMENDATIONS', error);
     return NextResponse.json(
       { error: 'Failed to get recommendations' },
       { status: 500 }

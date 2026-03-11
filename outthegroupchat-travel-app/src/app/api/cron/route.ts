@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { logError } from '@/lib/logger';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -188,7 +189,7 @@ export async function GET(req: Request) {
       results,
     });
   } catch (error) {
-    console.error('[CRON] Error:', error);
+    logError('CRON', error);
     return NextResponse.json(
       { success: false, error: 'Cron job failed' },
       { status: 500 }

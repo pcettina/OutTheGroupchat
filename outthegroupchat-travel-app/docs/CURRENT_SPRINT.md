@@ -62,66 +62,63 @@
 
 | Priority | Focus Area | Status |
 |----------|-----------|--------|
-| 🔴 P0 | Test Coverage (currently 0%) | ⏳ Not Started |
-| 🔴 P0 | Sentry / Error Monitoring Setup | ⏳ Not Started |
-| 🟠 P1 | `img` → `next/image` Migration | ⏳ Not Started |
-| 🟠 P1 | `console.log` Cleanup (~30 instances) | ⏳ Not Started |
-| 🟠 P1 | Zod Validation on Unguarded API Routes | ⏳ Not Started |
-| 🟡 P2 | `any` Type Elimination (~12 instances) | ⏳ Not Started |
+| 🔴 P0 | Test Coverage (51 tests passing) | ✅ In Progress |
+| 🔴 P0 | Sentry / Error Monitoring Setup | 🔄 In Progress |
+| 🟠 P1 | `img` → `next/image` Migration | ✅ Complete (2026-03-09) |
+| 🟠 P1 | `console.log` Cleanup (75 → ~50 target) | 🔄 In Progress |
+| 🟠 P1 | Zod Validation on Unguarded API Routes | ✅ Complete (2026-03-09) |
+| 🟡 P2 | `any` Type Elimination (18 → ~7 target) | 🔄 In Progress |
 
 ---
 
 ## 🔴 PRIORITY 0: Test Coverage
 
-**Current State:** 0% — no test runner configured
-**Target:** Vitest for unit/integration, Playwright for E2E
+**Current State:** 51 Vitest tests passing (trips, voting, survey, feed)
+**Target:** 80+ tests; then Playwright for E2E
 
 ### Tasks
-- [ ] Install and configure Vitest + Testing Library
-- [ ] Write unit tests for `src/lib/` utilities (email, geocoding, invitations, rate-limit)
-- [ ] Write integration tests for critical API routes (trips CRUD, invitations, auth)
-- [ ] Install Playwright and write E2E smoke tests (login, create trip, invite member)
-- [ ] Add test scripts to `package.json` and CI pipeline
+- [x] Install and configure Vitest + Testing Library ✅ 2026-03-09
+- [x] Write integration tests: trips API (30 tests) ✅ 2026-03-09
+- [x] Write integration tests: voting API (10 tests) ✅ 2026-03-10
+- [x] Write integration tests: survey API (11 tests) ✅ 2026-03-10
+- [x] Write integration tests: feed API (10 tests) ✅ 2026-03-10
+- [ ] Write unit tests for `src/lib/` utilities (email, geocoding, rate-limit)
+- [ ] Install Playwright and write E2E smoke tests
 
 ---
 
 ## 🔴 PRIORITY 0: Error Monitoring (Sentry)
 
-**Current State:** No monitoring in production
-**Risk:** Bugs in production are invisible until users report them
+**Current State:** `@sentry/nextjs` installed, config files created, DSN added to `.env.example`
+**Risk:** Need real DSN from Sentry dashboard and Vercel env var.
 
 ### Tasks
-- [ ] Install `@sentry/nextjs`
-- [ ] Create Sentry project and obtain DSN
-- [ ] Configure `sentry.client.config.ts` and `sentry.server.config.ts`
+- [x] Install `@sentry/nextjs` ✅ 2026-03-10
+- [x] Configure `sentry.client.config.ts` and `sentry.server.config.ts` ✅ 2026-03-10
+- [x] Add `SENTRY_DSN` to `.env.example` ✅ 2026-03-10
+- [ ] Create Sentry project and obtain real DSN
 - [ ] Add `SENTRY_DSN` to Vercel environment variables
-- [ ] Verify error capture on a test throw in development
+- [ ] Verify error capture in production
 
 ---
 
 ## 🟠 PRIORITY 1: `img` → `next/image` Migration
 
-**Current State:** Raw `<img>` tags in use; Next.js warns on build
-**Goal:** Replace all `<img>` with `next/image` `<Image>` for optimization and LCP improvements
-
-### Tasks
-- [ ] Audit all `.tsx` files for `<img>` usage
-- [ ] Replace each instance with `<Image>` (set `width`, `height`, or `fill` + `sizes`)
-- [ ] Verify no layout shift introduced (check responsive breakpoints)
-- [ ] Confirm build passes with zero `<img>` warnings
+**Current State:** ✅ COMPLETE — 0 `<img>` tags remain (was 18). All migrated to `<Image />`. (2026-03-09)
 
 ---
 
 ## 🟠 PRIORITY 1: `console.log` Cleanup
 
-**Current State:** ~30 `console.log` calls in production code
+**Current State:** 75 → targeting 50. Active cleanup in AI routes and components.
 **Convention:** Use `logger` (pino) for all diagnostic output
 
 ### Tasks
-- [ ] Run `grep -r "console.log" src/` to enumerate all instances
-- [ ] Replace each with appropriate `logger.info`, `logger.warn`, or `logger.error`
-- [ ] Remove debug-only logs that provide no operational value
-- [ ] Confirm `npm run build` produces zero console.log lint warnings
+- [x] Enumerate all console.* instances ✅ (75 found)
+- [ ] Remove/replace in AI API routes (generate-itinerary, recommend, search, suggest-activities)
+- [ ] Remove/replace in service layer files
+- [ ] Remove/replace in component files
+- [ ] Confirm `npm run lint` passes
 
 ---
 

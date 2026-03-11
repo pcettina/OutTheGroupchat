@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { getModel, checkRateLimit } from '@/lib/ai/client';
+import { logError } from '@/lib/logger';
 
 const recommendSchema = z.object({
   userId: z.string().optional(),
@@ -147,7 +148,7 @@ Generate ${limit} personalized activity recommendations. Return ONLY valid JSON.
       const jsonMatch = text.match(/\[[\s\S]*\]/);
       recommendations = jsonMatch ? JSON.parse(jsonMatch[0]) : [];
     } catch {
-      console.error('Failed to parse AI recommendations:', text);
+      logError('AI_RECOMMEND_PARSE', new Error('Failed to parse AI recommendations'));
       recommendations = [];
     }
 
@@ -204,7 +205,7 @@ Generate ${limit} personalized activity recommendations. Return ONLY valid JSON.
       },
     });
   } catch (error) {
-    console.error('[AI_RECOMMEND]', error);
+    logError('AI_RECOMMEND', error);
     return NextResponse.json(
       { error: 'Failed to generate recommendations' },
       { status: 500 }
@@ -312,7 +313,7 @@ Generate 8 activities that would complement existing plans and appeal to the who
       },
     });
   } catch (error) {
-    console.error('[AI_RECOMMEND_GET]', error);
+    logError('AI_RECOMMEND_GET', error);
     return NextResponse.json(
       { error: 'Failed to get recommendations' },
       { status: 500 }
