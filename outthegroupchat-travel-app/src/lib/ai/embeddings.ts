@@ -1,7 +1,13 @@
+/**
+ * @module embeddings
+ * Semantic embedding utilities using OpenAI's text-embedding-3-small model.
+ * Provides vector generation, cosine similarity, in-memory vector store, and
+ * text builders for activities and destinations.
+ */
 import { openai, isOpenAIConfigured } from './client';
 import { embed, embedMany } from 'ai';
 
-// Helper to get OpenAI client or throw
+/** Returns the configured OpenAI client or throws if not configured. */
 function getOpenAIClient() {
   if (!isOpenAIConfigured() || !openai) {
     throw new Error('OpenAI is not configured. Please set OPENAI_API_KEY environment variable.');
@@ -9,7 +15,11 @@ function getOpenAIClient() {
   return openai;
 }
 
-// Generate embedding for a single text
+/**
+ * Generates a vector embedding for a single text string.
+ * @param text - The text to embed.
+ * @returns A float array representing the embedding vector.
+ */
 export async function generateEmbedding(text: string): Promise<number[]> {
   const client = getOpenAIClient();
   const { embedding } = await embed({
@@ -19,7 +29,11 @@ export async function generateEmbedding(text: string): Promise<number[]> {
   return embedding;
 }
 
-// Generate embeddings for multiple texts
+/**
+ * Generates vector embeddings for multiple text strings in a single API call.
+ * @param texts - Array of strings to embed.
+ * @returns Array of float arrays, one per input text.
+ */
 export async function generateEmbeddings(texts: string[]): Promise<number[][]> {
   const client = getOpenAIClient();
   const { embeddings } = await embedMany({
@@ -29,7 +43,13 @@ export async function generateEmbeddings(texts: string[]): Promise<number[][]> {
   return embeddings;
 }
 
-// Calculate cosine similarity between two vectors
+/**
+ * Computes cosine similarity between two equal-length vectors.
+ * @param a - First vector.
+ * @param b - Second vector (must be same length as a).
+ * @returns Similarity score in range [-1, 1], where 1 is identical.
+ * @throws If vectors have different lengths.
+ */
 export function cosineSimilarity(a: number[], b: number[]): number {
   if (a.length !== b.length) {
     throw new Error('Vectors must have the same length');
@@ -98,7 +118,10 @@ export class InMemoryVectorStore {
   }
 }
 
-// Activity text builder for embedding
+/**
+ * Builds a single concatenated text string from an activity object suitable for embedding.
+ * Joins name, description, category, location, and tags with spaces.
+ */
 export function buildActivityText(activity: {
   name: string;
   description?: string | null;
@@ -118,7 +141,10 @@ export function buildActivityText(activity: {
   return parts.join(' ');
 }
 
-// Destination text builder for embedding
+/**
+ * Builds a single concatenated text string from a destination object suitable for embedding.
+ * Joins city, country, description, attractions, and vibes with spaces.
+ */
 export function buildDestinationText(destination: {
   city: string;
   country: string;

@@ -154,13 +154,6 @@ export function AddActivityModal({
 
       if (!response.ok) {
         const data = await response.json();
-        console.error('[AddActivityModal] API Error:', {
-          status: response.status,
-          error: data.error,
-          details: data.details,
-          payload,
-        });
-        
         // Show validation errors if available
         if (data.details) {
           const errorMessages = Object.values(data.details.fieldErrors || {}).flat();

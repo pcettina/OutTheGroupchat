@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
+import { logger } from '@/lib/logger';
 
 // Get all notifications for current user
 export async function GET(req: Request) {
@@ -40,7 +41,7 @@ export async function GET(req: Request) {
       },
     });
   } catch (error) {
-    console.error('[NOTIFICATIONS_GET]', error);
+    logger.error({ error }, '[NOTIFICATIONS_GET] Failed to fetch notifications');
     return NextResponse.json(
       { success: false, error: 'Failed to fetch notifications' },
       { status: 500 }
@@ -70,7 +71,7 @@ export async function PATCH(req: Request) {
       message: 'All notifications marked as read',
     });
   } catch (error) {
-    console.error('[NOTIFICATIONS_PATCH]', error);
+    logger.error({ error }, '[NOTIFICATIONS_PATCH] Failed to update notifications');
     return NextResponse.json(
       { success: false, error: 'Failed to update notifications' },
       { status: 500 }

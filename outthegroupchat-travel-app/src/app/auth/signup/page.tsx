@@ -5,6 +5,12 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 
+interface PendingInvitation {
+  id: string;
+  tripId: string;
+  status: string;
+}
+
 function SignUpForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -79,7 +85,7 @@ function SignUpForm() {
             if (invitationsResponse.ok) {
               const invitationsData = await invitationsResponse.json();
               const pendingInvitation = invitationsData.data?.find(
-                (inv: any) => inv.tripId === tripId && inv.status === 'PENDING'
+                (inv: PendingInvitation) => inv.tripId === tripId && inv.status === 'PENDING'
               );
               
               if (pendingInvitation) {

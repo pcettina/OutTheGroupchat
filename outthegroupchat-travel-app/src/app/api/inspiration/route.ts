@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 const searchSchema = z.object({
   query: z.string().optional(),
@@ -309,7 +310,7 @@ export async function GET(req: Request) {
       },
     });
   } catch (error) {
-    console.error('[INSPIRATION_GET]', error);
+    logger.error({ error }, '[INSPIRATION_GET] Failed to fetch inspiration');
     return NextResponse.json(
       { error: 'Failed to fetch inspiration' },
       { status: 500 }
@@ -345,7 +346,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error) {
-    console.error('[INSPIRATION_POST]', error);
+    logger.error({ error }, '[INSPIRATION_POST] Failed to process request');
     return NextResponse.json(
       { error: 'Failed to process request' },
       { status: 500 }

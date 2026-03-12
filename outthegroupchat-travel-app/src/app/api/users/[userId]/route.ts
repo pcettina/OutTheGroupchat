@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
+import { logger } from '@/lib/logger';
 
 // Get user profile
 export async function GET(
@@ -85,7 +86,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error('[USER_GET]', error);
+    logger.error({ error }, '[USER_GET] Failed to fetch user');
     return NextResponse.json(
       { success: false, error: 'Failed to fetch user' },
       { status: 500 }
@@ -171,7 +172,7 @@ export async function POST(
       });
     }
   } catch (error) {
-    console.error('[USER_FOLLOW]', error);
+    logger.error({ error }, '[USER_FOLLOW] Failed to follow/unfollow');
     return NextResponse.json(
       { success: false, error: 'Failed to follow/unfollow' },
       { status: 500 }

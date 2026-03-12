@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { logger } from '@/lib/logger';
 
 const TICKETMASTER_BASE_URL = 'https://app.ticketmaster.com/discovery/v2';
 const TICKETMASTER_API_KEY = process.env.TICKETMASTER_API_KEY;
@@ -60,7 +61,7 @@ export async function searchEvents({
 
     return response.data._embedded?.events || [];
   } catch (error) {
-    console.error('Error fetching Ticketmaster events:', error);
+    logger.error({ error }, 'Error fetching Ticketmaster events');
     return [];
   }
 }
@@ -75,7 +76,7 @@ export async function getEventDetails(eventId: string): Promise<TicketmasterEven
 
     return response.data;
   } catch (error) {
-    console.error('Error fetching Ticketmaster event details:', error);
+    logger.error({ error }, 'Error fetching Ticketmaster event details');
     return null;
   }
 } 

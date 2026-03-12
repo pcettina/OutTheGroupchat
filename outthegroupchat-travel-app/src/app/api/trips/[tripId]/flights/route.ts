@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { searchFlights, getAirportCode } from '@/lib/api/flights';
+import { logger } from '@/lib/logger';
 
 interface TripMember {
   id: string;
@@ -85,7 +86,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error('[FLIGHT_SUGGESTIONS]', error);
+    logger.error({ error }, '[FLIGHT_SUGGESTIONS] Internal error');
     return new NextResponse('Internal error', { status: 500 });
   }
 } 

@@ -28,7 +28,7 @@ export function Navigation() {
         setNotificationCount(data.pagination?.total || 0);
       }
     } catch (error) {
-      console.error('Failed to fetch notifications:', error);
+      // silently handle notification fetch error
     }
   };
 

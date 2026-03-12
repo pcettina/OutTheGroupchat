@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
+import { logger } from '@/lib/logger';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -34,7 +35,7 @@ export async function GET() {
 
     return NextResponse.json(user);
   } catch (error) {
-    console.error('[PROFILE_GET]', error);
+    logger.error({ error }, '[PROFILE_GET] Internal error');
     return new NextResponse('Internal error', { status: 500 });
   }
 }
@@ -72,7 +73,7 @@ export async function PUT(req: Request) {
 
     return NextResponse.json(user);
   } catch (error) {
-    console.error('[PROFILE_PUT]', error);
+    logger.error({ error }, '[PROFILE_PUT] Internal error');
     return new NextResponse('Internal error', { status: 500 });
   }
 } 

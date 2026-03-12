@@ -89,7 +89,7 @@ export default function FeedPage() {
         setPagination(data.pagination);
       }
     } catch (err) {
-      console.error('Failed to load feed:', err);
+      // silently handle fetch error
     } finally {
       setIsLoading(false);
       setIsLoadingMore(false);

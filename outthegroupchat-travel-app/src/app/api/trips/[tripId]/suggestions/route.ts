@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth';
 import { searchEvents } from '@/lib/api/ticketmaster';
 import { searchPlaces } from '@/lib/api/places';
 import { calculateDailyCosts } from '@/lib/utils/costs';
+import { logger } from '@/lib/logger';
 
 export async function GET(
   req: Request,
@@ -81,7 +82,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error('[TRIP_SUGGESTIONS]', error);
+    logger.error({ error }, '[TRIP_SUGGESTIONS] Internal error');
     return new NextResponse('Internal error', { status: 500 });
   }
 } 

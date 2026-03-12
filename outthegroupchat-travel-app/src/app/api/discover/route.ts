@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { EventsService } from '@/services/events.service';
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 const searchSchema = z.object({
   city: z.string().min(1),
@@ -67,7 +68,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ success: true, data });
   } catch (error) {
-    console.error('[DISCOVER_GET]', error);
+    logger.error({ error }, '[DISCOVER_GET] Failed to fetch discovery data');
     return NextResponse.json(
       { success: false, error: 'Failed to fetch discovery data' },
       { status: 500 }
@@ -103,7 +104,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, data: flights });
   } catch (error) {
-    console.error('[DISCOVER_FLIGHTS_POST]', error);
+    logger.error({ error }, '[DISCOVER_FLIGHTS_POST] Failed to search flights');
     return NextResponse.json(
       { success: false, error: 'Failed to search flights' },
       { status: 500 }

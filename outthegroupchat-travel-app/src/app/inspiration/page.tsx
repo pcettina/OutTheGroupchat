@@ -74,7 +74,7 @@ export default function InspirationPage() {
         setTrendingActivities(data.data.trending);
       }
     } catch (error) {
-      console.error('Failed to fetch inspiration:', error);
+      // silently handle fetch error
     } finally {
       setIsLoading(false);
     }

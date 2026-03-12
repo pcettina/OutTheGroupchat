@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
@@ -225,10 +226,10 @@ export async function PATCH(
       data: {
         ...(updateData.title && { title: updateData.title }),
         ...(updateData.description !== undefined && { description: updateData.description }),
-        ...(updateData.destination && { destination: updateData.destination as any }),
+        ...(updateData.destination && { destination: updateData.destination as Prisma.InputJsonValue }),
         ...(updateData.startDate && { startDate: updateData.startDate }),
         ...(updateData.endDate && { endDate: updateData.endDate }),
-        ...(updateData.budget && { budget: updateData.budget as any }),
+        ...(updateData.budget && { budget: updateData.budget as Prisma.InputJsonValue }),
         ...(updateData.status && { status: updateData.status }),
         ...(updateData.isPublic !== undefined && { isPublic: updateData.isPublic }),
       },

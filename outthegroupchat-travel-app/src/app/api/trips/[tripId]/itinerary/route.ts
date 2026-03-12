@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 const itineraryItemSchema = z.object({
   order: z.number(),
@@ -84,7 +85,7 @@ export async function GET(
 
     return NextResponse.json({ success: true, data: itinerary });
   } catch (error) {
-    console.error('[ITINERARY_GET]', error);
+    logger.error({ error }, '[ITINERARY_GET] Failed to fetch itinerary');
     return NextResponse.json(
       { success: false, error: 'Failed to fetch itinerary' },
       { status: 500 }
@@ -183,7 +184,7 @@ export async function PUT(
 
     return NextResponse.json({ success: true, data: itinerary });
   } catch (error) {
-    console.error('[ITINERARY_PUT]', error);
+    logger.error({ error }, '[ITINERARY_PUT] Failed to update itinerary');
     return NextResponse.json(
       { success: false, error: 'Failed to update itinerary' },
       { status: 500 }

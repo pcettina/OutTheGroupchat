@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
@@ -159,7 +160,7 @@ export async function POST(
       data: {
         tripId,
         title,
-        questions: questions as any,
+        questions: questions as Prisma.InputJsonValue,
         status: 'ACTIVE',
         expiresAt,
       },
@@ -258,12 +259,12 @@ export async function PUT(
         },
       },
       update: {
-        answers: answers as any,
+        answers: answers as Prisma.InputJsonValue,
       },
       create: {
         surveyId: survey.id,
         userId: session.user.id,
-        answers: answers as any,
+        answers: answers as Prisma.InputJsonValue,
       },
       include: {
         user: {

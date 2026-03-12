@@ -1,9 +1,9 @@
 # 📡 API & Integration Status
 
-> **Last updated: 2026-03-09**
+> **Last updated: 2026-03-11**
 >
 > **Last Audit:** March 2026
-> **Overall Status:** 72% Complete
+> **Overall Status:** 75% Complete
 > **Target:** 100% for Beta Launch
 
 ---
@@ -26,10 +26,10 @@
 |----------|--------|--------|-------------------|-------|
 | `/api/auth/[...nextauth]` | ALL | ✅ | ✅ | NextAuth handler |
 | `/api/auth/signup` | POST | ✅ | ✅ | JSON error handling fixed |
-| `/api/auth/demo` | POST | 🔶 | ✅ | Demo credentials exposed (security) |
+| `/api/auth/demo` | POST | ✅ | ✅ | Demo credentials in env vars ✅ 2026-03-10 |
+| `/api/auth/demo` | GET | ✅ | ✅ | Returns demo account info (hides password in prod) |
 
 ### Auth Issues to Fix
-- [ ] Demo credentials should be in env vars
 - [ ] Add password reset endpoint
 - [ ] Add email verification endpoint
 
@@ -188,7 +188,8 @@ BLOCKED - Need Environment Variables:
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
 | `/api/cron` | GET | ✅ | N/A | Background jobs |
-| `/api/health` | GET | ⏳ | ⏳ | Not implemented |
+| `/api/health` | GET | ✅ | N/A | DB connectivity check, env info, 503 on degraded ✅ 2026-03-10 |
+| `/api/users/me` | GET | ✅ | 🔶 | Get current authenticated user |
 
 ---
 
@@ -215,10 +216,10 @@ BLOCKED - Need Environment Variables:
 | AI | 4 | 0 | 4 | 0 | 0 |
 | User | 4 | 2 | 0 | 0 | 2 |
 | Real-time | 1 | 0 | 0 | 0 | 1 |
-| System | 2 | 1 | 0 | 0 | 1 |
-| **TOTAL** | **40** | **26** | **7** | **1** | **6** |
+| System | 3 | 2 | 0 | 0 | 1 |
+| **TOTAL** | **42** | **28** | **7** | **1** | **6** |
 
-**API Completion Rate: 65% fully working** ✅ (Up from 55%)
+**API Completion Rate: 67% fully working** ✅ (Up from 65%)
 
 ---
 
@@ -236,7 +237,7 @@ BLOCKED - Need Environment Variables:
 7. **Pusher Auth** - Add env vars
 
 ### Medium (Nice to Have)
-8. **Health Check** - Add endpoint
+8. **Health Check** - ✅ COMPLETE 2026-03-10
 9. **Follow System** - Implement
 10. **Share/Repost** - Implement
 
@@ -319,4 +320,4 @@ EMAIL_FROM=             # Email sender (onboarding@resend.dev) ✅
 
 *Review and update after each API change.*
 
-*Last Updated: 2026-03-09 - Added /api/images/search and /api/geocoding entries*
+*Last Updated: 2026-03-11 - /api/health marked complete, /api/users/me added, demo auth security resolved, summary counts updated*

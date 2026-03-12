@@ -69,7 +69,6 @@ export function DestinationStep({ data, onUpdate, onNext }: StepProps) {
         setSearchResults(results);
         setShowResults(true);
       } catch (error) {
-        console.error('Search error:', error);
         // Fallback to showing custom destination option
         setSearchResults([{
           city: searchQuery,
