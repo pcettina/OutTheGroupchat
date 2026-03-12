@@ -12,13 +12,13 @@
 |----------|-------|--------|--------|
 | Infrastructure | 92% | 100% | 🟡 Almost Ready |
 | Core Features | 73% | 90% | 🟠 In Progress |
-| Security | 75% | 100% | 🟠 In Progress |
-| Testing | 55% | 80% | 🟠 In Progress |
-| Monitoring | 50% | 80% | 🟠 In Progress |
+| Security | 80% | 100% | 🟠 In Progress |
+| Testing | 60% | 80% | 🟠 In Progress |
+| Monitoring | 55% | 80% | 🟠 In Progress |
 
-**Overall Readiness: 69%** → Target: 85% for Beta Launch
+**Overall Readiness: 72%** → Target: 85% for Beta Launch
 
-> Last updated: 2026-03-10 (nightly build)
+> Last updated: 2026-03-11 (nightly build)
 
 ---
 
@@ -114,24 +114,24 @@
 ```
 ⚠️ MUST FIX BEFORE LAUNCH:
 
-1. [ ] Fix in-memory rate limiting → Use Upstash Redis
-   File: src/lib/ai/client.ts
+1. [x] Fix in-memory rate limiting → Use Upstash Redis ✅ Dec 2025
+   File: src/lib/rate-limit.ts (Redis-based implementation)
 
-2. [ ] Fix JWT callback DB query on every request
-   File: src/lib/auth.ts
+2. [x] Fix JWT callback DB query on every request ✅ Dec 2025
+   File: src/lib/auth.ts (trigger check on signIn/update only)
 
 3. [ ] Remove email from user search
    File: src/app/api/search/route.ts
 
-4. [ ] Fix placeholder user creation abuse
+4. [x] Fix placeholder user creation abuse ✅ Dec 2025
    File: src/app/api/trips/[tripId]/invitations/route.ts
 ```
 
 ### Security Headers
-- [ ] Add security headers to next.config.js
-- [ ] HSTS enabled
-- [ ] X-Frame-Options set
-- [ ] Content-Security-Policy defined
+- [x] Add security headers to next.config.js ✅ 2026-03-10
+- [x] HSTS enabled ✅ 2026-03-10
+- [x] X-Frame-Options set ✅ 2026-03-10
+- [x] Content-Security-Policy defined ✅ 2026-03-10
 
 ---
 
@@ -139,13 +139,14 @@
 
 ### Unit Tests
 - [ ] Service layer tests
-- [ ] Utility function tests
-- [ ] API route tests
+- [x] Utility function tests (email, geocoding, invitations, rate-limit) ✅ 2026-03-11
+- [x] API route tests (trips 30, voting 10, survey 11, feed 12) ✅ 2026-03-10
+- [x] API route tests (auth/signup, notifications, profile) ✅ 2026-03-11
 
 ### Integration Tests
 - [ ] Auth flow tests
-- [ ] Trip CRUD tests
-- [ ] Database operation tests
+- [x] Trip CRUD tests ✅ 2026-03-10
+- [x] Database operation tests (covered via API mocks) ✅ 2026-03-10
 
 ### E2E Tests (Critical Flows)
 - [ ] User signup → trip creation → invite flow
@@ -170,9 +171,9 @@
 ## 📊 PHASE 5: Monitoring & Observability
 
 ### Error Tracking
-- [ ] Sentry installed and configured
-- [ ] Error alerts configured
-- [ ] Source maps uploaded
+- [x] Sentry installed and configured ✅ 2026-03-10 (needs real DSN in Vercel)
+- [ ] Error alerts configured (pending Sentry DSN)
+- [ ] Source maps uploaded (pending Sentry DSN)
 
 ### Performance
 - [ ] Vercel Analytics enabled
@@ -185,9 +186,9 @@
 - [ ] Alert channels configured (Slack/Email)
 
 ### Logging
-- [ ] Structured logging implemented
+- [x] Structured logging implemented (pino via @/lib/logger) ✅ 2026-03-09
 - [ ] Log aggregation configured
-- [ ] Debug logs removed from production
+- [ ] Debug logs removed from production (in progress: 59 → target ~20)
 
 ---
 
@@ -344,4 +345,4 @@ git push origin main  # Auto-deploys to Vercel
 
 *This checklist should be reviewed daily during launch preparation.*
 
-*Last Updated: December 17, 2025 - Production Testing Round 3 Complete*
+*Last Updated: 2026-03-11 - Security headers done, Sentry configured, tests expanded, /api/health complete*

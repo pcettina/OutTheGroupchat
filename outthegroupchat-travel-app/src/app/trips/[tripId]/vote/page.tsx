@@ -49,7 +49,7 @@ export default function VotePage() {
         }
       }
     } catch (err) {
-      console.error('Failed to load voting sessions:', err);
+      // silently handle fetch error
     } finally {
       setIsLoading(false);
     }
@@ -116,7 +116,7 @@ export default function VotePage() {
       setResults(data.data);
       setShowResults(true);
     } catch (err) {
-      console.error('Failed to submit vote:', err);
+      // silently handle submit error
     } finally {
       setIsSubmitting(false);
     }

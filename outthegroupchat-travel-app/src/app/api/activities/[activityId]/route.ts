@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 const commentSchema = z.object({
   text: z.string().min(1).max(500),
@@ -130,7 +131,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error('[ACTIVITY_GET]', error);
+    logger.error({ error }, '[ACTIVITY_GET] Failed to fetch activity');
     return NextResponse.json(
       { success: false, error: 'Failed to fetch activity' },
       { status: 500 }
@@ -209,7 +210,7 @@ export async function POST(
       });
     }
   } catch (error) {
-    console.error('[ACTIVITY_SAVE]', error);
+    logger.error({ error }, '[ACTIVITY_SAVE] Failed to save/unsave activity');
     return NextResponse.json(
       { success: false, error: 'Failed to save/unsave activity' },
       { status: 500 }
@@ -296,7 +297,7 @@ export async function PUT(
       { status: 400 }
     );
   } catch (error) {
-    console.error('[ACTIVITY_PUT]', error);
+    logger.error({ error }, '[ACTIVITY_PUT] Failed to process action');
     return NextResponse.json(
       { success: false, error: 'Failed to process action' },
       { status: 500 }

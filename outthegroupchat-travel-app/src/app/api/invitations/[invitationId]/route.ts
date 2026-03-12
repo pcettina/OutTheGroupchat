@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
 import type { Prisma } from '@prisma/client';
+import { logger } from '@/lib/logger';
 
 const respondSchema = z.object({
   action: z.enum(['accept', 'decline']),
@@ -124,7 +125,7 @@ export async function POST(
       });
     }
   } catch (error) {
-    console.error('[INVITATION_RESPOND]', error);
+    logger.error({ error }, '[INVITATION_RESPOND] Failed to respond to invitation');
     return NextResponse.json(
       { success: false, error: 'Failed to respond to invitation' },
       { status: 500 }
@@ -195,7 +196,7 @@ export async function GET(
 
     return NextResponse.json({ success: true, data: invitation });
   } catch (error) {
-    console.error('[INVITATION_GET]', error);
+    logger.error({ error }, '[INVITATION_GET] Failed to fetch invitation');
     return NextResponse.json(
       { success: false, error: 'Failed to fetch invitation' },
       { status: 500 }

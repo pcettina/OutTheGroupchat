@@ -62,12 +62,12 @@
 
 | Priority | Focus Area | Status |
 |----------|-----------|--------|
-| 🔴 P0 | Test Coverage (51 tests passing) | ✅ In Progress |
-| 🔴 P0 | Sentry / Error Monitoring Setup | 🔄 In Progress |
+| 🔴 P0 | Test Coverage (63 tests passing) | 🔄 In Progress (expanding) |
+| 🔴 P0 | Sentry / Error Monitoring Setup | 🔄 In Progress (needs Vercel DSN) |
 | 🟠 P1 | `img` → `next/image` Migration | ✅ Complete (2026-03-09) |
-| 🟠 P1 | `console.log` Cleanup (75 → ~50 target) | 🔄 In Progress |
+| 🟠 P1 | `console.log` Cleanup (75 → 59 → ~20 target) | 🔄 In Progress |
 | 🟠 P1 | Zod Validation on Unguarded API Routes | ✅ Complete (2026-03-09) |
-| 🟡 P2 | `any` Type Elimination (18 → ~7 target) | 🔄 In Progress |
+| 🟡 P2 | `any` Type Elimination (18 → 6 → 0) | ✅ Complete (2026-03-11) |
 
 ---
 
@@ -81,8 +81,9 @@
 - [x] Write integration tests: trips API (30 tests) ✅ 2026-03-09
 - [x] Write integration tests: voting API (10 tests) ✅ 2026-03-10
 - [x] Write integration tests: survey API (11 tests) ✅ 2026-03-10
-- [x] Write integration tests: feed API (10 tests) ✅ 2026-03-10
-- [ ] Write unit tests for `src/lib/` utilities (email, geocoding, rate-limit)
+- [x] Write integration tests: feed API (12 tests) ✅ 2026-03-10
+- [x] Write unit tests for `src/lib/` utilities (email, geocoding, invitations, rate-limit) ✅ 2026-03-11
+- [x] Write API tests: auth/signup, notifications, profile ✅ 2026-03-11
 - [ ] Install Playwright and write E2E smoke tests
 
 ---
@@ -110,14 +111,16 @@
 
 ## 🟠 PRIORITY 1: `console.log` Cleanup
 
-**Current State:** 75 → targeting 50. Active cleanup in AI routes and components.
+**Current State:** 75 → 59 (2026-03-10) → targeting ~20 (2026-03-11)
 **Convention:** Use `logger` (pino) for all diagnostic output
 
 ### Tasks
 - [x] Enumerate all console.* instances ✅ (75 found)
-- [ ] Remove/replace in AI API routes (generate-itinerary, recommend, search, suggest-activities)
-- [ ] Remove/replace in service layer files
-- [ ] Remove/replace in component files
+- [x] Remove/replace in AI API routes (generate-itinerary, recommend, search, suggest-activities) ✅ 2026-03-10
+- [x] Remove/replace in service layer files ✅ 2026-03-10
+- [x] Remove/replace in API routes (activities, discover, notifications, profile, users, etc.) ✅ 2026-03-11
+- [x] Remove in page and component files ✅ 2026-03-11
+- [x] Replace in lib files (places, ticketmaster, geocoding, rate-limit) ✅ 2026-03-11
 - [ ] Confirm `npm run lint` passes
 
 ---
@@ -137,13 +140,15 @@
 
 ## 🟡 PRIORITY 2: `any` Type Elimination
 
-**Current State:** ~12 `any` types across the codebase
-**Target:** 0 `any` types (TypeScript strict mode)
+**Current State:** ✅ 0 `any` types (2026-03-11). Down from 18 (2026-03-08) → 7 (2026-03-10) → 0.
+**Method:** Used `Prisma.InputJsonValue` for JSON fields; typed interfaces for client-side callbacks.
 
 ### Tasks
-- [ ] Run `tsc --noEmit` and collect all `any` warnings
-- [ ] Replace each with proper interface or union type
-- [ ] Pay special attention to Prisma result types and API response shapes
+- [x] Run `tsc --noEmit` and collect all `any` warnings ✅ 2026-03-10
+- [x] Fix voting/activities/members/invitations routes ✅ 2026-03-10
+- [x] Fix survey/route.ts (3 `any` casts) ✅ 2026-03-11
+- [x] Fix trips/[tripId]/route.ts (2 `any` casts) ✅ 2026-03-11
+- [x] Fix auth/signup/page.tsx (1 `any` callback) ✅ 2026-03-11
 
 ---
 
@@ -176,14 +181,15 @@
 
 ## 📊 Sprint Metrics
 
-| Metric | Target | Current |
-|--------|--------|---------|
-| Test coverage | 30%+ | 0% |
-| `any` types | 0 | ~12 |
-| `console.log` in prod code | 0 | ~30 |
-| Sentry configured | Yes | No |
-| `<img>` warnings on build | 0 | Unknown |
+| Metric | Target | Current | Previous |
+|--------|--------|---------|---------|
+| Test count | 80+ | 90+ (est. after 2026-03-11) | 63 |
+| `any` types | 0 | 0 ✅ | 7 |
+| `console.*` in prod code | 0 | ~20 (est.) | 59 |
+| Sentry configured | Yes | Infrastructure ready | No |
+| `<img>` warnings on build | 0 | 0 ✅ | 0 |
+| Launch readiness | 85% | 72% | 69% |
 
 ---
 
-*Updated: 2026-03-09*
+*Updated: 2026-03-11*

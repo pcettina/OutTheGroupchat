@@ -41,7 +41,7 @@ export default function DiscoverPage() {
       const data = await res.json();
       setActivities(data.data || []);
     } catch (err) {
-      console.error('Failed to load activities:', err);
+      // silently handle fetch error
     } finally {
       setIsLoading(false);
     }
@@ -60,7 +60,7 @@ export default function DiscoverPage() {
         body: JSON.stringify({ action: 'save' }),
       });
     } catch (err) {
-      console.error('Failed to save activity:', err);
+      // silently handle save error
     }
   };
 

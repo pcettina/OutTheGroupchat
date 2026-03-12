@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
+import { logger } from '@/lib/logger';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -59,7 +60,7 @@ export async function GET() {
 
     return NextResponse.json({ success: true, data: updatedInvitations });
   } catch (error) {
-    console.error('[INVITATIONS_GET]', error);
+    logger.error({ error }, '[INVITATIONS_GET] Failed to fetch invitations');
     return NextResponse.json(
       { success: false, error: 'Failed to fetch invitations' },
       { status: 500 }

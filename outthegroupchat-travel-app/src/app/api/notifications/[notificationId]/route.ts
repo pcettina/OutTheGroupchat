@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
+import { logger } from '@/lib/logger';
 
 // Mark a single notification as read
 export async function PATCH(
@@ -41,7 +42,7 @@ export async function PATCH(
 
     return NextResponse.json({ success: true, data: updated });
   } catch (error) {
-    console.error('[NOTIFICATION_PATCH]', error);
+    logger.error({ error }, '[NOTIFICATION_PATCH] Failed to update notification');
     return NextResponse.json(
       { success: false, error: 'Failed to update notification' },
       { status: 500 }
@@ -86,7 +87,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true, message: 'Notification deleted' });
   } catch (error) {
-    console.error('[NOTIFICATION_DELETE]', error);
+    logger.error({ error }, '[NOTIFICATION_DELETE] Failed to delete notification');
     return NextResponse.json(
       { success: false, error: 'Failed to delete notification' },
       { status: 500 }

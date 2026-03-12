@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { ZodSchema, ZodError } from 'zod';
 import { authOptions } from '@/lib/auth';
 import { checkRateLimit, apiRateLimiter, authRateLimiter } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 // ============================================
 // Types
@@ -59,7 +60,7 @@ export function withAuth<T>(
         session: { user: session.user as { id: string; name?: string | null; email?: string | null } },
       });
     } catch (error) {
-      console.error('[API_AUTH_ERROR]', error);
+      logger.error({ error }, '[API_AUTH_ERROR] Authentication error');
       return NextResponse.json(
         { success: false, error: 'Authentication error' },
         { status: 500 }
@@ -241,7 +242,7 @@ export function apiError(
  * Handle unknown errors safely
  */
 export function handleApiError(error: unknown): NextResponse<ApiErrorResponse> {
-  console.error('[API_ERROR]', error);
+  logger.error({ error }, '[API_ERROR] Unexpected error');
 
   if (error instanceof ZodError) {
     return apiError('Validation failed', 400, formatZodError(error));

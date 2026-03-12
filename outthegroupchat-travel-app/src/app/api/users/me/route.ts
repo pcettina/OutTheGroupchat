@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 const updateProfileSchema = z.object({
   name: z.string().min(1).optional(),
@@ -111,7 +112,7 @@ export async function GET() {
       },
     });
   } catch (error) {
-    console.error('[USER_ME_GET]', error);
+    logger.error({ error }, '[USER_ME_GET] Failed to fetch profile');
     return NextResponse.json(
       { success: false, error: 'Failed to fetch profile' },
       { status: 500 }
@@ -174,7 +175,7 @@ export async function PATCH(req: Request) {
 
     return NextResponse.json({ success: true, data: updatedUser });
   } catch (error) {
-    console.error('[USER_ME_PATCH]', error);
+    logger.error({ error }, '[USER_ME_PATCH] Failed to update profile');
     return NextResponse.json(
       { success: false, error: 'Failed to update profile' },
       { status: 500 }

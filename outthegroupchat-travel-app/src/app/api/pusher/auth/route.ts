@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getPusherServer } from '@/lib/pusher';
+import { logger } from '@/lib/logger';
 
 // Pusher channel authentication endpoint
 export async function POST(req: Request) {
@@ -45,7 +46,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(authResponse);
   } catch (error) {
-    console.error('[PUSHER_AUTH]', error);
+    logger.error({ error }, '[PUSHER_AUTH] Authentication failed');
     return NextResponse.json(
       { error: 'Authentication failed' },
       { status: 500 }

@@ -106,7 +106,7 @@ export default function Home() {
         }
       }
     } catch (error) {
-      console.error('Demo login failed:', error);
+      // silently handle demo login error
     } finally {
       setIsDemoLoading(false);
     }

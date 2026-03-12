@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { RecommendationService } from '@/services/recommendation.service';
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 const applyRecommendationSchema = z.object({
   recommendationId: z.string(),
@@ -65,7 +66,7 @@ export async function GET(
 
     return NextResponse.json({ success: true, data: recommendations });
   } catch (error) {
-    console.error('[RECOMMENDATIONS_GET]', error);
+    logger.error({ error }, '[RECOMMENDATIONS_GET] Failed to generate recommendations');
     return NextResponse.json(
       { success: false, error: 'Failed to generate recommendations' },
       { status: 500 }
@@ -140,7 +141,7 @@ export async function POST(
       { status: 400 }
     );
   } catch (error) {
-    console.error('[RECOMMENDATIONS_POST]', error);
+    logger.error({ error }, '[RECOMMENDATIONS_POST] Failed to apply recommendation');
     return NextResponse.json(
       { success: false, error: 'Failed to apply recommendation' },
       { status: 500 }

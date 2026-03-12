@@ -1,5 +1,6 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
+import { logger } from '@/lib/logger';
 
 // Get and clean environment variables (remove any whitespace/newlines)
 const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL?.trim();
@@ -64,7 +65,7 @@ export async function checkRateLimit(
 ): Promise<{ success: boolean; limit: number; remaining: number; reset: number }> {
   // If Redis is not configured, allow all requests (development fallback)
   if (!limiter) {
-    console.warn('[RATE_LIMIT] Redis not configured, skipping rate limit check');
+    logger.warn('[RATE_LIMIT] Redis not configured, skipping rate limit check');
     return { success: true, limit: 0, remaining: 0, reset: 0 };
   }
 
@@ -77,7 +78,7 @@ export async function checkRateLimit(
       reset: result.reset,
     };
   } catch (error) {
-    console.error('[RATE_LIMIT] Error checking rate limit:', error);
+    logger.error({ error }, '[RATE_LIMIT] Error checking rate limit');
     // On error, allow the request but log the issue
     return { success: true, limit: 0, remaining: 0, reset: 0 };
   }

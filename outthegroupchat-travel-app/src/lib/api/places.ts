@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { logger } from '@/lib/logger';
 
 const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY;
 const GOOGLE_PLACES_BASE_URL = 'https://maps.googleapis.com/maps/api/place';
@@ -52,7 +53,7 @@ export async function searchPlaces({
 
     return response.data.results || [];
   } catch (error) {
-    console.error('Error searching places:', error);
+    logger.error({ error }, 'Error searching places');
     return [];
   }
 }
@@ -69,7 +70,7 @@ export async function getPlaceDetails(placeId: string): Promise<PlaceDetails | n
 
     return response.data.result || null;
   } catch (error) {
-    console.error('Error fetching place details:', error);
+    logger.error({ error }, 'Error fetching place details');
     return null;
   }
 }

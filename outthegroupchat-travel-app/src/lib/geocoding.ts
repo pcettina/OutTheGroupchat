@@ -5,6 +5,7 @@
  */
 
 import type { Destination } from '@/types';
+import { logger } from '@/lib/logger';
 
 // Nominatim API response type
 interface NominatimResult {
@@ -120,7 +121,7 @@ export async function searchDestinations(query: string): Promise<Destination[]> 
 
     return destinations;
   } catch (error) {
-    console.error('Geocoding error:', error);
+    logger.error({ error }, 'Geocoding error');
     return [];
   }
 }
@@ -206,7 +207,7 @@ export async function getDestinationCoordinates(
 
     return coords;
   } catch (error) {
-    console.error('Coordinate lookup error:', error);
+    logger.error({ error }, 'Coordinate lookup error');
     return null;
   }
 }
