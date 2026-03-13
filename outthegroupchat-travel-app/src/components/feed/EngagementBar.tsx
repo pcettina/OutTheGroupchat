@@ -43,8 +43,7 @@ export function EngagementBar({
             setLikeCount(data.likeCount || 0);
           }
         }
-      } catch (error) {
-        console.error('Failed to fetch like state:', error);
+      } catch {
         // Fall back to initial values on error
       } finally {
         setIsLoading(false);
@@ -87,11 +86,10 @@ export function EngagementBar({
         }
         onLike?.(newLikedState);
       }
-    } catch (error) {
+    } catch {
       // Revert on error
       setIsLiked(!newLikedState);
       setLikeCount(prev => newLikedState ? prev - 1 : prev + 1);
-      console.error('Failed to update like:', error);
     } finally {
       setIsLiking(false);
     }

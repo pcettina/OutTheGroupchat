@@ -62,12 +62,14 @@
 
 | Priority | Focus Area | Status |
 |----------|-----------|--------|
-| 🔴 P0 | Test Coverage (63 tests passing) | 🔄 In Progress (expanding) |
+| 🔴 P0 | Test Coverage (170+ tests passing) | 🔄 In Progress (expanding) |
 | 🔴 P0 | Sentry / Error Monitoring Setup | 🔄 In Progress (needs Vercel DSN) |
 | 🟠 P1 | `img` → `next/image` Migration | ✅ Complete (2026-03-09) |
-| 🟠 P1 | `console.log` Cleanup (75 → 59 → ~20 target) | 🔄 In Progress |
-| 🟠 P1 | Zod Validation on Unguarded API Routes | ✅ Complete (2026-03-09) |
+| 🟠 P1 | `console.*` Cleanup (75 → 59 → 9 → 0) | ✅ Complete (2026-03-12) |
+| 🟠 P1 | Zod Validation on Unguarded API Routes | 🔄 In Progress (major routes done) |
 | 🟡 P2 | `any` Type Elimination (18 → 6 → 0) | ✅ Complete (2026-03-11) |
+| 🟡 P2 | Password Reset API | ✅ Complete (2026-03-12) |
+| 🟡 P2 | Playwright E2E Setup | ✅ Complete (2026-03-12) |
 
 ---
 
@@ -84,7 +86,9 @@
 - [x] Write integration tests: feed API (12 tests) ✅ 2026-03-10
 - [x] Write unit tests for `src/lib/` utilities (email, geocoding, invitations, rate-limit) ✅ 2026-03-11
 - [x] Write API tests: auth/signup, notifications, profile ✅ 2026-03-11
-- [ ] Install Playwright and write E2E smoke tests
+- [x] Write API tests: password reset (POST + PATCH) ✅ 2026-03-12
+- [x] Configure Playwright and write E2E smoke tests (smoke.spec.ts) ✅ 2026-03-12
+- [ ] Install Playwright browsers: `npx playwright install chromium`
 
 ---
 

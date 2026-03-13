@@ -11,14 +11,14 @@
 | Category | Score | Target | Status |
 |----------|-------|--------|--------|
 | Infrastructure | 92% | 100% | 🟡 Almost Ready |
-| Core Features | 73% | 90% | 🟠 In Progress |
-| Security | 80% | 100% | 🟠 In Progress |
-| Testing | 60% | 80% | 🟠 In Progress |
+| Core Features | 77% | 90% | 🟠 In Progress |
+| Security | 83% | 100% | 🟠 In Progress |
+| Testing | 68% | 80% | 🟠 In Progress |
 | Monitoring | 55% | 80% | 🟠 In Progress |
 
-**Overall Readiness: 72%** → Target: 85% for Beta Launch
+**Overall Readiness: 75%** → Target: 85% for Beta Launch
 
-> Last updated: 2026-03-11 (nightly build)
+> Last updated: 2026-03-12 (nightly build)
 
 ---
 
@@ -54,7 +54,7 @@
 - [x] Email/password signup
 - [x] Email/password signin
 - [x] Session management (NextAuth)
-- [ ] Password reset flow
+- [x] Password reset flow ✅ 2026-03-12 (API complete; needs frontend UI page)
 - [ ] Email verification
 - [ ] OAuth providers (Google, Apple) - *Post-beta*
 

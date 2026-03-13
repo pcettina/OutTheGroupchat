@@ -3,6 +3,19 @@ import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { logError } from '@/lib/logger';
+import { z } from 'zod';
+
+const postCommentSchema = z.object({
+  itemId: z.string().min(1, 'itemId is required'),
+  itemType: z.enum(['activity', 'trip'], { message: 'itemType must be activity or trip' }),
+  text: z.string().min(1, 'Comment text is required').max(2000, 'Comment too long'),
+  parentId: z.string().optional(),
+});
+
+const deleteCommentSchema = z.object({
+  commentId: z.string().min(1, 'commentId is required'),
+  itemType: z.enum(['activity', 'trip']).default('activity'),
+});
 
 // Get comments for an item (activity or trip)
 export async function GET(req: Request) {
@@ -81,11 +94,14 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { itemId, itemType, text, parentId } = body;
-
-    if (!itemId || !itemType || !text?.trim()) {
-      return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+    const parsed = postCommentSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Invalid request', issues: parsed.error.issues },
+        { status: 400 }
+      );
     }
+    const { itemId, itemType, text, parentId } = parsed.data;
 
     let comment;
     let notificationData: { ownerId: string; title: string } | null = null;
@@ -231,12 +247,17 @@ export async function DELETE(req: Request) {
     }
 
     const { searchParams } = new URL(req.url);
-    const commentId = searchParams.get('commentId');
-    const itemType = searchParams.get('itemType') || 'activity';
-
-    if (!commentId) {
-      return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+    const deleteResult = deleteCommentSchema.safeParse({
+      commentId: searchParams.get('commentId'),
+      itemType: searchParams.get('itemType') ?? 'activity',
+    });
+    if (!deleteResult.success) {
+      return NextResponse.json(
+        { error: 'Invalid request', issues: deleteResult.error.issues },
+        { status: 400 }
+      );
     }
+    const { commentId, itemType } = deleteResult.data;
 
     if (itemType === 'trip') {
       // Check if trip comment exists and belongs to user
