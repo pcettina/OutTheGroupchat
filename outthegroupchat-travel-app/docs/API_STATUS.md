@@ -1,9 +1,9 @@
 # 📡 API & Integration Status
 
-> **Last updated: 2026-03-11**
+> **Last updated: 2026-03-12**
 >
 > **Last Audit:** March 2026
-> **Overall Status:** 75% Complete
+> **Overall Status:** 77% Complete
 > **Target:** 100% for Beta Launch
 
 ---
@@ -28,6 +28,8 @@
 | `/api/auth/signup` | POST | ✅ | ✅ | JSON error handling fixed |
 | `/api/auth/demo` | POST | ✅ | ✅ | Demo credentials in env vars ✅ 2026-03-10 |
 | `/api/auth/demo` | GET | ✅ | ✅ | Returns demo account info (hides password in prod) |
+| `/api/auth/reset-password` | POST | ✅ | ⏳ | Request reset token; email-safe 200 response ✅ 2026-03-12 |
+| `/api/auth/reset-password` | PATCH | ✅ | ⏳ | Confirm reset with token + new password ✅ 2026-03-12 |
 
 ### Auth Issues to Fix
 - [ ] Add password reset endpoint

@@ -3,6 +3,13 @@ import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { logError } from '@/lib/logger';
+import { z } from 'zod';
+
+const engagementSchema = z.object({
+  itemId: z.string().min(1, 'itemId is required'),
+  itemType: z.enum(['activity', 'trip'], { message: 'itemType must be activity or trip' }),
+  action: z.enum(['like', 'unlike'], { message: 'action must be like or unlike' }),
+});
 
 // Handle likes/unlikes for feed items
 export async function POST(req: Request) {
@@ -14,11 +21,14 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { itemId, itemType, action } = body;
-
-    if (!itemId || !itemType || !['like', 'unlike'].includes(action)) {
-      return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+    const parsed = engagementSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Invalid request', issues: parsed.error.issues },
+        { status: 400 }
+      );
     }
+    const { itemId, itemType, action } = parsed.data;
 
     const userId = session.user.id;
 

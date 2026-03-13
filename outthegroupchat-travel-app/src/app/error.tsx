@@ -11,7 +11,9 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error('Global error:', error);
+    // Errors are captured by Sentry via instrumentation-client
+    // No explicit logging needed here
+    void error;
   }, [error]);
 
   return (

@@ -105,8 +105,7 @@ function SignUpForm() {
               }
             }
           }
-        } catch (inviteError) {
-          console.error('Failed to auto-accept invitation:', inviteError);
+        } catch {
           // Continue with normal redirect even if auto-accept fails
         }
       }

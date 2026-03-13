@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
+import { logError } from '@/lib/logger';
 import { z } from 'zod';
 import type { Prisma, ActivityCategory, ActivityStatus } from '@prisma/client';
 
@@ -143,7 +144,7 @@ export async function GET(
 
     return NextResponse.json({ success: true, data: activitiesWithRatings });
   } catch (error) {
-    console.error('[ACTIVITIES_GET]', error);
+    logError('ACTIVITIES_GET', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch activities' },
       { status: 500 }
@@ -236,7 +237,7 @@ export async function POST(
 
     return NextResponse.json({ success: true, data: activity }, { status: 201 });
   } catch (error) {
-    console.error('[ACTIVITIES_POST]', error);
+    logError('ACTIVITIES_POST', error);
     return NextResponse.json(
       { success: false, error: 'Failed to create activity' },
       { status: 500 }

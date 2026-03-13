@@ -58,8 +58,8 @@ export function TripChat({ tripContext, onAction, className = '' }: TripChatProp
             ...m,
             timestamp: new Date(m.timestamp),
           })));
-        } catch (e) {
-          console.error('Failed to parse chat history:', e);
+        } catch {
+          // Ignore parse errors; start with empty history
         }
       }
     }
@@ -227,8 +227,7 @@ Where are you thinking of going?`;
         ));
       }
 
-    } catch (error) {
-      console.error('Chat error:', error);
+    } catch {
       const errorMessage: Message = {
         id: assistantMessageId,
         role: 'assistant',

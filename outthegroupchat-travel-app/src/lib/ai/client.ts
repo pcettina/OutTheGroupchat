@@ -1,5 +1,6 @@
 import { createOpenAI } from '@ai-sdk/openai';
 import { createAnthropic } from '@ai-sdk/anthropic';
+import { logger } from '@/lib/logger';
 
 // Check if API keys are configured
 export function isOpenAIConfigured(): boolean {
@@ -95,7 +96,7 @@ export {
 const requestCounts = new Map<string, { count: number; resetAt: number }>();
 
 export function checkRateLimit(userId: string, limit = 20, windowMs = 60000): boolean {
-  console.warn('[DEPRECATED] Using in-memory rate limiting. Migrate to Redis-based rate limiting.');
+  logger.warn('[DEPRECATED] Using in-memory rate limiting. Migrate to Redis-based rate limiting.');
   const now = Date.now();
   const userLimit = requestCounts.get(userId);
   
