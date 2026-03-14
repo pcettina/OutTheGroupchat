@@ -208,7 +208,12 @@ export class EventsService {
   }
 
   /**
-   * Get comprehensive destination info
+   * Get comprehensive destination info including events, restaurants, attractions, and nightlife
+   * @param city - The destination city name (e.g., "Nashville", "New York")
+   * @param startDate - The start date of the trip for event search
+   * @param endDate - The end date of the trip for event search
+   * @returns An object containing events (up to 20), restaurants with price estimates,
+   *   attractions, nightlife venues, and lat/lng coordinates for the city (or null if unknown)
    */
   static async getDestinationInfo(city: string, startDate: Date, endDate: Date) {
     const [events, restaurants, attractions, nightlife] = await Promise.all([

@@ -32,6 +32,12 @@ export default function NotFound() {
           >
             Browse Trips
           </Link>
+          <Link
+            href="/auth/signin"
+            className="px-6 py-3 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-medium rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+          >
+            Sign In
+          </Link>
         </div>
       </div>
     </div>

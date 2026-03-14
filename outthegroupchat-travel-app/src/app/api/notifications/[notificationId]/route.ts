@@ -3,6 +3,11 @@ import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { logger } from '@/lib/logger';
+import { z } from 'zod';
+
+const patchNotificationSchema = z.object({
+  read: z.boolean().optional().default(true),
+});
 
 // Mark a single notification as read
 export async function PATCH(
@@ -15,6 +20,16 @@ export async function PATCH(
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const rawBody = await req.text();
+    const body = rawBody ? JSON.parse(rawBody) : {};
+    const parsed = patchNotificationSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Invalid input', issues: parsed.error.issues },
+        { status: 400 }
+      );
     }
 
     const notification = await prisma.notification.findUnique({

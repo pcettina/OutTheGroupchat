@@ -143,10 +143,12 @@ Generate ${limit} personalized activity recommendations. Return ONLY valid JSON.
     });
 
     // Parse AI response
-    let recommendations;
+    let recommendations: unknown[] = [];
     try {
       const jsonMatch = text.match(/\[[\s\S]*\]/);
-      recommendations = jsonMatch ? JSON.parse(jsonMatch[0]) : [];
+      const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : [];
+      const parseValidation = z.array(z.unknown()).safeParse(parsed);
+      recommendations = parseValidation.success ? parseValidation.data : [];
     } catch {
       logError('AI_RECOMMEND_PARSE', new Error('Failed to parse AI recommendations'));
       recommendations = [];
@@ -295,10 +297,12 @@ Generate 8 activities that would complement existing plans and appeal to the who
       prompt,
     });
 
-    let recommendations;
+    let recommendations: unknown[] = [];
     try {
       const jsonMatch = text.match(/\[[\s\S]*\]/);
-      recommendations = jsonMatch ? JSON.parse(jsonMatch[0]) : [];
+      const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : [];
+      const parseValidation = z.array(z.unknown()).safeParse(parsed);
+      recommendations = parseValidation.success ? parseValidation.data : [];
     } catch {
       recommendations = [];
     }

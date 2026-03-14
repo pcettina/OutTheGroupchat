@@ -66,9 +66,12 @@
 | 🔴 P0 | Sentry / Error Monitoring Setup | 🔄 In Progress (needs Vercel DSN) |
 | 🟠 P1 | `img` → `next/image` Migration | ✅ Complete (2026-03-09) |
 | 🟠 P1 | `console.*` Cleanup (75 → 59 → 9 → 0) | ✅ Complete (2026-03-12) |
-| 🟠 P1 | Zod Validation on Unguarded API Routes | 🔄 In Progress (major routes done) |
+| 🟠 P1 | Zod Validation on Unguarded API Routes | ✅ Complete (2026-03-13) |
 | 🟡 P2 | `any` Type Elimination (18 → 6 → 0) | ✅ Complete (2026-03-11) |
 | 🟡 P2 | Password Reset API | ✅ Complete (2026-03-12) |
+| 🟡 P2 | Password Reset UI Pages | ✅ Complete (2026-03-13) |
+| 🟡 P2 | Error Boundary (global-error.tsx) | ✅ Complete (2026-03-13) |
+| 🟡 P2 | 404 Page Improvements | ✅ Complete (2026-03-13) |
 | 🟡 P2 | Playwright E2E Setup | ✅ Complete (2026-03-12) |
 
 ---
@@ -137,6 +140,8 @@
 ### Tasks
 - [ ] Audit all `POST` and `PATCH` API routes for missing Zod schemas
 - [ ] Add Zod schemas for: `/api/trips`, `/api/trips/[tripId]`, `/api/feed/comments`, `/api/feed/engagement`
+- [x] Add Zod validation to `/api/profile` PUT ✅ 2026-03-13
+- [x] Add Zod validation to `/api/notifications/[id]` PATCH ✅ 2026-03-13
 - [ ] Return standardized 400 errors with Zod issue details on validation failure
 - [ ] Write tests asserting validation rejects bad input
 
@@ -196,4 +201,4 @@
 
 ---
 
-*Updated: 2026-03-11*
+*Updated: 2026-03-13*

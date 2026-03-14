@@ -83,7 +83,12 @@ export async function POST(req: Request) {
       if (!jsonMatch) {
         throw new Error('No JSON found in response');
       }
-      recommendations = JSON.parse(jsonMatch[0]);
+      const parsed = JSON.parse(jsonMatch[0]);
+      const parseValidation = z.object({}).passthrough().safeParse(parsed);
+      if (!parseValidation.success) {
+        throw new Error('AI response did not match expected shape');
+      }
+      recommendations = parseValidation.data as typeof recommendations;
     } catch (parseError) {
       logError('ACTIVITY_SUGGESTIONS_PARSE_ERROR', parseError);
       return NextResponse.json(

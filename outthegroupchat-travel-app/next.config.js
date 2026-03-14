@@ -137,7 +137,12 @@ const sentryWebpackPluginOptions = {
   hideSourceMaps: true,
 
   // Tree-shake the Sentry logger out of the production bundle.
-  disableLogger: true,
+  // disableLogger is deprecated — use webpack.treeshake.removeDebugLogging instead.
+  webpack: {
+    treeshake: {
+      removeDebugLogging: true,
+    },
+  },
 };
 
 module.exports = withSentryConfig(nextConfig, sentryWebpackPluginOptions);
