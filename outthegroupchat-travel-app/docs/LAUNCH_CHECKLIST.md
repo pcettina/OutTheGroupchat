@@ -54,7 +54,7 @@
 - [x] Email/password signup
 - [x] Email/password signin
 - [x] Session management (NextAuth)
-- [x] Password reset flow ✅ 2026-03-12 (API complete; needs frontend UI page)
+- [x] Password reset flow ✅ 2026-03-14 (API + frontend UI pages complete)
 - [ ] Email verification
 - [ ] OAuth providers (Google, Apple) - *Post-beta*
 
