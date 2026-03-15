@@ -1,8 +1,18 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { logger } from '@/lib/logger';
+import { z } from 'zod';
+
+const updateProfileSchema = z.object({
+  name: z.string().optional(),
+  bio: z.string().optional(),
+  city: z.string().optional(),
+  image: z.string().optional(),
+  preferences: z.record(z.unknown()).optional(),
+});
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -49,7 +59,14 @@ export async function PUT(req: Request) {
     }
 
     const body = await req.json();
-    const { name, city, bio, preferences } = body;
+    const parsed = updateProfileSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Invalid input', issues: parsed.error.issues },
+        { status: 400 }
+      );
+    }
+    const { name, city, bio, image, preferences } = parsed.data;
 
     const user = await prisma.user.update({
       where: {
@@ -59,7 +76,8 @@ export async function PUT(req: Request) {
         name,
         city,
         bio,
-        preferences,
+        image,
+        preferences: preferences as Prisma.InputJsonValue | undefined,
       },
       select: {
         id: true,
