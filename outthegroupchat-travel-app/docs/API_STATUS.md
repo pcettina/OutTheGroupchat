@@ -1,9 +1,9 @@
 # 📡 API & Integration Status
 
-> **Last updated: 2026-03-13**
+> **Last updated: 2026-03-14**
 >
 > **Last Audit:** March 2026
-> **Overall Status:** 77% Complete
+> **Overall Status:** 79% Complete
 > **Target:** 100% for Beta Launch
 
 ---
@@ -28,8 +28,8 @@
 | `/api/auth/signup` | POST | ✅ | ✅ | JSON error handling fixed |
 | `/api/auth/demo` | POST | ✅ | ✅ | Demo credentials in env vars ✅ 2026-03-10 |
 | `/api/auth/demo` | GET | ✅ | ✅ | Returns demo account info (hides password in prod) |
-| `/api/auth/reset-password` | POST | ✅ | ⏳ | Request reset token; email-safe 200 response ✅ 2026-03-12 |
-| `/api/auth/reset-password` | PATCH | ✅ | ⏳ | Confirm reset with token + new password ✅ 2026-03-12 |
+| `/api/auth/reset-password` | POST | ✅ | ✅ | Request reset token; email-safe 200 response ✅ 2026-03-12; UI page added 2026-03-14 |
+| `/api/auth/reset-password` | PATCH | ✅ | ✅ | Confirm reset with token + new password ✅ 2026-03-12; UI confirm page added 2026-03-14 |
 
 ### Auth Issues to Fix
 - [x] Add password reset endpoint ✅ 2026-03-12
@@ -85,7 +85,7 @@
 | `/api/feed/comments` | GET | ✅ | ✅ | **Trip support added** ✅ Dec 17 |
 | `/api/feed/comments` | POST | ✅ | ✅ | **Trip support added** ✅ Dec 17 |
 | `/api/feed/engagement` | POST | ✅ | ✅ | **Trip support added** ✅ Dec 17 |
-| `/api/feed/share` | POST | ⏳ | ⏳ | Not implemented |
+| `/api/feed/share` | POST | ✅ | ⏳ | Implemented 2026-03-14: returns shareUrl, notifies owner |
 
 ### Feed Issues to Fix
 ```

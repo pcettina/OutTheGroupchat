@@ -124,6 +124,15 @@ function SignInForm() {
           </div>
         </div>
 
+        <div className="flex items-center justify-between">
+          <Link
+            href="/auth/reset-password"
+            className="text-sm text-indigo-600 hover:text-indigo-500"
+          >
+            Forgot your password?
+          </Link>
+        </div>
+
         <div>
           <button
             type="submit"
