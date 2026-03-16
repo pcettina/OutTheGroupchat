@@ -134,16 +134,15 @@
 
 ## 🟠 PRIORITY 1: Zod Validation on API Routes
 
-**Current State:** Several API routes accept request bodies without runtime validation
+**Current State:** Major API routes now have Zod validation
 **Risk:** Malformed input can cause unexpected DB errors or silent failures
 
 ### Tasks
-- [ ] Audit all `POST` and `PATCH` API routes for missing Zod schemas
-- [ ] Add Zod schemas for: `/api/trips`, `/api/trips/[tripId]`, `/api/feed/comments`, `/api/feed/engagement`
-- [x] Add Zod validation to `/api/profile` PUT ✅ 2026-03-13
-- [x] Add Zod validation to `/api/notifications/[id]` PATCH ✅ 2026-03-13
-- [ ] Return standardized 400 errors with Zod issue details on validation failure
-- [ ] Write tests asserting validation rejects bad input
+- [x] Audit all `POST` and `PATCH` API routes for missing Zod schemas ✅ 2026-03-14
+- [x] Add Zod schemas for: `/api/trips`, `/api/trips/[tripId]`, `/api/feed/comments`, `/api/feed/engagement` ✅ 2026-03-13
+- [x] Add Zod validation to `/api/search` GET route ✅ 2026-03-14
+- [x] Return standardized 400 errors with Zod issue details on validation failure ✅
+- [x] Write tests asserting validation rejects bad input ✅
 
 ---
 
@@ -202,3 +201,18 @@
 ---
 
 *Updated: 2026-03-16*
+---
+
+## 🟢 Completed 2026-03-14 (Nightly Build)
+
+- `feed/share` API implemented (POST) with auth, Zod validation, visibility checks, owner notifications
+- `recommendation.service.ts` split into service + `recommendation-data.ts` (568 → 407 lines)
+- JSDoc added to all private/public methods in `RecommendationService`
+- Password reset frontend UI pages created: `/auth/reset-password` + `/auth/reset-password/confirm`
+- "Forgot password?" link added to sign-in page
+- Zod validation added to `/api/search` GET route
+- `ProfileStatsTab` extracted into `src/components/profile/ProfileStatsTab.tsx`
+- Test suites added: `share.test.ts` (17 tests), `search.test.ts` (22 tests), `inspiration.test.ts` (20 tests)
+- API_STATUS.md, LAUNCH_CHECKLIST.md, CURRENT_SPRINT.md updated to reflect 2026-03-14 state
+
+*Updated: 2026-03-14*

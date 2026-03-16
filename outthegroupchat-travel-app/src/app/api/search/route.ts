@@ -3,10 +3,17 @@ import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { logError } from '@/lib/logger';
+import { z } from 'zod';
 import type { JsonValue } from '@prisma/client/runtime/library';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
+
+const searchQuerySchema = z.object({
+  q: z.string().max(200).default(''),
+  type: z.enum(['all', 'trips', 'activities', 'users']).default('all'),
+  limit: z.coerce.number().int().min(1).max(50).default(10),
+});
 
 // Global search across trips, activities, and users
 export async function GET(req: Request) {
@@ -18,9 +25,21 @@ export async function GET(req: Request) {
     }
 
     const { searchParams } = new URL(req.url);
-    const query = searchParams.get('q')?.toLowerCase() || '';
-    const type = searchParams.get('type') || 'all'; // 'all', 'trips', 'activities', 'users'
-    const limit = parseInt(searchParams.get('limit') || '10');
+    const parseResult = searchQuerySchema.safeParse({
+      q: searchParams.get('q') ?? undefined,
+      type: searchParams.get('type') ?? undefined,
+      limit: searchParams.get('limit') ?? undefined,
+    });
+
+    if (!parseResult.success) {
+      return NextResponse.json(
+        { error: 'Invalid query parameters', details: parseResult.error.issues },
+        { status: 400 }
+      );
+    }
+
+    const { q: rawQuery, type, limit } = parseResult.data;
+    const query = rawQuery.toLowerCase();
 
     if (!query || query.length < 2) {
       return NextResponse.json({
