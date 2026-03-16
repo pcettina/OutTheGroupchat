@@ -54,7 +54,7 @@
 - [x] Email/password signup
 - [x] Email/password signin
 - [x] Session management (NextAuth)
-- [x] Password reset flow ✅ 2026-03-14 (API + frontend UI pages complete)
+- [x] Password reset flow ✅ 2026-03-14 (API + UI complete)
 - [ ] Email verification
 - [ ] OAuth providers (Google, Apple) - *Post-beta*
 
@@ -73,7 +73,7 @@
 - [x] Engagement bar UI
 - [x] Comments API (Trip support added) ✅ Dec 17
 - [x] Reactions/Likes API (Trip support added) ✅ Dec 17
-- [x] Share functionality ✅ Dec 17
+- [x] Share functionality ✅ 2026-03-16 (POST /api/feed/share implemented with Zod + notification)
 - [ ] Follow system integration
 
 ### Group Coordination 🔶
@@ -345,4 +345,4 @@ git push origin main  # Auto-deploys to Vercel
 
 *This checklist should be reviewed daily during launch preparation.*
 
-*Last Updated: 2026-03-13 - Security headers done, Sentry configured, tests expanded, /api/health complete, 404/500/error boundary pages added*
+*Last Updated: 2026-03-16 - feed/share API implemented, TripChat split into sub-components, AI route tests added, users/health tests added, docs updated*

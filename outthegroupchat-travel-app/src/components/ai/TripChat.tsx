@@ -2,40 +2,45 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import type { Message, SuggestedAction, TripContext, TripChatProps } from './chat-types';
+import { ChatMessage } from './ChatMessage';
+import { ChatLoadingIndicator } from './ChatLoadingIndicator';
+import { ChatQuickPrompts } from './ChatQuickPrompts';
 
-interface Message {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: Date;
-  actions?: SuggestedAction[];
-  error?: boolean;
-}
-
-interface SuggestedAction {
-  type: 'add_activity' | 'invite_member' | 'start_survey' | 'view_destination' | 'view_itinerary';
-  label: string;
-  payload?: Record<string, unknown>;
-}
-
-interface TripContext {
-  tripId: string;
-  tripTitle: string;
-  destination: string;
-  startDate: string;
-  endDate: string;
-  memberCount: number;
-  budget?: number;
-}
-
-interface TripChatProps {
-  tripContext?: TripContext;
-  onAction?: (action: SuggestedAction) => void;
-  className?: string;
-}
+export type { TripChatProps };
 
 // Storage key for chat history
 const CHAT_STORAGE_KEY = 'otg_chat_history';
+
+/** Extract suggested quick-action buttons from an AI response. */
+function extractActions(content: string, tripContext?: TripContext): SuggestedAction[] {
+  const actions: SuggestedAction[] = [];
+  const lower = content.toLowerCase();
+
+  if (lower.includes('itinerary') || lower.includes('schedule') || lower.includes('day ')) {
+    actions.push({ type: 'view_itinerary', label: '📋 View Itinerary', payload: { tripId: tripContext?.tripId } });
+  }
+  if (lower.includes('restaurant') || lower.includes('food') || lower.includes('eat')) {
+    actions.push({ type: 'add_activity', label: '🍽️ Add Restaurant', payload: { category: 'FOOD' } });
+  }
+  if (lower.includes('activity') || lower.includes('attraction') || lower.includes('visit')) {
+    actions.push({ type: 'add_activity', label: '➕ Add Activity', payload: {} });
+  }
+  if (lower.includes('survey') || lower.includes('preferences') || lower.includes('vote')) {
+    actions.push({ type: 'start_survey', label: '📊 Start Survey', payload: { tripId: tripContext?.tripId } });
+  }
+
+  return actions.slice(0, 3);
+}
+
+/** Build the welcome message shown on first open. */
+function buildWelcomeMessage(tripContext?: TripContext): Message {
+  const content = tripContext
+    ? `Hey! I'm your AI trip assistant for **${tripContext.destination}**! 🌍\n\nI can help you with:\n• Local attractions & hidden gems\n• Restaurant recommendations  \n• Day-by-day itinerary planning\n• Budget tips & cost optimization\n• Weather & packing suggestions\n\nWhat would you like to know about your trip?`
+    : `Hey! I'm your AI travel assistant! ✈️\n\nI'm here to help you plan amazing group trips. Ask me about:\n• Destination recommendations\n• Best places for group trips\n• Budget planning tips\n• Activity ideas for groups\n• Travel logistics\n\nWhere are you thinking of going?`;
+
+  return { id: 'welcome', role: 'assistant', content, timestamp: new Date() };
+}
 
 export function TripChat({ tripContext, onAction, className = '' }: TripChatProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -47,17 +52,14 @@ export function TripChat({ tripContext, onAction, className = '' }: TripChatProp
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Load chat history from storage
+  // Load persisted chat history
   useEffect(() => {
     if (typeof window !== 'undefined' && tripContext?.tripId) {
       const stored = localStorage.getItem(`${CHAT_STORAGE_KEY}_${tripContext.tripId}`);
       if (stored) {
         try {
           const parsed = JSON.parse(stored);
-          setMessages(parsed.map((m: Message) => ({
-            ...m,
-            timestamp: new Date(m.timestamp),
-          })));
+          setMessages(parsed.map((m: Message) => ({ ...m, timestamp: new Date(m.timestamp) })));
         } catch {
           // Ignore parse errors; start with empty history
         }
@@ -65,58 +67,29 @@ export function TripChat({ tripContext, onAction, className = '' }: TripChatProp
     }
   }, [tripContext?.tripId]);
 
-  // Save chat history
+  // Persist chat history (last 50 messages)
   useEffect(() => {
     if (typeof window !== 'undefined' && tripContext?.tripId && messages.length > 1) {
-      // Only save last 50 messages
-      const toSave = messages.slice(-50);
       localStorage.setItem(
         `${CHAT_STORAGE_KEY}_${tripContext.tripId}`,
-        JSON.stringify(toSave)
+        JSON.stringify(messages.slice(-50))
       );
     }
   }, [messages, tripContext?.tripId]);
 
-  // Welcome message
+  // Show welcome message when history is empty
   useEffect(() => {
     if (messages.length === 0) {
-      const welcomeContent = tripContext
-        ? `Hey! I'm your AI trip assistant for **${tripContext.destination}**! 🌍
-
-I can help you with:
-• Local attractions & hidden gems
-• Restaurant recommendations  
-• Day-by-day itinerary planning
-• Budget tips & cost optimization
-• Weather & packing suggestions
-
-What would you like to know about your trip?`
-        : `Hey! I'm your AI travel assistant! ✈️
-
-I'm here to help you plan amazing group trips. Ask me about:
-• Destination recommendations
-• Best places for group trips
-• Budget planning tips
-• Activity ideas for groups
-• Travel logistics
-
-Where are you thinking of going?`;
-
-      setMessages([{
-        id: 'welcome',
-        role: 'assistant',
-        content: welcomeContent,
-        timestamp: new Date(),
-      }]);
+      setMessages([buildWelcomeMessage(tripContext)]);
     }
   }, [tripContext, messages.length]);
 
-  // Scroll to bottom on new messages
+  // Scroll to the latest message
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Focus input when opened
+  // Focus input when chat opens
   useEffect(() => {
     if (isOpen && !isMinimized) {
       inputRef.current?.focus();
@@ -137,7 +110,7 @@ Where are you thinking of going?`;
       setMessages(prev => [...prev, userMessage]);
       setInput('');
     }
-    
+
     setIsLoading(true);
     setRetryMessage(null);
 
@@ -156,22 +129,19 @@ Where are you thinking of going?`;
         }),
       });
 
-      // Handle rate limiting
       if (response.status === 429) {
-        const errorMessage: Message = {
+        setMessages(prev => [...prev, {
           id: assistantMessageId,
           role: 'assistant',
           content: "I'm receiving too many messages right now. Please wait a moment and try again! 🙏",
           timestamp: new Date(),
           error: true,
-        };
-        setMessages(prev => [...prev, errorMessage]);
+        }]);
         setRetryMessage(userMessage);
         return;
       }
 
       if (!response.ok) {
-        // Try to get error message from response
         const contentType = response.headers.get('content-type');
         if (contentType?.includes('application/json')) {
           const errorData = await response.json();
@@ -180,10 +150,8 @@ Where are you thinking of going?`;
         throw new Error('Failed to get response');
       }
 
-      // Check if response is actually a stream
       const contentType = response.headers.get('content-type');
       if (contentType?.includes('application/json')) {
-        // API returned JSON instead of stream - likely an error
         const errorData = await response.json();
         throw new Error(errorData.error || 'Unexpected response format');
       }
@@ -192,7 +160,6 @@ Where are you thinking of going?`;
       const decoder = new TextDecoder();
       let assistantContent = '';
 
-      // Add placeholder message
       setMessages(prev => [...prev, {
         id: assistantMessageId,
         role: 'assistant',
@@ -204,38 +171,27 @@ Where are you thinking of going?`;
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
-
-          const chunk = decoder.decode(value);
-          assistantContent += chunk;
-
-          // Update message with streaming content
-          setMessages(prev => prev.map(m =>
-            m.id === assistantMessageId
-              ? { ...m, content: assistantContent }
-              : m
-          ));
+          assistantContent += decoder.decode(value);
+          setMessages(prev =>
+            prev.map(m => m.id === assistantMessageId ? { ...m, content: assistantContent } : m)
+          );
         }
       }
 
-      // Extract any action suggestions from the response
       const suggestedActions = extractActions(assistantContent, tripContext);
       if (suggestedActions.length > 0) {
-        setMessages(prev => prev.map(m =>
-          m.id === assistantMessageId
-            ? { ...m, actions: suggestedActions }
-            : m
-        ));
+        setMessages(prev =>
+          prev.map(m => m.id === assistantMessageId ? { ...m, actions: suggestedActions } : m)
+        );
       }
-
     } catch {
-      const errorMessage: Message = {
+      setMessages(prev => [...prev, {
         id: assistantMessageId,
         role: 'assistant',
-        content: "Sorry, I encountered an error. Please try again! 😅",
+        content: 'Sorry, I encountered an error. Please try again! 😅',
         timestamp: new Date(),
         error: true,
-      };
-      setMessages(prev => [...prev, errorMessage]);
+      }]);
       setRetryMessage(userMessage);
     } finally {
       setIsLoading(false);
@@ -249,7 +205,6 @@ Where are you thinking of going?`;
 
   const handleRetry = () => {
     if (retryMessage) {
-      // Remove the error message
       setMessages(prev => prev.filter(m => !m.error));
       sendMessage(retryMessage.content, true);
     }
@@ -261,20 +216,6 @@ Where are you thinking of going?`;
     }
     setMessages([]);
   };
-
-  const quickPrompts = tripContext
-    ? [
-        { text: "Must-see attractions", icon: "🎯" },
-        { text: "Best local restaurants", icon: "🍽️" },
-        { text: "Create a day itinerary", icon: "📋" },
-        { text: "Budget tips", icon: "💰" },
-      ]
-    : [
-        { text: "Best bachelor party destinations", icon: "🎉" },
-        { text: "Budget-friendly group trips", icon: "💵" },
-        { text: "Beach getaway suggestions", icon: "🏖️" },
-        { text: "Adventure trip ideas", icon: "🏔️" },
-      ];
 
   return (
     <>
@@ -311,7 +252,6 @@ Where are you thinking of going?`;
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
               </svg>
-              {/* AI Badge */}
               <span className="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full border-2 border-emerald-500" />
             </motion.div>
           )}
@@ -323,12 +263,7 @@ Where are you thinking of going?`;
         {isOpen && (
           <motion.div
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
-            animate={{ 
-              opacity: 1, 
-              y: 0, 
-              scale: 1,
-              height: isMinimized ? 56 : 512,
-            }}
+            animate={{ opacity: 1, y: 0, scale: 1, height: isMinimized ? 56 : 512 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             className="fixed bottom-24 right-6 z-50 w-96 max-w-[calc(100vw-3rem)] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden"
@@ -351,7 +286,7 @@ Where are you thinking of going?`;
                   aria-label={isMinimized ? 'Expand' : 'Minimize'}
                 >
                   <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={isMinimized ? "M5 15l7-7 7 7" : "M19 9l-7 7-7-7"} />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={isMinimized ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'} />
                   </svg>
                 </button>
                 <button
@@ -367,119 +302,25 @@ Where are you thinking of going?`;
               </div>
             </div>
 
-            {/* Chat Content */}
+            {/* Chat Body */}
             {!isMinimized && (
               <>
-                {/* Messages */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
                   {messages.map((message) => (
-                    <motion.div
+                    <ChatMessage
                       key={message.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                    >
-                      <div
-                        className={`max-w-[85%] rounded-2xl px-4 py-2.5 ${
-                          message.role === 'user'
-                            ? 'bg-emerald-500 text-white rounded-br-sm'
-                            : message.error
-                            ? 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-bl-sm'
-                            : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-bl-sm'
-                        }`}
-                      >
-                        {/* Message Content */}
-                        <div className="prose prose-sm dark:prose-invert max-w-none">
-                          {message.content.split('\n').map((line, i) => (
-                            <p key={i} className="mb-1 last:mb-0 text-sm leading-relaxed">
-                              {line.split('**').map((part, j) =>
-                                j % 2 === 1 ? <strong key={j}>{part}</strong> : part
-                              )}
-                            </p>
-                          ))}
-                        </div>
-
-                        {/* Suggested Actions */}
-                        {message.actions && message.actions.length > 0 && (
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            {message.actions.map((action, i) => (
-                              <motion.button
-                                key={i}
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                onClick={() => onAction?.(action)}
-                                className="text-xs bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 px-3 py-1.5 rounded-full hover:bg-emerald-500/30 transition-colors font-medium"
-                              >
-                                {action.label}
-                              </motion.button>
-                            ))}
-                          </div>
-                        )}
-
-                        {/* Retry Button */}
-                        {message.error && retryMessage && (
-                          <button
-                            onClick={handleRetry}
-                            className="mt-2 text-xs text-emerald-600 dark:text-emerald-400 hover:underline"
-                          >
-                            Retry message →
-                          </button>
-                        )}
-                      </div>
-                    </motion.div>
+                      message={message}
+                      onAction={onAction}
+                      onRetry={handleRetry}
+                      showRetry={!!retryMessage}
+                    />
                   ))}
-
-                  {/* Loading Indicator */}
-                  {isLoading && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="flex justify-start"
-                    >
-                      <div className="bg-slate-100 dark:bg-slate-800 rounded-2xl rounded-bl-sm px-4 py-3">
-                        <div className="flex gap-1">
-                          <motion.span
-                            animate={{ scale: [1, 1.2, 1] }}
-                            transition={{ repeat: Infinity, duration: 0.6, delay: 0 }}
-                            className="w-2 h-2 bg-emerald-500 rounded-full"
-                          />
-                          <motion.span
-                            animate={{ scale: [1, 1.2, 1] }}
-                            transition={{ repeat: Infinity, duration: 0.6, delay: 0.2 }}
-                            className="w-2 h-2 bg-emerald-500 rounded-full"
-                          />
-                          <motion.span
-                            animate={{ scale: [1, 1.2, 1] }}
-                            transition={{ repeat: Infinity, duration: 0.6, delay: 0.4 }}
-                            className="w-2 h-2 bg-emerald-500 rounded-full"
-                          />
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-
+                  {isLoading && <ChatLoadingIndicator />}
                   <div ref={messagesEndRef} />
                 </div>
 
-                {/* Quick Prompts */}
                 {messages.length <= 1 && (
-                  <div className="px-4 pb-3">
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">Quick questions:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {quickPrompts.map((prompt, i) => (
-                        <motion.button
-                          key={i}
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={() => sendMessage(prompt.text)}
-                          className="text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-3 py-1.5 rounded-full hover:bg-emerald-100 dark:hover:bg-emerald-900/30 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors flex items-center gap-1"
-                        >
-                          <span>{prompt.icon}</span>
-                          <span>{prompt.text}</span>
-                        </motion.button>
-                      ))}
-                    </div>
-                  </div>
+                  <ChatQuickPrompts tripContext={tripContext} onSelect={sendMessage} />
                 )}
 
                 {/* Input */}
@@ -514,48 +355,6 @@ Where are you thinking of going?`;
       </AnimatePresence>
     </>
   );
-}
-
-// Helper function to extract suggested actions from AI response
-function extractActions(content: string, tripContext?: TripContext): SuggestedAction[] {
-  const actions: SuggestedAction[] = [];
-  const lowerContent = content.toLowerCase();
-
-  // Detect intent and suggest relevant actions
-  if (lowerContent.includes('itinerary') || lowerContent.includes('schedule') || lowerContent.includes('day ')) {
-    actions.push({
-      type: 'view_itinerary',
-      label: '📋 View Itinerary',
-      payload: { tripId: tripContext?.tripId },
-    });
-  }
-
-  if (lowerContent.includes('restaurant') || lowerContent.includes('food') || lowerContent.includes('eat')) {
-    actions.push({
-      type: 'add_activity',
-      label: '🍽️ Add Restaurant',
-      payload: { category: 'FOOD' },
-    });
-  }
-
-  if (lowerContent.includes('activity') || lowerContent.includes('attraction') || lowerContent.includes('visit')) {
-    actions.push({
-      type: 'add_activity',
-      label: '➕ Add Activity',
-      payload: {},
-    });
-  }
-
-  if (lowerContent.includes('survey') || lowerContent.includes('preferences') || lowerContent.includes('vote')) {
-    actions.push({
-      type: 'start_survey',
-      label: '📊 Start Survey',
-      payload: { tripId: tripContext?.tripId },
-    });
-  }
-
-  // Limit to 3 actions
-  return actions.slice(0, 3);
 }
 
 export default TripChat;

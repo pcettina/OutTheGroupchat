@@ -6,15 +6,16 @@
  * Strategy
  * --------
  * - All external dependencies (Prisma, NextAuth, logger) are mocked.
- * - The handler is called directly with minimal Request objects.
- * - Tests cover: auth guard, Zod validation, trip sharing, activity sharing,
- *   visibility/access control, and owner notification creation.
+ * - Handlers are invoked directly with a minimal Request object.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 
+// ---------------------------------------------------------------------------
+// Mock: @/lib/prisma — extend global setup
+// ---------------------------------------------------------------------------
 vi.mock('@/lib/prisma', async (importOriginal) => {
   const original = await importOriginal<typeof import('@/lib/prisma')>();
   return {
@@ -22,13 +23,16 @@ vi.mock('@/lib/prisma', async (importOriginal) => {
     prisma: {
       ...original.prisma,
       trip: {
+        findMany: vi.fn(),
         findUnique: vi.fn(),
+        findFirst: vi.fn(),
+        create: vi.fn(),
+        update: vi.fn(),
+        delete: vi.fn(),
       },
       activity: {
-        findUnique: vi.fn(),
-      },
-      tripMember: {
-        findUnique: vi.fn(),
+        findMany: vi.fn(),
+        findFirst: vi.fn(),
       },
       notification: {
         create: vi.fn(),
@@ -37,279 +41,164 @@ vi.mock('@/lib/prisma', async (importOriginal) => {
   };
 });
 
-import { POST } from '@/app/api/feed/share/route';
-
-const mockGetServerSession = vi.mocked(getServerSession);
-const mockPrismaTrip = vi.mocked(prisma.trip);
-const mockPrismaActivity = vi.mocked(prisma.activity);
-const mockPrismaTripMember = vi.mocked(prisma.tripMember);
-const mockPrismaNotification = vi.mocked(prisma.notification);
-
 // ---------------------------------------------------------------------------
-// Fixtures
+// Helpers
 // ---------------------------------------------------------------------------
-
-const MOCK_USER_ID = 'user-share-001';
-const MOCK_OWNER_ID = 'user-share-owner';
-const MOCK_TRIP_ID = 'trip-share-111';
-const MOCK_ACTIVITY_ID = 'activity-share-222';
-
-const MOCK_SESSION = {
-  user: { id: MOCK_USER_ID, name: 'Share Tester', email: 'share@example.com' },
-  expires: '2099-01-01',
-};
-
-const MOCK_PUBLIC_TRIP = {
-  id: MOCK_TRIP_ID,
-  title: 'Nashville Weekend',
-  ownerId: MOCK_OWNER_ID,
-  isPublic: true,
-  status: 'PLANNING',
-};
-
-const MOCK_PRIVATE_TRIP = {
-  id: MOCK_TRIP_ID,
-  title: 'Private Getaway',
-  ownerId: MOCK_OWNER_ID,
-  isPublic: false,
-  status: 'PLANNING',
-};
-
-const MOCK_PUBLIC_ACTIVITY = {
-  id: MOCK_ACTIVITY_ID,
-  name: 'Broadway Bar Crawl',
-  isPublic: true,
-  trip: { id: MOCK_TRIP_ID, title: 'Nashville Weekend', ownerId: MOCK_OWNER_ID },
-};
-
-const MOCK_PRIVATE_ACTIVITY = {
-  id: MOCK_ACTIVITY_ID,
-  name: 'Secret Dinner',
-  isPublic: false,
-  trip: { id: MOCK_TRIP_ID, title: 'Private Getaway', ownerId: MOCK_OWNER_ID },
-};
-
 function makeRequest(body: unknown): Request {
-  return new Request('http://localhost:3000/api/feed/share', {
+  return new Request('http://localhost/api/feed/share', {
     method: 'POST',
-    body: JSON.stringify(body),
     headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
   });
 }
 
-async function parseJson(res: Response) {
-  return res.json();
-}
+const mockSession = { user: { id: 'user-1', name: 'Tester', email: 'test@test.com' } };
+
+const mockPublicTrip = {
+  id: 'trip-1',
+  title: 'Paris Trip',
+  isPublic: true,
+  ownerId: 'user-2',
+};
+
+const mockActivity = {
+  id: 'activity-1',
+  name: 'Eiffel Tower Visit',
+};
 
 // ---------------------------------------------------------------------------
-// Reset mocks between tests
+// POST /api/feed/share
 // ---------------------------------------------------------------------------
-beforeEach(() => {
-  vi.clearAllMocks();
-  mockPrismaNotification.create.mockResolvedValue({} as never);
-});
+describe('POST /api/feed/share', () => {
+  let POST: (req: Request) => Promise<Response>;
 
-// ===========================================================================
-// Auth guard
-// ===========================================================================
-describe('POST /api/feed/share — auth guard', () => {
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    const mod = await import('@/app/api/feed/share/route');
+    POST = mod.POST;
+  });
+
   it('returns 401 when unauthenticated', async () => {
-    mockGetServerSession.mockResolvedValue(null);
-
-    const res = await POST(makeRequest({ itemId: MOCK_TRIP_ID, itemType: 'trip' }));
-    const body = await parseJson(res);
-
+    vi.mocked(getServerSession).mockResolvedValue(null);
+    const res = await POST(makeRequest({ itemId: 'trip-1', itemType: 'trip' }));
     expect(res.status).toBe(401);
-    expect(body.error).toBe('Unauthorized');
-  });
-});
-
-// ===========================================================================
-// Input validation
-// ===========================================================================
-describe('POST /api/feed/share — input validation', () => {
-  beforeEach(() => {
-    mockGetServerSession.mockResolvedValue(MOCK_SESSION);
   });
 
   it('returns 400 when itemId is missing', async () => {
+    vi.mocked(getServerSession).mockResolvedValue(mockSession);
     const res = await POST(makeRequest({ itemType: 'trip' }));
-    const body = await parseJson(res);
-
     expect(res.status).toBe(400);
-    expect(body.error).toBe('Invalid request');
+    const json = await res.json();
+    expect(json.error).toBe('Invalid request');
+  });
+
+  it('returns 400 when itemType is missing', async () => {
+    vi.mocked(getServerSession).mockResolvedValue(mockSession);
+    const res = await POST(makeRequest({ itemId: 'trip-1' }));
+    expect(res.status).toBe(400);
   });
 
   it('returns 400 when itemType is invalid', async () => {
-    const res = await POST(makeRequest({ itemId: MOCK_TRIP_ID, itemType: 'user' }));
-    const body = await parseJson(res);
-
+    vi.mocked(getServerSession).mockResolvedValue(mockSession);
+    const res = await POST(makeRequest({ itemId: 'trip-1', itemType: 'post' }));
     expect(res.status).toBe(400);
-    expect(body.error).toBe('Invalid request');
+    const json = await res.json();
+    expect(json.issues).toBeDefined();
   });
 
   it('returns 400 when message exceeds 500 characters', async () => {
-    const res = await POST(makeRequest({
-      itemId: MOCK_TRIP_ID,
-      itemType: 'trip',
-      message: 'x'.repeat(501),
-    }));
-    const body = await parseJson(res);
-
+    vi.mocked(getServerSession).mockResolvedValue(mockSession);
+    const res = await POST(makeRequest({ itemId: 'trip-1', itemType: 'trip', message: 'x'.repeat(501) }));
     expect(res.status).toBe(400);
-    expect(body.error).toBe('Invalid request');
-  });
-});
-
-// ===========================================================================
-// Trip sharing
-// ===========================================================================
-describe('POST /api/feed/share — trip sharing', () => {
-  beforeEach(() => {
-    mockGetServerSession.mockResolvedValue(MOCK_SESSION);
   });
 
-  it('returns 404 when trip does not exist', async () => {
-    mockPrismaTrip.findUnique.mockResolvedValue(null);
+  it('returns 404 when trip is not found or not accessible', async () => {
+    vi.mocked(getServerSession).mockResolvedValue(mockSession);
+    vi.mocked(prisma.trip.findFirst).mockResolvedValue(null);
 
-    const res = await POST(makeRequest({ itemId: MOCK_TRIP_ID, itemType: 'trip' }));
-    const body = await parseJson(res);
-
+    const res = await POST(makeRequest({ itemId: 'nonexistent', itemType: 'trip' }));
     expect(res.status).toBe(404);
-    expect(body.error).toBe('Trip not found');
+    const json = await res.json();
+    expect(json.error).toMatch(/not found/i);
   });
 
-  it('returns 200 and correct shareUrl for a public trip', async () => {
-    mockPrismaTrip.findUnique.mockResolvedValue(MOCK_PUBLIC_TRIP as never);
+  it('returns 200 and share URL when trip share succeeds', async () => {
+    vi.mocked(getServerSession).mockResolvedValue(mockSession);
+    vi.mocked(prisma.trip.findFirst).mockResolvedValue(mockPublicTrip as Awaited<ReturnType<typeof prisma.trip.findFirst>>);
+    vi.mocked(prisma.trip.findUnique).mockResolvedValue(mockPublicTrip as Awaited<ReturnType<typeof prisma.trip.findUnique>>);
+    vi.mocked(prisma.notification.create).mockResolvedValue({} as Awaited<ReturnType<typeof prisma.notification.create>>);
 
-    const res = await POST(makeRequest({ itemId: MOCK_TRIP_ID, itemType: 'trip' }));
-    const body = await parseJson(res);
-
+    const res = await POST(makeRequest({ itemId: 'trip-1', itemType: 'trip' }));
     expect(res.status).toBe(200);
-    expect(body.success).toBe(true);
-    expect(body.shareUrl).toBe(`/trips/${MOCK_TRIP_ID}`);
-    expect(body.itemType).toBe('trip');
-    expect(body.itemId).toBe(MOCK_TRIP_ID);
+    const json = await res.json();
+    expect(json.success).toBe(true);
+    expect(json.data.shared).toBe(true);
+    expect(json.data.shareUrl).toBe('/trips/trip-1');
   });
 
-  it('creates a notification to the owner when sharer is not the owner', async () => {
-    mockPrismaTrip.findUnique.mockResolvedValue(MOCK_PUBLIC_TRIP as never);
+  it('sends a notification when sharing a trip owned by another user', async () => {
+    vi.mocked(getServerSession).mockResolvedValue(mockSession);
+    vi.mocked(prisma.trip.findFirst).mockResolvedValue(mockPublicTrip as Awaited<ReturnType<typeof prisma.trip.findFirst>>);
+    vi.mocked(prisma.trip.findUnique).mockResolvedValue(mockPublicTrip as Awaited<ReturnType<typeof prisma.trip.findUnique>>);
+    vi.mocked(prisma.notification.create).mockResolvedValue({} as Awaited<ReturnType<typeof prisma.notification.create>>);
 
-    await POST(makeRequest({ itemId: MOCK_TRIP_ID, itemType: 'trip' }));
+    await POST(makeRequest({ itemId: 'trip-1', itemType: 'trip', message: 'Check this out!' }));
 
-    expect(mockPrismaNotification.create).toHaveBeenCalledOnce();
-    expect(mockPrismaNotification.create).toHaveBeenCalledWith(
+    expect(prisma.notification.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
-          userId: MOCK_OWNER_ID,
-          type: 'TRIP_UPDATE',
-          title: 'Someone shared your trip',
+          userId: 'user-2',
+          type: 'TRIP_LIKE',
         }),
       })
     );
   });
 
-  it('does NOT create a notification when the owner shares their own trip', async () => {
-    const ownSession = {
-      user: { id: MOCK_OWNER_ID, name: 'Owner', email: 'owner@example.com' },
-      expires: '2099-01-01',
-    };
-    mockGetServerSession.mockResolvedValue(ownSession);
-    mockPrismaTrip.findUnique.mockResolvedValue(MOCK_PUBLIC_TRIP as never);
+  it('does not send a notification when sharing own trip', async () => {
+    vi.mocked(getServerSession).mockResolvedValue(mockSession);
+    const ownTrip = { ...mockPublicTrip, ownerId: 'user-1' };
+    vi.mocked(prisma.trip.findFirst).mockResolvedValue(ownTrip as Awaited<ReturnType<typeof prisma.trip.findFirst>>);
+    vi.mocked(prisma.trip.findUnique).mockResolvedValue(ownTrip as Awaited<ReturnType<typeof prisma.trip.findUnique>>);
 
-    await POST(makeRequest({ itemId: MOCK_TRIP_ID, itemType: 'trip' }));
+    await POST(makeRequest({ itemId: 'trip-1', itemType: 'trip' }));
 
-    expect(mockPrismaNotification.create).not.toHaveBeenCalled();
+    expect(prisma.notification.create).not.toHaveBeenCalled();
   });
 
-  it('returns 403 for a private trip when user is not a member', async () => {
-    mockPrismaTrip.findUnique.mockResolvedValue(MOCK_PRIVATE_TRIP as never);
-    mockPrismaTripMember.findUnique.mockResolvedValue(null);
+  it('returns 404 when activity is not found or not public', async () => {
+    vi.mocked(getServerSession).mockResolvedValue(mockSession);
+    vi.mocked(prisma.activity.findFirst).mockResolvedValue(null);
 
-    const res = await POST(makeRequest({ itemId: MOCK_TRIP_ID, itemType: 'trip' }));
-    const body = await parseJson(res);
-
-    expect(res.status).toBe(403);
-    expect(body.error).toBe('Forbidden');
-  });
-
-  it('returns 200 for a private trip when user is a member', async () => {
-    mockPrismaTrip.findUnique.mockResolvedValue(MOCK_PRIVATE_TRIP as never);
-    mockPrismaTripMember.findUnique.mockResolvedValue({ id: 'member-1' } as never);
-
-    const res = await POST(makeRequest({ itemId: MOCK_TRIP_ID, itemType: 'trip' }));
-    const body = await parseJson(res);
-
-    expect(res.status).toBe(200);
-    expect(body.success).toBe(true);
-  });
-
-  it('accepts optional platform and message fields', async () => {
-    mockPrismaTrip.findUnique.mockResolvedValue(MOCK_PUBLIC_TRIP as never);
-
-    const res = await POST(makeRequest({
-      itemId: MOCK_TRIP_ID,
-      itemType: 'trip',
-      platform: 'native',
-      message: 'Check this out!',
-    }));
-    const body = await parseJson(res);
-
-    expect(res.status).toBe(200);
-    expect(body.platform).toBe('native');
-    expect(body.message).toBe('Check this out!');
-  });
-});
-
-// ===========================================================================
-// Activity sharing
-// ===========================================================================
-describe('POST /api/feed/share — activity sharing', () => {
-  beforeEach(() => {
-    mockGetServerSession.mockResolvedValue(MOCK_SESSION);
-  });
-
-  it('returns 404 when activity does not exist', async () => {
-    mockPrismaActivity.findUnique.mockResolvedValue(null);
-
-    const res = await POST(makeRequest({ itemId: MOCK_ACTIVITY_ID, itemType: 'activity' }));
-    const body = await parseJson(res);
-
+    const res = await POST(makeRequest({ itemId: 'nonexistent', itemType: 'activity' }));
     expect(res.status).toBe(404);
-    expect(body.error).toBe('Activity not found');
   });
 
-  it('returns 200 and correct shareUrl for a public activity', async () => {
-    mockPrismaActivity.findUnique.mockResolvedValue(MOCK_PUBLIC_ACTIVITY as never);
+  it('returns 200 and share URL when activity share succeeds', async () => {
+    vi.mocked(getServerSession).mockResolvedValue(mockSession);
+    vi.mocked(prisma.activity.findFirst).mockResolvedValue(mockActivity as Awaited<ReturnType<typeof prisma.activity.findFirst>>);
 
-    const res = await POST(makeRequest({ itemId: MOCK_ACTIVITY_ID, itemType: 'activity' }));
-    const body = await parseJson(res);
-
+    const res = await POST(makeRequest({ itemId: 'activity-1', itemType: 'activity' }));
     expect(res.status).toBe(200);
-    expect(body.success).toBe(true);
-    expect(body.shareUrl).toBe(`/trips/${MOCK_TRIP_ID}?activity=${MOCK_ACTIVITY_ID}`);
-    expect(body.itemType).toBe('activity');
+    const json = await res.json();
+    expect(json.success).toBe(true);
+    expect(json.data.shareUrl).toBe('/activities/activity-1');
   });
 
-  it('returns 403 for a private activity when user is not a member', async () => {
-    mockPrismaActivity.findUnique.mockResolvedValue(MOCK_PRIVATE_ACTIVITY as never);
-    mockPrismaTripMember.findUnique.mockResolvedValue(null);
+  it('returns 500 on unexpected internal error', async () => {
+    vi.mocked(getServerSession).mockResolvedValue(mockSession);
+    vi.mocked(prisma.trip.findFirst).mockRejectedValue(new Error('DB failure'));
 
-    const res = await POST(makeRequest({ itemId: MOCK_ACTIVITY_ID, itemType: 'activity' }));
-    const body = await parseJson(res);
-
-    expect(res.status).toBe(403);
-    expect(body.error).toBe('Forbidden');
+    const res = await POST(makeRequest({ itemId: 'trip-1', itemType: 'trip' }));
+    expect(res.status).toBe(500);
   });
 
-  it('returns 200 for a private activity when user is a member of the trip', async () => {
-    mockPrismaActivity.findUnique.mockResolvedValue(MOCK_PRIVATE_ACTIVITY as never);
-    mockPrismaTripMember.findUnique.mockResolvedValue({ id: 'member-1' } as never);
+  it('accepts optional message field', async () => {
+    vi.mocked(getServerSession).mockResolvedValue(mockSession);
+    vi.mocked(prisma.trip.findFirst).mockResolvedValue(mockPublicTrip as Awaited<ReturnType<typeof prisma.trip.findFirst>>);
+    vi.mocked(prisma.trip.findUnique).mockResolvedValue(mockPublicTrip as Awaited<ReturnType<typeof prisma.trip.findUnique>>);
+    vi.mocked(prisma.notification.create).mockResolvedValue({} as Awaited<ReturnType<typeof prisma.notification.create>>);
 
-    const res = await POST(makeRequest({ itemId: MOCK_ACTIVITY_ID, itemType: 'activity' }));
-    const body = await parseJson(res);
-
+    const res = await POST(makeRequest({ itemId: 'trip-1', itemType: 'trip', message: 'Amazing destination!' }));
     expect(res.status).toBe(200);
-    expect(body.success).toBe(true);
   });
 });

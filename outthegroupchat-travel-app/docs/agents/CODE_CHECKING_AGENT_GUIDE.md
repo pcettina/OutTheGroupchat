@@ -7,6 +7,28 @@
 
 ---
 
+## ⚙️ Environment Setup Requirements
+
+Before running tests, ensure the following are installed:
+
+```bash
+# Install Playwright browsers (required for E2E tests)
+npx playwright install chromium
+
+# Run unit tests
+npm test
+
+# Run lint
+npm run lint
+
+# Build check (always clear cache first to avoid stale ENOENT errors)
+rm -rf .next && npm run build
+```
+
+> **Known issue:** Always run `rm -rf .next` before `npm run build`. Stale cache causes ENOENT errors (confirmed 2026-03-10, 2026-03-13, 2026-03-16).
+
+---
+
 ## 🎯 Code Review Priorities
 
 ### Priority 1: Security (BLOCK if violated)
