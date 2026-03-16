@@ -32,7 +32,7 @@
 | `/api/auth/reset-password` | PATCH | ✅ | ✅ | Confirm reset with token + new password ✅ 2026-03-12; UI confirm page added 2026-03-14 |
 
 ### Auth Issues to Fix
-- [ ] Add password reset endpoint
+- [x] Add password reset endpoint ✅ 2026-03-12
 - [ ] Add email verification endpoint
 
 ---
@@ -105,6 +105,7 @@ COMPLETED ✅ Dec 17:
 |----------|--------|--------|-------------------|-------|
 | `/api/notifications` | GET | ✅ | ✅ | **Data structure verified** ✅ Dec 17 |
 | `/api/notifications` | PATCH | ✅ | ✅ | Mark as read |
+| `/api/notifications/[id]` | PATCH | ✅ | ✅ | Mark individual notification read; Zod validation added 2026-03-13 |
 
 ### Notification Issues to Fix
 ```
@@ -160,7 +161,7 @@ COMPLETED ✅ Dec 17:
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
 | `/api/profile` | GET | ✅ | 🔶 | Get current user |
-| `/api/profile` | PATCH | ✅ | 🔶 | Update profile |
+| `/api/profile` | PUT | ✅ | 🔶 | Update profile; Zod validation added 2026-03-13 |
 | `/api/users/[userId]` | GET | ✅ | ⏳ | Get user profile |
 | `/api/users/[userId]/follow` | POST | ⏳ | ⏳ | Not implemented |
 
@@ -210,18 +211,18 @@ BLOCKED - Need Environment Variables:
 
 | Category | Total | Working | Partial | Broken | Not Started |
 |----------|-------|---------|---------|--------|-------------|
-| Auth | 3 | 2 | 1 | 0 | 0 |
+| Auth | 6 | 6 | 0 | 0 | 0 |
 | Trips | 15 | 13 | 0 | 1 | 1 |
 | Feed | 5 | 4 | 0 | 0 | 1 |
-| Notifications | 2 | 2 | 0 | 0 | 0 |
+| Notifications | 3 | 3 | 0 | 0 | 0 |
 | Discovery | 4 | 1 | 2 | 1 | 0 |
 | AI | 4 | 0 | 4 | 0 | 0 |
 | User | 4 | 2 | 0 | 0 | 2 |
 | Real-time | 1 | 0 | 0 | 0 | 1 |
 | System | 3 | 2 | 0 | 0 | 1 |
-| **TOTAL** | **42** | **28** | **7** | **1** | **6** |
+| **TOTAL** | **45** | **31** | **6** | **1** | **6** |
 
-**API Completion Rate: 67% fully working** ✅ (Up from 65%)
+**API Completion Rate: 69% fully working** ✅ (Up from 67%)
 
 ---
 
@@ -322,4 +323,4 @@ EMAIL_FROM=             # Email sender (onboarding@resend.dev) ✅
 
 *Review and update after each API change.*
 
-*Last Updated: 2026-03-11 - /api/health marked complete, /api/users/me added, demo auth security resolved, summary counts updated*
+*Last Updated: 2026-03-13 - password reset endpoint marked complete, /api/profile PUT and /api/notifications/[id] PATCH Zod validation noted, auth/notifications counts corrected, completion rate updated*

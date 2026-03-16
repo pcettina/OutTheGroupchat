@@ -37,8 +37,8 @@ A modern web application that helps groups coordinate trip planning through surv
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-org/outthegroupchat.git
-   cd outthegroupchat/OutTheGroupchat/outthegroupchat-travel-app
+   git clone https://github.com/pcettina/OutTheGroupchat.git
+   cd OutTheGroupchat/outthegroupchat-travel-app
    ```
 
 2. Install dependencies:
@@ -55,7 +55,7 @@ A modern web application that helps groups coordinate trip planning through surv
 4. Set up the database:
    ```bash
    npm run db:push
-   npm run db:seed  # Optional: seed demo data
+   # npm run db:seed  # Not yet configured — seed script is not in package.json
    ```
 
 5. Start the development server:
@@ -117,7 +117,7 @@ npm run lint       # Run ESLint
 npm run db:push    # Push schema to database
 npm run db:migrate # Create migration
 npm run db:studio  # Open Prisma Studio
-npm run db:seed    # Seed demo data
+# npm run db:seed  # Not yet configured — seed script is not in package.json
 ```
 
 ## Deployment
@@ -169,7 +169,7 @@ The project includes:
 
 ## Demo Accounts
 
-After running `npm run db:seed`:
+> Note: `npm run db:seed` is not yet configured. These accounts must be created manually.
 
 | Email | Password |
 |-------|----------|

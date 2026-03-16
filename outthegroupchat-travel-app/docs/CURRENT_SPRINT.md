@@ -66,9 +66,12 @@
 | 🔴 P0 | Sentry / Error Monitoring Setup | 🔄 In Progress (needs Vercel DSN) |
 | 🟠 P1 | `img` → `next/image` Migration | ✅ Complete (2026-03-09) |
 | 🟠 P1 | `console.*` Cleanup (75 → 59 → 9 → 0) | ✅ Complete (2026-03-12) |
-| 🟠 P1 | Zod Validation on Unguarded API Routes | 🔄 In Progress (major routes done) |
+| 🟠 P1 | Zod Validation on Unguarded API Routes | ✅ Complete (2026-03-13) |
 | 🟡 P2 | `any` Type Elimination (18 → 6 → 0) | ✅ Complete (2026-03-11) |
 | 🟡 P2 | Password Reset API | ✅ Complete (2026-03-12) |
+| 🟡 P2 | Password Reset UI Pages | ✅ Complete (2026-03-13) |
+| 🟡 P2 | Error Boundary (global-error.tsx) | ✅ Complete (2026-03-13) |
+| 🟡 P2 | 404 Page Improvements | ✅ Complete (2026-03-13) |
 | 🟡 P2 | Playwright E2E Setup | ✅ Complete (2026-03-12) |
 
 ---

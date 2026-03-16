@@ -16,9 +16,9 @@
 | Testing | 68% | 80% | 🟠 In Progress |
 | Monitoring | 55% | 80% | 🟠 In Progress |
 
-**Overall Readiness: 75%** → Target: 85% for Beta Launch
+**Overall Readiness: 77%** → Target: 85% for Beta Launch
 
-> Last updated: 2026-03-12 (nightly build)
+> Last updated: 2026-03-13 (nightly build — added 404/500/error boundary pages)
 
 ---
 
@@ -205,9 +205,9 @@
 - [ ] No search results state
 
 ### Error States
-- [ ] Global error boundary
-- [ ] Friendly 404 page
-- [ ] Friendly 500 page
+- [x] Global error boundary ✅ 2026-03-13 (global-error.tsx)
+- [x] Friendly 404 page ✅ 2026-03-13 (not-found.tsx)
+- [x] Friendly 500 page ✅ 2026-03-13 (error.tsx)
 - [ ] Form validation errors inline
 
 ### Responsive Design
@@ -345,4 +345,4 @@ git push origin main  # Auto-deploys to Vercel
 
 *This checklist should be reviewed daily during launch preparation.*
 
-*Last Updated: 2026-03-11 - Security headers done, Sentry configured, tests expanded, /api/health complete*
+*Last Updated: 2026-03-13 - Security headers done, Sentry configured, tests expanded, /api/health complete, 404/500/error boundary pages added*
