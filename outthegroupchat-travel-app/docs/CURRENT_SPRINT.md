@@ -78,8 +78,8 @@
 
 ## 🔴 PRIORITY 0: Test Coverage
 
-**Current State:** 51 Vitest tests passing (trips, voting, survey, feed)
-**Target:** 80+ tests; then Playwright for E2E
+**Current State:** 232+ Vitest tests passing (trips, voting, survey, feed, auth, notifications, profile, reset-password, geocoding, email, rate-limit, invitations, AI routes, users/health, share)
+**Target:** 250+ tests; then Playwright for E2E
 
 ### Tasks
 - [x] Install and configure Vitest + Testing Library ✅ 2026-03-09
@@ -201,4 +201,4 @@
 
 ---
 
-*Updated: 2026-03-13*
+*Updated: 2026-03-16*

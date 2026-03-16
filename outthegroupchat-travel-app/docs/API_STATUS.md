@@ -85,7 +85,7 @@
 | `/api/feed/comments` | GET | ✅ | ✅ | **Trip support added** ✅ Dec 17 |
 | `/api/feed/comments` | POST | ✅ | ✅ | **Trip support added** ✅ Dec 17 |
 | `/api/feed/engagement` | POST | ✅ | ✅ | **Trip support added** ✅ Dec 17 |
-| `/api/feed/share` | POST | ⏳ | ⏳ | Not implemented |
+| `/api/feed/share` | POST | ✅ | ⏳ | Implemented with Zod validation + notification ✅ 2026-03-16 |
 
 ### Feed Issues to Fix
 ```
@@ -94,7 +94,7 @@ COMPLETED ✅ Dec 17:
 2. [x] Update comments API for itemType: 'trip'
 3. [x] Add TripLike model to schema
 4. [x] Update engagement API for trip items
-5. [ ] Implement share/repost API
+5. [x] Implement share/repost API ✅ 2026-03-16
 ```
 
 ---
@@ -163,7 +163,7 @@ COMPLETED ✅ Dec 17:
 | `/api/profile` | GET | ✅ | 🔶 | Get current user |
 | `/api/profile` | PUT | ✅ | 🔶 | Update profile; Zod validation added 2026-03-13 |
 | `/api/users/[userId]` | GET | ✅ | ⏳ | Get user profile |
-| `/api/users/[userId]/follow` | POST | ⏳ | ⏳ | Not implemented |
+| `/api/users/[userId]/follow` | POST | ✅ | ⏳ | Follow/unfollow implemented in /api/users/[userId] POST ✅ |
 
 ---
 
@@ -323,4 +323,4 @@ EMAIL_FROM=             # Email sender (onboarding@resend.dev) ✅
 
 *Review and update after each API change.*
 
-*Last Updated: 2026-03-13 - password reset endpoint marked complete, /api/profile PUT and /api/notifications/[id] PATCH Zod validation noted, auth/notifications counts corrected, completion rate updated*
+*Last Updated: 2026-03-16 - /api/feed/share POST implemented (Zod + notification), /api/users/[userId] POST confirmed as follow/unfollow endpoint*
