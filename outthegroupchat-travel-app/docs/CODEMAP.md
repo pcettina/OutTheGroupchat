@@ -1,6 +1,6 @@
 # OutTheGroupchat — Full Codemap
 
-> Auto-generated 2026-03-10. Last updated 2026-03-13. Comprehensive reference for agents and developers.
+> Auto-generated 2026-03-10. Last updated 2026-03-17. Comprehensive reference for agents and developers.
 
 ## Table of Contents
 
@@ -81,7 +81,7 @@ outthegroupchat-travel-app/
 │   │   └── api/                   # 48 API route files (see API Routes section)
 │   ├── components/                # 94 files across 16 feature directories
 │   │   ├── accessibility/         # FocusTrap, SkipLinks, VisuallyHidden, LiveRegion
-│   │   ├── ai/                    # TripChat
+│   │   ├── ai/                    # TripChat (360L), ChatMessage, ChatLoadingIndicator, ChatQuickPrompts, chat-types.ts
 │   │   ├── auth/                  # SignUpForm
 │   │   ├── discover/              # CategoryFilter, DestinationCard, TrendingSection
 │   │   ├── feed/                  # FeedItem, RichFeedItem, CommentThread, ShareModal, etc.
@@ -131,7 +131,8 @@ outthegroupchat-travel-app/
 │   │   └── utils/
 │   │       └── costs.ts           # Cost calculation helpers
 │   ├── services/
-│   │   ├── recommendation.service.ts  # 562L — AI + survey recommendation engine
+│   │   ├── recommendation.service.ts  # 459L — AI + survey recommendation engine
+│   │   ├── recommendation-data.ts     # 185L — Static destination/activity data for RecommendationService
 │   │   ├── survey.service.ts          # 377L — Survey CRUD + analysis
 │   │   └── events.service.ts          # Event discovery (Ticketmaster)
 │   ├── types/
@@ -142,19 +143,26 @@ outthegroupchat-travel-app/
 │   ├── middleware.ts              # Route protection (redirect unauthenticated)
 │   └── __tests__/
 │       ├── setup.ts               # Test environment config
-│       └── api/
-│           ├── trips.test.ts      # 525L — 30 Vitest tests for trips API
-│           ├── voting.test.ts     # 10 Vitest tests for voting API
-│           ├── survey.test.ts     # 11 Vitest tests for survey API
-│           ├── feed.test.ts       # 12 Vitest tests for feed API
+│       ├── api/
+│       │   ├── trips.test.ts      # 525L — 30 Vitest tests for trips API
+│       │   ├── voting.test.ts     # 10 Vitest tests for voting API
+│       │   ├── survey.test.ts     # 11 Vitest tests for survey API
+│       │   ├── feed.test.ts       # 12 Vitest tests for feed API
+│       │   ├── auth.test.ts       # 10 Vitest tests for auth flow
+│       │   ├── notifications.test.ts # 19 Vitest tests for notifications API
+│       │   ├── profile.test.ts    # 10 Vitest tests for profile API
+│       │   ├── reset-password.test.ts # 286L — 12 Vitest tests for password reset API
+│       │   ├── ai.test.ts         # 411L — 19 Vitest tests for AI routes
+│       │   ├── users.test.ts      # 316L — 19 Vitest tests for users/follow API
+│       │   ├── share.test.ts      # 204L — 13 Vitest tests for feed share endpoint
+│       │   ├── inspiration.test.ts # 358L — 20 Vitest tests for inspiration API
+│       │   ├── search.test.ts     # 328L — 15 Vitest tests for search API
+│       │   └── beta-initialize-password.test.ts # 274L — 15 Vitest tests for beta password init
+│       └── lib/
 │           ├── email.test.ts      # 14 Vitest tests for email service
 │           ├── geocoding.test.ts  # 26 Vitest tests for geocoding
 │           ├── invitations.test.ts # 16 Vitest tests for invitation tokens
-│           ├── rate-limit.test.ts # 13 Vitest tests for rate limiting
-│           ├── auth.test.ts       # 10 Vitest tests for auth flow
-│           ├── notifications.test.ts # 19 Vitest tests for notifications API
-│           ├── profile.test.ts    # 10 Vitest tests for profile API
-│           └── reset-password.test.ts # 286L — 12 Vitest tests for password reset API
+│           └── rate-limit.test.ts # 13 Vitest tests for rate limiting
 ├── docs/                          # 23 markdown files (see docs/README.md)
 ├── public/                        # Empty (assets via CDN)
 ├── package.json
@@ -522,7 +530,11 @@ db:seed        → npx tsx prisma/seed/index.ts
 
 | Component | Lines | Props | Purpose |
 |-----------|-------|-------|---------|
-| `TripChat` | 562 | tripContext?, onAction?, className? | Floating AI travel assistant with streaming, localStorage history, quick prompts, retry on 429 |
+| `TripChat` | 360 | tripContext?, onAction?, className? | Floating AI travel assistant with streaming, localStorage history, quick prompts, retry on 429 |
+| `ChatMessage` | 73 | message, isStreaming? | Renders a single chat message bubble (user or assistant) |
+| `ChatLoadingIndicator` | 29 | — | Animated loading dots shown while AI is responding |
+| `ChatQuickPrompts` | 56 | prompts, onSelect | Horizontal row of quick-prompt pill buttons |
+| `chat-types.ts` | 34 | — | Shared TypeScript types for chat components (ChatMessage, ChatState, etc.) |
 
 ### Auth (`components/auth/`)
 
@@ -731,7 +743,8 @@ db:seed        → npx tsx prisma/seed/index.ts
 
 | Service | File | Lines | Key Methods | Purpose |
 |---------|------|-------|-------------|---------|
-| RecommendationService | `services/recommendation.service.ts` | 562 | generateRecommendations(tripMembers, preferences), analyzeDestination(destination, budget), rankDestinations(options, preferences) | AI + survey-based recommendation engine |
+| RecommendationService | `services/recommendation.service.ts` | 459 | generateRecommendations(tripMembers, preferences), analyzeDestination(destination, budget), rankDestinations(options, preferences) | AI + survey-based recommendation engine |
+| RecommendationData | `services/recommendation-data.ts` | 185 | — | Static destination databases, activity lists, cost constants, and airport code mappings used by RecommendationService (extracted to keep service under 600 lines) |
 | SurveyService | `services/survey.service.ts` | 377 | createSurvey(tripId, questions), recordResponse(surveyId, userId, response), analyzeSurvey(surveyId) | Survey CRUD + analysis |
 | EventsService | `services/events.service.ts` | — | searchEvents(destination, date), getEventDetails(eventId) | Event discovery (Ticketmaster) |
 
@@ -782,7 +795,7 @@ db:seed        → npx tsx prisma/seed/index.ts
 
 ## Tests
 
-**Total: 182 tests across 12 Vitest unit/integration test files**
+**Total: 283 tests across 18 Vitest unit/integration test files**
 
 | File | Lines | Tests | Coverage |
 |------|-------|-------|----------|
@@ -790,14 +803,20 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `src/__tests__/api/voting.test.ts` | — | 10 | Voting API (create, vote, close session) |
 | `src/__tests__/api/survey.test.ts` | — | 11 | Survey API (create, respond, analyze) |
 | `src/__tests__/api/feed.test.ts` | — | 12 | Feed API (pagination, comments, engagement) |
-| `src/__tests__/api/email.test.ts` | — | 14 | Email service (templates, delivery) |
-| `src/__tests__/api/geocoding.test.ts` | — | 26 | Geocoding (coords, city lookup, caching) |
-| `src/__tests__/api/invitations.test.ts` | — | 16 | Invitation tokens (generate, validate, redeem) |
-| `src/__tests__/api/rate-limit.test.ts` | — | 13 | Rate limiting (quota, window, headers) |
+| `src/__tests__/lib/email.test.ts` | — | 14 | Email service (templates, delivery) |
+| `src/__tests__/lib/geocoding.test.ts` | — | 26 | Geocoding (coords, city lookup, caching) |
+| `src/__tests__/lib/invitations.test.ts` | — | 16 | Invitation tokens (generate, validate, redeem) |
+| `src/__tests__/lib/rate-limit.test.ts` | — | 13 | Rate limiting (quota, window, headers) |
 | `src/__tests__/api/auth.test.ts` | — | 10 | Auth flow (signup, signin, session) |
 | `src/__tests__/api/notifications.test.ts` | — | 19 | Notifications API (inbox, mark-read, delete) |
 | `src/__tests__/api/profile.test.ts` | — | 10 | Profile API (GET, PATCH preferences) |
 | `src/__tests__/api/reset-password.test.ts` | 286 | 12 | Password reset API (POST request, PATCH confirm, token validation, expiry) |
+| `src/__tests__/api/ai.test.ts` | 411 | 19 | AI routes (chat, recommend, suggest-activities, search, generate-itinerary) |
+| `src/__tests__/api/users.test.ts` | 316 | 19 | Users API (follow/unfollow, profile, social) |
+| `src/__tests__/api/share.test.ts` | 204 | 13 | Feed share endpoint |
+| `src/__tests__/api/inspiration.test.ts` | 358 | 20 | Inspiration API (templates, trending, popular) |
+| `src/__tests__/api/search.test.ts` | 328 | 15 | Search API (global, activities, users) |
+| `src/__tests__/api/beta-initialize-password.test.ts` | 274 | 15 | Beta password initialization endpoint |
 | `src/__tests__/setup.ts` | — | — | Test environment/fixture config |
 | `vitest.config.ts` | 16 | — | Vitest runner configuration |
 
@@ -832,21 +851,20 @@ db:seed        → npx tsx prisma/seed/index.ts
 | Lint warnings | 0 |
 | `any` types | 0 ✅ |
 | `console.*` | 0 ✅ |
-| Vitest tests | 182 passing (12 files) |
+| Vitest tests | 283 passing (18 files) |
 | E2E tests | 11 Playwright smoke tests (4 suites) |
 | Error monitoring | Sentry installed (server + client + edge) — needs `SENTRY_DSN` in Vercel |
-| Files >400 lines | 12 (consider splitting) |
+| Files >400 lines | 10 (consider splitting) |
 | Production env gaps | OPENAI_API_KEY, Pusher vars, Sentry DSN, Resend domain |
 
 ### Largest Files (>400 lines)
 
 | File | Lines | Action |
 |------|-------|--------|
-| `services/recommendation.service.ts` | 562 | Consider splitting by concern |
-| `components/ai/TripChat.tsx` | 562 | Extract sub-components |
-| `app/profile/page.tsx` | 561 | Extract profile sections |
-| `components/trips/AddActivityModal.tsx` | 492 | Extract form sections |
+| `app/profile/page.tsx` | 539 | Extract profile sections |
+| `components/trips/AddActivityModal.tsx` | 485 | Extract form sections |
 | `components/surveys/SurveyBuilder.tsx` | 473 | Extract question editor |
+| `services/recommendation.service.ts` | 459 | Consider splitting by concern |
 | `types/index.ts` | 449 | Split by domain |
 | `components/feed/RichFeedItem.tsx` | 432 | Extract reaction/comment sections |
 | `app/inspiration/page.tsx` | 401 | Extract template/trending sections |

@@ -28,3 +28,8 @@ Sentry.init({
     Sentry.replayIntegration(),
   ],
 });
+
+// Required by Next.js App Router for Turbopack compatibility.
+// Captures router transition timing for Sentry performance tracing.
+// Without this export the build emits a "missing onRouterTransitionStart" warning.
+export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;

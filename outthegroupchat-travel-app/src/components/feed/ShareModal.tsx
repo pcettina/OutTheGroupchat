@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useToast } from '@/contexts/ToastContext';
 
 interface ShareData {
   id: string;
@@ -86,23 +87,48 @@ const socialPlatforms = [
 export function ShareModal({ isOpen, onClose, shareData }: ShareModalProps) {
   const [copied, setCopied] = useState(false);
   const [shareUrl, setShareUrl] = useState('');
+  const [isSharing, setIsSharing] = useState(false);
+  const isSharingRef = useRef(false);
+  const toast = useToast();
 
   useEffect(() => {
     if (shareData && typeof window !== 'undefined') {
       const baseUrl = window.location.origin;
-      const path = shareData.type === 'trip' 
-        ? `/trips/${shareData.id}` 
+      const path = shareData.type === 'trip'
+        ? `/trips/${shareData.id}`
         : `/activity/${shareData.id}`;
       setShareUrl(`${baseUrl}${path}`);
     }
   }, [shareData]);
+
+  const recordShare = useCallback(async () => {
+    if (!shareData || isSharingRef.current) return;
+    isSharingRef.current = true;
+    setIsSharing(true);
+    try {
+      const res = await fetch('/api/feed/share', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ itemId: shareData.id, itemType: shareData.type }),
+      });
+      if (res.ok) {
+        toast.success('Shared successfully!');
+      }
+    } catch {
+      // Network error — share action already completed client-side, no toast needed
+    } finally {
+      isSharingRef.current = false;
+      setIsSharing(false);
+    }
+  }, [shareData, toast]);
 
   const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
+      await recordShare();
+    } catch {
       // silently handle clipboard error
     }
   };
@@ -115,21 +141,23 @@ export function ShareModal({ isOpen, onClose, shareData }: ShareModalProps) {
           text: shareData.description || `Check out this ${shareData.type} on OutTheGroupchat!`,
           url: shareUrl,
         });
-      } catch (err) {
-        // User cancelled share
+        await recordShare();
+      } catch {
+        // User cancelled share — do not record or show error
       }
     }
   };
 
-  const handleSocialShare = (platform: typeof socialPlatforms[0]) => {
+  const handleSocialShare = async (platform: typeof socialPlatforms[0]) => {
     if (!shareData) return;
-    
-    const text = shareData.description 
+
+    const text = shareData.description
       ? `${shareData.title} - ${shareData.description}`
       : `Check out "${shareData.title}" on OutTheGroupchat!`;
-    
+
     const url = platform.getUrl(shareUrl, text);
     window.open(url, '_blank', 'width=600,height=400');
+    await recordShare();
   };
 
   if (!shareData) return null;
@@ -229,7 +257,8 @@ export function ShareModal({ isOpen, onClose, shareData }: ShareModalProps) {
                 />
                 <button
                   onClick={handleCopyLink}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  disabled={isSharing}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-60 ${
                     copied
                       ? 'bg-emerald-500 text-white'
                       : 'bg-white dark:bg-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-500'

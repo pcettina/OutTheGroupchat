@@ -13,6 +13,36 @@ import type { AIActivityRecommendation } from '@/types';
 export const maxDuration = 60; // seconds - AI generation can take longer
 export const dynamic = 'force-dynamic';
 
+const aiActivityRecommendationSchema = z.object({
+  name: z.string(),
+  category: z.enum(['food', 'entertainment', 'outdoors', 'culture', 'nightlife', 'sports']).optional(),
+  description: z.string().optional().default(''),
+  address: z.string().optional().default(''),
+  priceRange: z.string().optional().default(''),
+  estimatedCost: z.object({
+    amount: z.number(),
+    per: z.enum(['person', 'group']),
+  }).optional(),
+  duration: z.number().optional().default(60),
+  bestTime: z.string().optional().default(''),
+  bookingRequired: z.boolean().optional().default(false),
+  groupFriendly: z.boolean().optional().default(true),
+  goodFor: z.array(z.string()).optional().default([]),
+  tips: z.string().optional(),
+}).passthrough();
+
+const localEventSchema = z.object({
+  name: z.string(),
+  date: z.string(),
+  description: z.string(),
+  relevance: z.string(),
+});
+
+const activitySuggestionsOutputSchema = z.object({
+  recommendations: z.array(aiActivityRecommendationSchema),
+  localEvents: z.array(localEventSchema).optional(),
+});
+
 const suggestActivitiesSchema = z.object({
   destination: z.string(),
   categories: z.array(z.string()).optional().default(['food', 'entertainment', 'culture']),
@@ -73,22 +103,28 @@ export async function POST(req: Request) {
     });
 
     // Parse the response
-    let recommendations: { 
+    let recommendations: {
       recommendations: AIActivityRecommendation[];
       localEvents?: { name: string; date: string; description: string; relevance: string }[];
     };
-    
+
     try {
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         throw new Error('No JSON found in response');
       }
       const parsed = JSON.parse(jsonMatch[0]);
-      const parseValidation = z.object({}).passthrough().safeParse(parsed);
+      const parseValidation = activitySuggestionsOutputSchema.safeParse(parsed);
       if (!parseValidation.success) {
-        throw new Error('AI response did not match expected shape');
+        logError('ACTIVITY_SUGGESTIONS_PARSE_ERROR', new Error('AI response did not match expected schema'), {
+          issues: parseValidation.error.flatten(),
+        });
+        return NextResponse.json(
+          { success: false, error: 'Invalid AI response format' },
+          { status: 502 }
+        );
       }
-      recommendations = parseValidation.data as typeof recommendations;
+      recommendations = parseValidation.data;
     } catch (parseError) {
       logError('ACTIVITY_SUGGESTIONS_PARSE_ERROR', parseError);
       return NextResponse.json(

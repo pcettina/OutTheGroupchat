@@ -64,6 +64,9 @@
 | `/api/trips/[tripId]/activities` | POST | ✅ | 🔶 | Add activity |
 | `/api/trips/[tripId]/itinerary` | GET | ✅ | 🔶 | Get itinerary |
 | `/api/trips/[tripId]/itinerary` | PUT | ✅ | ⏳ | Update itinerary |
+| `/api/activities/[activityId]` | GET | ✅ | ⏳ | Get activity detail with comments, ratings, avg score; public activities accessible without auth |
+| `/api/activities/[activityId]` | POST | ✅ | ⏳ | Save/unsave activity (toggle); auth required |
+| `/api/activities/[activityId]` | PUT | ✅ | ⏳ | Add comment (`action: 'comment'`) or rating (`action: 'rate'`) to activity; auth required |
 
 ### Trip Planning APIs
 
@@ -74,6 +77,16 @@
 | `/api/trips/[tripId]/voting` | GET | ✅ | 🔶 | Get voting session |
 | `/api/trips/[tripId]/voting` | POST | ✅ | 🔶 | Create/cast vote |
 | `/api/trips/[tripId]/recommendations` | GET | ✅ | ⏳ | AI recommendations |
+| `/api/trips/[tripId]/flights` | GET | ✅ | ⏳ | Search flights for trip dates using user's profile city as origin; uses Amadeus API |
+| `/api/trips/[tripId]/suggestions` | GET | ✅ | ⏳ | Fetch events (Ticketmaster), attractions, and restaurants for trip destination; includes daily cost estimate |
+
+### Invitation Management APIs
+
+| Endpoint | Method | Status | Frontend Connected | Notes |
+|----------|--------|--------|-------------------|-------|
+| `/api/invitations` | GET | ✅ | ⏳ | List all invitations for current user; auto-marks expired PENDING invitations |
+| `/api/invitations/[invitationId]` | GET | ✅ | ⏳ | Get invitation details including trip + members; auth + ownership check |
+| `/api/invitations/[invitationId]` | POST | ✅ | ⏳ | Accept or decline invitation (`action: 'accept'|'decline'`); on accept adds user as TripMember and notifies owner |
 
 ---
 
@@ -120,6 +133,8 @@ No fix needed - code was already correct
 
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
+| `/api/discover` | GET | ✅ | ⏳ | Search events/places/restaurants/attractions/nightlife by city + date range; type param filters results |
+| `/api/discover` | POST | ✅ | ⏳ | Search flights via EventsService (origin, destination, departureDate, returnDate, adults) |
 | `/api/discover/search` | GET | 🔶 | 🔶 | Fallback mode active |
 | `/api/discover/recommendations` | GET | ✅ | 🔶 | Working |
 | `/api/discover/import` | POST | 🔶 | ⏳ | OpenTripMap import |
@@ -141,6 +156,8 @@ Remove email from searchable fields in /api/search/route.ts
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
 | `/api/ai/chat` | POST | ✅ | ✅ | **OpenAI connected** ✅ Dec 17 |
+| `/api/ai/recommend` | POST | ✅ | ⏳ | Personalized activity recommendations using user saved/rated history; AI + DB hybrid results |
+| `/api/ai/recommend` | GET | ✅ | ⏳ | Trip-scoped recommendations by `?tripId=`; aggregates group member preferences to suggest activities |
 | `/api/ai/generate-itinerary` | POST | 🔶 | ⏳ | Needs real AI |
 | `/api/ai/suggest-activities` | POST | 🔶 | ⏳ | Needs real AI |
 | `/api/ai/search` | GET/POST | 🔶 | ⏳ | Semantic search |
@@ -212,17 +229,18 @@ BLOCKED - Need Environment Variables:
 | Category | Total | Working | Partial | Broken | Not Started |
 |----------|-------|---------|---------|--------|-------------|
 | Auth | 6 | 6 | 0 | 0 | 0 |
-| Trips | 15 | 13 | 0 | 1 | 1 |
+| Trips | 20 | 18 | 0 | 1 | 1 |
+| Invitations | 3 | 3 | 0 | 0 | 0 |
 | Feed | 5 | 4 | 0 | 0 | 1 |
 | Notifications | 3 | 3 | 0 | 0 | 0 |
-| Discovery | 4 | 1 | 2 | 1 | 0 |
-| AI | 4 | 0 | 4 | 0 | 0 |
+| Discovery | 6 | 3 | 2 | 1 | 0 |
+| AI | 6 | 2 | 4 | 0 | 0 |
 | User | 4 | 2 | 0 | 0 | 2 |
 | Real-time | 1 | 0 | 0 | 0 | 1 |
 | System | 3 | 2 | 0 | 0 | 1 |
-| **TOTAL** | **45** | **31** | **6** | **1** | **6** |
+| **TOTAL** | **57** | **43** | **6** | **1** | **5** |
 
-**API Completion Rate: 69% fully working** ✅ (Up from 67%)
+**API Completion Rate: 75% fully working** ✅ (updated after documenting 12 previously undocumented endpoints)
 
 ---
 
@@ -323,4 +341,4 @@ EMAIL_FROM=             # Email sender (onboarding@resend.dev) ✅
 
 *Review and update after each API change.*
 
-*Last Updated: 2026-03-16 - /api/feed/share POST implemented (Zod + notification), /api/users/[userId] POST confirmed as follow/unfollow endpoint*
+*Last Updated: 2026-03-16 - Documented 12 previously undocumented endpoints: /api/activities/[activityId] (GET/POST/PUT), /api/discover (GET/POST), /api/invitations (GET), /api/invitations/[invitationId] (GET/POST), /api/trips/[tripId]/flights (GET), /api/trips/[tripId]/suggestions (GET), /api/ai/recommend (GET/POST)*
