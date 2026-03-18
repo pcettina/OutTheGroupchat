@@ -1,36 +1,36 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { logger } from '@/lib/logger';
 
+const SignupSchema = z.object({
+  name: z.string().min(1, 'Name is required').max(100),
+  email: z.string().email('Invalid email format'),
+  password: z.string().min(6, 'Password must be at least 6 characters').max(100),
+});
+
 export async function POST(req: Request) {
   try {
-    const { name, email, password } = await req.json();
+    const body = await req.json();
 
-    // Validate input
-    if (!name || !email || !password) {
+    // Check for missing required fields first (before format validation)
+    if (!body.name || !body.email || !body.password) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
       );
     }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    const parseResult = SignupSchema.safeParse(body);
+    if (!parseResult.success) {
+      const firstIssue = parseResult.error.issues[0];
       return NextResponse.json(
-        { error: 'Invalid email format' },
+        { error: firstIssue?.message || 'Invalid input', details: parseResult.error.issues },
         { status: 400 }
       );
     }
-
-    // Validate password strength
-    if (password.length < 6) {
-      return NextResponse.json(
-        { error: 'Password must be at least 6 characters' },
-        { status: 400 }
-      );
-    }
+    const { name, email, password } = parseResult.data;
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({

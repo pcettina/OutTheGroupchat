@@ -514,5 +514,5 @@ Before launching any social feature:
 
 *Make connections that turn strangers into travel companions.*
 
-*Last Updated: December 2024*
+*Last Updated: March 2026*
 

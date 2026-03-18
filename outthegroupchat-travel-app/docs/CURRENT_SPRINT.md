@@ -62,7 +62,7 @@
 
 | Priority | Focus Area | Status |
 |----------|-----------|--------|
-| 🔴 P0 | Test Coverage (170+ tests passing) | 🔄 In Progress (expanding) |
+| 🔴 P0 | Test Coverage (293+ tests passing) | 🔄 In Progress (expanding) |
 | 🔴 P0 | Sentry / Error Monitoring Setup | 🔄 In Progress (needs Vercel DSN) |
 | 🟠 P1 | `img` → `next/image` Migration | ✅ Complete (2026-03-09) |
 | 🟠 P1 | `console.*` Cleanup (75 → 59 → 9 → 0) | ✅ Complete (2026-03-12) |
@@ -78,8 +78,8 @@
 
 ## 🔴 PRIORITY 0: Test Coverage
 
-**Current State:** 232+ Vitest tests passing (trips, voting, survey, feed, auth, notifications, profile, reset-password, geocoding, email, rate-limit, invitations, AI routes, users/health, share)
-**Target:** 250+ tests; then Playwright for E2E
+**Current State:** 293+ Vitest tests passing (trips, voting, survey, feed, auth, notifications, profile, reset-password, geocoding, email, rate-limit, invitations, AI routes, users/health, share, activities, beta/newsletter) across 19 test files
+**Target:** 300+ tests; then Playwright for E2E
 
 ### Tasks
 - [x] Install and configure Vitest + Testing Library ✅ 2026-03-09
@@ -200,7 +200,21 @@
 
 ---
 
-*Updated: 2026-03-16*
+*Updated: 2026-03-18*
+---
+
+## 🟢 Completed 2026-03-18 (Nightly Build)
+
+- `auth/signup` Zod validation added (replaces manual regex validation)
+- `beta/status` route: added logger import + Zod email query param validation
+- New test files: `activities.test.ts` (15 tests), `beta.test.ts` (21 tests across beta/signup, beta/status, newsletter/subscribe)
+- `setup.ts` expanded: user CRUD, notification CRUD, activity CRUD, activityRating/comment mocks added
+- `API_STATUS.md` updated: added `/api/trips/[tripId]/suggestions` and `/api/trips/[tripId]/flights`
+- `LAUNCH_CHECKLIST.md` dates corrected (Dec 2024 → Mar 2026), target updated to Q2 2026
+- Agent guides updated: FRONTEND, PLANNING, SOCIAL_ENGAGEMENT all corrected to March 2026
+- `CODEMAP.md` updated to reflect 2026-03-18 state
+
+*Updated: 2026-03-18*
 ---
 
 ## 🟢 Completed 2026-03-14 (Nightly Build)

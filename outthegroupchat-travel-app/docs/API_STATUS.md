@@ -1,6 +1,6 @@
 # 📡 API & Integration Status
 
-> **Last updated: 2026-03-14**
+> **Last updated: 2026-03-18**
 >
 > **Last Audit:** March 2026
 > **Overall Status:** 79% Complete
@@ -25,7 +25,7 @@
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
 | `/api/auth/[...nextauth]` | ALL | ✅ | ✅ | NextAuth handler |
-| `/api/auth/signup` | POST | ✅ | ✅ | JSON error handling fixed |
+| `/api/auth/signup` | POST | ✅ | ✅ | Zod validation added 2026-03-18 |
 | `/api/auth/demo` | POST | ✅ | ✅ | Demo credentials in env vars ✅ 2026-03-10 |
 | `/api/auth/demo` | GET | ✅ | ✅ | Returns demo account info (hides password in prod) |
 | `/api/auth/reset-password` | POST | ✅ | ✅ | Request reset token; email-safe 200 response ✅ 2026-03-12; UI page added 2026-03-14 |
@@ -74,6 +74,8 @@
 | `/api/trips/[tripId]/voting` | GET | ✅ | 🔶 | Get voting session |
 | `/api/trips/[tripId]/voting` | POST | ✅ | 🔶 | Create/cast vote |
 | `/api/trips/[tripId]/recommendations` | GET | ✅ | ⏳ | AI recommendations |
+| `/api/trips/[tripId]/suggestions` | GET | 🔶 | ⏳ | Activity suggestions via Ticketmaster + Places APIs; requires ext API keys |
+| `/api/trips/[tripId]/flights` | GET | 🔶 | ⏳ | Flight search via Amadeus-style integration; requires AMADEUS_API_KEY |
 
 ---
 
@@ -212,17 +214,17 @@ BLOCKED - Need Environment Variables:
 | Category | Total | Working | Partial | Broken | Not Started |
 |----------|-------|---------|---------|--------|-------------|
 | Auth | 6 | 6 | 0 | 0 | 0 |
-| Trips | 15 | 13 | 0 | 1 | 1 |
-| Feed | 5 | 4 | 0 | 0 | 1 |
+| Trips | 17 | 13 | 2 | 1 | 1 |
+| Feed | 5 | 5 | 0 | 0 | 0 |
 | Notifications | 3 | 3 | 0 | 0 | 0 |
 | Discovery | 4 | 1 | 2 | 1 | 0 |
 | AI | 4 | 0 | 4 | 0 | 0 |
 | User | 4 | 2 | 0 | 0 | 2 |
 | Real-time | 1 | 0 | 0 | 0 | 1 |
 | System | 3 | 2 | 0 | 0 | 1 |
-| **TOTAL** | **45** | **31** | **6** | **1** | **6** |
+| **TOTAL** | **47** | **32** | **8** | **1** | **4** |
 
-**API Completion Rate: 69% fully working** ✅ (Up from 67%)
+**API Completion Rate: 68% fully working** (2 new partial routes added: suggestions, flights)
 
 ---
 
@@ -323,4 +325,4 @@ EMAIL_FROM=             # Email sender (onboarding@resend.dev) ✅
 
 *Review and update after each API change.*
 
-*Last Updated: 2026-03-16 - /api/feed/share POST implemented (Zod + notification), /api/users/[userId] POST confirmed as follow/unfollow endpoint*
+*Last Updated: 2026-03-18 - /api/trips/[tripId]/suggestions and /api/trips/[tripId]/flights documented (discovered routes); /api/auth/signup Zod validation added; feed/share wired to UI*
