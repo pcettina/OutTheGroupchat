@@ -8,12 +8,10 @@ const BetaSignupSchema = z.object({
   name: z.string().min(1).optional(),
 });
 
-// API Key validation (set in environment variables)
-const N8N_API_KEY = process.env.N8N_API_KEY;
-
+// API Key validation (read per-request to support test stubbing)
 function validateApiKey(request: Request): boolean {
   const apiKey = request.headers.get('x-api-key');
-  return apiKey === N8N_API_KEY;
+  return apiKey === process.env.N8N_API_KEY;
 }
 
 export async function POST(req: Request) {

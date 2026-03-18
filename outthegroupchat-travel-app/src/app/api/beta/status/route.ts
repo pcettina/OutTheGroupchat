@@ -1,5 +1,14 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
+import { logger } from '@/lib/logger';
+
+// Force dynamic rendering — this route reads request.url query params
+export const dynamic = 'force-dynamic';
+
+const StatusQuerySchema = z.object({
+  email: z.string().email('Invalid email format'),
+});
 
 export async function GET(req: Request) {
   try {
@@ -13,8 +22,18 @@ export async function GET(req: Request) {
       );
     }
 
+    const parseResult = StatusQuerySchema.safeParse({ email });
+    if (!parseResult.success) {
+      return NextResponse.json(
+        { error: 'Invalid email format' },
+        { status: 400 }
+      );
+    }
+
+    const normalizedEmail = parseResult.data.email.toLowerCase();
+
     const user = await prisma.user.findUnique({
-      where: { email: email.toLowerCase() },
+      where: { email: normalizedEmail },
       select: {
         id: true,
         email: true,
@@ -28,7 +47,7 @@ export async function GET(req: Request) {
     if (!user) {
       return NextResponse.json({
         exists: false,
-        email: email.toLowerCase(),
+        email: normalizedEmail,
       });
     }
 
@@ -41,10 +60,10 @@ export async function GET(req: Request) {
       newsletterSubscribedAt: user.newsletterSubscribedAt,
     });
   } catch (error) {
+    logger.error({ err: error, context: 'BETA_STATUS' }, 'Error checking beta status');
     return NextResponse.json(
       { error: 'Unable to check status' },
       { status: 500 }
     );
   }
 }
-
