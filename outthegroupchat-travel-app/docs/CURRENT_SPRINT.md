@@ -62,7 +62,7 @@
 
 | Priority | Focus Area | Status |
 |----------|-----------|--------|
-| 🔴 P0 | Test Coverage (293+ tests passing) | 🔄 In Progress (expanding) |
+| 🔴 P0 | Test Coverage (478+ tests passing) | 🔄 In Progress (expanding) |
 | 🔴 P0 | Sentry / Error Monitoring Setup | 🔄 In Progress (needs Vercel DSN) |
 | 🟠 P1 | `img` → `next/image` Migration | ✅ Complete (2026-03-09) |
 | 🟠 P1 | `console.*` Cleanup (75 → 59 → 9 → 0) | ✅ Complete (2026-03-12) |
@@ -78,8 +78,8 @@
 
 ## 🔴 PRIORITY 0: Test Coverage
 
-**Current State:** 293+ Vitest tests passing (trips, voting, survey, feed, auth, notifications, profile, reset-password, geocoding, email, rate-limit, invitations, AI routes, users/health, share, activities, beta/newsletter) across 19 test files
-**Target:** 300+ tests; then Playwright for E2E
+**Current State:** 478+ Vitest tests passing (trips, voting, survey, feed, auth, notifications, profile, reset-password, geocoding, email, rate-limit, invitations, AI routes, users/health, share, activities, beta/newsletter, trips-suggestions-flights, trips-members, trips-activities-itinerary, users-me, feed-comments-engagement) across 25 test files
+**Target:** 500+ tests; then Playwright for E2E
 
 ### Tasks
 - [x] Install and configure Vitest + Testing Library ✅ 2026-03-09
@@ -191,7 +191,7 @@
 
 | Metric | Target | Current | Previous |
 |--------|--------|---------|---------|
-| Test count | 80+ | 90+ (est. after 2026-03-11) | 63 |
+| Test count | 500+ | 478+ (25 test files) | 304 |
 | `any` types | 0 | 0 ✅ | 7 |
 | `console.*` in prod code | 0 | ~20 (est.) | 59 |
 | Sentry configured | Yes | Infrastructure ready | No |
@@ -200,7 +200,37 @@
 
 ---
 
-*Updated: 2026-03-18*
+*Updated: 2026-03-19*
+---
+
+## 🟢 Completed 2026-03-19 (Nightly Build)
+
+### Wave 1 — New Test Files (174 new tests: 304 → 478 total; 19 → 25 test files)
+- L1: `trips-suggestions-flights.test.ts` — 20 tests (GET /api/trips/[tripId]/suggestions, /api/trips/[tripId]/flights)
+- L2: `trips-members.test.ts` — 29 tests (GET/PATCH/DELETE /api/trips/[tripId]/members)
+- L3: `trips-activities-itinerary.test.ts` — 37 tests (GET/POST /api/trips/[tripId]/activities, GET/PUT /api/trips/[tripId]/itinerary)
+- M1: `users-me.test.ts` — 18 tests (GET/PATCH /api/users/me)
+- M2: `feed-comments-engagement.test.ts` — 46 tests (GET/POST /api/feed/comments, POST /api/feed/engagement)
+- M6: `invitations.test.ts` — 24 tests (GET /api/invitations, GET/POST /api/invitations/[invitationId])
+
+### Wave 2 — Features & Fixes
+- L4: `/api/beta/initialize-password` — added N8N_API_KEY authentication (account takeover vulnerability fixed)
+- L5: `GET /api/auth/verify-email` — new email token verification endpoint created
+- L6: Fixed 38 TSC errors in `ai.test.ts`, `feed.test.ts`, `reset-password.test.ts`, `trips.test.ts`, `users.test.ts` (mock data missing required Prisma fields)
+- M3: `instrumentation-client.ts` — added `register()` export and `onRouterTransitionStart` Sentry export
+- M4: JSDoc added to `lib/ai/client.ts`, `lib/pusher.ts`, `lib/logger.ts`, `lib/api/flights.ts`, `lib/api/ticketmaster.ts`, `lib/api/places.ts`
+- M5: Created `src/components/trips/InviteMemberModal.tsx`; wired into `app/trips/[tripId]/page.tsx` and `components/trips/index.ts`
+
+### Automated (Phase 3.5 — 8 small tasks)
+- All metrics clean: 0 `any` types, 0 `console.*`, 0 files >600 lines, 0 TODOs flagged
+
+### Setup.ts Expansion
+- Added `findMany`, `findUnique`, `update`, `delete` to `prisma.tripMember`
+- Added `aggregate` to `prisma.activityRating`
+- Added full mock objects: `prisma.itineraryDay`, `prisma.itineraryItem`, `prisma.tripComment`, `prisma.tripLike`
+- Added `findMany`, `findUnique`, `updateMany` to `prisma.tripInvitation`
+
+*Updated: 2026-03-19*
 ---
 
 ## 🟢 Completed 2026-03-18 (Nightly Build)
@@ -214,7 +244,7 @@
 - Agent guides updated: FRONTEND, PLANNING, SOCIAL_ENGAGEMENT all corrected to March 2026
 - `CODEMAP.md` updated to reflect 2026-03-18 state
 
-*Updated: 2026-03-18*
+*Updated: 2026-03-19*
 ---
 
 ## 🟢 Completed 2026-03-14 (Nightly Build)

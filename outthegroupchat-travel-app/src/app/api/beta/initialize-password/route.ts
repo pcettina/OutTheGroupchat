@@ -10,8 +10,23 @@ const InitializePasswordSchema = z.object({
   token: z.string().optional(),
 });
 
+// API Key validation (read per-request to support test stubbing)
+function validateApiKey(request: Request): boolean {
+  const apiKey = request.headers.get('x-api-key');
+  return apiKey === process.env.N8N_API_KEY;
+}
+
 export async function POST(req: Request) {
   try {
+    // Require N8N_API_KEY to prevent unauthenticated account takeover
+    if (!validateApiKey(req)) {
+      logger.warn({ context: 'PASSWORD_INIT' }, 'Unauthorized attempt to initialize password — invalid API key');
+      return NextResponse.json(
+        { error: 'Unauthorized - Invalid API key' },
+        { status: 401 }
+      );
+    }
+
     const body = await req.json();
     const parseResult = InitializePasswordSchema.safeParse(body);
     if (!parseResult.success) {
@@ -20,7 +35,7 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-    const { email, password, token } = parseResult.data;
+    const { email, password } = parseResult.data;
 
     // Find user
     const user = await prisma.user.findUnique({
@@ -41,10 +56,6 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-
-    // Optional: Validate token if provided (for additional security)
-    // You can implement token generation/validation logic here
-    // For now, we'll allow direct initialization for beta users
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);

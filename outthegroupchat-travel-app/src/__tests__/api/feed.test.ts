@@ -86,11 +86,17 @@ const MOCK_SESSION = {
 const MOCK_TRIP_ROW = {
   id: MOCK_TRIP_ID,
   title: 'Tokyo Adventure',
+  description: null,
   destination: { city: 'Tokyo', country: 'Japan' },
-  status: 'PLANNING',
+  status: 'PLANNING' as const,
   isPublic: true,
   coverImage: null,
+  createdAt: new Date('2026-02-01'),
   updatedAt: new Date('2026-02-01'),
+  startDate: new Date('2026-04-01'),
+  endDate: new Date('2026-04-10'),
+  budget: null,
+  viewCount: 0,
   ownerId: MOCK_USER_ID,
   owner: { id: MOCK_USER_ID, name: 'Feed Tester', image: null },
   _count: { members: 2, activities: 5 },
@@ -99,11 +105,30 @@ const MOCK_TRIP_ROW = {
 /** A minimal public activity row returned by prisma.activity.findMany. */
 const MOCK_ACTIVITY_ROW = {
   id: MOCK_ACTIVITY_ID,
+  tripId: MOCK_TRIP_ID,
   name: 'Shibuya Crossing Walk',
-  category: 'Sightseeing',
+  category: 'CULTURE' as const,
   description: 'Walk through the famous crossing',
+  status: 'SUGGESTED' as const,
   isPublic: true,
   createdAt: new Date('2026-02-02'),
+  updatedAt: new Date('2026-02-02'),
+  location: null,
+  date: null,
+  startTime: null,
+  endTime: null,
+  duration: null,
+  cost: null,
+  currency: 'USD',
+  priceRange: null,
+  costDetails: null,
+  bookingStatus: 'NOT_NEEDED' as const,
+  bookingUrl: null,
+  confirmationCode: null,
+  requirements: null,
+  originalTripId: null,
+  shareCount: 0,
+  externalLinks: null,
   trip: {
     id: MOCK_TRIP_ID,
     title: 'Tokyo Adventure',
@@ -279,9 +304,10 @@ describe('POST /api/feed', () => {
   it('saves an activity successfully and returns action: save', async () => {
     mockGetServerSession.mockResolvedValue(MOCK_SESSION);
     mockPrismaSavedActivity.upsert.mockResolvedValue({
+      id: 'saved-1',
       userId: MOCK_USER_ID,
       activityId: MOCK_ACTIVITY_ID,
-      createdAt: new Date(),
+      savedAt: new Date(),
     });
 
     const res = await feedPOST(

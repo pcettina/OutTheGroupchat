@@ -1,6 +1,6 @@
 # 📡 API & Integration Status
 
-> **Last updated: 2026-03-18**
+> **Last updated: 2026-03-19**
 >
 > **Last Audit:** March 2026
 > **Overall Status:** 79% Complete
@@ -30,10 +30,11 @@
 | `/api/auth/demo` | GET | ✅ | ✅ | Returns demo account info (hides password in prod) |
 | `/api/auth/reset-password` | POST | ✅ | ✅ | Request reset token; email-safe 200 response ✅ 2026-03-12; UI page added 2026-03-14 |
 | `/api/auth/reset-password` | PATCH | ✅ | ✅ | Confirm reset with token + new password ✅ 2026-03-12; UI confirm page added 2026-03-14 |
+| `/api/auth/verify-email` | GET | ✅ | ✅ | Email token verification ✅ 2026-03-19 (endpoint exists; signup does not yet send verification email) |
 
 ### Auth Issues to Fix
 - [x] Add password reset endpoint ✅ 2026-03-12
-- [ ] Add email verification endpoint
+- [x] Add email verification endpoint ✅ 2026-03-19 (GET /api/auth/verify-email — signup email not yet wired)
 
 ---
 
@@ -195,6 +196,20 @@ BLOCKED - Need Environment Variables:
 | `/api/cron` | GET | ✅ | N/A | Background jobs |
 | `/api/health` | GET | ✅ | N/A | DB connectivity check, env info, 503 on degraded ✅ 2026-03-10 |
 | `/api/users/me` | GET | ✅ | 🔶 | Get current authenticated user |
+| `/api/users/me` | PATCH | ✅ | 🔶 | Update current user profile + preferences |
+
+---
+
+## 🎯 Activity & Invitation APIs
+
+| Endpoint | Method | Status | Frontend Connected | Notes |
+|----------|--------|--------|-------------------|-------|
+| `/api/activities/[activityId]` | GET | ✅ | 🔶 | Get activity detail, ratings, comments |
+| `/api/activities/[activityId]` | POST | ✅ | 🔶 | Save/unsave activity (toggle) |
+| `/api/activities/[activityId]` | PUT | ✅ | 🔶 | Add comment or rating to activity |
+| `/api/invitations` | GET | ✅ | 🔶 | List user's pending trip invitations |
+| `/api/invitations/[invitationId]` | GET | ✅ | 🔶 | Get invitation detail |
+| `/api/invitations/[invitationId]` | POST | ✅ | 🔶 | Respond to invitation (accept/decline) |
 
 ---
 
@@ -204,7 +219,7 @@ BLOCKED - Need Environment Variables:
 |----------|--------|--------|-------------------|-------|
 | `/api/beta/signup` | POST | ✅ | ✅ | Beta waitlist signup |
 | `/api/beta/status` | GET | ✅ | ✅ | Check beta access status |
-| `/api/beta/initialize-password` | POST | ✅ | ✅ | Beta user password init |
+| `/api/beta/initialize-password` | POST | ✅ | ✅ | Beta user password init — now protected with N8N_API_KEY auth ✅ 2026-03-19 (was unauthenticated — account takeover vulnerability fixed) |
 | `/api/newsletter/subscribe` | POST | ✅ | ✅ | Newsletter subscription |
 
 ---
@@ -213,18 +228,21 @@ BLOCKED - Need Environment Variables:
 
 | Category | Total | Working | Partial | Broken | Not Started |
 |----------|-------|---------|---------|--------|-------------|
-| Auth | 6 | 6 | 0 | 0 | 0 |
+| Auth | 7 | 7 | 0 | 0 | 0 |
 | Trips | 17 | 13 | 2 | 1 | 1 |
 | Feed | 5 | 5 | 0 | 0 | 0 |
 | Notifications | 3 | 3 | 0 | 0 | 0 |
 | Discovery | 4 | 1 | 2 | 1 | 0 |
 | AI | 4 | 0 | 4 | 0 | 0 |
-| User | 4 | 2 | 0 | 0 | 2 |
+| User | 5 | 3 | 0 | 0 | 2 |
 | Real-time | 1 | 0 | 0 | 0 | 1 |
 | System | 3 | 2 | 0 | 0 | 1 |
-| **TOTAL** | **47** | **32** | **8** | **1** | **4** |
+| Activities | 3 | 3 | 0 | 0 | 0 |
+| Invitations | 3 | 3 | 0 | 0 | 0 |
+| Beta/Newsletter | 4 | 4 | 0 | 0 | 0 |
+| **TOTAL** | **59** | **44** | **8** | **1** | **4** |
 
-**API Completion Rate: 68% fully working** (2 new partial routes added: suggestions, flights)
+**API Completion Rate: 75% fully working** (1 new auth route: verify-email; initialize-password security fix; activities + invitations documented 2026-03-19)
 
 ---
 
@@ -325,4 +343,4 @@ EMAIL_FROM=             # Email sender (onboarding@resend.dev) ✅
 
 *Review and update after each API change.*
 
-*Last Updated: 2026-03-18 - /api/trips/[tripId]/suggestions and /api/trips/[tripId]/flights documented (discovered routes); /api/auth/signup Zod validation added; feed/share wired to UI*
+*Last Updated: 2026-03-19 - GET /api/auth/verify-email added; /api/beta/initialize-password security fix (N8N_API_KEY auth); /api/activities/[activityId] and /api/invitations documented; /api/users/me PATCH documented; route total updated to 59*

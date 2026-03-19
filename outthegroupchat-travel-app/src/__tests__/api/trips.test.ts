@@ -56,14 +56,14 @@ const MOCK_TRIP = {
   endDate: new Date('2026-06-10'),
   isPublic: false,
   ownerId: MOCK_USER_ID,
-  status: 'PLANNING',
+  status: 'PLANNING' as const,
   viewCount: 0,
   coverImage: null,
   budget: null,
   createdAt: new Date('2026-01-01'),
   updatedAt: new Date('2026-01-01'),
   owner: { id: MOCK_USER_ID, name: 'Test User', image: null },
-  members: [{ userId: MOCK_USER_ID, role: 'OWNER', user: { id: MOCK_USER_ID, name: 'Test User', image: null } }],
+  members: [{ userId: MOCK_USER_ID, role: 'OWNER' as const, user: { id: MOCK_USER_ID, name: 'Test User', image: null } }],
   _count: { members: 1, activities: 0 },
 };
 
@@ -448,7 +448,7 @@ describe('PATCH /api/trips/[tripId]', () => {
   });
 
   it('updates the trip and returns 200 for an owner', async () => {
-    mockPrismaTripMember.findFirst.mockResolvedValueOnce({ role: 'OWNER' });
+    mockPrismaTripMember.findFirst.mockResolvedValueOnce({ id: 'member-1', userId: MOCK_USER_ID, tripId: MOCK_TRIP_ID, role: 'OWNER' as const, joinedAt: new Date(), budgetRange: null, departureCity: null, flightDetails: null });
     mockPrismaTrip.update.mockResolvedValueOnce({ ...MOCK_TRIP, title: 'Updated Title', isPublic: true });
 
     const res = await callPatch(MOCK_TRIP_ID, VALID_PATCH_BODY);
@@ -460,7 +460,7 @@ describe('PATCH /api/trips/[tripId]', () => {
   });
 
   it('returns 400 for an invalid status value', async () => {
-    mockPrismaTripMember.findFirst.mockResolvedValueOnce({ role: 'OWNER' });
+    mockPrismaTripMember.findFirst.mockResolvedValueOnce({ id: 'member-1', userId: MOCK_USER_ID, tripId: MOCK_TRIP_ID, role: 'OWNER' as const, joinedAt: new Date(), budgetRange: null, departureCity: null, flightDetails: null });
 
     const res = await callPatch(MOCK_TRIP_ID, { status: 'INVALID_STATUS' });
     const body = await parseJson(res);

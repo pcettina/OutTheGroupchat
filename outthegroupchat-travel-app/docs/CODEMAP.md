@@ -1,6 +1,6 @@
 # OutTheGroupchat — Full Codemap
 
-> Auto-generated 2026-03-10. Last updated 2026-03-18. Comprehensive reference for agents and developers.
+> Auto-generated 2026-03-10. Last updated 2026-03-19. Comprehensive reference for agents and developers.
 
 ## Table of Contents
 
@@ -29,7 +29,7 @@ Full-stack Next.js 14 collaborative travel planning app. Groups plan trips toget
 
 **App root:** `outthegroupchat-travel-app/`
 **Source:** `outthegroupchat-travel-app/src/`
-**Stats:** ~198 TS/TSX files | ~33,500 LOC | 49 API routes | 94 components | 20 pages
+**Stats:** ~227 TS/TSX files | ~33,500 LOC | 48 API routes | 94 components | 20 pages
 
 ---
 
@@ -78,7 +78,7 @@ outthegroupchat-travel-app/
 │   │   ├── inspiration/page.tsx
 │   │   ├── notifications/page.tsx
 │   │   ├── profile/page.tsx
-│   │   └── api/                   # 48 API route files (see API Routes section)
+│   │   └── api/                   # 49 API route files (see API Routes section)
 │   ├── components/                # 94 files across 16 feature directories
 │   │   ├── accessibility/         # FocusTrap, SkipLinks, VisuallyHidden, LiveRegion
 │   │   ├── ai/                    # TripChat
@@ -400,8 +400,9 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `/api/auth/signup` | POST | No | No | User registration + pending invitation processing |
 | `/api/auth/demo` | POST, GET | No | No | Demo account creation/retrieval |
 | `/api/auth/reset-password` | POST, PATCH | No | Yes | POST: request reset token (always 200, prevents enumeration); PATCH: confirm reset with token + new password |
+| `/api/auth/verify-email` | GET | No | Yes | Email token verification ✅ 2026-03-19 |
 | `/api/beta/signup` | POST | API Key | Yes | Beta signup via N8N |
-| `/api/beta/initialize-password` | POST | No | Yes | Password init for beta users |
+| `/api/beta/initialize-password` | POST | API Key | Yes | Password init for beta users — N8N_API_KEY auth protection added 2026-03-19 |
 | `/api/beta/status` | GET | No | No | Beta signup status check |
 
 ### Trips CRUD
@@ -626,6 +627,7 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `MemberList` | — | members, onRemove?, onRoleChange?, editable? | Member list with roles |
 | `ItineraryTimeline` | — | days, onAddDay?, onEditDay?, editable? | Day-by-day schedule |
 | `InviteModal` | — | tripId, open, onOpenChange, onInvite? | Email invite form |
+| `InviteMemberModal` | — | tripId, open, onOpenChange, onInvited? | Invite member UI with member search and email invite ✅ 2026-03-19 |
 | `AddActivityModal` | 492 | tripId, date?, open, onOpenChange, onAdd? | Add activity to itinerary |
 
 **Trip wizard steps** (`components/trips/steps/`):
@@ -782,7 +784,7 @@ db:seed        → npx tsx prisma/seed/index.ts
 
 ## Tests
 
-**Total: 330+ tests across 19 Vitest unit/integration test files**
+**Total: 478+ tests across 25 Vitest unit/integration test files**
 
 | File | Lines | Tests | Coverage |
 |------|-------|-------|----------|
@@ -805,6 +807,12 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `src/__tests__/api/users.test.ts` | — | 19 | Users API + health endpoint |
 | `src/__tests__/api/activities.test.ts` | — | 15 | Activities API (GET, POST save/unsave, PUT comment/rate) |
 | `src/__tests__/api/beta.test.ts` | — | 21 | Beta signup, beta status, newsletter subscribe |
+| `src/__tests__/api/trips-suggestions-flights.test.ts` | — | 20 | GET /api/trips/[tripId]/suggestions and /flights |
+| `src/__tests__/api/trips-members.test.ts` | — | 29 | GET/PATCH/DELETE /api/trips/[tripId]/members |
+| `src/__tests__/api/trips-activities-itinerary.test.ts` | — | 37 | GET/POST /api/trips/[tripId]/activities; GET/PUT /api/trips/[tripId]/itinerary |
+| `src/__tests__/api/users-me.test.ts` | — | 18 | GET/PATCH /api/users/me |
+| `src/__tests__/api/feed-comments-engagement.test.ts` | — | 46 | GET/POST /api/feed/comments; POST /api/feed/engagement |
+| `src/__tests__/api/invitations.test.ts` | — | 24 | GET /api/invitations; GET/POST /api/invitations/[invitationId] |
 | `src/__tests__/setup.ts` | — | — | Test environment/fixture config |
 | `vitest.config.ts` | 16 | — | Vitest runner configuration |
 
@@ -839,7 +847,7 @@ db:seed        → npx tsx prisma/seed/index.ts
 | Lint warnings | 0 |
 | `any` types | 0 ✅ |
 | `console.*` | 0 ✅ |
-| Vitest tests | 330+ passing (19 files) |
+| Vitest tests | 478+ passing (25 files) |
 | E2E tests | 11 Playwright smoke tests (4 suites) |
 | Error monitoring | Sentry installed (server + client + edge) — needs `SENTRY_DSN` in Vercel |
 | Files >400 lines | ~10 (0 files exceed 600 lines) |

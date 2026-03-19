@@ -7,5 +7,6 @@ export { default as MemberList } from './MemberList';
 export { default as ItineraryTimeline } from './ItineraryTimeline';
 export { default as InviteModal } from './InviteModal';
 export { default as AddActivityModal } from './AddActivityModal';
+export { default as InviteMemberModal } from './InviteMemberModal';
 export * from './steps';
 

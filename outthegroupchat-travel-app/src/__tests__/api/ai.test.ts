@@ -251,10 +251,18 @@ describe('POST /api/ai/generate-itinerary', () => {
   const mockTrip = {
     id: 'trip-1',
     title: 'Paris Trip',
+    description: null,
+    status: 'PLANNING' as const,
+    createdAt: new Date('2026-01-01'),
+    updatedAt: new Date('2026-01-01'),
     destination: { city: 'Paris', country: 'France' },
     startDate: new Date('2026-06-01'),
     endDate: new Date('2026-06-07'),
     budget: { total: 3000, currency: 'USD' },
+    coverImage: null,
+    isPublic: false,
+    viewCount: 0,
+    ownerId: 'user-1',
     members: [
       {
         userId: 'user-1',
@@ -351,7 +359,7 @@ describe('POST /api/ai/generate-itinerary', () => {
         itineraryItem: { deleteMany: vi.fn(), createMany: vi.fn() },
         itineraryDay: { deleteMany: vi.fn(), create: vi.fn().mockResolvedValue({ id: 'day-1' }) },
       };
-      return fn(mockTx as Parameters<typeof prisma.$transaction>[0] extends infer T ? T : never);
+      return (fn as unknown as (tx: typeof mockTx) => Promise<unknown>)(mockTx);
     });
 
     const res = await POST(makeItineraryRequest({ tripId: 'trip-1' }));
@@ -391,7 +399,7 @@ describe('POST /api/ai/generate-itinerary', () => {
         itineraryItem: { deleteMany: vi.fn(), createMany: vi.fn() },
         itineraryDay: { deleteMany: vi.fn(), create: vi.fn().mockResolvedValue({ id: 'day-1' }) },
       };
-      return fn(mockTx as Parameters<typeof prisma.$transaction>[0] extends infer T ? T : never);
+      return (fn as unknown as (tx: typeof mockTx) => Promise<unknown>)(mockTx);
     });
 
     const res = await POST(makeItineraryRequest({

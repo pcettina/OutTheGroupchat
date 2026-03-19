@@ -69,12 +69,22 @@ const otherSession = { user: { id: 'user-2', name: 'Other', email: 'other@test.c
 const mockUser = {
   id: 'user-2',
   name: 'Target User',
-  email: null,
+  email: 'target@example.com',
+  emailVerified: null,
+  password: null,
   image: null,
   bio: 'I love travel',
   city: 'New York',
+  phone: null,
   preferences: null,
   createdAt: new Date('2025-01-01'),
+  updatedAt: new Date('2025-01-01'),
+  lastActive: new Date('2025-01-01'),
+  betaSignupDate: null,
+  newsletterSubscribed: false,
+  newsletterSubscribedAt: null,
+  passwordInitialized: false,
+  betaLaunchEmailSent: false,
   _count: { followers: 5, following: 3, ownedTrips: 10 },
 };
 
@@ -151,8 +161,8 @@ describe('GET /api/users/[userId]', () => {
     vi.mocked(getServerSession).mockResolvedValue(null);
     vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as Awaited<ReturnType<typeof prisma.user.findUnique>>);
     vi.mocked(prisma.trip.findMany).mockResolvedValue([
-      { id: 'trip-1', title: 'Paris Trip', destination: { city: 'Paris', country: 'France' }, startDate: new Date(), endDate: new Date(), status: 'PLANNING', _count: { members: 3, activities: 5 } },
-    ] as Awaited<ReturnType<typeof prisma.trip.findMany>>);
+      { id: 'trip-1', title: 'Paris Trip', description: null, destination: { city: 'Paris', country: 'France' }, startDate: new Date(), endDate: new Date(), status: 'PLANNING' as const, isPublic: true, ownerId: 'user-2', coverImage: null, budget: null, viewCount: 0, createdAt: new Date(), updatedAt: new Date(), _count: { members: 3, activities: 5 } },
+    ] as unknown as Awaited<ReturnType<typeof prisma.trip.findMany>>);
 
     const res = await GET(makeGetRequest('user-2'), { params: { userId: 'user-2' } });
     const json = await res.json();

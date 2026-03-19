@@ -2,13 +2,20 @@ import { createOpenAI } from '@ai-sdk/openai';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { logger } from '@/lib/logger';
 
-// Check if API keys are configured
+/**
+ * @description Checks whether the OpenAI API key is present and well-formed (starts with 'sk-').
+ * @returns {boolean} True if the OPENAI_API_KEY environment variable is set and valid.
+ */
 export function isOpenAIConfigured(): boolean {
   const apiKey = process.env.OPENAI_API_KEY;
   // Check if key exists and is not empty, and starts with 'sk-' (OpenAI key format)
   return !!(apiKey && apiKey.trim().length > 0 && apiKey.startsWith('sk-'));
 }
 
+/**
+ * @description Checks whether the Anthropic API key is present in the environment.
+ * @returns {boolean} True if the ANTHROPIC_API_KEY environment variable is set.
+ */
 export function isAnthropicConfigured(): boolean {
   return !!process.env.ANTHROPIC_API_KEY;
 }
@@ -33,7 +40,14 @@ function getAnthropicClient() {
   });
 }
 
-// Get the appropriate model based on task type
+/**
+ * @description Returns the appropriate AI model instance for the given task type.
+ * Uses GPT-4o for itinerary and analysis tasks, GPT-4o-mini for chat and suggestions,
+ * and Claude claude-3-5-sonnet for analysis when Anthropic is configured.
+ * @param {'itinerary' | 'chat' | 'suggestions' | 'analysis' | 'recommendations'} task - The task type to select a model for.
+ * @returns The configured AI model instance for the specified task.
+ * @throws {Error} If OPENAI_API_KEY is not configured.
+ */
 export function getModel(task: 'itinerary' | 'chat' | 'suggestions' | 'analysis' | 'recommendations') {
   // Check if OpenAI is configured (required for most tasks)
   if (!isOpenAIConfigured()) {
@@ -63,16 +77,26 @@ export function getModel(task: 'itinerary' | 'chat' | 'suggestions' | 'analysis'
   }
 }
 
-// Legacy exports for backward compatibility
+/**
+ * @description Legacy OpenAI client instance for backward compatibility.
+ * Null when OPENAI_API_KEY is not configured. Prefer getModel() for new code.
+ */
 export const openai = isOpenAIConfigured() 
   ? createOpenAI({ apiKey: process.env.OPENAI_API_KEY, compatibility: 'strict' })
   : null;
 
+/**
+ * @description Legacy Anthropic client instance for backward compatibility.
+ * Null when ANTHROPIC_API_KEY is not configured. Prefer getModel() for new code.
+ */
 export const anthropic = isAnthropicConfigured()
   ? createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
   : null;
 
-// Models object - lazily create models only when accessed
+/**
+ * @description Lazy model accessor object that creates model instances on demand.
+ * Each getter calls the underlying client factory, throwing if the required API key is absent.
+ */
 export const models = {
   get fast() { return getOpenAIClient()('gpt-4o-mini'); },
   get quality() { return getOpenAIClient()('gpt-4o'); },
@@ -95,6 +119,15 @@ export {
  */
 const requestCounts = new Map<string, { count: number; resetAt: number }>();
 
+/**
+ * @deprecated Use checkRedisRateLimit from @/lib/rate-limit instead.
+ * @description In-memory rate limiter that tracks per-user request counts in a sliding window.
+ * Fails in multi-instance or serverless deployments where memory is not shared.
+ * @param {string} userId - The identifier of the user being rate-limited.
+ * @param {number} [limit=20] - Maximum number of requests allowed within the window.
+ * @param {number} [windowMs=60000] - Duration of the rate-limit window in milliseconds.
+ * @returns {boolean} True if the request is within the allowed limit, false if it should be rejected.
+ */
 export function checkRateLimit(userId: string, limit = 20, windowMs = 60000): boolean {
   logger.warn('[DEPRECATED] Using in-memory rate limiting. Migrate to Redis-based rate limiting.');
   const now = Date.now();
@@ -113,13 +146,23 @@ export function checkRateLimit(userId: string, limit = 20, windowMs = 60000): bo
   return true;
 }
 
-// Token estimation helper
+/**
+ * @description Estimates the number of tokens in a text string using a rough 4-characters-per-token heuristic.
+ * @param {string} text - The input text to estimate token count for.
+ * @returns {number} Approximate token count, rounded up.
+ */
 export function estimateTokens(text: string): number {
   // Rough estimation: ~4 characters per token
   return Math.ceil(text.length / 4);
 }
 
-// Cost tracking (approximate)
+/**
+ * @description Estimates the USD cost of an AI API call based on token counts and per-model pricing rates.
+ * @param {number} inputTokens - Number of input (prompt) tokens consumed.
+ * @param {number} outputTokens - Number of output (completion) tokens generated.
+ * @param {'gpt-4o' | 'gpt-4o-mini' | 'claude-3-5-sonnet' | 'claude-3-haiku'} model - The model used for the request.
+ * @returns {number} Approximate cost in USD.
+ */
 export function estimateCost(
   inputTokens: number,
   outputTokens: number,

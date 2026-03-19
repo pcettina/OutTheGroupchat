@@ -82,16 +82,20 @@ function makeRequest(method: string, body: unknown): Request {
 }
 
 // ---------------------------------------------------------------------------
-// Import route handlers under test
+// Import route handlers under test (lazy to avoid top-level await)
 // ---------------------------------------------------------------------------
-const { POST, PATCH } = await import('@/app/api/auth/reset-password/route');
+let POST: (req: Request) => Promise<Response>;
+let PATCH: (req: Request) => Promise<Response>;
 
 // ---------------------------------------------------------------------------
 // Test suite
 // ---------------------------------------------------------------------------
 describe('POST /api/auth/reset-password (request reset)', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    const mod = await import('@/app/api/auth/reset-password/route');
+    POST = mod.POST;
+    PATCH = mod.PATCH;
   });
 
   it('returns 200 when user exists and creates token', async () => {
@@ -163,8 +167,11 @@ describe('POST /api/auth/reset-password (request reset)', () => {
 });
 
 describe('PATCH /api/auth/reset-password (confirm reset)', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    const mod = await import('@/app/api/auth/reset-password/route');
+    POST = mod.POST;
+    PATCH = mod.PATCH;
   });
 
   const validToken = {

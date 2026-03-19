@@ -55,7 +55,7 @@
 - [x] Email/password signin
 - [x] Session management (NextAuth)
 - [x] Password reset flow ✅ 2026-03-14 (API + UI complete)
-- [ ] Email verification
+- [x] Email verification endpoint ✅ 2026-03-19 (GET /api/auth/verify-email created; signup does not yet send verification email — wiring required)
 - [ ] OAuth providers (Google, Apple) - *Post-beta*
 
 ### Trip Management 🔶
@@ -125,6 +125,9 @@
 
 4. [x] Fix placeholder user creation abuse ✅ Dec 2025
    File: src/app/api/trips/[tripId]/invitations/route.ts
+
+5. [x] Fix unauthenticated /api/beta/initialize-password (account takeover) ✅ 2026-03-19
+   File: src/app/api/beta/initialize-password/route.ts (N8N_API_KEY auth added)
 ```
 
 ### Security Headers
@@ -345,4 +348,4 @@ git push origin main  # Auto-deploys to Vercel
 
 *This checklist should be reviewed daily during launch preparation.*
 
-*Last Updated: 2026-03-18 - auth/signup Zod validation, beta/status logger fix, activities/beta/newsletter tests added, API_STATUS updated with suggestions+flights routes*
+*Last Updated: 2026-03-19 - email verification endpoint added (partial), initialize-password security fix, InviteMemberModal UI created, 174 new tests (304 → 478), 38 TSC errors fixed*

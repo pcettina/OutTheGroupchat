@@ -9,7 +9,7 @@ import { format } from 'date-fns';
 import { useTrip } from '@/hooks/useTrips';
 import { TripChat } from '@/components/ai';
 import { Navigation } from '@/components/Navigation';
-import { TripHeader, TripOverview, MemberList, ItineraryTimeline, InviteModal, AddActivityModal } from '@/components/trips';
+import { TripHeader, TripOverview, MemberList, ItineraryTimeline, InviteModal, AddActivityModal, InviteMemberModal } from '@/components/trips';
 import { ShareModal } from '@/components/feed/ShareModal';
 import { FloatingShareButton } from '@/components/ui';
 import type { Destination, TripBudget } from '@/types';
@@ -23,6 +23,7 @@ export default function TripDetailPage() {
   
   // Modal states
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [isInviteMemberModalOpen, setIsInviteMemberModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isAddActivityModalOpen, setIsAddActivityModalOpen] = useState(false);
   const [activityPreselectedDate, setActivityPreselectedDate] = useState<Date | undefined>(undefined);
@@ -103,8 +104,18 @@ export default function TripDetailPage() {
     budget: budget?.total,
   };
 
+  const isOwnerOrAdmin =
+    session?.user?.id === trip.ownerId ||
+    trip.members?.some(
+      (m) => m.userId === session?.user?.id && (m.role === 'OWNER' || m.role === 'ADMIN')
+    );
+
   const handleInvite = () => {
     setIsInviteModalOpen(true);
+  };
+
+  const handleAddMember = () => {
+    setIsInviteMemberModalOpen(true);
   };
 
   const handleShare = () => {
@@ -280,6 +291,32 @@ export default function TripDetailPage() {
                 onInvite={handleInvite}
                 isOwner={session?.user?.id === trip.ownerId}
               />
+
+              {/* Add Member (direct add by email — owner/admin only) */}
+              {isOwnerOrAdmin && (
+                <motion.button
+                  onClick={handleAddMember}
+                  whileHover={{ scale: 1.01, y: -1 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full py-3 px-4 bg-white dark:bg-slate-800 rounded-xl border border-dashed border-slate-300 dark:border-slate-600 hover:border-emerald-400 dark:hover:border-emerald-600 text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 font-medium text-sm flex items-center justify-center gap-2 transition-colors shadow-sm"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+                    />
+                  </svg>
+                  Add Existing Member
+                </motion.button>
+              )}
             </div>
           </div>
         </div>
@@ -296,13 +333,22 @@ export default function TripDetailPage() {
         }}
       />
 
-      {/* Invite Modal */}
+      {/* Invite Modal (email invitation flow) */}
       <InviteModal
         isOpen={isInviteModalOpen}
         onClose={() => setIsInviteModalOpen(false)}
         tripId={tripId}
         tripTitle={trip.title}
       />
+
+      {/* Add Member Modal (direct add by email — owner/admin only) */}
+      {isOwnerOrAdmin && (
+        <InviteMemberModal
+          tripId={tripId}
+          isOpen={isInviteMemberModalOpen}
+          onClose={() => setIsInviteMemberModalOpen(false)}
+        />
+      )}
 
       {/* Share Modal */}
       <ShareModal

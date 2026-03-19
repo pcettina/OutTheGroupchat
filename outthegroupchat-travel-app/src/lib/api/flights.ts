@@ -115,6 +115,20 @@ export interface FlightSearchParams {
   max?: number;
 }
 
+/**
+ * @description Searches for available flight offers via the Amadeus Flight Offers API.
+ * Returns an empty array on error rather than throwing.
+ * @param {FlightSearchParams} params - Search parameters including origin, destination, dates, and filters.
+ * @param {string} params.originLocationCode - IATA code for the departure airport/city.
+ * @param {string} params.destinationLocationCode - IATA code for the arrival airport/city.
+ * @param {string} params.departureDate - Departure date in YYYY-MM-DD format.
+ * @param {string} [params.returnDate] - Optional return date in YYYY-MM-DD format for round trips.
+ * @param {number} [params.adults=1] - Number of adult passengers.
+ * @param {boolean} [params.nonStop=false] - Whether to filter for non-stop flights only.
+ * @param {string} [params.currencyCode='USD'] - Currency code for pricing.
+ * @param {number} [params.max=10] - Maximum number of offers to return.
+ * @returns {Promise<FlightOffer[]>} Array of normalized flight offer objects.
+ */
 export async function searchFlights({
   originLocationCode,
   destinationLocationCode,
@@ -188,6 +202,12 @@ export async function searchFlights({
   }
 }
 
+/**
+ * @description Looks up the primary IATA code for a given city or airport name using the Amadeus Locations API.
+ * Returns null when no match is found or on error.
+ * @param {string} cityName - The city or airport name to search for.
+ * @returns {Promise<string | null>} The IATA code of the first matching location, or null.
+ */
 export async function getAirportCode(cityName: string): Promise<string | null> {
   try {
     const token = await getAmadeusToken();
