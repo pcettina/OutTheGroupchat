@@ -29,6 +29,9 @@ Sentry.init({
   ],
 });
 
+// Required by Next.js App Router for Turbopack compatibility.
+// Captures router transition timing for Sentry performance tracing.
+// Without this export the build emits a "missing onRouterTransitionStart" warning.
 // Required by Next.js instrumentation API to register the client-side hook.
 export function register() {}
 

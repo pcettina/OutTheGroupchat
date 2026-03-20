@@ -19,6 +19,54 @@ const generateItinerarySchema = z.object({
   customInstructions: z.string().optional(),
 });
 
+const itineraryItemSchema = z.object({
+  time: z.string(),
+  title: z.string(),
+  description: z.string(),
+  location: z.string(),
+  duration: z.number(),
+  cost: z.object({
+    amount: z.number(),
+    per: z.enum(['person', 'group']),
+  }),
+  category: z.enum(['food', 'activity', 'transport', 'leisure']).optional(),
+  optional: z.boolean().optional().default(false),
+  notes: z.string().optional(),
+}).passthrough();
+
+const mealSchema = z.object({
+  name: z.string(),
+  cuisine: z.string(),
+  priceRange: z.string(),
+});
+
+const itineraryDaySchema = z.object({
+  dayNumber: z.number(),
+  date: z.string(),
+  theme: z.string(),
+  items: z.array(itineraryItemSchema),
+  meals: z.object({
+    breakfast: mealSchema.optional(),
+    lunch: mealSchema.optional(),
+    dinner: mealSchema.optional(),
+  }).optional(),
+  weatherBackup: z.string().optional(),
+});
+
+const aiGeneratedItinerarySchema = z.object({
+  overview: z.string().optional().default(''),
+  days: z.array(itineraryDaySchema),
+  budgetBreakdown: z.object({
+    accommodation: z.number(),
+    food: z.number(),
+    activities: z.number(),
+    transport: z.number(),
+    total: z.number().optional(),
+  }),
+  packingTips: z.array(z.string()),
+  localTips: z.array(z.string()),
+});
+
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -136,7 +184,18 @@ export async function POST(req: Request) {
       if (!jsonMatch) {
         throw new Error('No JSON found in response');
       }
-      itinerary = JSON.parse(jsonMatch[0]);
+      const parsed = JSON.parse(jsonMatch[0]);
+      const itineraryResult = aiGeneratedItinerarySchema.safeParse(parsed);
+      if (!itineraryResult.success) {
+        logError('ITINERARY_PARSE_ERROR', new Error('AI response did not match expected schema'), {
+          issues: itineraryResult.error.flatten(),
+        });
+        return NextResponse.json(
+          { success: false, error: 'Invalid AI response format' },
+          { status: 502 }
+        );
+      }
+      itinerary = itineraryResult.data;
     } catch (parseError) {
       logError('ITINERARY_PARSE_ERROR', parseError);
       return NextResponse.json(
