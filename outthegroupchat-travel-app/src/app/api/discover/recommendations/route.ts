@@ -4,6 +4,14 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { checkRateLimit, apiRateLimiter } from '@/lib/rate-limit';
 import { logError } from '@/lib/logger';
+import { z } from 'zod';
+
+const RecommendationsQuerySchema = z.object({
+  tripId: z.string().optional(),
+  city: z.string().optional(),
+  country: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(30).optional().default(10),
+});
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -23,11 +31,21 @@ export async function GET(req: NextRequest) {
 
     const session = await getServerSession(authOptions);
     const { searchParams } = new URL(req.url);
-    
-    const tripId = searchParams.get('tripId');
-    const city = searchParams.get('city') || '';
-    const country = searchParams.get('country') || '';
-    const limit = Math.min(parseInt(searchParams.get('limit') || '10'), 30);
+
+    const parsed = RecommendationsQuerySchema.safeParse({
+      tripId: searchParams.get('tripId') ?? undefined,
+      city: searchParams.get('city') ?? undefined,
+      country: searchParams.get('country') ?? undefined,
+      limit: searchParams.get('limit') ?? undefined,
+    });
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Invalid query parameters', details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
+
+    const { tripId, city = '', country = '', limit } = parsed.data;
     
     // Build recommendation context
     let userPreferences: string[] = [];

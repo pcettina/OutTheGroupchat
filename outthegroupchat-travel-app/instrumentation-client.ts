@@ -28,3 +28,9 @@ Sentry.init({
     Sentry.replayIntegration(),
   ],
 });
+
+// Required by Next.js instrumentation API to register the client-side hook.
+export function register() {}
+
+// Required by Sentry to instrument client-side navigations (router transitions).
+export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;

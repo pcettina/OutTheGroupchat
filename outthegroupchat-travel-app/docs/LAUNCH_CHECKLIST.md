@@ -106,7 +106,7 @@
 - [x] SQL injection prevention (Prisma)
 - [x] Rate limiting infrastructure (Upstash)
 - [ ] Rate limiting on ALL endpoints
-- [ ] Input validation on ALL forms (Zod)
+- [x] Input validation on major API routes (Zod) ✅ 2026-03-20 — notifications, feed/comments, feed/engagement, pusher/auth, users/[userId], discover/*, images/search added
 - [ ] XSS prevention (DOMPurify)
 - [ ] CORS configured properly
 
@@ -120,7 +120,7 @@
 2. [x] Fix JWT callback DB query on every request ✅ Dec 2025
    File: src/lib/auth.ts (trigger check on signIn/update only)
 
-3. [ ] Remove email from user search
+3. [x] Remove email from user search ✅ 2026-03-20
    File: src/app/api/search/route.ts
 
 4. [x] Fix placeholder user creation abuse ✅ Dec 2025
@@ -142,6 +142,7 @@
 - [x] Utility function tests (email, geocoding, invitations, rate-limit) ✅ 2026-03-11
 - [x] API route tests (trips 30, voting 10, survey 11, feed 12) ✅ 2026-03-10
 - [x] API route tests (auth/signup, notifications, profile) ✅ 2026-03-11
+- [x] API route tests (trips-suggestions 23, trips-flights 26, trips-members 29) ✅ 2026-03-20 — total: 382 tests across 22 files
 
 ### Integration Tests
 - [ ] Auth flow tests
@@ -171,7 +172,7 @@
 ## 📊 PHASE 5: Monitoring & Observability
 
 ### Error Tracking
-- [x] Sentry installed and configured ✅ 2026-03-10 (needs real DSN in Vercel)
+- [x] Sentry installed and configured ✅ 2026-03-10 (instrumentation-client.ts onRouterTransitionStart fixed 2026-03-20; needs real DSN in Vercel)
 - [ ] Error alerts configured (pending Sentry DSN)
 - [ ] Source maps uploaded (pending Sentry DSN)
 
@@ -345,4 +346,4 @@ git push origin main  # Auto-deploys to Vercel
 
 *This checklist should be reviewed daily during launch preparation.*
 
-*Last Updated: 2026-03-18 - auth/signup Zod validation, beta/status logger fix, activities/beta/newsletter tests added, API_STATUS updated with suggestions+flights routes*
+*Last Updated: 2026-03-20 - 78 new tests (382 total, 22 files); Zod added to notifications, feed/comments, feed/engagement, pusher/auth, users/[userId], discover/*, images/search; POST /api/trips/[tripId]/members implemented; Sentry onRouterTransitionStart fixed; /api/search email exposure resolved*

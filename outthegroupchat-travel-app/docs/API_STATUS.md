@@ -1,9 +1,9 @@
 # 📡 API & Integration Status
 
-> **Last updated: 2026-03-18**
+> **Last updated: 2026-03-20**
 >
 > **Last Audit:** March 2026
-> **Overall Status:** 79% Complete
+> **Overall Status:** 82% Complete
 > **Target:** 100% for Beta Launch
 
 ---
@@ -52,7 +52,7 @@
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
 | `/api/trips/[tripId]/members` | GET | ✅ | 🔶 | List members |
-| `/api/trips/[tripId]/members` | POST | ✅ | ⏳ | Add member |
+| `/api/trips/[tripId]/members` | POST | ✅ | ⏳ | Add member — POST handler implemented 2026-03-20 |
 | `/api/trips/[tripId]/invitations` | GET | ✅ | 🔶 | List invitations |
 | `/api/trips/[tripId]/invitations` | POST | ✅ | ✅ | **Email service configured** ✅ Dec 17 |
 
@@ -125,15 +125,15 @@ No fix needed - code was already correct
 | `/api/discover/search` | GET | 🔶 | 🔶 | Fallback mode active |
 | `/api/discover/recommendations` | GET | ✅ | 🔶 | Working |
 | `/api/discover/import` | POST | 🔶 | ⏳ | OpenTripMap import |
-| `/api/search` | GET | ⚠️ | 🔶 | **Exposes email addresses** |
+| `/api/search` | GET | ✅ | 🔶 | Email removed from select projection (privacy fix) ✅ 2026-03-20 |
 | `/api/geocoding` | GET | ✅ | 🔶 | Geocoding for destination search via Nominatim |
 | `/api/inspiration` | GET | ✅ | 🔶 | Auth guard added 2026-03-08 |
 | `/api/images/search` | GET | ✅ | 🔶 | Image search via Unsplash API; requires UNSPLASH_ACCESS_KEY |
 
 ### Search Issues to Fix
 ```
-SECURITY:
-Remove email from searchable fields in /api/search/route.ts
+COMPLETED ✅ 2026-03-20:
+Email removed from select projection in /api/search/route.ts
 ```
 
 ---
@@ -217,14 +217,14 @@ BLOCKED - Need Environment Variables:
 | Trips | 17 | 13 | 2 | 1 | 1 |
 | Feed | 5 | 5 | 0 | 0 | 0 |
 | Notifications | 3 | 3 | 0 | 0 | 0 |
-| Discovery | 4 | 1 | 2 | 1 | 0 |
+| Discovery | 4 | 2 | 2 | 0 | 0 |
 | AI | 4 | 0 | 4 | 0 | 0 |
 | User | 4 | 2 | 0 | 0 | 2 |
 | Real-time | 1 | 0 | 0 | 0 | 1 |
 | System | 3 | 2 | 0 | 0 | 1 |
-| **TOTAL** | **47** | **32** | **8** | **1** | **4** |
+| **TOTAL** | **47** | **33** | **8** | **0** | **4** |
 
-**API Completion Rate: 68% fully working** (2 new partial routes added: suggestions, flights)
+**API Completion Rate: 70% fully working** (search email fix: ⚠️ → ✅; members POST handler implemented 2026-03-20)
 
 ---
 
@@ -237,7 +237,7 @@ BLOCKED - Need Environment Variables:
 4. **Invitations** - ✅ COMPLETE Dec 17
 
 ### High (Should Fix)
-5. **Search** - Remove email exposure
+5. **Search** - ✅ Email removed from select projection 2026-03-20
 6. **AI Chat** - ✅ COMPLETE Dec 17
 7. **Pusher Auth** - Add env vars
 
@@ -325,4 +325,4 @@ EMAIL_FROM=             # Email sender (onboarding@resend.dev) ✅
 
 *Review and update after each API change.*
 
-*Last Updated: 2026-03-18 - /api/trips/[tripId]/suggestions and /api/trips/[tripId]/flights documented (discovered routes); /api/auth/signup Zod validation added; feed/share wired to UI*
+*Last Updated: 2026-03-20 - POST /api/trips/[tripId]/members handler implemented; /api/search email exposure fixed (⚠️ → ✅); Zod added to notifications, feed/comments, feed/engagement, pusher/auth, users/[userId], discover/*, images/search routes; 78 new tests in 3 new test files (trips-suggestions: 23, trips-flights: 26, trips-members: 29)*
