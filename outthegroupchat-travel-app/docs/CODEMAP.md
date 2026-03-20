@@ -1,6 +1,6 @@
 # OutTheGroupchat — Full Codemap
 
-> Auto-generated 2026-03-10. Last updated 2026-03-18. Comprehensive reference for agents and developers.
+> Auto-generated 2026-03-10. Last updated 2026-03-20. Comprehensive reference for agents and developers.
 
 ## Table of Contents
 
@@ -29,7 +29,7 @@ Full-stack Next.js 14 collaborative travel planning app. Groups plan trips toget
 
 **App root:** `outthegroupchat-travel-app/`
 **Source:** `outthegroupchat-travel-app/src/`
-**Stats:** ~198 TS/TSX files | ~33,500 LOC | 49 API routes | 94 components | 20 pages
+**Stats:** ~225 TS/TSX files | ~33,500 LOC | 47 API routes | 94 components | 20 pages
 
 ---
 
@@ -144,6 +144,9 @@ outthegroupchat-travel-app/
 │       ├── setup.ts               # Test environment config
 │       └── api/
 │           ├── trips.test.ts      # 525L — 30 Vitest tests for trips API
+│           ├── trips-suggestions.test.ts # 23 Vitest tests for trips suggestions API
+│           ├── trips-flights.test.ts     # 26 Vitest tests for trips flights API
+│           ├── trips-members.test.ts     # 29 Vitest tests for trips members API
 │           ├── voting.test.ts     # 10 Vitest tests for voting API
 │           ├── survey.test.ts     # 11 Vitest tests for survey API
 │           ├── feed.test.ts       # 12 Vitest tests for feed API
@@ -782,11 +785,14 @@ db:seed        → npx tsx prisma/seed/index.ts
 
 ## Tests
 
-**Total: 330+ tests across 19 Vitest unit/integration test files**
+**Total: 382 tests across 22 Vitest unit/integration test files** (0 TSC errors in production code, 0 in test files as of 2026-03-20)
 
 | File | Lines | Tests | Coverage |
 |------|-------|-------|----------|
 | `src/__tests__/api/trips.test.ts` | 525 | 30 | Trips API (GET, POST, PATCH, DELETE) |
+| `src/__tests__/api/trips-suggestions.test.ts` | — | 23 | Trips suggestions API (Ticketmaster + Places) |
+| `src/__tests__/api/trips-flights.test.ts` | — | 26 | Trips flights API (Amadeus-style) |
+| `src/__tests__/api/trips-members.test.ts` | — | 29 | Trips members API (GET, PATCH, DELETE) |
 | `src/__tests__/api/voting.test.ts` | — | 10 | Voting API (create, vote, close session) |
 | `src/__tests__/api/survey.test.ts` | — | 11 | Survey API (create, respond, analyze) |
 | `src/__tests__/api/feed.test.ts` | — | 12 | Feed API (pagination, comments, engagement) |
@@ -839,7 +845,7 @@ db:seed        → npx tsx prisma/seed/index.ts
 | Lint warnings | 0 |
 | `any` types | 0 ✅ |
 | `console.*` | 0 ✅ |
-| Vitest tests | 330+ passing (19 files) |
+| Vitest tests | 382 passing (22 files) |
 | E2E tests | 11 Playwright smoke tests (4 suites) |
 | Error monitoring | Sentry installed (server + client + edge) — needs `SENTRY_DSN` in Vercel |
 | Files >400 lines | ~10 (0 files exceed 600 lines) |

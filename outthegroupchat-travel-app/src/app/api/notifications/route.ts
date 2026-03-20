@@ -3,6 +3,16 @@ import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { logger } from '@/lib/logger';
+import { z } from 'zod';
+
+const getNotificationsQuerySchema = z.object({
+  unread: z.enum(['true', 'false']).optional(),
+  limit: z
+    .string()
+    .optional()
+    .transform((val) => (val !== undefined ? parseInt(val, 10) : 50))
+    .pipe(z.number().int().min(1).max(200)),
+});
 
 // Get all notifications for current user
 export async function GET(req: Request) {
@@ -14,8 +24,19 @@ export async function GET(req: Request) {
     }
 
     const { searchParams } = new URL(req.url);
-    const unreadOnly = searchParams.get('unread') === 'true';
-    const limit = parseInt(searchParams.get('limit') || '50');
+    const rawQuery = {
+      unread: searchParams.get('unread') ?? undefined,
+      limit: searchParams.get('limit') ?? undefined,
+    };
+    const parsedQuery = getNotificationsQuerySchema.safeParse(rawQuery);
+    if (!parsedQuery.success) {
+      return NextResponse.json(
+        { error: 'Invalid query parameters', issues: parsedQuery.error.issues },
+        { status: 400 }
+      );
+    }
+    const unreadOnly = parsedQuery.data.unread === 'true';
+    const limit = parsedQuery.data.limit;
 
     const notifications = await prisma.notification.findMany({
       where: {

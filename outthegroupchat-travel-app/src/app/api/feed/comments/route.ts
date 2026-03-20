@@ -17,16 +17,26 @@ const deleteCommentSchema = z.object({
   itemType: z.enum(['activity', 'trip']).default('activity'),
 });
 
+const getCommentsSchema = z.object({
+  itemId: z.string().min(1, 'itemId is required'),
+  itemType: z.enum(['activity', 'trip'], { message: 'itemType must be activity or trip' }),
+});
+
 // Get comments for an item (activity or trip)
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const itemId = searchParams.get('itemId');
-    const itemType = searchParams.get('itemType');
-
-    if (!itemId || !itemType) {
-      return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+    const getResult = getCommentsSchema.safeParse({
+      itemId: searchParams.get('itemId'),
+      itemType: searchParams.get('itemType'),
+    });
+    if (!getResult.success) {
+      return NextResponse.json(
+        { error: 'Invalid request', issues: getResult.error.issues },
+        { status: 400 }
+      );
     }
+    const { itemId, itemType } = getResult.data;
 
     let comments;
 
@@ -44,7 +54,7 @@ export async function GET(req: Request) {
         },
         orderBy: { createdAt: 'asc' },
       });
-    } else if (itemType === 'trip') {
+    } else {
       comments = await prisma.tripComment.findMany({
         where: { tripId: itemId },
         include: {
@@ -58,8 +68,6 @@ export async function GET(req: Request) {
         },
         orderBy: { createdAt: 'asc' },
       });
-    } else {
-      return NextResponse.json({ comments: [] });
     }
 
     // Transform to match the frontend interface

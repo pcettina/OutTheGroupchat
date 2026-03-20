@@ -5,6 +5,14 @@ import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
 import type { Prisma } from '@prisma/client';
 
+const addMemberSchema = z.object({
+  userId: z.string().optional(),
+  email: z.string().email().optional(),
+  role: z.enum(['ADMIN', 'MEMBER']).optional(),
+}).refine((data) => data.userId !== undefined || data.email !== undefined, {
+  message: 'At least one of userId or email must be provided',
+});
+
 const updateMemberSchema = z.object({
   role: z.enum(['ADMIN', 'MEMBER']).optional(),
   budgetRange: z.object({
@@ -21,6 +29,93 @@ const updateMemberSchema = z.object({
     arrivalAirport: z.string().optional(),
   }).optional(),
 });
+
+export async function POST(
+  req: Request,
+  { params }: { params: { tripId: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    const { tripId } = params;
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const validationResult = addMemberSchema.safeParse(body);
+    if (!validationResult.success) {
+      return NextResponse.json(
+        { success: false, error: 'Validation failed', details: validationResult.error.flatten() },
+        { status: 400 }
+      );
+    }
+
+    // Check that the requesting user is OWNER or ADMIN
+    const requestingMember = await prisma.tripMember.findFirst({
+      where: { tripId, userId: session.user.id },
+    });
+
+    if (!requestingMember || !['OWNER', 'ADMIN'].includes(requestingMember.role)) {
+      return NextResponse.json(
+        { success: false, error: 'Not authorized to add members to this trip' },
+        { status: 403 }
+      );
+    }
+
+    const { userId, email, role } = validationResult.data;
+
+    // Resolve the target user
+    let targetUserId = userId;
+    if (!targetUserId && email) {
+      const userByEmail = await prisma.user.findUnique({ where: { email } });
+      if (!userByEmail) {
+        return NextResponse.json(
+          { success: false, error: 'User not found' },
+          { status: 404 }
+        );
+      }
+      targetUserId = userByEmail.id;
+    }
+
+    // Check if already a member
+    const existingMember = await prisma.tripMember.findFirst({
+      where: { tripId, userId: targetUserId },
+    });
+
+    if (existingMember) {
+      return NextResponse.json(
+        { success: false, error: 'User is already a member of this trip' },
+        { status: 409 }
+      );
+    }
+
+    const newMember = await prisma.tripMember.create({
+      data: {
+        tripId,
+        userId: targetUserId as string,
+        role: role ?? 'MEMBER',
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+          },
+        },
+      },
+    });
+
+    return NextResponse.json({ success: true, data: newMember }, { status: 201 });
+  } catch {
+    return NextResponse.json(
+      { success: false, error: 'Failed to add member' },
+      { status: 500 }
+    );
+  }
+}
 
 export async function GET(
   req: Request,

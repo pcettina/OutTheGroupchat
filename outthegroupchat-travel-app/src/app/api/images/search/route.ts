@@ -1,11 +1,18 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { searchImages, isUnsplashConfigured } from '@/lib/api/unsplash';
+import { z } from 'zod';
+
+const ImageSearchQuerySchema = z.object({
+  q: z.string().min(1, 'Query parameter "q" must be a non-empty string'),
+  page: z.coerce.number().int().min(1).optional().default(1),
+  perPage: z.coerce.number().int().min(1).max(30).optional().default(12),
+});
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -21,16 +28,20 @@ export async function GET(req: Request) {
     }
 
     const { searchParams } = new URL(req.url);
-    const query = searchParams.get('q');
-    const page = parseInt(searchParams.get('page') || '1', 10);
-    const perPage = Math.min(parseInt(searchParams.get('perPage') || '12', 10), 30);
 
-    if (!query || query.trim().length === 0) {
+    const parsed = ImageSearchQuerySchema.safeParse({
+      q: searchParams.get('q') ?? undefined,
+      page: searchParams.get('page') ?? undefined,
+      perPage: searchParams.get('perPage') ?? undefined,
+    });
+    if (!parsed.success) {
       return NextResponse.json(
-        { success: false, error: 'Query parameter "q" is required' },
+        { success: false, error: 'Invalid query parameters', details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       );
     }
+
+    const { q: query, page, perPage } = parsed.data;
 
     const result = await searchImages(`${query.trim()} travel`, page, perPage, 'landscape');
 
