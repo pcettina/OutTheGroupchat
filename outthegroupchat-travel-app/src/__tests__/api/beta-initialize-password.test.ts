@@ -56,7 +56,7 @@ const TEST_EMAIL    = 'beta@example.com';
 function makePostRequest(body: unknown, headers: Record<string, string> = {}): Request {
   return new Request('http://localhost/api/beta/initialize-password', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...headers },
+    headers: { 'Content-Type': 'application/json', 'x-api-key': VALID_API_KEY, ...headers },
     body: JSON.stringify(body),
   });
 }

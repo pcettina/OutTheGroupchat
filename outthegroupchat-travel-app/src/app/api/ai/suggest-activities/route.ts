@@ -15,14 +15,14 @@ export const dynamic = 'force-dynamic';
 
 const aiActivityRecommendationSchema = z.object({
   name: z.string(),
-  category: z.enum(['food', 'entertainment', 'outdoors', 'culture', 'nightlife', 'sports']).optional(),
+  category: z.enum(['food', 'entertainment', 'outdoors', 'culture', 'nightlife', 'sports']).default('food'),
   description: z.string().optional().default(''),
   address: z.string().optional().default(''),
   priceRange: z.string().optional().default(''),
   estimatedCost: z.object({
     amount: z.number(),
     per: z.enum(['person', 'group']),
-  }).optional(),
+  }).default({ amount: 0, per: 'person' }),
   duration: z.number().optional().default(60),
   bestTime: z.string().optional().default(''),
   bookingRequired: z.boolean().optional().default(false),

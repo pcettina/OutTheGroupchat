@@ -200,7 +200,27 @@
 
 ---
 
-*Updated: 2026-03-19*
+*Updated: 2026-03-20*
+---
+
+## 🟢 Completed 2026-03-20 (Nightly Build)
+
+- [L1] New test suite: /api/trips/[tripId]/suggestions (23 tests)
+- [L2] New test suite: /api/trips/[tripId]/flights (26 tests)
+- [L3] Implemented POST /api/trips/[tripId]/members handler
+- [L4] Zod validation added to invitations routes
+- [L5] Fixed TSC errors in ai.test.ts + users.test.ts
+- [L6] Fixed TSC errors in trips.test.ts + feed.test.ts + reset-password.test.ts
+- [M1] New test suite: trips/members GET/PATCH/DELETE (29 tests)
+- [M2] Zod validation added to notifications routes
+- [M3] Zod validation added to feed/comments + feed/engagement routes
+- [M4] Zod validation added to pusher/auth + users/[userId] routes
+- [M5] Zod validation added to discover/* + images/search routes
+- [M6] Fixed Sentry onRouterTransitionStart in instrumentation-client.ts
+- [Automated] 8 metrics tasks (any:0, console:0, TODO:0, files>600:0, tests:382, routes:47, test_files:22, TS_files:225)
+**Tests: 382 total (+78 from tonight)**
+
+*Updated: 2026-03-20*
 ---
 
 ## 🟢 Completed 2026-03-19 (Nightly Build)
@@ -244,27 +264,7 @@
 - Agent guides updated: FRONTEND, PLANNING, SOCIAL_ENGAGEMENT all corrected to March 2026
 - `CODEMAP.md` updated to reflect 2026-03-18 state
 
-*Updated: 2026-03-20*
----
-
-## 🟢 Completed 2026-03-20 (Nightly Build)
-
-- [L1] New test suite: /api/trips/[tripId]/suggestions (23 tests)
-- [L2] New test suite: /api/trips/[tripId]/flights (26 tests)
-- [L3] Implemented POST /api/trips/[tripId]/members handler
-- [L4] Zod validation added to invitations routes
-- [L5] Fixed TSC errors in ai.test.ts + users.test.ts
-- [L6] Fixed TSC errors in trips.test.ts + feed.test.ts + reset-password.test.ts
-- [M1] New test suite: trips/members GET/PATCH/DELETE (29 tests)
-- [M2] Zod validation added to notifications routes
-- [M3] Zod validation added to feed/comments + feed/engagement routes
-- [M4] Zod validation added to pusher/auth + users/[userId] routes
-- [M5] Zod validation added to discover/* + images/search routes
-- [M6] Fixed Sentry onRouterTransitionStart in instrumentation-client.ts
-- [Automated] 8 metrics tasks (any:0, console:0, TODO:0, files>600:0, tests:382, routes:47, test_files:22, TS_files:225)
-**Tests: 382 total (+78 from tonight)**
-
-*Updated: 2026-03-20*
+*Updated: 2026-03-18*
 ---
 
 ## 🟢 Completed 2026-03-14 (Nightly Build)

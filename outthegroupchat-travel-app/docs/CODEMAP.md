@@ -1,6 +1,5 @@
 # OutTheGroupchat — Full Codemap
 
-> Auto-generated 2026-03-10. Last updated 2026-03-17. Comprehensive reference for agents and developers.
 > Auto-generated 2026-03-10. Last updated 2026-03-20. Comprehensive reference for agents and developers.
 
 ## Table of Contents
