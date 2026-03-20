@@ -1,6 +1,7 @@
 # OutTheGroupchat — Full Codemap
 
 > Auto-generated 2026-03-10. Last updated 2026-03-17. Comprehensive reference for agents and developers.
+> Auto-generated 2026-03-10. Last updated 2026-03-20. Comprehensive reference for agents and developers.
 
 ## Table of Contents
 
@@ -29,7 +30,7 @@ Full-stack Next.js 14 collaborative travel planning app. Groups plan trips toget
 
 **App root:** `outthegroupchat-travel-app/`
 **Source:** `outthegroupchat-travel-app/src/`
-**Stats:** ~196 TS/TSX files | ~33,000 LOC | 47 API routes | 94 components | 20 pages
+**Stats:** ~225 TS/TSX files | ~33,500 LOC | 47 API routes | 94 components | 20 pages
 
 ---
 
@@ -159,6 +160,14 @@ outthegroupchat-travel-app/
 │       │   ├── search.test.ts     # 328L — 15 Vitest tests for search API
 │       │   └── beta-initialize-password.test.ts # 274L — 15 Vitest tests for beta password init
 │       └── lib/
+│       └── api/
+│           ├── trips.test.ts      # 525L — 30 Vitest tests for trips API
+│           ├── trips-suggestions.test.ts # 23 Vitest tests for trips suggestions API
+│           ├── trips-flights.test.ts     # 26 Vitest tests for trips flights API
+│           ├── trips-members.test.ts     # 29 Vitest tests for trips members API
+│           ├── voting.test.ts     # 10 Vitest tests for voting API
+│           ├── survey.test.ts     # 11 Vitest tests for survey API
+│           ├── feed.test.ts       # 12 Vitest tests for feed API
 │           ├── email.test.ts      # 14 Vitest tests for email service
 │           ├── geocoding.test.ts  # 26 Vitest tests for geocoding
 │           ├── invitations.test.ts # 16 Vitest tests for invitation tokens
@@ -796,10 +805,14 @@ db:seed        → npx tsx prisma/seed/index.ts
 ## Tests
 
 **Total: 283 tests across 18 Vitest unit/integration test files**
+**Total: 382 tests across 22 Vitest unit/integration test files** (0 TSC errors in production code, 0 in test files as of 2026-03-20)
 
 | File | Lines | Tests | Coverage |
 |------|-------|-------|----------|
 | `src/__tests__/api/trips.test.ts` | 525 | 30 | Trips API (GET, POST, PATCH, DELETE) |
+| `src/__tests__/api/trips-suggestions.test.ts` | — | 23 | Trips suggestions API (Ticketmaster + Places) |
+| `src/__tests__/api/trips-flights.test.ts` | — | 26 | Trips flights API (Amadeus-style) |
+| `src/__tests__/api/trips-members.test.ts` | — | 29 | Trips members API (GET, PATCH, DELETE) |
 | `src/__tests__/api/voting.test.ts` | — | 10 | Voting API (create, vote, close session) |
 | `src/__tests__/api/survey.test.ts` | — | 11 | Survey API (create, respond, analyze) |
 | `src/__tests__/api/feed.test.ts` | — | 12 | Feed API (pagination, comments, engagement) |
@@ -807,6 +820,9 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `src/__tests__/lib/geocoding.test.ts` | — | 26 | Geocoding (coords, city lookup, caching) |
 | `src/__tests__/lib/invitations.test.ts` | — | 16 | Invitation tokens (generate, validate, redeem) |
 | `src/__tests__/lib/rate-limit.test.ts` | — | 13 | Rate limiting (quota, window, headers) |
+| `src/__tests__/lib/geocoding.test.ts` | — | 25 | Geocoding (coords, city lookup, caching) |
+| `src/__tests__/lib/invitations.test.ts` | — | 16 | Invitation tokens (generate, validate, redeem) |
+| `src/__tests__/lib/rate-limit.test.ts` | — | 38 | Rate limiting (quota, window, headers) |
 | `src/__tests__/api/auth.test.ts` | — | 10 | Auth flow (signup, signin, session) |
 | `src/__tests__/api/notifications.test.ts` | — | 19 | Notifications API (inbox, mark-read, delete) |
 | `src/__tests__/api/profile.test.ts` | — | 10 | Profile API (GET, PATCH preferences) |
@@ -817,6 +833,13 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `src/__tests__/api/inspiration.test.ts` | 358 | 20 | Inspiration API (templates, trending, popular) |
 | `src/__tests__/api/search.test.ts` | 328 | 15 | Search API (global, activities, users) |
 | `src/__tests__/api/beta-initialize-password.test.ts` | 274 | 15 | Beta password initialization endpoint |
+| `src/__tests__/api/inspiration.test.ts` | — | 20 | Inspiration API |
+| `src/__tests__/api/search.test.ts` | — | 15 | Search API |
+| `src/__tests__/api/share.test.ts` | — | 13 | Feed share API |
+| `src/__tests__/api/ai.test.ts` | — | 19 | AI routes (suggest-activities, generate-itinerary) |
+| `src/__tests__/api/users.test.ts` | — | 19 | Users API + health endpoint |
+| `src/__tests__/api/activities.test.ts` | — | 15 | Activities API (GET, POST save/unsave, PUT comment/rate) |
+| `src/__tests__/api/beta.test.ts` | — | 21 | Beta signup, beta status, newsletter subscribe |
 | `src/__tests__/setup.ts` | — | — | Test environment/fixture config |
 | `vitest.config.ts` | 16 | — | Vitest runner configuration |
 
@@ -855,6 +878,10 @@ db:seed        → npx tsx prisma/seed/index.ts
 | E2E tests | 11 Playwright smoke tests (4 suites) |
 | Error monitoring | Sentry installed (server + client + edge) — needs `SENTRY_DSN` in Vercel |
 | Files >400 lines | 10 (consider splitting) |
+| Vitest tests | 382 passing (22 files) |
+| E2E tests | 11 Playwright smoke tests (4 suites) |
+| Error monitoring | Sentry installed (server + client + edge) — needs `SENTRY_DSN` in Vercel |
+| Files >400 lines | ~10 (0 files exceed 600 lines) |
 | Production env gaps | OPENAI_API_KEY, Pusher vars, Sentry DSN, Resend domain |
 
 ### Largest Files (>400 lines)

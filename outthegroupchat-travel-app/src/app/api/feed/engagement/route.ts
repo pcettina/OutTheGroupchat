@@ -11,6 +11,11 @@ const engagementSchema = z.object({
   action: z.enum(['like', 'unlike'], { message: 'action must be like or unlike' }),
 });
 
+const getEngagementSchema = z.object({
+  itemId: z.string().min(1, 'itemId is required'),
+  itemType: z.enum(['activity', 'trip'], { message: 'itemType must be activity or trip' }),
+});
+
 // Handle likes/unlikes for feed items
 export async function POST(req: Request) {
   try {
@@ -148,12 +153,17 @@ export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     const { searchParams } = new URL(req.url);
-    const itemId = searchParams.get('itemId');
-    const itemType = searchParams.get('itemType');
-
-    if (!itemId || !itemType) {
-      return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+    const getResult = getEngagementSchema.safeParse({
+      itemId: searchParams.get('itemId'),
+      itemType: searchParams.get('itemType'),
+    });
+    if (!getResult.success) {
+      return NextResponse.json(
+        { error: 'Invalid request', issues: getResult.error.issues },
+        { status: 400 }
+      );
     }
+    const { itemId, itemType } = getResult.data;
 
     if (itemType === 'activity') {
       const [likeCount, commentCount, isLiked] = await Promise.all([
