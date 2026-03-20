@@ -32,6 +32,16 @@ export interface PlaceSearchParams {
   type?: string;
 }
 
+/**
+ * @description Searches for places using the Google Places Text Search API.
+ * Optionally biases results toward a geographic location and radius. Returns an empty array on error.
+ * @param {PlaceSearchParams} params - Search parameters for the places query.
+ * @param {string} params.query - The text query to search for (e.g. "restaurants in Paris").
+ * @param {{ lat: number; lng: number }} [params.location] - Optional center point for geographic bias.
+ * @param {number} [params.radius=5000] - Search radius in meters when location is provided.
+ * @param {string} [params.type] - Optional Google Places type filter (e.g. "restaurant", "museum").
+ * @returns {Promise<PlaceDetails[]>} Array of matching place detail objects.
+ */
 export async function searchPlaces({
   query,
   location,
@@ -58,6 +68,12 @@ export async function searchPlaces({
   }
 }
 
+/**
+ * @description Fetches detailed information for a single place using the Google Places Details API.
+ * Returns null when the place is not found or on error.
+ * @param {string} placeId - The Google Places place_id for the location.
+ * @returns {Promise<PlaceDetails | null>} The place detail object, or null.
+ */
 export async function getPlaceDetails(placeId: string): Promise<PlaceDetails | null> {
   try {
     const response = await axios.get(`${GOOGLE_PLACES_BASE_URL}/details/json`, {
@@ -75,6 +91,11 @@ export async function getPlaceDetails(placeId: string): Promise<PlaceDetails | n
   }
 }
 
+/**
+ * @description Converts a Google Places numeric price_level (0–4) to a human-readable price estimate string.
+ * @param {number | undefined} priceLevel - The numeric price level from the Google Places API.
+ * @returns {string} A descriptive label such as "Free", "Moderate", or "Price not available".
+ */
 export function getPriceEstimate(priceLevel: number | undefined): string {
   switch (priceLevel) {
     case 0:

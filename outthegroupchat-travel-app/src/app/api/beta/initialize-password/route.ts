@@ -126,6 +126,15 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
+    // Require N8N_API_KEY to prevent unauthenticated account takeover
+    if (!validateApiKey(req)) {
+      logger.warn({ context: 'PASSWORD_INIT' }, 'Unauthorized attempt to initialize password — invalid API key');
+      return NextResponse.json(
+        { error: 'Unauthorized - Invalid API key' },
+        { status: 401 }
+      );
+    }
+
     const body = await req.json();
     const parseResult = InitializePasswordSchema.safeParse(body);
 

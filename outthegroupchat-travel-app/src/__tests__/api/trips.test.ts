@@ -64,7 +64,7 @@ const MOCK_TRIP = {
   createdAt: new Date('2026-01-01'),
   updatedAt: new Date('2026-01-01'),
   owner: { id: MOCK_USER_ID, name: 'Test User', image: null },
-  members: [{ userId: MOCK_USER_ID, role: 'OWNER', user: { id: MOCK_USER_ID, name: 'Test User', image: null } }],
+  members: [{ userId: MOCK_USER_ID, role: 'OWNER' as const, user: { id: MOCK_USER_ID, name: 'Test User', image: null } }],
   _count: { members: 1, activities: 0 },
 };
 

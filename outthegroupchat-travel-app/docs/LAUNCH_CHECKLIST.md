@@ -55,7 +55,7 @@
 - [x] Email/password signin
 - [x] Session management (NextAuth)
 - [x] Password reset flow ✅ 2026-03-14 (API + UI complete)
-- [ ] Email verification
+- [x] Email verification endpoint ✅ 2026-03-19 (GET /api/auth/verify-email created; signup does not yet send verification email — wiring required)
 - [ ] OAuth providers (Google, Apple) - *Post-beta*
 
 ### Trip Management 🔶
@@ -125,6 +125,9 @@
 
 4. [x] Fix placeholder user creation abuse ✅ Dec 2025
    File: src/app/api/trips/[tripId]/invitations/route.ts
+
+5. [x] Fix unauthenticated /api/beta/initialize-password (account takeover) ✅ 2026-03-19
+   File: src/app/api/beta/initialize-password/route.ts (N8N_API_KEY auth added)
 ```
 
 ### Security Headers

@@ -86,8 +86,11 @@ function makeRequest(method: string, body: unknown): Request {
 // Test suite
 // ---------------------------------------------------------------------------
 describe('POST /api/auth/reset-password (request reset)', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    const mod = await import('@/app/api/auth/reset-password/route');
+    POST = mod.POST;
+    PATCH = mod.PATCH;
   });
 
   it('returns 200 when user exists and creates token', async () => {
@@ -159,8 +162,11 @@ describe('POST /api/auth/reset-password (request reset)', () => {
 });
 
 describe('PATCH /api/auth/reset-password (confirm reset)', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    const mod = await import('@/app/api/auth/reset-password/route');
+    POST = mod.POST;
+    PATCH = mod.PATCH;
   });
 
   const validToken = {

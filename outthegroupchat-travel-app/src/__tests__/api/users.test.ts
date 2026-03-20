@@ -69,12 +69,22 @@ const otherSession = { user: { id: 'user-2', name: 'Other', email: 'other@test.c
 const mockUser = {
   id: 'user-2',
   name: 'Target User',
-  email: null,
+  email: 'target@example.com',
+  emailVerified: null,
+  password: null,
   image: null,
   bio: 'I love travel',
   city: 'New York',
+  phone: null,
   preferences: null,
   createdAt: new Date('2025-01-01'),
+  updatedAt: new Date('2025-01-01'),
+  lastActive: new Date('2025-01-01'),
+  betaSignupDate: null,
+  newsletterSubscribed: false,
+  newsletterSubscribedAt: null,
+  passwordInitialized: false,
+  betaLaunchEmailSent: false,
   _count: { followers: 5, following: 3, ownedTrips: 10 },
 };
 

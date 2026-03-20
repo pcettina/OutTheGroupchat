@@ -4,6 +4,11 @@ import PusherClient from 'pusher-js';
 // Server-side Pusher instance
 let pusherServer: Pusher | null = null;
 
+/**
+ * @description Returns the singleton server-side Pusher instance, creating it on first call.
+ * Reads PUSHER_APP_ID, PUSHER_KEY, PUSHER_SECRET, and PUSHER_CLUSTER from environment variables.
+ * @returns {Pusher | null} The Pusher server instance, or null if any required env var is missing.
+ */
 export function getPusherServer() {
   if (!pusherServer) {
     if (
@@ -29,6 +34,11 @@ export function getPusherServer() {
 // Client-side Pusher instance
 let pusherClient: PusherClient | null = null;
 
+/**
+ * @description Returns the singleton client-side Pusher instance, creating it on first call.
+ * Must be called in a browser context; returns null on the server or when env vars are absent.
+ * @returns {PusherClient | null} The Pusher client instance, or null if not in a browser or env vars are missing.
+ */
 export function getPusherClient() {
   if (typeof window === 'undefined') {
     return null;
@@ -50,14 +60,20 @@ export function getPusherClient() {
   return pusherClient;
 }
 
-// Channel names
+/**
+ * @description Channel name factory functions for Pusher subscriptions.
+ * Provides consistent, typed channel name strings for trip, user, and voting channels.
+ */
 export const channels = {
   trip: (tripId: string) => `trip-${tripId}`,
   user: (userId: string) => `user-${userId}`,
   voting: (tripId: string) => `voting-${tripId}`,
 } as const;
 
-// Event types
+/**
+ * @description Constant map of all Pusher event type strings used across the application.
+ * Covers trip, survey, voting, and user notification events.
+ */
 export const events = {
   // Trip events
   TRIP_UPDATED: 'trip:updated',
@@ -82,7 +98,14 @@ export const events = {
   INVITATION: 'invitation',
 } as const;
 
-// Helper to broadcast to trip members
+/**
+ * @description Broadcasts a Pusher event to the channel associated with a specific trip.
+ * Silently skips if the server instance is unavailable; broadcast failures are non-fatal.
+ * @param {string} tripId - The ID of the trip whose channel should receive the event.
+ * @param {string} event - The Pusher event name to trigger.
+ * @param {unknown} data - The payload to send with the event.
+ * @returns {Promise<void>}
+ */
 export async function broadcastToTrip(tripId: string, event: string, data: unknown) {
   const pusher = getPusherServer();
   if (!pusher) return;
@@ -94,7 +117,14 @@ export async function broadcastToTrip(tripId: string, event: string, data: unkno
   }
 }
 
-// Helper to broadcast to a specific user
+/**
+ * @description Broadcasts a Pusher event to the channel associated with a specific user.
+ * Silently skips if the server instance is unavailable; broadcast failures are non-fatal.
+ * @param {string} userId - The ID of the user whose channel should receive the event.
+ * @param {string} event - The Pusher event name to trigger.
+ * @param {unknown} data - The payload to send with the event.
+ * @returns {Promise<void>}
+ */
 export async function broadcastToUser(userId: string, event: string, data: unknown) {
   const pusher = getPusherServer();
   if (!pusher) return;

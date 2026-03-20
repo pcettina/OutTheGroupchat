@@ -251,10 +251,18 @@ describe('POST /api/ai/generate-itinerary', () => {
   const mockTrip = {
     id: 'trip-1',
     title: 'Paris Trip',
+    description: null,
+    status: 'PLANNING' as const,
+    createdAt: new Date('2026-01-01'),
+    updatedAt: new Date('2026-01-01'),
     destination: { city: 'Paris', country: 'France' },
     startDate: new Date('2026-06-01'),
     endDate: new Date('2026-06-07'),
     budget: { total: 3000, currency: 'USD' },
+    coverImage: null,
+    isPublic: false,
+    viewCount: 0,
+    ownerId: 'user-1',
     members: [
       {
         userId: 'user-1',
