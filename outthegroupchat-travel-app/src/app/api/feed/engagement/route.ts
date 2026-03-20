@@ -158,8 +158,13 @@ export async function GET(req: Request) {
       itemType: searchParams.get('itemType'),
     });
     if (!getResult.success) {
+      // Return specific error for invalid enum values on itemType to match API contract
+      const invalidEnumIssue = getResult.error.issues.find(
+        i => i.path.includes('itemType') && i.code === 'invalid_enum_value'
+      );
+      const errorMsg = invalidEnumIssue ? 'Invalid item type' : 'Invalid request';
       return NextResponse.json(
-        { error: 'Invalid request', issues: getResult.error.issues },
+        { error: errorMsg, issues: getResult.error.issues },
         { status: 400 }
       );
     }

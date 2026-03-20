@@ -29,7 +29,7 @@ const itineraryItemSchema = z.object({
     amount: z.number(),
     per: z.enum(['person', 'group']),
   }),
-  category: z.enum(['food', 'activity', 'transport', 'leisure']).optional(),
+  category: z.enum(['food', 'activity', 'transport', 'leisure']).default('activity'),
   optional: z.boolean().optional().default(false),
   notes: z.string().optional(),
 }).passthrough();
@@ -49,7 +49,7 @@ const itineraryDaySchema = z.object({
     breakfast: mealSchema.optional(),
     lunch: mealSchema.optional(),
     dinner: mealSchema.optional(),
-  }).optional(),
+  }).default({}),
   weatherBackup: z.string().optional(),
 });
 
@@ -61,7 +61,7 @@ const aiGeneratedItinerarySchema = z.object({
     food: z.number(),
     activities: z.number(),
     transport: z.number(),
-    total: z.number().optional(),
+    total: z.number().default(0),
   }),
   packingTips: z.array(z.string()),
   localTips: z.array(z.string()),

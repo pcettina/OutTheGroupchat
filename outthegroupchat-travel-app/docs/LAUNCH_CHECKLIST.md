@@ -18,7 +18,7 @@
 
 **Overall Readiness: 77%** → Target: 85% for Beta Launch
 
-> Last updated: 2026-03-13 (nightly build — added 404/500/error boundary pages)
+> Last updated: 2026-03-20
 
 ---
 

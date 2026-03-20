@@ -369,5 +369,4 @@ EMAIL_FROM=             # Email sender (onboarding@resend.dev) ✅
 
 *Review and update after each API change.*
 
-*Last Updated: 2026-03-16 - Documented 12 previously undocumented endpoints: /api/activities/[activityId] (GET/POST/PUT), /api/discover (GET/POST), /api/invitations (GET), /api/invitations/[invitationId] (GET/POST), /api/trips/[tripId]/flights (GET), /api/trips/[tripId]/suggestions (GET), /api/ai/recommend (GET/POST)*
-*Last Updated: 2026-03-20 - POST /api/trips/[tripId]/members handler implemented; /api/search email exposure fixed (⚠️ → ✅); Zod added to notifications, feed/comments, feed/engagement, pusher/auth, users/[userId], discover/*, images/search routes; 78 new tests in 3 new test files (trips-suggestions: 23, trips-flights: 26, trips-members: 29)*
+*Last Updated: 2026-03-20 - POST /api/trips/[tripId]/members handler implemented; /api/search email exposure fixed; Zod added to notifications, feed/comments, feed/engagement, pusher/auth, users/[userId], discover/\*, images/search routes; 12 previously undocumented endpoints documented (2026-03-16); 78 new tests in 3 test files*
