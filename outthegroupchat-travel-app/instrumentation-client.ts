@@ -24,14 +24,18 @@ export function register(): void {
     // Capture 10% of all sessions for general replay.
     replaysSessionSampleRate: 0.1,
 
-    integrations: [
-      // replayIntegration() — sessionSampleRate/errorSampleRate are set above via
-      // replaysSessionSampleRate / replaysOnErrorSampleRate, not on the integration itself.
-      Sentry.replayIntegration(),
-    ],
-  });
-}
+  integrations: [
+    // replayIntegration() — sessionSampleRate/errorSampleRate are set above via
+    // replaysSessionSampleRate / replaysOnErrorSampleRate, not on the integration itself.
+    Sentry.replayIntegration(),
+  ],
+});
 
-// Instruments Next.js App Router navigations for Sentry tracing.
-// Required to avoid the Sentry build warning about missing onRouterTransitionStart.
+// Required by Next.js App Router for Turbopack compatibility.
+// Captures router transition timing for Sentry performance tracing.
+// Without this export the build emits a "missing onRouterTransitionStart" warning.
+// Required by Next.js instrumentation API to register the client-side hook.
+export function register() {}
+
+// Required by Sentry to instrument client-side navigations (router transitions).
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;

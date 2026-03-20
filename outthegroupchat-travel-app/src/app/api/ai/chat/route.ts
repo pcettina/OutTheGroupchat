@@ -212,10 +212,17 @@ export async function GET(req: Request) {
     });
     const textContent = await result.text;
 
+    const tipsOutputSchema = z.array(z.string());
     let tips: string[];
     try {
       const jsonMatch = textContent.match(/\[[\s\S]*\]/);
-      tips = jsonMatch ? JSON.parse(jsonMatch[0]) : [textContent];
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        const tipsResult = tipsOutputSchema.safeParse(parsed);
+        tips = tipsResult.success ? tipsResult.data : [textContent];
+      } else {
+        tips = [textContent];
+      }
     } catch {
       tips = [textContent];
     }

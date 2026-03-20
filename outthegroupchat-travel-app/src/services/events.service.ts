@@ -1,4 +1,9 @@
-// Events Service - Aggregates events from multiple sources
+/**
+ * @module events.service
+ * @description Aggregates event, place, and flight data from multiple external sources
+ * (Ticketmaster, Google Places, flight APIs) to support trip activity discovery,
+ * venue recommendations, and travel logistics for group trip planning.
+ */
 import { searchEvents as searchTicketmaster } from '@/lib/api/ticketmaster';
 import { searchPlaces, getPlaceDetails, getPriceEstimate, type PlaceDetails } from '@/lib/api/places';
 import { searchFlights, getAirportCode } from '@/lib/api/flights';

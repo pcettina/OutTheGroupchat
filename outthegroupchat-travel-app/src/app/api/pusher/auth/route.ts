@@ -1,8 +1,14 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { z } from 'zod';
 import { authOptions } from '@/lib/auth';
 import { getPusherServer } from '@/lib/pusher';
 import { logger } from '@/lib/logger';
+
+const pusherAuthSchema = z.object({
+  socket_id: z.string().min(1, 'socket_id is required'),
+  channel_name: z.string().min(1, 'channel_name is required'),
+});
 
 // Pusher channel authentication endpoint
 export async function POST(req: Request) {
@@ -19,12 +25,19 @@ export async function POST(req: Request) {
     }
 
     const formData = await req.formData();
-    const socketId = formData.get('socket_id') as string;
-    const channelName = formData.get('channel_name') as string;
+    const parsed = pusherAuthSchema.safeParse({
+      socket_id: formData.get('socket_id'),
+      channel_name: formData.get('channel_name'),
+    });
 
-    if (!socketId || !channelName) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Missing required fields', details: parsed.error.flatten() },
+        { status: 400 }
+      );
     }
+
+    const { socket_id: socketId, channel_name: channelName } = parsed.data;
 
     // Authorize access to the channel
     // For private channels, ensure user has access

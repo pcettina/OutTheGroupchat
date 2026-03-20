@@ -339,7 +339,7 @@ describe('POST /api/ai/generate-itinerary', () => {
     vi.mocked(prisma.trip.findUnique).mockResolvedValue({
       ...mockTrip,
       members: [{ userId: 'other-user', user: { id: 'other-user', name: 'Other', preferences: null } }],
-    } as Parameters<typeof prisma.trip.findUnique>[0] extends infer T ? NonNullable<Awaited<ReturnType<typeof prisma.trip.findUnique>>> : never);
+    } as unknown as NonNullable<Awaited<ReturnType<typeof prisma.trip.findUnique>>>);
 
     const res = await POST(makeItineraryRequest({ tripId: 'trip-1' }));
     expect(res.status).toBe(403);
@@ -347,19 +347,19 @@ describe('POST /api/ai/generate-itinerary', () => {
 
   it('returns 200 with generated itinerary on success', async () => {
     vi.mocked(getServerSession).mockResolvedValue(mockSession);
-    vi.mocked(prisma.trip.findUnique).mockResolvedValue(mockTrip as Parameters<typeof prisma.trip.findUnique>[0] extends infer T ? NonNullable<Awaited<ReturnType<typeof prisma.trip.findUnique>>> : never);
+    vi.mocked(prisma.trip.findUnique).mockResolvedValue(mockTrip as unknown as NonNullable<Awaited<ReturnType<typeof prisma.trip.findUnique>>>);
 
     const { generateText } = await import('ai');
     vi.mocked(generateText).mockResolvedValue({
       text: JSON.stringify(mockItinerary),
     } as ReturnType<typeof generateText> extends Promise<infer T> ? T : never);
 
-    vi.mocked(prisma.$transaction).mockImplementation(async (fn) => {
+    (prisma.$transaction as ReturnType<typeof vi.fn>).mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
       const mockTx = {
         itineraryItem: { deleteMany: vi.fn(), createMany: vi.fn() },
         itineraryDay: { deleteMany: vi.fn(), create: vi.fn().mockResolvedValue({ id: 'day-1' }) },
       };
-      return (fn as unknown as (tx: typeof mockTx) => Promise<unknown>)(mockTx);
+      return fn(mockTx);
     });
 
     const res = await POST(makeItineraryRequest({ tripId: 'trip-1' }));
@@ -372,7 +372,7 @@ describe('POST /api/ai/generate-itinerary', () => {
 
   it('returns 500 when AI response has no JSON', async () => {
     vi.mocked(getServerSession).mockResolvedValue(mockSession);
-    vi.mocked(prisma.trip.findUnique).mockResolvedValue(mockTrip as Parameters<typeof prisma.trip.findUnique>[0] extends infer T ? NonNullable<Awaited<ReturnType<typeof prisma.trip.findUnique>>> : never);
+    vi.mocked(prisma.trip.findUnique).mockResolvedValue(mockTrip as unknown as NonNullable<Awaited<ReturnType<typeof prisma.trip.findUnique>>>);
 
     const { generateText } = await import('ai');
     vi.mocked(generateText).mockResolvedValue({
@@ -387,19 +387,19 @@ describe('POST /api/ai/generate-itinerary', () => {
 
   it('accepts optional customInstructions', async () => {
     vi.mocked(getServerSession).mockResolvedValue(mockSession);
-    vi.mocked(prisma.trip.findUnique).mockResolvedValue(mockTrip as Parameters<typeof prisma.trip.findUnique>[0] extends infer T ? NonNullable<Awaited<ReturnType<typeof prisma.trip.findUnique>>> : never);
+    vi.mocked(prisma.trip.findUnique).mockResolvedValue(mockTrip as unknown as NonNullable<Awaited<ReturnType<typeof prisma.trip.findUnique>>>);
 
     const { generateText } = await import('ai');
     vi.mocked(generateText).mockResolvedValue({
       text: JSON.stringify(mockItinerary),
     } as ReturnType<typeof generateText> extends Promise<infer T> ? T : never);
 
-    vi.mocked(prisma.$transaction).mockImplementation(async (fn) => {
+    (prisma.$transaction as ReturnType<typeof vi.fn>).mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
       const mockTx = {
         itineraryItem: { deleteMany: vi.fn(), createMany: vi.fn() },
         itineraryDay: { deleteMany: vi.fn(), create: vi.fn().mockResolvedValue({ id: 'day-1' }) },
       };
-      return (fn as unknown as (tx: typeof mockTx) => Promise<unknown>)(mockTx);
+      return fn(mockTx);
     });
 
     const res = await POST(makeItineraryRequest({

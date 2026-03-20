@@ -3,6 +3,16 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { logError } from '@/lib/logger';
+import { z } from 'zod';
+
+const ImportBodySchema = z.object({
+  latitude: z.number({ required_error: 'Latitude is required' }),
+  longitude: z.number({ required_error: 'Longitude is required' }),
+  city: z.string().optional(),
+  country: z.string().optional(),
+  radius: z.number().int().min(100).max(50000).optional().default(10000),
+  limit: z.number().int().min(1).max(200).optional().default(100),
+});
 
 // OpenTripMap API integration
 const OPENTRIPMAP_API_KEY = process.env.OPENTRIPMAP_API_KEY || '';
@@ -90,14 +100,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { city, country, latitude, longitude, radius = 10000, limit = 100 } = await req.json();
-
-    if (!latitude || !longitude) {
+    const body: unknown = await req.json();
+    const parsed = ImportBodySchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Latitude and longitude are required' },
+        { error: 'Invalid request body', details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       );
     }
+
+    const { city = '', country = '', latitude, longitude, radius, limit } = parsed.data;
 
     if (!OPENTRIPMAP_API_KEY) {
       return NextResponse.json(

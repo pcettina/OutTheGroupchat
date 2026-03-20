@@ -7,6 +7,18 @@ import { authOptions } from '@/lib/auth';
 import { getModel, checkRateLimit } from '@/lib/ai/client';
 import { logError } from '@/lib/logger';
 
+const aiRecommendationItemSchema = z.object({
+  name: z.string(),
+  description: z.string(),
+  category: z.enum(['FOOD', 'CULTURE', 'NATURE', 'ENTERTAINMENT', 'NIGHTLIFE', 'SPORTS', 'SHOPPING']),
+  estimatedCost: z.number(),
+  duration: z.string(),
+  matchScore: z.number(),
+  matchReasons: z.array(z.string()),
+});
+
+const aiRecommendationsOutputSchema = z.array(aiRecommendationItemSchema);
+
 const recommendSchema = z.object({
   userId: z.string().optional(),
   destination: z.string().optional(),
@@ -147,8 +159,13 @@ Generate ${limit} personalized activity recommendations. Return ONLY valid JSON.
     try {
       const jsonMatch = text.match(/\[[\s\S]*\]/);
       const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : [];
-      const parseValidation = z.array(z.unknown()).safeParse(parsed);
+      const parseValidation = aiRecommendationsOutputSchema.safeParse(parsed);
       recommendations = parseValidation.success ? parseValidation.data : [];
+      if (!parseValidation.success) {
+        logError('AI_RECOMMEND_PARSE', new Error('AI recommendations did not match expected schema'), {
+          issues: parseValidation.error.flatten(),
+        });
+      }
     } catch {
       logError('AI_RECOMMEND_PARSE', new Error('Failed to parse AI recommendations'));
       recommendations = [];
@@ -301,8 +318,13 @@ Generate 8 activities that would complement existing plans and appeal to the who
     try {
       const jsonMatch = text.match(/\[[\s\S]*\]/);
       const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : [];
-      const parseValidation = z.array(z.unknown()).safeParse(parsed);
+      const parseValidation = aiRecommendationsOutputSchema.safeParse(parsed);
       recommendations = parseValidation.success ? parseValidation.data : [];
+      if (!parseValidation.success) {
+        logError('AI_RECOMMEND_GET_PARSE', new Error('AI recommendations did not match expected schema'), {
+          issues: parseValidation.error.flatten(),
+        });
+      }
     } catch {
       recommendations = [];
     }

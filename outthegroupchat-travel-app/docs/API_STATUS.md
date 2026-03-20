@@ -1,9 +1,9 @@
 # 📡 API & Integration Status
 
-> **Last updated: 2026-03-19**
+> **Last updated: 2026-03-20**
 >
 > **Last Audit:** March 2026
-> **Overall Status:** 79% Complete
+> **Overall Status:** 82% Complete
 > **Target:** 100% for Beta Launch
 
 ---
@@ -53,7 +53,7 @@
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
 | `/api/trips/[tripId]/members` | GET | ✅ | 🔶 | List members |
-| `/api/trips/[tripId]/members` | POST | ✅ | ⏳ | Add member |
+| `/api/trips/[tripId]/members` | POST | ✅ | ⏳ | Add member — POST handler implemented 2026-03-20 |
 | `/api/trips/[tripId]/invitations` | GET | ✅ | 🔶 | List invitations |
 | `/api/trips/[tripId]/invitations` | POST | ✅ | ✅ | **Email service configured** ✅ Dec 17 |
 
@@ -65,6 +65,9 @@
 | `/api/trips/[tripId]/activities` | POST | ✅ | 🔶 | Add activity |
 | `/api/trips/[tripId]/itinerary` | GET | ✅ | 🔶 | Get itinerary |
 | `/api/trips/[tripId]/itinerary` | PUT | ✅ | ⏳ | Update itinerary |
+| `/api/activities/[activityId]` | GET | ✅ | ⏳ | Get activity detail with comments, ratings, avg score; public activities accessible without auth |
+| `/api/activities/[activityId]` | POST | ✅ | ⏳ | Save/unsave activity (toggle); auth required |
+| `/api/activities/[activityId]` | PUT | ✅ | ⏳ | Add comment (`action: 'comment'`) or rating (`action: 'rate'`) to activity; auth required |
 
 ### Trip Planning APIs
 
@@ -75,6 +78,16 @@
 | `/api/trips/[tripId]/voting` | GET | ✅ | 🔶 | Get voting session |
 | `/api/trips/[tripId]/voting` | POST | ✅ | 🔶 | Create/cast vote |
 | `/api/trips/[tripId]/recommendations` | GET | ✅ | ⏳ | AI recommendations |
+| `/api/trips/[tripId]/flights` | GET | ✅ | ⏳ | Search flights for trip dates using user's profile city as origin; uses Amadeus API |
+| `/api/trips/[tripId]/suggestions` | GET | ✅ | ⏳ | Fetch events (Ticketmaster), attractions, and restaurants for trip destination; includes daily cost estimate |
+
+### Invitation Management APIs
+
+| Endpoint | Method | Status | Frontend Connected | Notes |
+|----------|--------|--------|-------------------|-------|
+| `/api/invitations` | GET | ✅ | ⏳ | List all invitations for current user; auto-marks expired PENDING invitations |
+| `/api/invitations/[invitationId]` | GET | ✅ | ⏳ | Get invitation details including trip + members; auth + ownership check |
+| `/api/invitations/[invitationId]` | POST | ✅ | ⏳ | Accept or decline invitation (`action: 'accept'|'decline'`); on accept adds user as TripMember and notifies owner |
 | `/api/trips/[tripId]/suggestions` | GET | 🔶 | ⏳ | Activity suggestions via Ticketmaster + Places APIs; requires ext API keys |
 | `/api/trips/[tripId]/flights` | GET | 🔶 | ⏳ | Flight search via Amadeus-style integration; requires AMADEUS_API_KEY |
 
@@ -123,18 +136,20 @@ No fix needed - code was already correct
 
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
+| `/api/discover` | GET | ✅ | ⏳ | Search events/places/restaurants/attractions/nightlife by city + date range; type param filters results |
+| `/api/discover` | POST | ✅ | ⏳ | Search flights via EventsService (origin, destination, departureDate, returnDate, adults) |
 | `/api/discover/search` | GET | 🔶 | 🔶 | Fallback mode active |
 | `/api/discover/recommendations` | GET | ✅ | 🔶 | Working |
 | `/api/discover/import` | POST | 🔶 | ⏳ | OpenTripMap import |
-| `/api/search` | GET | ⚠️ | 🔶 | **Exposes email addresses** |
+| `/api/search` | GET | ✅ | 🔶 | Email removed from select projection (privacy fix) ✅ 2026-03-20 |
 | `/api/geocoding` | GET | ✅ | 🔶 | Geocoding for destination search via Nominatim |
 | `/api/inspiration` | GET | ✅ | 🔶 | Auth guard added 2026-03-08 |
 | `/api/images/search` | GET | ✅ | 🔶 | Image search via Unsplash API; requires UNSPLASH_ACCESS_KEY |
 
 ### Search Issues to Fix
 ```
-SECURITY:
-Remove email from searchable fields in /api/search/route.ts
+COMPLETED ✅ 2026-03-20:
+Email removed from select projection in /api/search/route.ts
 ```
 
 ---
@@ -144,6 +159,8 @@ Remove email from searchable fields in /api/search/route.ts
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
 | `/api/ai/chat` | POST | ✅ | ✅ | **OpenAI connected** ✅ Dec 17 |
+| `/api/ai/recommend` | POST | ✅ | ⏳ | Personalized activity recommendations using user saved/rated history; AI + DB hybrid results |
+| `/api/ai/recommend` | GET | ✅ | ⏳ | Trip-scoped recommendations by `?tripId=`; aggregates group member preferences to suggest activities |
 | `/api/ai/generate-itinerary` | POST | 🔶 | ⏳ | Needs real AI |
 | `/api/ai/suggest-activities` | POST | 🔶 | ⏳ | Needs real AI |
 | `/api/ai/search` | GET/POST | 🔶 | ⏳ | Semantic search |
@@ -228,21 +245,30 @@ BLOCKED - Need Environment Variables:
 
 | Category | Total | Working | Partial | Broken | Not Started |
 |----------|-------|---------|---------|--------|-------------|
-| Auth | 7 | 7 | 0 | 0 | 0 |
+| Auth | 6 | 6 | 0 | 0 | 0 |
+| Trips | 20 | 18 | 0 | 1 | 1 |
+| Invitations | 3 | 3 | 0 | 0 | 0 |
+| Feed | 5 | 4 | 0 | 0 | 1 |
+| Notifications | 3 | 3 | 0 | 0 | 0 |
+| Discovery | 6 | 3 | 2 | 1 | 0 |
+| AI | 6 | 2 | 4 | 0 | 0 |
+| User | 4 | 2 | 0 | 0 | 2 |
+| Real-time | 1 | 0 | 0 | 0 | 1 |
+| System | 3 | 2 | 0 | 0 | 1 |
+| **TOTAL** | **57** | **43** | **6** | **1** | **5** |
+
+**API Completion Rate: 75% fully working** ✅ (updated after documenting 12 previously undocumented endpoints)
 | Trips | 17 | 13 | 2 | 1 | 1 |
 | Feed | 5 | 5 | 0 | 0 | 0 |
 | Notifications | 3 | 3 | 0 | 0 | 0 |
-| Discovery | 4 | 1 | 2 | 1 | 0 |
+| Discovery | 4 | 2 | 2 | 0 | 0 |
 | AI | 4 | 0 | 4 | 0 | 0 |
 | User | 5 | 3 | 0 | 0 | 2 |
 | Real-time | 1 | 0 | 0 | 0 | 1 |
 | System | 3 | 2 | 0 | 0 | 1 |
-| Activities | 3 | 3 | 0 | 0 | 0 |
-| Invitations | 3 | 3 | 0 | 0 | 0 |
-| Beta/Newsletter | 4 | 4 | 0 | 0 | 0 |
-| **TOTAL** | **59** | **44** | **8** | **1** | **4** |
+| **TOTAL** | **47** | **33** | **8** | **0** | **4** |
 
-**API Completion Rate: 75% fully working** (1 new auth route: verify-email; initialize-password security fix; activities + invitations documented 2026-03-19)
+**API Completion Rate: 70% fully working** (search email fix: ⚠️ → ✅; members POST handler implemented 2026-03-20)
 
 ---
 
@@ -255,7 +281,7 @@ BLOCKED - Need Environment Variables:
 4. **Invitations** - ✅ COMPLETE Dec 17
 
 ### High (Should Fix)
-5. **Search** - Remove email exposure
+5. **Search** - ✅ Email removed from select projection 2026-03-20
 6. **AI Chat** - ✅ COMPLETE Dec 17
 7. **Pusher Auth** - Add env vars
 
@@ -343,4 +369,5 @@ EMAIL_FROM=             # Email sender (onboarding@resend.dev) ✅
 
 *Review and update after each API change.*
 
-*Last Updated: 2026-03-19 - GET /api/auth/verify-email added; /api/beta/initialize-password security fix (N8N_API_KEY auth); /api/activities/[activityId] and /api/invitations documented; /api/users/me PATCH documented; route total updated to 59*
+*Last Updated: 2026-03-16 - Documented 12 previously undocumented endpoints: /api/activities/[activityId] (GET/POST/PUT), /api/discover (GET/POST), /api/invitations (GET), /api/invitations/[invitationId] (GET/POST), /api/trips/[tripId]/flights (GET), /api/trips/[tripId]/suggestions (GET), /api/ai/recommend (GET/POST)*
+*Last Updated: 2026-03-20 - POST /api/trips/[tripId]/members handler implemented; /api/search email exposure fixed (⚠️ → ✅); Zod added to notifications, feed/comments, feed/engagement, pusher/auth, users/[userId], discover/*, images/search routes; 78 new tests in 3 new test files (trips-suggestions: 23, trips-flights: 26, trips-members: 29)*

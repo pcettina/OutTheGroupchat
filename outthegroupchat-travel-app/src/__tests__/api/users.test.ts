@@ -112,7 +112,7 @@ describe('GET /api/users/[userId]', () => {
 
   it('returns 200 with user data when found (unauthenticated)', async () => {
     vi.mocked(getServerSession).mockResolvedValue(null);
-    vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as Awaited<ReturnType<typeof prisma.user.findUnique>>);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>);
     vi.mocked(prisma.trip.findMany).mockResolvedValue([]);
 
     const res = await GET(makeGetRequest('user-2'), { params: { userId: 'user-2' } });
@@ -124,7 +124,7 @@ describe('GET /api/users/[userId]', () => {
 
   it('returns isFollowing: false when not following', async () => {
     vi.mocked(getServerSession).mockResolvedValue(mockSession);
-    vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as Awaited<ReturnType<typeof prisma.user.findUnique>>);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>);
     vi.mocked(prisma.follow.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.trip.findMany).mockResolvedValue([]);
 
@@ -135,7 +135,7 @@ describe('GET /api/users/[userId]', () => {
 
   it('returns isFollowing: true when following', async () => {
     vi.mocked(getServerSession).mockResolvedValue(mockSession);
-    vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as Awaited<ReturnType<typeof prisma.user.findUnique>>);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>);
     vi.mocked(prisma.follow.findFirst).mockResolvedValue({ id: 'follow-1', followerId: 'user-1', followingId: 'user-2', createdAt: new Date() } as Awaited<ReturnType<typeof prisma.follow.findFirst>>);
     vi.mocked(prisma.trip.findMany).mockResolvedValue([]);
 
@@ -147,7 +147,7 @@ describe('GET /api/users/[userId]', () => {
   it('hides isFollowing check when viewing own profile', async () => {
     vi.mocked(getServerSession).mockResolvedValue(mockSession);
     const ownUser = { ...mockUser, id: 'user-1' };
-    vi.mocked(prisma.user.findUnique).mockResolvedValue(ownUser as Awaited<ReturnType<typeof prisma.user.findUnique>>);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(ownUser as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>);
     vi.mocked(prisma.trip.findMany).mockResolvedValue([]);
 
     const res = await GET(makeGetRequest('user-1'), { params: { userId: 'user-1' } });
@@ -159,9 +159,9 @@ describe('GET /api/users/[userId]', () => {
 
   it('includes public trips in response', async () => {
     vi.mocked(getServerSession).mockResolvedValue(null);
-    vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as Awaited<ReturnType<typeof prisma.user.findUnique>>);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>);
     vi.mocked(prisma.trip.findMany).mockResolvedValue([
-      { id: 'trip-1', title: 'Paris Trip', description: null, destination: { city: 'Paris', country: 'France' }, startDate: new Date(), endDate: new Date(), status: 'PLANNING' as const, isPublic: true, ownerId: 'user-2', coverImage: null, budget: null, viewCount: 0, createdAt: new Date(), updatedAt: new Date(), _count: { members: 3, activities: 5 } },
+      { id: 'trip-1', title: 'Paris Trip', destination: { city: 'Paris', country: 'France' }, startDate: new Date(), endDate: new Date(), status: 'PLANNING', _count: { members: 3, activities: 5 } },
     ] as unknown as Awaited<ReturnType<typeof prisma.trip.findMany>>);
 
     const res = await GET(makeGetRequest('user-2'), { params: { userId: 'user-2' } });
@@ -214,7 +214,7 @@ describe('POST /api/users/[userId] (follow/unfollow)', () => {
 
   it('follows a user when not already following', async () => {
     vi.mocked(getServerSession).mockResolvedValue(mockSession);
-    vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as Awaited<ReturnType<typeof prisma.user.findUnique>>);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>);
     vi.mocked(prisma.follow.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.follow.create).mockResolvedValue({ id: 'follow-1', followerId: 'user-1', followingId: 'user-2', createdAt: new Date() });
     vi.mocked(prisma.notification.create).mockResolvedValue({} as Awaited<ReturnType<typeof prisma.notification.create>>);
@@ -229,7 +229,7 @@ describe('POST /api/users/[userId] (follow/unfollow)', () => {
 
   it('unfollows a user when already following', async () => {
     vi.mocked(getServerSession).mockResolvedValue(otherSession);
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({ ...mockUser, id: 'user-1' } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ ...mockUser, id: 'user-1' } as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>);
     vi.mocked(prisma.follow.findFirst).mockResolvedValue({ id: 'follow-1', followerId: 'user-2', followingId: 'user-1', createdAt: new Date() } as Awaited<ReturnType<typeof prisma.follow.findFirst>>);
     vi.mocked(prisma.follow.delete).mockResolvedValue({ id: 'follow-1', followerId: 'user-2', followingId: 'user-1', createdAt: new Date() });
 
@@ -242,7 +242,7 @@ describe('POST /api/users/[userId] (follow/unfollow)', () => {
 
   it('creates a FOLLOW notification when following', async () => {
     vi.mocked(getServerSession).mockResolvedValue(mockSession);
-    vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as Awaited<ReturnType<typeof prisma.user.findUnique>>);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>);
     vi.mocked(prisma.follow.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.follow.create).mockResolvedValue({ id: 'follow-1', followerId: 'user-1', followingId: 'user-2', createdAt: new Date() });
     vi.mocked(prisma.notification.create).mockResolvedValue({} as Awaited<ReturnType<typeof prisma.notification.create>>);

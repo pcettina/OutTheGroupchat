@@ -17,6 +17,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
+import { TripStatus, ActivityStatus, ActivityCategory, BookingStatus } from '@prisma/client';
 
 // Extend the global prisma mock (defined in setup.ts) with the additional
 // models and methods that the feed route handler calls.
@@ -88,14 +89,14 @@ const MOCK_TRIP_ROW = {
   title: 'Tokyo Adventure',
   description: null,
   destination: { city: 'Tokyo', country: 'Japan' },
-  status: 'PLANNING' as const,
+  status: 'PLANNING' as TripStatus,
   isPublic: true,
   coverImage: null,
-  createdAt: new Date('2026-02-01'),
-  updatedAt: new Date('2026-02-01'),
-  startDate: new Date('2026-04-01'),
-  endDate: new Date('2026-04-10'),
   budget: null,
+  createdAt: new Date('2026-01-15'),
+  updatedAt: new Date('2026-02-01'),
+  startDate: new Date('2026-07-01'),
+  endDate: new Date('2026-07-10'),
   viewCount: 0,
   ownerId: MOCK_USER_ID,
   owner: { id: MOCK_USER_ID, name: 'Feed Tester', image: null },
@@ -107,22 +108,22 @@ const MOCK_ACTIVITY_ROW = {
   id: MOCK_ACTIVITY_ID,
   tripId: MOCK_TRIP_ID,
   name: 'Shibuya Crossing Walk',
-  category: 'CULTURE' as const,
+  category: 'CULTURE' as ActivityCategory,
   description: 'Walk through the famous crossing',
-  status: 'SUGGESTED' as const,
+  status: 'SUGGESTED' as ActivityStatus,
   isPublic: true,
   createdAt: new Date('2026-02-02'),
   updatedAt: new Date('2026-02-02'),
-  location: null,
   date: null,
   startTime: null,
   endTime: null,
   duration: null,
+  location: null,
   cost: null,
   currency: 'USD',
   priceRange: null,
   costDetails: null,
-  bookingStatus: 'NOT_NEEDED' as const,
+  bookingStatus: 'NOT_NEEDED' as BookingStatus,
   bookingUrl: null,
   confirmationCode: null,
   requirements: null,
@@ -304,7 +305,7 @@ describe('POST /api/feed', () => {
   it('saves an activity successfully and returns action: save', async () => {
     mockGetServerSession.mockResolvedValue(MOCK_SESSION);
     mockPrismaSavedActivity.upsert.mockResolvedValue({
-      id: 'saved-1',
+      id: 'saved-act-1',
       userId: MOCK_USER_ID,
       activityId: MOCK_ACTIVITY_ID,
       savedAt: new Date(),

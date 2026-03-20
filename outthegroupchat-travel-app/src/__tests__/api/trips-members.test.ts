@@ -28,6 +28,7 @@ import {
 // ---------------------------------------------------------------------------
 const mockGetServerSession = vi.mocked(getServerSession);
 const mockPrismaTripMember = vi.mocked(prisma.tripMember) as typeof prisma.tripMember & {
+  findFirst: ReturnType<typeof vi.fn>;
   findMany: ReturnType<typeof vi.fn>;
   findUnique: ReturnType<typeof vi.fn>;
   update: ReturnType<typeof vi.fn>;

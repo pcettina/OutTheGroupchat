@@ -2,6 +2,7 @@ import { Outfit, Poppins } from 'next/font/google';
 import '@/styles/globals.css';
 import { Providers } from '@/lib/providers';
 import { SkipLinks } from '@/components/accessibility';
+import { Analytics } from '@vercel/analytics/react';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -50,6 +51,7 @@ export default function RootLayout({
             </main>
           </div>
         </Providers>
+        <Analytics />
       </body>
     </html>
   );

@@ -15,6 +15,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { prisma } from '@/lib/prisma';
 import crypto from 'crypto';
+import { POST, PATCH } from '@/app/api/auth/reset-password/route';
 
 // ---------------------------------------------------------------------------
 // Mock bcryptjs
@@ -80,12 +81,6 @@ function makeRequest(method: string, body: unknown): Request {
     body: JSON.stringify(body),
   });
 }
-
-// ---------------------------------------------------------------------------
-// Import route handlers under test (lazy to avoid top-level await)
-// ---------------------------------------------------------------------------
-let POST: (req: Request) => Promise<Response>;
-let PATCH: (req: Request) => Promise<Response>;
 
 // ---------------------------------------------------------------------------
 // Test suite

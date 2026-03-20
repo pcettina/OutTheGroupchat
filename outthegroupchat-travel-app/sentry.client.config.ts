@@ -1,6 +1,10 @@
-// This file configures the initialization of Sentry on the client side.
-// The config you add here will be used whenever a user loads a page in their browser.
-// https://docs.sentry.io/platforms/javascript/guides/nextjs/
+// DEPRECATED: Client-side Sentry initialization has been migrated to
+// instrumentation-client.ts for Turbopack compatibility (Next.js 14+).
+// This file is kept as a fallback for non-Turbopack builds but is no longer
+// the canonical source of Sentry client config.
+//
+// See: https://docs.sentry.io/platforms/javascript/guides/nextjs/instrumentation/
+// Do NOT add new configuration here — edit instrumentation-client.ts instead.
 
 import * as Sentry from "@sentry/nextjs";
 

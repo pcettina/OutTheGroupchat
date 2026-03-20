@@ -14,6 +14,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
+import { TripStatus, TripMemberRole } from '@prisma/client';
 
 // Import the route handlers under test
 import { GET as tripsGET, POST as tripsPOST } from '@/app/api/trips/route';
@@ -56,7 +57,7 @@ const MOCK_TRIP = {
   endDate: new Date('2026-06-10'),
   isPublic: false,
   ownerId: MOCK_USER_ID,
-  status: 'PLANNING' as const,
+  status: 'PLANNING' as TripStatus,
   viewCount: 0,
   coverImage: null,
   budget: null,
@@ -448,7 +449,16 @@ describe('PATCH /api/trips/[tripId]', () => {
   });
 
   it('updates the trip and returns 200 for an owner', async () => {
-    mockPrismaTripMember.findFirst.mockResolvedValueOnce({ id: 'member-1', userId: MOCK_USER_ID, tripId: MOCK_TRIP_ID, role: 'OWNER' as const, joinedAt: new Date(), budgetRange: null, departureCity: null, flightDetails: null });
+    mockPrismaTripMember.findFirst.mockResolvedValueOnce({
+      id: 'member-1',
+      tripId: MOCK_TRIP_ID,
+      userId: MOCK_USER_ID,
+      role: 'OWNER' as TripMemberRole,
+      joinedAt: new Date('2026-01-01'),
+      budgetRange: null,
+      departureCity: null,
+      flightDetails: null,
+    });
     mockPrismaTrip.update.mockResolvedValueOnce({ ...MOCK_TRIP, title: 'Updated Title', isPublic: true });
 
     const res = await callPatch(MOCK_TRIP_ID, VALID_PATCH_BODY);
@@ -460,7 +470,16 @@ describe('PATCH /api/trips/[tripId]', () => {
   });
 
   it('returns 400 for an invalid status value', async () => {
-    mockPrismaTripMember.findFirst.mockResolvedValueOnce({ id: 'member-1', userId: MOCK_USER_ID, tripId: MOCK_TRIP_ID, role: 'OWNER' as const, joinedAt: new Date(), budgetRange: null, departureCity: null, flightDetails: null });
+    mockPrismaTripMember.findFirst.mockResolvedValueOnce({
+      id: 'member-1',
+      tripId: MOCK_TRIP_ID,
+      userId: MOCK_USER_ID,
+      role: 'OWNER' as TripMemberRole,
+      joinedAt: new Date('2026-01-01'),
+      budgetRange: null,
+      departureCity: null,
+      flightDetails: null,
+    });
 
     const res = await callPatch(MOCK_TRIP_ID, { status: 'INVALID_STATUS' });
     const body = await parseJson(res);
