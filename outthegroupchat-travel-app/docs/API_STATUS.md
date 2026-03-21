@@ -1,6 +1,6 @@
 # 📡 API & Integration Status
 
-> **Last updated: 2026-03-20**
+> **Last updated: 2026-03-21**
 >
 > **Last Audit:** March 2026
 > **Overall Status:** 82% Complete
@@ -25,16 +25,17 @@
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
 | `/api/auth/[...nextauth]` | ALL | ✅ | ✅ | NextAuth handler |
-| `/api/auth/signup` | POST | ✅ | ✅ | Zod validation added 2026-03-18 |
+| `/api/auth/signup` | POST | ✅ | ✅ | Zod validation added 2026-03-18; email verification sending added 2026-03-21 |
 | `/api/auth/demo` | POST | ✅ | ✅ | Demo credentials in env vars ✅ 2026-03-10 |
 | `/api/auth/demo` | GET | ✅ | ✅ | Returns demo account info (hides password in prod) |
 | `/api/auth/reset-password` | POST | ✅ | ✅ | Request reset token; email-safe 200 response ✅ 2026-03-12; UI page added 2026-03-14 |
 | `/api/auth/reset-password` | PATCH | ✅ | ✅ | Confirm reset with token + new password ✅ 2026-03-12; UI confirm page added 2026-03-14 |
-| `/api/auth/verify-email` | GET | ✅ | ✅ | Email token verification ✅ 2026-03-19 (endpoint exists; signup does not yet send verification email) |
+| `/api/auth/verify-email` | GET | ✅ | ✅ | Email token verification ✅ 2026-03-19; signup now sends verification email ✅ 2026-03-21 |
 
 ### Auth Issues to Fix
 - [x] Add password reset endpoint ✅ 2026-03-12
-- [x] Add email verification endpoint ✅ 2026-03-19 (GET /api/auth/verify-email — signup email not yet wired)
+- [x] Add email verification endpoint ✅ 2026-03-19 (GET /api/auth/verify-email)
+- [x] Wire email verification sending on signup ✅ 2026-03-21
 
 ---
 
@@ -97,7 +98,7 @@
 
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
-| `/api/feed` | GET | ✅ | ✅ | Main feed |
+| `/api/feed` | GET | ✅ | ✅ | Main feed; Zod validation added 2026-03-21 |
 | `/api/feed/comments` | GET | ✅ | ✅ | **Trip support added** ✅ Dec 17 |
 | `/api/feed/comments` | POST | ✅ | ✅ | **Trip support added** ✅ Dec 17 |
 | `/api/feed/engagement` | POST | ✅ | ✅ | **Trip support added** ✅ Dec 17 |
@@ -137,12 +138,12 @@ No fix needed - code was already correct
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
 | `/api/discover` | GET | ✅ | ⏳ | Search events/places/restaurants/attractions/nightlife by city + date range; type param filters results |
-| `/api/discover` | POST | ✅ | ⏳ | Search flights via EventsService (origin, destination, departureDate, returnDate, adults) |
+| `/api/discover` | POST | ✅ | ⏳ | Search flights via EventsService (origin, destination, departureDate, returnDate, adults); Zod validation added 2026-03-21 |
 | `/api/discover/search` | GET | 🔶 | 🔶 | Fallback mode active |
 | `/api/discover/recommendations` | GET | ✅ | 🔶 | Working |
 | `/api/discover/import` | POST | 🔶 | ⏳ | OpenTripMap import |
 | `/api/search` | GET | ✅ | 🔶 | Email removed from select projection (privacy fix) ✅ 2026-03-20 |
-| `/api/geocoding` | GET | ✅ | 🔶 | Geocoding for destination search via Nominatim |
+| `/api/geocoding` | GET | ✅ | 🔶 | Geocoding for destination search via Nominatim; Zod validation added 2026-03-21 |
 | `/api/inspiration` | GET | ✅ | 🔶 | Auth guard added 2026-03-08 |
 | `/api/images/search` | GET | ✅ | 🔶 | Image search via Unsplash API; requires UNSPLASH_ACCESS_KEY |
 
@@ -235,7 +236,7 @@ BLOCKED - Need Environment Variables:
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
 | `/api/beta/signup` | POST | ✅ | ✅ | Beta waitlist signup |
-| `/api/beta/status` | GET | ✅ | ✅ | Check beta access status |
+| `/api/beta/status` | GET | ✅ | ✅ | Check beta access status; IP rate limiting added 2026-03-21 (user enumeration risk mitigated) |
 | `/api/beta/initialize-password` | POST | ✅ | ✅ | Beta user password init — now protected with N8N_API_KEY auth ✅ 2026-03-19 (was unauthenticated — account takeover vulnerability fixed) |
 | `/api/newsletter/subscribe` | POST | ✅ | ✅ | Newsletter subscription |
 
@@ -369,4 +370,4 @@ EMAIL_FROM=             # Email sender (onboarding@resend.dev) ✅
 
 *Review and update after each API change.*
 
-*Last Updated: 2026-03-20 - POST /api/trips/[tripId]/members handler implemented; /api/search email exposure fixed; Zod added to notifications, feed/comments, feed/engagement, pusher/auth, users/[userId], discover/\*, images/search routes; 12 previously undocumented endpoints documented (2026-03-16); 78 new tests in 3 test files*
+*Last Updated: 2026-03-21 - Email verification now sent on signup; IP rate limiting added to /api/beta/status (user enumeration mitigated); Zod added to /api/feed GET, /api/geocoding GET, /api/discover POST; 35 new tests in 3 new test files (verify-email.test.ts: 9, pusher-auth.test.ts: 14, trips-members POST tests: 12); TSC errors fixed in 5 test files; JSDoc added to src/lib/api/unsplash.ts; tests total ~577*

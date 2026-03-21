@@ -34,13 +34,25 @@ export interface UnsplashSearchResult {
   results: UnsplashImage[];
 }
 
+/**
+ * Returns whether the Unsplash API is configured in the current environment.
+ * @returns `true` if `UNSPLASH_ACCESS_KEY` is set, `false` otherwise.
+ */
 export function isUnsplashConfigured(): boolean {
   return !!UNSPLASH_ACCESS_KEY;
 }
 
 /**
- * Search Unsplash for images matching a query.
- * Free tier: 50 requests/hour.
+ * Searches Unsplash for photos matching the given query string.
+ * Results are cached for 5 minutes via Next.js fetch revalidation.
+ * Falls back to an empty result set if the API key is missing or the request fails.
+ * Free tier limit: 50 requests per hour.
+ *
+ * @param query - The search term used to find relevant photos.
+ * @param page - Page number for paginated results (default: 1).
+ * @param perPage - Number of results per page, max 30 on the free tier (default: 12).
+ * @param orientation - Optional filter for photo orientation: `'landscape'`, `'portrait'`, or `'squarish'`.
+ * @returns A promise resolving to an `UnsplashSearchResult` with `total`, `total_pages`, and `results`.
  */
 export async function searchImages(
   query: string,

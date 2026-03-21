@@ -1,6 +1,6 @@
 # OutTheGroupchat — Full Codemap
 
-> Auto-generated 2026-03-10. Last updated 2026-03-20. Comprehensive reference for agents and developers.
+> Auto-generated 2026-03-10. Last updated 2026-03-21. Comprehensive reference for agents and developers.
 
 ## Table of Contents
 
@@ -805,15 +805,16 @@ db:seed        → npx tsx prisma/seed/index.ts
 
 ## Tests
 
-**Total: 283 tests across 18 Vitest unit/integration test files**
-**Total: 382 tests across 22 Vitest unit/integration test files** (0 TSC errors in production code, 0 in test files as of 2026-03-20)
+**Total: ~577 tests across 31 Vitest unit/integration test files** (0 TSC errors in production code, 0 in test files as of 2026-03-21)
 
 | File | Lines | Tests | Coverage |
 |------|-------|-------|----------|
 | `src/__tests__/api/trips.test.ts` | 525 | 30 | Trips API (GET, POST, PATCH, DELETE) |
 | `src/__tests__/api/trips-suggestions.test.ts` | — | 23 | Trips suggestions API (Ticketmaster + Places) |
 | `src/__tests__/api/trips-flights.test.ts` | — | 26 | Trips flights API (Amadeus-style) |
-| `src/__tests__/api/trips-members.test.ts` | — | 29 | Trips members API (GET, PATCH, DELETE) |
+| `src/__tests__/api/trips-members.test.ts` | — | 41 | Trips members API (GET, POST, PATCH, DELETE) — 12 POST tests added 2026-03-21 |
+| `src/__tests__/api/verify-email.test.ts` | — | 9 | Email verification token flow (GET /api/auth/verify-email) |
+| `src/__tests__/api/pusher-auth.test.ts` | — | 14 | Pusher channel auth (POST /api/pusher/auth) |
 | `src/__tests__/api/voting.test.ts` | — | 10 | Voting API (create, vote, close session) |
 | `src/__tests__/api/survey.test.ts` | — | 11 | Survey API (create, respond, analyze) |
 | `src/__tests__/api/feed.test.ts` | — | 12 | Feed API (pagination, comments, engagement) |
@@ -881,11 +882,8 @@ db:seed        → npx tsx prisma/seed/index.ts
 | Lint warnings | 0 |
 | `any` types | 0 ✅ |
 | `console.*` | 0 ✅ |
-| Vitest tests | 283 passing (18 files) |
-| E2E tests | 11 Playwright smoke tests (4 suites) |
-| Error monitoring | Sentry installed (server + client + edge) — needs `SENTRY_DSN` in Vercel |
-| Files >400 lines | 10 (consider splitting) |
-| Vitest tests | 382 passing (22 files) |
+| TSC errors (prod + test) | 0 ✅ |
+| Vitest tests | ~577 passing (31 files) |
 | E2E tests | 11 Playwright smoke tests (4 suites) |
 | Error monitoring | Sentry installed (server + client + edge) — needs `SENTRY_DSN` in Vercel |
 | Files >400 lines | ~10 (0 files exceed 600 lines) |

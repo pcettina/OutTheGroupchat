@@ -152,7 +152,7 @@ describe('GET /api/trips/[tripId]/suggestions', () => {
   });
 
   it('returns 401 when the user is not a member or owner', async () => {
-    mockPrismaTrip.findUnique.mockResolvedValueOnce(MOCK_TRIP_OTHER_OWNER);
+    mockPrismaTrip.findUnique.mockResolvedValueOnce(MOCK_TRIP_OTHER_OWNER as unknown as Awaited<ReturnType<typeof prisma.trip.findUnique>>);
 
     const res = await callSuggestions(MOCK_TRIP_ID);
 
@@ -161,7 +161,7 @@ describe('GET /api/trips/[tripId]/suggestions', () => {
   });
 
   it('returns 200 with suggestions data when authenticated as owner', async () => {
-    mockPrismaTrip.findUnique.mockResolvedValueOnce(MOCK_TRIP);
+    mockPrismaTrip.findUnique.mockResolvedValueOnce(MOCK_TRIP as unknown as Awaited<ReturnType<typeof prisma.trip.findUnique>>);
     mockSearchEvents.mockResolvedValueOnce([
       { id: 'evt-1', name: 'Eiffel Tower Concert', url: 'https://example.com/evt-1', dates: { start: { localDate: '2026-06-02', localTime: '20:00:00' } } },
     ]);
@@ -201,7 +201,7 @@ describe('GET /api/trips/[tripId]/suggestions', () => {
       ...MOCK_TRIP_OTHER_OWNER,
       members: [{ id: MOCK_USER_ID, name: 'Test User', email: 'test@example.com' }],
     };
-    mockPrismaTrip.findUnique.mockResolvedValueOnce(tripAsMember);
+    mockPrismaTrip.findUnique.mockResolvedValueOnce(tripAsMember as unknown as Awaited<ReturnType<typeof prisma.trip.findUnique>>);
     mockSearchEvents.mockResolvedValueOnce([]);
     mockSearchPlaces.mockResolvedValueOnce([]);
     mockSearchPlaces.mockResolvedValueOnce([]);
@@ -221,7 +221,7 @@ describe('GET /api/trips/[tripId]/suggestions', () => {
   });
 
   it('calls searchEvents with the correct city and dates', async () => {
-    mockPrismaTrip.findUnique.mockResolvedValueOnce(MOCK_TRIP);
+    mockPrismaTrip.findUnique.mockResolvedValueOnce(MOCK_TRIP as unknown as Awaited<ReturnType<typeof prisma.trip.findUnique>>);
     mockSearchEvents.mockResolvedValueOnce([]);
     mockSearchPlaces.mockResolvedValueOnce([]);
     mockSearchPlaces.mockResolvedValueOnce([]);
@@ -246,7 +246,7 @@ describe('GET /api/trips/[tripId]/suggestions', () => {
 
   it('handles a trip with no destination city gracefully', async () => {
     const tripNoCity = { ...MOCK_TRIP, destination: null };
-    mockPrismaTrip.findUnique.mockResolvedValueOnce(tripNoCity);
+    mockPrismaTrip.findUnique.mockResolvedValueOnce(tripNoCity as unknown as Awaited<ReturnType<typeof prisma.trip.findUnique>>);
     mockSearchEvents.mockResolvedValueOnce([]);
     mockSearchPlaces.mockResolvedValueOnce([]);
     mockSearchPlaces.mockResolvedValueOnce([]);
@@ -278,7 +278,7 @@ describe('GET /api/trips/[tripId]/suggestions', () => {
   });
 
   it('returns 500 when an external API call throws unexpectedly', async () => {
-    mockPrismaTrip.findUnique.mockResolvedValueOnce(MOCK_TRIP);
+    mockPrismaTrip.findUnique.mockResolvedValueOnce(MOCK_TRIP as unknown as Awaited<ReturnType<typeof prisma.trip.findUnique>>);
     // searchEvents throws (not gracefully returns []) — route catch block fires
     mockSearchEvents.mockRejectedValueOnce(new Error('Ticketmaster API down'));
 
@@ -317,7 +317,7 @@ describe('GET /api/trips/[tripId]/flights', () => {
   });
 
   it('returns 401 when the user is not a member or owner', async () => {
-    mockPrismaTrip.findUnique.mockResolvedValueOnce(MOCK_TRIP_OTHER_OWNER);
+    mockPrismaTrip.findUnique.mockResolvedValueOnce(MOCK_TRIP_OTHER_OWNER as unknown as Awaited<ReturnType<typeof prisma.trip.findUnique>>);
 
     const res = await callFlights(MOCK_TRIP_ID);
 
@@ -326,8 +326,8 @@ describe('GET /api/trips/[tripId]/flights', () => {
   });
 
   it('returns 400 when airport code cannot be found for origin', async () => {
-    mockPrismaTrip.findUnique.mockResolvedValueOnce(MOCK_TRIP);
-    mockPrismaUser.findUnique.mockResolvedValueOnce({ city: 'New York' });
+    mockPrismaTrip.findUnique.mockResolvedValueOnce(MOCK_TRIP as unknown as Awaited<ReturnType<typeof prisma.trip.findUnique>>);
+    mockPrismaUser.findUnique.mockResolvedValueOnce({ city: 'New York' } as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>);
     // originCode returns null → route returns 400
     mockGetAirportCode.mockResolvedValueOnce(null);
     mockGetAirportCode.mockResolvedValueOnce('CDG');
@@ -340,8 +340,8 @@ describe('GET /api/trips/[tripId]/flights', () => {
   });
 
   it('returns 400 when airport code cannot be found for destination', async () => {
-    mockPrismaTrip.findUnique.mockResolvedValueOnce(MOCK_TRIP);
-    mockPrismaUser.findUnique.mockResolvedValueOnce({ city: 'New York' });
+    mockPrismaTrip.findUnique.mockResolvedValueOnce(MOCK_TRIP as unknown as Awaited<ReturnType<typeof prisma.trip.findUnique>>);
+    mockPrismaUser.findUnique.mockResolvedValueOnce({ city: 'New York' } as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>);
     mockGetAirportCode.mockResolvedValueOnce('JFK');
     // destinationCode returns null → route returns 400
     mockGetAirportCode.mockResolvedValueOnce(null);
@@ -354,8 +354,8 @@ describe('GET /api/trips/[tripId]/flights', () => {
   });
 
   it('returns 200 with flight data when all lookups succeed', async () => {
-    mockPrismaTrip.findUnique.mockResolvedValueOnce(MOCK_TRIP);
-    mockPrismaUser.findUnique.mockResolvedValueOnce({ city: 'New York' });
+    mockPrismaTrip.findUnique.mockResolvedValueOnce(MOCK_TRIP as unknown as Awaited<ReturnType<typeof prisma.trip.findUnique>>);
+    mockPrismaUser.findUnique.mockResolvedValueOnce({ city: 'New York' } as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>);
     mockGetAirportCode.mockResolvedValueOnce('JFK');
     mockGetAirportCode.mockResolvedValueOnce('CDG');
     mockSearchFlights.mockResolvedValueOnce([
@@ -389,8 +389,8 @@ describe('GET /api/trips/[tripId]/flights', () => {
       ...MOCK_TRIP_OTHER_OWNER,
       members: [{ id: MOCK_USER_ID, name: 'Test User', email: 'test@example.com' }],
     };
-    mockPrismaTrip.findUnique.mockResolvedValueOnce(tripAsMember);
-    mockPrismaUser.findUnique.mockResolvedValueOnce({ city: 'Los Angeles' });
+    mockPrismaTrip.findUnique.mockResolvedValueOnce(tripAsMember as unknown as Awaited<ReturnType<typeof prisma.trip.findUnique>>);
+    mockPrismaUser.findUnique.mockResolvedValueOnce({ city: 'Los Angeles' } as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>);
     mockGetAirportCode.mockResolvedValueOnce('LAX');
     mockGetAirportCode.mockResolvedValueOnce('CDG');
     mockSearchFlights.mockResolvedValueOnce([]);
@@ -404,8 +404,8 @@ describe('GET /api/trips/[tripId]/flights', () => {
   });
 
   it('defaults origin city to New York when user has no city set', async () => {
-    mockPrismaTrip.findUnique.mockResolvedValueOnce(MOCK_TRIP);
-    mockPrismaUser.findUnique.mockResolvedValueOnce({ city: null });
+    mockPrismaTrip.findUnique.mockResolvedValueOnce(MOCK_TRIP as unknown as Awaited<ReturnType<typeof prisma.trip.findUnique>>);
+    mockPrismaUser.findUnique.mockResolvedValueOnce({ city: null } as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>);
     mockGetAirportCode.mockResolvedValueOnce('JFK');
     mockGetAirportCode.mockResolvedValueOnce('CDG');
     mockSearchFlights.mockResolvedValueOnce([]);
@@ -418,8 +418,8 @@ describe('GET /api/trips/[tripId]/flights', () => {
   });
 
   it('calls searchFlights with the correct parameters', async () => {
-    mockPrismaTrip.findUnique.mockResolvedValueOnce(MOCK_TRIP);
-    mockPrismaUser.findUnique.mockResolvedValueOnce({ city: 'New York' });
+    mockPrismaTrip.findUnique.mockResolvedValueOnce(MOCK_TRIP as unknown as Awaited<ReturnType<typeof prisma.trip.findUnique>>);
+    mockPrismaUser.findUnique.mockResolvedValueOnce({ city: 'New York' } as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>);
     mockGetAirportCode.mockResolvedValueOnce('JFK');
     mockGetAirportCode.mockResolvedValueOnce('CDG');
     mockSearchFlights.mockResolvedValueOnce([]);
@@ -449,7 +449,7 @@ describe('GET /api/trips/[tripId]/flights', () => {
   });
 
   it('returns 500 when Prisma throws during user lookup', async () => {
-    mockPrismaTrip.findUnique.mockResolvedValueOnce(MOCK_TRIP);
+    mockPrismaTrip.findUnique.mockResolvedValueOnce(MOCK_TRIP as unknown as Awaited<ReturnType<typeof prisma.trip.findUnique>>);
     mockPrismaUser.findUnique.mockRejectedValueOnce(new Error('User DB error'));
 
     const res = await callFlights(MOCK_TRIP_ID);

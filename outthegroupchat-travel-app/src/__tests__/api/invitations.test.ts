@@ -24,7 +24,10 @@ import { prisma } from '@/lib/prisma';
 // ---------------------------------------------------------------------------
 // Import route handlers under test
 // ---------------------------------------------------------------------------
-import { GET as invitationsGET } from '@/app/api/invitations/route';
+import { GET as invitationsGETBase } from '@/app/api/invitations/route';
+// The route signature declares no params (force-dynamic), but tests pass a
+// Request for readability. Cast to accept it so TSC does not error.
+const invitationsGET = invitationsGETBase as unknown as (req: Request) => Promise<Response>;
 import {
   GET as invitationByIdGET,
   POST as invitationByIdPOST,
@@ -35,20 +38,23 @@ import {
 // The setup mock only defines findFirst / create / update; the routes under
 // test also call findMany, findUnique, and updateMany.
 // ---------------------------------------------------------------------------
-const mockTripInvitation = prisma.tripInvitation as typeof prisma.tripInvitation & {
+const mockTripInvitation = prisma.tripInvitation as unknown as {
+  findFirst: ReturnType<typeof vi.fn>;
   findMany: ReturnType<typeof vi.fn>;
   findUnique: ReturnType<typeof vi.fn>;
+  create: ReturnType<typeof vi.fn>;
+  update: ReturnType<typeof vi.fn>;
   updateMany: ReturnType<typeof vi.fn>;
 };
 
 if (!mockTripInvitation.findMany) {
-  (mockTripInvitation as Record<string, unknown>).findMany = vi.fn();
+  (mockTripInvitation as unknown as Record<string, unknown>).findMany = vi.fn();
 }
 if (!mockTripInvitation.findUnique) {
-  (mockTripInvitation as Record<string, unknown>).findUnique = vi.fn();
+  (mockTripInvitation as unknown as Record<string, unknown>).findUnique = vi.fn();
 }
 if (!mockTripInvitation.updateMany) {
-  (mockTripInvitation as Record<string, unknown>).updateMany = vi.fn();
+  (mockTripInvitation as unknown as Record<string, unknown>).updateMany = vi.fn();
 }
 
 // ---------------------------------------------------------------------------
@@ -447,8 +453,10 @@ describe('POST /api/invitations/[invitationId]', () => {
       tripId: MOCK_TRIP_ID,
       userId: MOCK_USER_ID,
       role: 'MEMBER',
-    });
-    mockPrismaNotification.create.mockResolvedValueOnce({ id: 'notif-1' });
+    } as unknown as Awaited<ReturnType<typeof prisma.tripMember.create>>);
+    mockPrismaNotification.create.mockResolvedValueOnce(
+      { id: 'notif-1' } as unknown as Awaited<ReturnType<typeof prisma.notification.create>>
+    );
 
     const res = await callPost(MOCK_INVITATION_ID, { action: 'accept' });
     const body = await parseJson(res);
@@ -477,8 +485,10 @@ describe('POST /api/invitations/[invitationId]', () => {
       role: 'MEMBER',
       budgetRange: { min: 500, max: 2000, currency: 'USD' },
       departureCity: 'New York',
-    });
-    mockPrismaNotification.create.mockResolvedValueOnce({ id: 'notif-2' });
+    } as unknown as Awaited<ReturnType<typeof prisma.tripMember.create>>);
+    mockPrismaNotification.create.mockResolvedValueOnce(
+      { id: 'notif-2' } as unknown as Awaited<ReturnType<typeof prisma.notification.create>>
+    );
 
     const res = await callPost(MOCK_INVITATION_ID, {
       action: 'accept',

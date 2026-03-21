@@ -221,7 +221,7 @@ describe('GET /api/feed/comments', () => {
   it('returns 200 with activity comments', async () => {
     mockPrismaActivityComment.findMany.mockResolvedValueOnce([
       MOCK_ACTIVITY_COMMENT_ROW,
-    ]);
+    ] as unknown as Awaited<ReturnType<typeof prisma.activityComment.findMany>>);
 
     const res = await commentsGET(
       makeRequest(`/api/feed/comments?itemId=${MOCK_ACTIVITY_ID}&itemType=activity`)
@@ -370,7 +370,7 @@ describe('POST /api/feed/comments', () => {
       id: MOCK_ACTIVITY_ID,
       tripId: MOCK_TRIP_ID,
       trip: { ownerId: MOCK_OTHER_USER_ID, title: 'Tokyo Adventure' },
-    });
+    } as unknown as Awaited<ReturnType<typeof prisma.activity.findUnique>>);
 
     // activityComment.create returns the new comment
     mockPrismaActivityComment.create.mockResolvedValueOnce({
@@ -378,7 +378,7 @@ describe('POST /api/feed/comments', () => {
       text: 'Great activity!',
       createdAt: MOCK_CREATED_AT,
       user: { id: MOCK_USER_ID, name: 'Comment Tester', image: null },
-    });
+    } as unknown as Awaited<ReturnType<typeof prisma.activityComment.create>>);
 
     // notification.create for the activity owner
     mockPrismaNotification.create.mockResolvedValueOnce({} as any);
@@ -407,14 +407,14 @@ describe('POST /api/feed/comments', () => {
       id: MOCK_ACTIVITY_ID,
       tripId: MOCK_TRIP_ID,
       trip: { ownerId: MOCK_USER_ID, title: 'My Trip' },
-    });
+    } as unknown as Awaited<ReturnType<typeof prisma.activity.findUnique>>);
 
     mockPrismaActivityComment.create.mockResolvedValueOnce({
       id: MOCK_COMMENT_ID,
       text: 'Self comment',
       createdAt: MOCK_CREATED_AT,
       user: { id: MOCK_USER_ID, name: 'Comment Tester', image: null },
-    });
+    } as unknown as Awaited<ReturnType<typeof prisma.activityComment.create>>);
 
     const res = await commentsPOST(
       makeRequest('/api/feed/comments', {
@@ -453,14 +453,14 @@ describe('POST /api/feed/comments', () => {
       id: MOCK_TRIP_ID,
       ownerId: MOCK_OTHER_USER_ID,
       title: 'Tokyo Adventure',
-    });
+    } as unknown as Awaited<ReturnType<typeof prisma.trip.findUnique>>);
 
     mockPrismaTripComment.create.mockResolvedValueOnce({
       id: MOCK_COMMENT_ID,
       text: 'Love this trip!',
       createdAt: MOCK_CREATED_AT,
       user: { id: MOCK_USER_ID, name: 'Comment Tester', image: null },
-    });
+    } as unknown as Awaited<ReturnType<typeof prisma.activityComment.create>>);
 
     mockPrismaNotification.create.mockResolvedValueOnce({} as any);
 
@@ -486,14 +486,14 @@ describe('POST /api/feed/comments', () => {
       id: MOCK_TRIP_ID,
       ownerId: MOCK_USER_ID,
       title: 'My Trip',
-    });
+    } as unknown as Awaited<ReturnType<typeof prisma.trip.findUnique>>);
 
     mockPrismaTripComment.create.mockResolvedValueOnce({
       id: MOCK_COMMENT_ID,
       text: 'My own trip comment',
       createdAt: MOCK_CREATED_AT,
       user: { id: MOCK_USER_ID, name: 'Comment Tester', image: null },
-    });
+    } as unknown as Awaited<ReturnType<typeof prisma.activityComment.create>>);
 
     const res = await commentsPOST(
       makeRequest('/api/feed/comments', {
@@ -515,7 +515,7 @@ describe('POST /api/feed/comments', () => {
       id: MOCK_ACTIVITY_ID,
       tripId: MOCK_TRIP_ID,
       trip: { ownerId: MOCK_OTHER_USER_ID, title: 'Tokyo Adventure' },
-    });
+    } as unknown as Awaited<ReturnType<typeof prisma.activity.findUnique>>);
 
     mockPrismaActivityComment.create.mockRejectedValueOnce(new Error('DB error'));
 
@@ -583,7 +583,7 @@ describe('DELETE /api/feed/comments', () => {
     mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
     mockPrismaActivityComment.findUnique.mockResolvedValueOnce({
       userId: MOCK_OTHER_USER_ID,
-    });
+    } as unknown as Awaited<ReturnType<typeof prisma.activityComment.findUnique>>);
 
     const res = await commentsDELETE(
       makeRequest(
@@ -601,7 +601,7 @@ describe('DELETE /api/feed/comments', () => {
     mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
     mockPrismaActivityComment.findUnique.mockResolvedValueOnce({
       userId: MOCK_USER_ID,
-    });
+    } as unknown as Awaited<ReturnType<typeof prisma.activityComment.findUnique>>);
     mockPrismaActivityComment.delete.mockResolvedValueOnce({} as any);
 
     const res = await commentsDELETE(
@@ -760,7 +760,7 @@ describe('GET /api/feed/engagement', () => {
     mockPrismaSavedActivity.findUnique.mockResolvedValueOnce({
       userId: MOCK_USER_ID,
       activityId: MOCK_ACTIVITY_ID,
-    });
+    } as unknown as Awaited<ReturnType<typeof prisma.savedActivity.findUnique>>);
 
     const res = await engagementGET(
       makeRequest(`/api/feed/engagement?itemId=${MOCK_ACTIVITY_ID}&itemType=activity`)
@@ -974,7 +974,7 @@ describe('POST /api/feed/engagement', () => {
       id: MOCK_TRIP_ID,
       ownerId: MOCK_OTHER_USER_ID,
       title: 'Tokyo Adventure',
-    });
+    } as unknown as Awaited<ReturnType<typeof prisma.trip.findUnique>>);
 
     mockPrismaTripLike.upsert.mockResolvedValueOnce({} as any);
     mockPrismaNotification.create.mockResolvedValueOnce({} as any);
@@ -1003,7 +1003,7 @@ describe('POST /api/feed/engagement', () => {
       id: MOCK_TRIP_ID,
       ownerId: MOCK_USER_ID,
       title: 'My Trip',
-    });
+    } as unknown as Awaited<ReturnType<typeof prisma.trip.findUnique>>);
 
     mockPrismaTripLike.upsert.mockResolvedValueOnce({} as any);
     mockPrismaTripLike.count.mockResolvedValueOnce(3);
@@ -1028,7 +1028,7 @@ describe('POST /api/feed/engagement', () => {
       id: MOCK_TRIP_ID,
       ownerId: MOCK_OTHER_USER_ID,
       title: 'Tokyo Adventure',
-    });
+    } as unknown as Awaited<ReturnType<typeof prisma.trip.findUnique>>);
 
     mockPrismaTripLike.deleteMany.mockResolvedValueOnce({ count: 1 });
     mockPrismaTripLike.count.mockResolvedValueOnce(9);

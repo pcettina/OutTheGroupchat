@@ -130,13 +130,13 @@ describe('GET /api/users/me', () => {
   it('returns 200 with full profile data on success', async () => {
     vi.mocked(getServerSession).mockResolvedValueOnce(mockSession);
     vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(
-      mockUser as Awaited<ReturnType<typeof prisma.user.findUnique>>
+      mockUser as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>
     );
     vi.mocked(prisma.trip.findMany).mockResolvedValueOnce(
-      mockTrips as Awaited<ReturnType<typeof prisma.trip.findMany>>
+      mockTrips as unknown as Awaited<ReturnType<typeof prisma.trip.findMany>>
     );
     vi.mocked(prisma.savedActivity.findMany).mockResolvedValueOnce(
-      mockSavedActivities as Awaited<ReturnType<typeof prisma.savedActivity.findMany>>
+      mockSavedActivities as unknown as Awaited<ReturnType<typeof prisma.savedActivity.findMany>>
     );
 
     const res = await GET();
@@ -151,7 +151,7 @@ describe('GET /api/users/me', () => {
   it('includes _count stats in successful response', async () => {
     vi.mocked(getServerSession).mockResolvedValueOnce(mockSession);
     vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(
-      mockUser as Awaited<ReturnType<typeof prisma.user.findUnique>>
+      mockUser as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>
     );
     vi.mocked(prisma.trip.findMany).mockResolvedValueOnce([]);
     vi.mocked(prisma.savedActivity.findMany).mockResolvedValueOnce([]);
@@ -168,10 +168,10 @@ describe('GET /api/users/me', () => {
   it('includes recentTrips in successful response', async () => {
     vi.mocked(getServerSession).mockResolvedValueOnce(mockSession);
     vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(
-      mockUser as Awaited<ReturnType<typeof prisma.user.findUnique>>
+      mockUser as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>
     );
     vi.mocked(prisma.trip.findMany).mockResolvedValueOnce(
-      mockTrips as Awaited<ReturnType<typeof prisma.trip.findMany>>
+      mockTrips as unknown as Awaited<ReturnType<typeof prisma.trip.findMany>>
     );
     vi.mocked(prisma.savedActivity.findMany).mockResolvedValueOnce([]);
 
@@ -184,11 +184,11 @@ describe('GET /api/users/me', () => {
   it('includes savedActivities (mapped from activity) in successful response', async () => {
     vi.mocked(getServerSession).mockResolvedValueOnce(mockSession);
     vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(
-      mockUser as Awaited<ReturnType<typeof prisma.user.findUnique>>
+      mockUser as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>
     );
     vi.mocked(prisma.trip.findMany).mockResolvedValueOnce([]);
     vi.mocked(prisma.savedActivity.findMany).mockResolvedValueOnce(
-      mockSavedActivities as Awaited<ReturnType<typeof prisma.savedActivity.findMany>>
+      mockSavedActivities as unknown as Awaited<ReturnType<typeof prisma.savedActivity.findMany>>
     );
 
     const res = await GET();
@@ -211,7 +211,7 @@ describe('GET /api/users/me', () => {
   it('returns 500 on database error during trip lookup', async () => {
     vi.mocked(getServerSession).mockResolvedValueOnce(mockSession);
     vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(
-      mockUser as Awaited<ReturnType<typeof prisma.user.findUnique>>
+      mockUser as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>
     );
     vi.mocked(prisma.trip.findMany).mockRejectedValueOnce(new Error('Trip query failed'));
 
@@ -278,10 +278,10 @@ describe('PATCH /api/users/me', () => {
   it('returns 200 with updated user on valid name update', async () => {
     vi.mocked(getServerSession).mockResolvedValueOnce(mockSession);
     vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(
-      mockUser as Awaited<ReturnType<typeof prisma.user.findUnique>>
+      mockUser as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>
     );
     vi.mocked(prisma.user.update).mockResolvedValueOnce(
-      mockUpdatedUser as Awaited<ReturnType<typeof prisma.user.update>>
+      mockUpdatedUser as unknown as Awaited<ReturnType<typeof prisma.user.update>>
     );
 
     const res = await PATCH(makePatchRequest({ name: 'Updated Name' }));
@@ -294,10 +294,10 @@ describe('PATCH /api/users/me', () => {
   it('returns 200 with updated user on valid bio + city update', async () => {
     vi.mocked(getServerSession).mockResolvedValueOnce(mockSession);
     vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(
-      mockUser as Awaited<ReturnType<typeof prisma.user.findUnique>>
+      mockUser as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>
     );
     vi.mocked(prisma.user.update).mockResolvedValueOnce(
-      mockUpdatedUser as Awaited<ReturnType<typeof prisma.user.update>>
+      mockUpdatedUser as unknown as Awaited<ReturnType<typeof prisma.user.update>>
     );
 
     const res = await PATCH(makePatchRequest({ bio: 'Updated bio', city: 'New York' }));
@@ -314,10 +314,10 @@ describe('PATCH /api/users/me', () => {
 
     vi.mocked(getServerSession).mockResolvedValueOnce(mockSession);
     vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(
-      userWithPrefs as Awaited<ReturnType<typeof prisma.user.findUnique>>
+      userWithPrefs as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>
     );
     vi.mocked(prisma.user.update).mockResolvedValueOnce(
-      mockUpdatedUser as Awaited<ReturnType<typeof prisma.user.update>>
+      mockUpdatedUser as unknown as Awaited<ReturnType<typeof prisma.user.update>>
     );
 
     const res = await PATCH(
@@ -340,10 +340,10 @@ describe('PATCH /api/users/me', () => {
   it('accepts valid travelStyle enum values', async () => {
     vi.mocked(getServerSession).mockResolvedValueOnce(mockSession);
     vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(
-      mockUser as Awaited<ReturnType<typeof prisma.user.findUnique>>
+      mockUser as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>
     );
     vi.mocked(prisma.user.update).mockResolvedValueOnce(
-      mockUpdatedUser as Awaited<ReturnType<typeof prisma.user.update>>
+      mockUpdatedUser as unknown as Awaited<ReturnType<typeof prisma.user.update>>
     );
 
     const res = await PATCH(
@@ -366,7 +366,7 @@ describe('PATCH /api/users/me', () => {
   it('returns 500 on database error during update', async () => {
     vi.mocked(getServerSession).mockResolvedValueOnce(mockSession);
     vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(
-      mockUser as Awaited<ReturnType<typeof prisma.user.findUnique>>
+      mockUser as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>
     );
     vi.mocked(prisma.user.update).mockRejectedValueOnce(new Error('Update failed'));
 

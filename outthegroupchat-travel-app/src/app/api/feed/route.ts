@@ -1,8 +1,20 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { logError } from '@/lib/logger';
+
+const feedQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+  type: z.enum(['all', 'following', 'trending']).default('all'),
+});
+
+const feedPostSchema = z.object({
+  activityId: z.string().min(1),
+  action: z.enum(['save', 'unsave']),
+});
 
 // Feed item types for different activities
 type FeedItemType = 
@@ -45,9 +57,11 @@ export async function GET(req: Request) {
     const userId = session?.user?.id;
 
     const { searchParams } = new URL(req.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '20');
-    const feedType = searchParams.get('type') || 'all'; // 'all', 'following', 'trending'
+    const parsed = feedQuerySchema.safeParse(Object.fromEntries(searchParams));
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    }
+    const { page, limit, type: feedType } = parsed.data;
 
     const skip = (page - 1) * limit;
 
@@ -281,11 +295,11 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { activityId, action } = body;
-
-    if (!activityId || !['save', 'unsave'].includes(action)) {
+    const parsedBody = feedPostSchema.safeParse(body);
+    if (!parsedBody.success) {
       return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
     }
+    const { activityId, action } = parsedBody.data;
 
     if (action === 'save') {
       await prisma.savedActivity.upsert({

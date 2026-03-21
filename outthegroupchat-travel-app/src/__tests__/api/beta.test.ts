@@ -15,6 +15,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 import { POST as betaSignupPOST } from '@/app/api/beta/signup/route';
@@ -41,11 +42,11 @@ function makeSignupRequest(body: unknown, apiKey?: string): Request {
   });
 }
 
-function makeStatusRequest(email?: string): Request {
+function makeStatusRequest(email?: string): NextRequest {
   const url = email
     ? `http://localhost:3000/api/beta/status?email=${encodeURIComponent(email)}`
     : 'http://localhost:3000/api/beta/status';
-  return new Request(url, { method: 'GET' });
+  return new NextRequest(url, { method: 'GET' });
 }
 
 function makeNewsletterRequest(body: unknown, apiKey?: string): Request {
