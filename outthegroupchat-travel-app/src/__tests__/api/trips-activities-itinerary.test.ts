@@ -186,19 +186,19 @@ const MOCK_TRIP_PUBLIC = {
   id: MOCK_TRIP_ID,
   isPublic: true,
   ownerId: 'other-owner',
-};
+} as unknown as Awaited<ReturnType<typeof prisma.trip.findUnique>>;
 
 const MOCK_TRIP_PRIVATE_OWNED = {
   id: MOCK_TRIP_ID,
   isPublic: false,
   ownerId: MOCK_USER_ID,
-};
+} as unknown as Awaited<ReturnType<typeof prisma.trip.findUnique>>;
 
 const MOCK_TRIP_PRIVATE_OTHER = {
   id: MOCK_TRIP_ID,
   isPublic: false,
   ownerId: 'other-owner',
-};
+} as unknown as Awaited<ReturnType<typeof prisma.trip.findUnique>>;
 
 const MOCK_ACTIVITY = {
   id: MOCK_ACTIVITY_ID,
@@ -224,7 +224,7 @@ const MOCK_ACTIVITY = {
   createdAt: new Date('2026-01-01'),
   updatedAt: new Date('2026-01-01'),
   _count: { comments: 0, ratings: 0, savedBy: 0 },
-};
+} as unknown as Awaited<ReturnType<typeof prisma.activity.create>>;
 
 const MOCK_ITINERARY_DAY = {
   id: 'day-111',
@@ -367,7 +367,7 @@ describe('GET /api/trips/[tripId]/activities', () => {
       userId: MOCK_USER_ID,
       tripId: MOCK_TRIP_ID,
       role: 'MEMBER',
-    });
+    } as unknown as Awaited<ReturnType<typeof prisma.tripMember.findFirst>>);
     mockPrismaActivity.findMany.mockResolvedValueOnce([MOCK_ACTIVITY]);
     mockActivityRatingAggregate.mockResolvedValueOnce({ _avg: { score: 3.0 } });
 
@@ -518,7 +518,7 @@ describe('POST /api/trips/[tripId]/activities', () => {
       userId: MOCK_USER_ID,
       tripId: MOCK_TRIP_ID,
       role: 'MEMBER',
-    });
+    } as unknown as Awaited<ReturnType<typeof prisma.tripMember.findFirst>>);
     mockPrismaActivity.create.mockResolvedValueOnce(MOCK_ACTIVITY);
 
     const res = await callPost(MOCK_TRIP_ID, VALID_POST_ACTIVITY_BODY);
@@ -640,7 +640,7 @@ describe('GET /api/trips/[tripId]/itinerary', () => {
       userId: MOCK_USER_ID,
       tripId: MOCK_TRIP_ID,
       role: 'MEMBER',
-    });
+    } as unknown as Awaited<ReturnType<typeof prisma.tripMember.findFirst>>);
     mockItineraryDay.findMany.mockResolvedValueOnce([MOCK_ITINERARY_DAY]);
 
     const req = makeRequest(`/api/trips/${MOCK_TRIP_ID}/itinerary`);
@@ -723,7 +723,7 @@ describe('PUT /api/trips/[tripId]/itinerary', () => {
       userId: MOCK_USER_ID,
       tripId: MOCK_TRIP_ID,
       role: 'OWNER',
-    });
+    } as unknown as Awaited<ReturnType<typeof prisma.tripMember.findFirst>>);
 
     const res = await callPut(MOCK_TRIP_ID, { invalid: 'body' });
     const body = await parseJson(res);
@@ -739,7 +739,7 @@ describe('PUT /api/trips/[tripId]/itinerary', () => {
       userId: MOCK_USER_ID,
       tripId: MOCK_TRIP_ID,
       role: 'OWNER',
-    });
+    } as unknown as Awaited<ReturnType<typeof prisma.tripMember.findFirst>>);
 
     const res = await callPut(MOCK_TRIP_ID, { days: [{ dayNumber: 1, items: [] }] });
     const body = await parseJson(res);
@@ -754,7 +754,7 @@ describe('PUT /api/trips/[tripId]/itinerary', () => {
       userId: MOCK_USER_ID,
       tripId: MOCK_TRIP_ID,
       role: 'OWNER',
-    });
+    } as unknown as Awaited<ReturnType<typeof prisma.tripMember.findFirst>>);
     mockItineraryItem.deleteMany.mockResolvedValueOnce({ count: 0 });
     mockItineraryDay.deleteMany.mockResolvedValueOnce({ count: 0 });
     mockItineraryDay.create.mockResolvedValueOnce({ ...MOCK_ITINERARY_DAY, id: 'day-new-111' });
@@ -779,7 +779,7 @@ describe('PUT /api/trips/[tripId]/itinerary', () => {
       userId: MOCK_USER_ID,
       tripId: MOCK_TRIP_ID,
       role: 'ADMIN',
-    });
+    } as unknown as Awaited<ReturnType<typeof prisma.tripMember.findFirst>>);
     mockItineraryItem.deleteMany.mockResolvedValueOnce({ count: 0 });
     mockItineraryDay.deleteMany.mockResolvedValueOnce({ count: 0 });
     mockItineraryDay.create.mockResolvedValueOnce({ ...MOCK_ITINERARY_DAY, id: 'day-new-222' });
@@ -801,7 +801,7 @@ describe('PUT /api/trips/[tripId]/itinerary', () => {
       userId: MOCK_USER_ID,
       tripId: MOCK_TRIP_ID,
       role: 'OWNER',
-    });
+    } as unknown as Awaited<ReturnType<typeof prisma.tripMember.findFirst>>);
     mockItineraryItem.deleteMany.mockResolvedValueOnce({ count: 3 });
     mockItineraryDay.deleteMany.mockResolvedValueOnce({ count: 2 });
     mockItineraryDay.findMany.mockResolvedValueOnce([]);
@@ -820,7 +820,7 @@ describe('PUT /api/trips/[tripId]/itinerary', () => {
       userId: MOCK_USER_ID,
       tripId: MOCK_TRIP_ID,
       role: 'OWNER',
-    });
+    } as unknown as Awaited<ReturnType<typeof prisma.tripMember.findFirst>>);
     mockItineraryItem.deleteMany.mockRejectedValueOnce(new Error('DB locked'));
 
     const res = await callPut(MOCK_TRIP_ID, VALID_PUT_ITINERARY_BODY);
@@ -836,7 +836,7 @@ describe('PUT /api/trips/[tripId]/itinerary', () => {
       userId: MOCK_USER_ID,
       tripId: MOCK_TRIP_ID,
       role: 'OWNER',
-    });
+    } as unknown as Awaited<ReturnType<typeof prisma.tripMember.findFirst>>);
     mockItineraryItem.deleteMany.mockResolvedValueOnce({ count: 0 });
     mockItineraryDay.deleteMany.mockResolvedValueOnce({ count: 0 });
     mockItineraryDay.create.mockRejectedValueOnce(new Error('Write failed'));

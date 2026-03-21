@@ -2,13 +2,64 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import { randomBytes } from 'crypto';
 import { logger } from '@/lib/logger';
+import { sendNotificationEmail } from '@/lib/email';
 
 const SignupSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
   email: z.string().email('Invalid email format'),
   password: z.string().min(6, 'Password must be at least 6 characters').max(100),
 });
+
+/**
+ * Create a VerificationToken in the database and send a verification email.
+ * Failures are logged but do NOT propagate — signup succeeds regardless.
+ */
+async function sendVerificationEmail(userId: string, email: string): Promise<void> {
+  try {
+    const token = randomBytes(32).toString('hex');
+    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
+
+    await prisma.verificationToken.create({
+      data: {
+        identifier: email,
+        token,
+        expires,
+      },
+    });
+
+    const appUrl = process.env.NEXTAUTH_URL ?? 'https://outthegroupchat.com';
+    const verifyUrl = `${appUrl}/api/auth/verify-email?token=${token}`;
+
+    const result = await sendNotificationEmail({
+      to: email,
+      subject: 'Verify your OutTheGroupchat email address',
+      title: 'Verify your email address',
+      message:
+        'Thanks for signing up! Please verify your email address to unlock all features. The link expires in 24 hours.',
+      actionUrl: verifyUrl,
+      actionText: 'Verify Email',
+    });
+
+    if (!result.success) {
+      logger.warn(
+        { userId, email, emailError: result.error, context: 'SIGNUP' },
+        'Verification email could not be delivered — token is still valid'
+      );
+    } else {
+      logger.info(
+        { userId, email, messageId: result.messageId, context: 'SIGNUP' },
+        'Verification email sent'
+      );
+    }
+  } catch (err) {
+    logger.error(
+      { err, userId, email, context: 'SIGNUP' },
+      'Failed to create verification token or send verification email'
+    );
+  }
+}
 
 export async function POST(req: Request) {
   try {
@@ -175,14 +226,17 @@ export async function POST(req: Request) {
           where: { email },
         });
 
-        logger.info({ userId: user.id, invitationsProcessed: pendingInvitations.length }, 
+        logger.info({ userId: user.id, invitationsProcessed: pendingInvitations.length },
           'Processed pending invitations for new user');
       }
     } catch (inviteError) {
       // Log but don't fail signup if invitation processing fails
-      logger.error({ err: inviteError, userId: user.id }, 
+      logger.error({ err: inviteError, userId: user.id },
         'Failed to process pending invitations');
     }
+
+    // Send verification email — failure is non-fatal
+    await sendVerificationEmail(user.id, user.email ?? email);
 
     return NextResponse.json({
       success: true,

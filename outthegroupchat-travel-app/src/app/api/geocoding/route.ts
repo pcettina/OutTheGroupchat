@@ -3,6 +3,11 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import type { Destination } from '@/types';
 import { logError } from '@/lib/logger';
+import { z } from 'zod';
+
+const geocodingQuerySchema = z.object({
+  q: z.string().min(1).optional(),
+});
 
 // Rate limiting for Nominatim
 let lastRequestTime = 0;
@@ -62,7 +67,11 @@ export async function GET(req: Request) {
   }
 
   const { searchParams } = new URL(req.url);
-  const query = searchParams.get('q')?.trim();
+  const parsed = geocodingQuerySchema.safeParse(Object.fromEntries(searchParams));
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  }
+  const query = parsed.data.q?.trim();
 
   if (!query || query.length < 2) {
     return NextResponse.json({ 

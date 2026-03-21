@@ -14,6 +14,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { prisma } from '@/lib/prisma';
+import { POST, GET } from '@/app/api/beta/initialize-password/route';
 
 // ── Mocks ────────────────────────────────────────────────────────────────────
 
@@ -87,7 +88,6 @@ const mockToken = {
 
 // Must happen after mocks are registered.
 process.env.N8N_API_KEY = VALID_API_KEY;
-const { POST, GET } = await import('@/app/api/beta/initialize-password/route');
 
 // ── POST tests ───────────────────────────────────────────────────────────────
 

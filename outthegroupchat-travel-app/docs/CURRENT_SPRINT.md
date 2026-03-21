@@ -191,16 +191,17 @@
 
 | Metric | Target | Current | Previous |
 |--------|--------|---------|---------|
-| Test count | 500+ | 478+ (25 test files) | 304 |
-| `any` types | 0 | 0 ✅ | 7 |
-| `console.*` in prod code | 0 | ~20 (est.) | 59 |
+| Test count | 500+ | ~577 (31 test files) | 542 |
+| `any` types | 0 | 0 ✅ | 0 |
+| `console.*` in prod code | 0 | 0 ✅ | 0 |
+| TSC errors (test files) | 0 | 0 ✅ | 104 |
 | Sentry configured | Yes | Infrastructure ready | No |
 | `<img>` warnings on build | 0 | 0 ✅ | 0 |
-| Launch readiness | 85% | 72% | 69% |
+| Launch readiness | 85% | 74% | 72% |
 
 ---
 
-*Updated: 2026-03-20*
+*Updated: 2026-03-21*
 ---
 
 ## 🟢 Completed 2026-03-20 (Nightly Build)
@@ -221,6 +222,25 @@
 **Tests: 382 total (+78 from tonight)**
 
 *Updated: 2026-03-20*
+---
+
+## 🟢 Completed 2026-03-21 (Nightly Build)
+
+- [L1] Added 12 POST /api/trips/[tripId]/members tests to trips-members.test.ts
+- [L2] Created verify-email.test.ts (9 tests — GET /api/auth/verify-email token validation)
+- [L3] Fixed TSC errors in beta-initialize-password.test.ts + invitations.test.ts
+- [L4] Fixed TSC errors in trips-activities-itinerary.test.ts
+- [L5] Fixed TSC errors in trips-suggestions-flights.test.ts, users-me.test.ts, feed-comments-engagement.test.ts
+- [L6] Email verification sending wired into /api/auth/signup (creates VerificationToken + sends email)
+- [M1] Created pusher-auth.test.ts (14 tests — POST /api/pusher/auth)
+- [M2] IP rate limiting added to /api/beta/status (user enumeration risk mitigated)
+- [M3] Zod validation added to /api/feed/route.ts (GET handler)
+- [M4] Zod validation added to /api/geocoding/route.ts (GET handler)
+- [M5] Zod validation added to /api/discover/route.ts POST handler
+- [M6] JSDoc added to src/lib/api/unsplash.ts
+**Tests: ~577 total (+35 from tonight); TSC errors: 0 (was 104 across test files)**
+
+*Updated: 2026-03-21*
 ---
 
 ## 🟢 Completed 2026-03-19 (Nightly Build)

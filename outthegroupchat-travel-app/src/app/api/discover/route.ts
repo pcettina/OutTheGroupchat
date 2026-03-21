@@ -5,6 +5,14 @@ import { EventsService } from '@/services/events.service';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
 
+const discoverPostSchema = z.object({
+  origin: z.string().min(1),
+  destination: z.string().min(1),
+  departureDate: z.string().optional(),
+  returnDate: z.string().optional(),
+  adults: z.coerce.number().int().min(1).max(9).default(1),
+});
+
 const searchSchema = z.object({
   city: z.string().min(1),
   startDate: z.string().transform(str => new Date(str)),
@@ -85,19 +93,21 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { origin, destination, departureDate, returnDate, adults = 1 } = body;
+    const validationResult = discoverPostSchema.safeParse(body);
 
-    if (!origin || !destination || !departureDate) {
+    if (!validationResult.success) {
       return NextResponse.json(
-        { success: false, error: 'Missing required fields' },
+        { success: false, error: 'Validation failed', details: validationResult.error.flatten() },
         { status: 400 }
       );
     }
 
+    const { origin, destination, departureDate, returnDate, adults } = validationResult.data;
+
     const flights = await EventsService.searchFlights({
       origin,
       destination,
-      departureDate: new Date(departureDate),
+      departureDate: departureDate ? new Date(departureDate) : new Date(),
       returnDate: returnDate ? new Date(returnDate) : undefined,
       adults,
     });

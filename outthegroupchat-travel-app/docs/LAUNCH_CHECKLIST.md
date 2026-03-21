@@ -18,7 +18,7 @@
 
 **Overall Readiness: 77%** → Target: 85% for Beta Launch
 
-> Last updated: 2026-03-20
+> Last updated: 2026-03-21
 
 ---
 
@@ -55,7 +55,8 @@
 - [x] Email/password signin
 - [x] Session management (NextAuth)
 - [x] Password reset flow ✅ 2026-03-14 (API + UI complete)
-- [x] Email verification endpoint ✅ 2026-03-19 (GET /api/auth/verify-email created; signup does not yet send verification email — wiring required)
+- [x] Email verification endpoint ✅ 2026-03-19 (GET /api/auth/verify-email created)
+- [x] Email verification sending on signup ✅ 2026-03-21 (VerificationToken created + email sent at signup)
 - [ ] OAuth providers (Google, Apple) - *Post-beta*
 
 ### Trip Management 🔶
@@ -146,6 +147,7 @@
 - [x] API route tests (trips 30, voting 10, survey 11, feed 12) ✅ 2026-03-10
 - [x] API route tests (auth/signup, notifications, profile) ✅ 2026-03-11
 - [x] API route tests (trips-suggestions 23, trips-flights 26, trips-members 29) ✅ 2026-03-20 — total: 382 tests across 22 files
+- [x] API route tests (verify-email 9, pusher-auth 14, trips-members POST +12) ✅ 2026-03-21 — total: ~577 tests across 31 files
 
 ### Integration Tests
 - [ ] Auth flow tests
@@ -349,4 +351,4 @@ git push origin main  # Auto-deploys to Vercel
 
 *This checklist should be reviewed daily during launch preparation.*
 
-*Last Updated: 2026-03-20 - 78 new tests (382 total, 22 files); Zod added to notifications, feed/comments, feed/engagement, pusher/auth, users/[userId], discover/*, images/search; POST /api/trips/[tripId]/members implemented; Sentry onRouterTransitionStart fixed; /api/search email exposure resolved*
+*Last Updated: 2026-03-21 - Email verification flow complete (signup now sends verification email); IP rate limiting on /api/beta/status; Zod added to /api/feed GET, /api/geocoding GET, /api/discover POST; 35 new tests (~577 total, 31 files); TSC errors resolved across 5 test files; JSDoc added to src/lib/api/unsplash.ts*
