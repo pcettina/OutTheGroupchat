@@ -1,6 +1,6 @@
 # 📡 API & Integration Status
 
-> **Last updated: 2026-03-21**
+> **Last updated: 2026-03-22**
 >
 > **Last Audit:** March 2026
 > **Overall Status:** 82% Complete
@@ -26,8 +26,8 @@
 |----------|--------|--------|-------------------|-------|
 | `/api/auth/[...nextauth]` | ALL | ✅ | ✅ | NextAuth handler |
 | `/api/auth/signup` | POST | ✅ | ✅ | Zod validation added 2026-03-18; email verification sending added 2026-03-21 |
-| `/api/auth/demo` | POST | ✅ | ✅ | Demo credentials in env vars ✅ 2026-03-10 |
-| `/api/auth/demo` | GET | ✅ | ✅ | Returns demo account info (hides password in prod) |
+| `/api/auth/demo` | POST | ✅ | ✅ | Demo credentials in env vars ✅ 2026-03-10; DEMO_MODE env guard added 2026-03-22 (requires DEMO_MODE=true to activate) |
+| `/api/auth/demo` | GET | ✅ | ✅ | Returns demo account info (hides password in prod); requires DEMO_MODE=true env var ✅ 2026-03-22 |
 | `/api/auth/reset-password` | POST | ✅ | ✅ | Request reset token; email-safe 200 response ✅ 2026-03-12; UI page added 2026-03-14 |
 | `/api/auth/reset-password` | PATCH | ✅ | ✅ | Confirm reset with token + new password ✅ 2026-03-12; UI confirm page added 2026-03-14 |
 | `/api/auth/verify-email` | GET | ✅ | ✅ | Email token verification ✅ 2026-03-19; signup now sends verification email ✅ 2026-03-21 |
@@ -120,7 +120,7 @@ COMPLETED ✅ Dec 17:
 
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
-| `/api/notifications` | GET | ✅ | ✅ | **Data structure verified** ✅ Dec 17 |
+| `/api/notifications` | GET | ✅ | ✅ | **Data structure verified** ✅ Dec 17; Zod pagination params improved 2026-03-22 |
 | `/api/notifications` | PATCH | ✅ | ✅ | Mark as read |
 | `/api/notifications/[id]` | PATCH | ✅ | ✅ | Mark individual notification read; Zod validation added 2026-03-13 |
 
@@ -144,7 +144,7 @@ No fix needed - code was already correct
 | `/api/discover/import` | POST | 🔶 | ⏳ | OpenTripMap import |
 | `/api/search` | GET | ✅ | 🔶 | Email removed from select projection (privacy fix) ✅ 2026-03-20 |
 | `/api/geocoding` | GET | ✅ | 🔶 | Geocoding for destination search via Nominatim; Zod validation added 2026-03-21 |
-| `/api/inspiration` | GET | ✅ | 🔶 | Auth guard added 2026-03-08 |
+| `/api/inspiration` | GET | ✅ | 🔶 | Auth guard added 2026-03-08; Zod coerce.number on query params + POST body schema added 2026-03-22 |
 | `/api/images/search` | GET | ✅ | 🔶 | Image search via Unsplash API; requires UNSPLASH_ACCESS_KEY |
 
 ### Search Issues to Fix
@@ -211,7 +211,7 @@ BLOCKED - Need Environment Variables:
 
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
-| `/api/cron` | GET | ✅ | N/A | Background jobs |
+| `/api/cron` | GET | ✅ | N/A | Background jobs; CRON_SECRET validation hardened 2026-03-22 |
 | `/api/health` | GET | ✅ | N/A | DB connectivity check, env info, 503 on degraded ✅ 2026-03-10 |
 | `/api/users/me` | GET | ✅ | 🔶 | Get current authenticated user |
 | `/api/users/me` | PATCH | ✅ | 🔶 | Update current user profile + preferences |
@@ -236,7 +236,7 @@ BLOCKED - Need Environment Variables:
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
 | `/api/beta/signup` | POST | ✅ | ✅ | Beta waitlist signup |
-| `/api/beta/status` | GET | ✅ | ✅ | Check beta access status; IP rate limiting added 2026-03-21 (user enumeration risk mitigated) |
+| `/api/beta/status` | GET | ✅ | ✅ | Check beta access status; IP rate limiting added 2026-03-21; response narrowed to {exists, passwordInitialized} only (data minimization) ✅ 2026-03-22 |
 | `/api/beta/initialize-password` | POST | ✅ | ✅ | Beta user password init — now protected with N8N_API_KEY auth ✅ 2026-03-19 (was unauthenticated — account takeover vulnerability fixed) |
 | `/api/newsletter/subscribe` | POST | ✅ | ✅ | Newsletter subscription |
 
@@ -370,4 +370,4 @@ EMAIL_FROM=             # Email sender (onboarding@resend.dev) ✅
 
 *Review and update after each API change.*
 
-*Last Updated: 2026-03-21 - Email verification now sent on signup; IP rate limiting added to /api/beta/status (user enumeration mitigated); Zod added to /api/feed GET, /api/geocoding GET, /api/discover POST; 35 new tests in 3 new test files (verify-email.test.ts: 9, pusher-auth.test.ts: 14, trips-members POST tests: 12); TSC errors fixed in 5 test files; JSDoc added to src/lib/api/unsplash.ts; tests total ~577*
+*Last Updated: 2026-03-22 - /api/beta/status response narrowed to {exists, passwordInitialized} (data minimization); /api/auth/demo DEMO_MODE env guard added; Zod improved on /api/inspiration and /api/notifications; CRON_SECRET validation hardened on /api/cron; 84 new tests across 7 new test files (Wave 1); TSC fixes in trips-tripid-invitations.test.ts and trips-tripid-recommendations.test.ts; tests total ~661 (37 test files)*

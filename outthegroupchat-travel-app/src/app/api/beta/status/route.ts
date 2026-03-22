@@ -70,32 +70,27 @@ export async function GET(req: NextRequest) {
 
     const normalizedEmail = parseResult.data.email.toLowerCase();
 
+    // Data minimization: omit betaSignupDate, newsletterSubscribed, newsletterSubscribedAt, and
+    // email from the response. Exposing those fields to unauthenticated callers would allow
+    // account enumeration and reveal account metadata. Only passwordInitialized is returned
+    // because it is required by the client to decide which onboarding flow to show.
     const user = await prisma.user.findUnique({
       where: { email: normalizedEmail },
       select: {
-        id: true,
-        email: true,
-        betaSignupDate: true,
         passwordInitialized: true,
-        newsletterSubscribed: true,
-        newsletterSubscribedAt: true,
       },
     });
 
     if (!user) {
       return NextResponse.json({
         exists: false,
-        email: normalizedEmail,
+        passwordInitialized: false,
       });
     }
 
     return NextResponse.json({
       exists: true,
-      email: user.email,
-      betaSignupDate: user.betaSignupDate,
       passwordInitialized: user.passwordInitialized,
-      newsletterSubscribed: user.newsletterSubscribed,
-      newsletterSubscribedAt: user.newsletterSubscribedAt,
     });
   } catch (error) {
     logger.error({ err: error, context: 'BETA_STATUS' }, 'Error checking beta status');

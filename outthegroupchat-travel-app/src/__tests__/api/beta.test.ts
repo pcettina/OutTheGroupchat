@@ -208,7 +208,6 @@ describe('GET /api/beta/status', () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.exists).toBe(false);
-    expect(body.email).toBe('unknown@example.com');
   });
 
   it('returns user status fields when user exists', async () => {
@@ -228,7 +227,6 @@ describe('GET /api/beta/status', () => {
     const body = await res.json();
     expect(body.exists).toBe(true);
     expect(body.passwordInitialized).toBe(true);
-    expect(body.newsletterSubscribed).toBe(false);
   });
 
   it('normalizes email to lowercase', async () => {

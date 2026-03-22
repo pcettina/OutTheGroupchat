@@ -6,12 +6,9 @@ import { logger } from '@/lib/logger';
 import { z } from 'zod';
 
 const getNotificationsQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
   unread: z.enum(['true', 'false']).optional(),
-  limit: z
-    .string()
-    .optional()
-    .transform((val) => (val !== undefined ? parseInt(val, 10) : 50))
-    .pipe(z.number().int().min(1).max(200)),
 });
 
 // Get all notifications for current user
@@ -24,19 +21,15 @@ export async function GET(req: Request) {
     }
 
     const { searchParams } = new URL(req.url);
-    const rawQuery = {
-      unread: searchParams.get('unread') ?? undefined,
-      limit: searchParams.get('limit') ?? undefined,
-    };
-    const parsedQuery = getNotificationsQuerySchema.safeParse(rawQuery);
+    const parsedQuery = getNotificationsQuerySchema.safeParse(Object.fromEntries(searchParams));
     if (!parsedQuery.success) {
       return NextResponse.json(
-        { error: 'Invalid query parameters', issues: parsedQuery.error.issues },
+        { error: 'Invalid query parameters', details: parsedQuery.error.flatten() },
         { status: 400 }
       );
     }
     const unreadOnly = parsedQuery.data.unread === 'true';
-    const limit = parsedQuery.data.limit;
+    const { limit } = parsedQuery.data;
 
     const notifications = await prisma.notification.findMany({
       where: {

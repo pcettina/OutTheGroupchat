@@ -9,14 +9,19 @@ const searchSchema = z.object({
   query: z.string().optional(),
   destination: z.string().optional(),
   tripType: z.enum(['bachelor', 'bachelorette', 'girls-trip', 'adventure', 'relaxation', 'cultural', 'food', 'nightlife']).optional(),
-  budgetMin: z.number().optional(),
-  budgetMax: z.number().optional(),
-  groupSizeMin: z.number().optional(),
-  groupSizeMax: z.number().optional(),
+  budgetMin: z.coerce.number().min(0).optional(),
+  budgetMax: z.coerce.number().min(0).optional(),
+  groupSizeMin: z.coerce.number().min(1).optional(),
+  groupSizeMax: z.coerce.number().min(1).optional(),
   duration: z.enum(['weekend', 'short', 'week', 'long']).optional(), // 2-3, 4-5, 6-7, 8+
   sortBy: z.enum(['popular', 'recent', 'rating', 'budget-low', 'budget-high']).default('popular'),
-  page: z.number().min(1).default(1),
-  limit: z.number().min(1).max(50).default(12),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(50).default(12),
+});
+
+const inspirationPostSchema = z.object({
+  templateId: z.string().min(1, 'templateId is required'),
+  action: z.enum(['get-template'], { message: 'action must be get-template' }),
 });
 
 // Pre-defined trip templates
@@ -147,23 +152,11 @@ export async function GET(req: Request) {
     }
 
     const { searchParams } = new URL(req.url);
-    
-    // Parse query params
-    const params = {
-      query: searchParams.get('query') || undefined,
-      destination: searchParams.get('destination') || undefined,
-      tripType: searchParams.get('tripType') || undefined,
-      budgetMin: searchParams.get('budgetMin') ? Number(searchParams.get('budgetMin')) : undefined,
-      budgetMax: searchParams.get('budgetMax') ? Number(searchParams.get('budgetMax')) : undefined,
-      sortBy: searchParams.get('sortBy') || 'popular',
-      page: searchParams.get('page') ? Number(searchParams.get('page')) : 1,
-      limit: searchParams.get('limit') ? Number(searchParams.get('limit')) : 12,
-    };
 
-    const validation = searchSchema.safeParse(params);
+    const validation = searchSchema.safeParse(Object.fromEntries(searchParams));
     if (!validation.success) {
       return NextResponse.json(
-        { error: 'Invalid parameters', details: validation.error.flatten() },
+        { error: 'Invalid request', details: validation.error.flatten() },
         { status: 400 }
       );
     }
@@ -327,7 +320,15 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { templateId, action } = body;
+    const parsedBody = inspirationPostSchema.safeParse(body);
+    if (!parsedBody.success) {
+      return NextResponse.json(
+        { error: 'Invalid request', details: parsedBody.error.flatten() },
+        { status: 400 }
+      );
+    }
+
+    const { templateId, action } = parsedBody.data;
 
     if (action === 'get-template') {
       const template = tripTemplates.find(t => t.id === templateId);

@@ -3,39 +3,28 @@ import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { logError } from '@/lib/logger';
 
-// Demo credentials from environment variables (security improvement)
+// DEMO_MODE must be explicitly set to 'true' in the environment to enable this endpoint.
+// This prevents demo credentials from being exposed in production environments where the
+// env var is absent or set to any other value. Never rely on NODE_ENV alone for this check.
 const DEMO_EMAIL = process.env.DEMO_USER_EMAIL || 'alex@demo.com';
-const DEMO_PASSWORD = process.env.DEMO_USER_PASSWORD;
-
-// Check if demo mode is enabled
-const isDemoEnabled = (): boolean => {
-  // Demo is enabled if password is set OR in development mode
-  return !!DEMO_PASSWORD || process.env.NODE_ENV === 'development';
-};
-
-// Get demo password (fallback to default only in development)
-const getDemoPassword = (): string | null => {
-  if (DEMO_PASSWORD) return DEMO_PASSWORD;
-  if (process.env.NODE_ENV === 'development') return 'demo123';
-  return null;
-};
 
 // Demo login endpoint - creates or retrieves the demo user
 export async function POST() {
   try {
-    // Check if demo mode is enabled
-    if (!isDemoEnabled()) {
+    // Guard: DEMO_MODE must be explicitly enabled
+    if (process.env.DEMO_MODE !== 'true') {
       return NextResponse.json(
         { success: false, error: 'Demo mode is not enabled' },
-        { status: 503 }
+        { status: 403 }
       );
     }
 
-    const demoPassword = getDemoPassword();
+    // Guard: DEMO_USER_PASSWORD must be configured — no hardcoded fallback allowed
+    const demoPassword = process.env.DEMO_USER_PASSWORD;
     if (!demoPassword) {
       return NextResponse.json(
-        { success: false, error: 'Demo mode not configured. Set DEMO_USER_PASSWORD environment variable.' },
-        { status: 503 }
+        { success: false, error: 'Demo configuration is incomplete' },
+        { status: 500 }
       );
     }
 
@@ -89,29 +78,22 @@ export async function POST() {
   }
 }
 
-// Get demo account info (does not expose password in production)
+// Get demo account info
 export async function GET() {
-  if (!isDemoEnabled()) {
+  // Guard: DEMO_MODE must be explicitly enabled
+  if (process.env.DEMO_MODE !== 'true') {
     return NextResponse.json(
       { success: false, error: 'Demo mode is not enabled' },
-      { status: 503 }
+      { status: 403 }
     );
   }
 
-  const demoPassword = getDemoPassword();
-  
   return NextResponse.json({
     success: true,
     data: {
       email: DEMO_EMAIL,
-      // Only include password in response if in development mode
-      ...(process.env.NODE_ENV === 'development' && demoPassword 
-        ? { password: demoPassword } 
-        : { password: '[hidden - use POST to get credentials]' }
-      ),
       name: 'Alex Johnson',
       description: 'A demo account to explore all features of OutTheGroupchat',
     },
   });
 }
-
