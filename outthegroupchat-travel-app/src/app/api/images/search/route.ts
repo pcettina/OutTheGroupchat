@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { searchImages, isUnsplashConfigured } from '@/lib/api/unsplash';
 import { z } from 'zod';
+import { logError } from '@/lib/logger';
+import { apiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 
 const ImageSearchQuerySchema = z.object({
   q: z.string().min(1, 'Query parameter "q" must be a non-empty string'),
@@ -18,6 +20,11 @@ export async function GET(req: NextRequest) {
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, session.user.id);
+    if (!rateLimitResult.success) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429, headers: getRateLimitHeaders(rateLimitResult) });
     }
 
     if (!isUnsplashConfigured()) {
@@ -66,6 +73,7 @@ export async function GET(req: NextRequest) {
       totalPages: result.total_pages,
     });
   } catch (error) {
+    logError('IMAGES_SEARCH', error);
     return NextResponse.json(
       { success: false, error: 'Failed to search images' },
       { status: 500 }

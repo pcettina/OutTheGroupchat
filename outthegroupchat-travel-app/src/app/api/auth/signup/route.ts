@@ -5,6 +5,7 @@ import bcrypt from 'bcryptjs';
 import { randomBytes } from 'crypto';
 import { logger } from '@/lib/logger';
 import { sendNotificationEmail } from '@/lib/email';
+import { authRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 
 const SignupSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
@@ -82,6 +83,16 @@ export async function POST(req: Request) {
       );
     }
     const { name, email, password } = parseResult.data;
+
+    // Rate limit by IP — auth endpoints are unauthenticated so limit by requester IP
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? req.headers.get('x-real-ip') ?? 'unknown';
+    const rateLimitResult = await checkRateLimit(authRateLimiter, ip);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
+      );
+    }
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({

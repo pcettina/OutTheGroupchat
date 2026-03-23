@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { Prisma, TripStatus } from '@prisma/client';
 import { logError } from '@/lib/logger';
 import { processInvitations } from '@/lib/invitations';
+import { apiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 
 // Route segment config - limit request body size to prevent memory exhaustion
 export const maxDuration = 30; // seconds
@@ -47,6 +48,14 @@ export async function GET(req: Request) {
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, session.user.id);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
+      );
     }
 
     const { searchParams } = new URL(req.url);
@@ -114,6 +123,14 @@ export async function POST(req: Request) {
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, session.user.id);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
+      );
     }
 
     const body = await req.json();

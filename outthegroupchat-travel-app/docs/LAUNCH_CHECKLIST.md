@@ -13,12 +13,12 @@
 | Infrastructure | 92% | 100% | 🟡 Almost Ready |
 | Core Features | 77% | 90% | 🟠 In Progress |
 | Security | 83% | 100% | 🟠 In Progress |
-| Testing | 68% | 80% | 🟠 In Progress |
+| Testing | 72% | 80% | 🟠 In Progress |
 | Monitoring | 55% | 80% | 🟠 In Progress |
 
-**Overall Readiness: 77%** → Target: 85% for Beta Launch
+**Overall Readiness: 78%** → Target: 85% for Beta Launch
 
-> Last updated: 2026-03-22
+> Last updated: 2026-03-23
 
 ---
 
@@ -109,7 +109,7 @@
 - [ ] Rate limiting on ALL endpoints
 - [x] Input validation on major API routes (Zod) ✅ 2026-03-22 — notifications, feed/comments, feed/engagement, pusher/auth, users/[userId], discover/*, images/search, inspiration, cron added
 - [ ] XSS prevention (DOMPurify)
-- [ ] CORS configured properly
+- [x] CORS configured properly ✅ 2026-03-23 — /api/:path* CORS headers added to next.config.js
 
 ### Critical Fixes Required
 ```
@@ -155,6 +155,7 @@
 - [x] API route tests (trips-suggestions 23, trips-flights 26, trips-members 29) ✅ 2026-03-20 — total: 382 tests across 22 files
 - [x] API route tests (verify-email 9, pusher-auth 14, trips-members POST +12) ✅ 2026-03-21 — total: ~577 tests across 31 files
 - [x] API route tests (signup 15, trips-tripid 20, ai-chat+recommend 24, tripid-invitations 14, tripid-recommendations 11) ✅ 2026-03-22 — total: ~661 tests across 37 files
+- [x] API route tests (ai-search 12, discover ~20, images-search 10, newsletter 10, geocoding-api 12) + lib tests (recommendation.service) ✅ 2026-03-23 — total: 746 tests across 42 files
 
 ### Integration Tests
 - [ ] Auth flow tests
@@ -162,6 +163,7 @@
 - [x] Database operation tests (covered via API mocks) ✅ 2026-03-10
 
 ### E2E Tests (Critical Flows)
+- [x] Auth flow E2E spec created (Playwright) ✅ 2026-03-23 — e2e/auth-flow.spec.ts
 - [ ] User signup → trip creation → invite flow
 - [ ] Survey completion flow
 - [ ] Voting flow
@@ -358,4 +360,4 @@ git push origin main  # Auto-deploys to Vercel
 
 *This checklist should be reviewed daily during launch preparation.*
 
-*Last Updated: 2026-03-22 - 84 new tests (~661 total, 37 files); /api/beta/status data minimization; /api/auth/demo DEMO_MODE guard; Zod improved on /api/inspiration and /api/notifications; CRON_SECRET hardened; setup.ts expanded (verificationToken, tripSurvey, notification.createMany); TSC fixes in trips-tripid-invitations.test.ts and trips-tripid-recommendations.test.ts*
+*Last Updated: 2026-03-23 - 85 new tests (746 total, 42 files); rate limiting added to 8 routes (ai/search, auth/signup, auth/reset-password, newsletter/subscribe, images/search, geocoding, trips GET/POST, trips/[tripId] GET/PATCH/DELETE); CORS headers added to next.config.js; DEMO_MODE added to .env.example; Playwright E2E auth-flow spec created; recommendation.service unit tests added*
