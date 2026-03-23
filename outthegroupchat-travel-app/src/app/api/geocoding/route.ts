@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import type { Destination } from '@/types';
 import { logError } from '@/lib/logger';
 import { z } from 'zod';
+import { apiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 
 const geocodingQuerySchema = z.object({
   q: z.string().min(1).optional(),
@@ -64,6 +65,14 @@ export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const rateLimitResult = await checkRateLimit(apiRateLimiter, session.user.id);
+  if (!rateLimitResult.success) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please try again later.' },
+      { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
+    );
   }
 
   const { searchParams } = new URL(req.url);

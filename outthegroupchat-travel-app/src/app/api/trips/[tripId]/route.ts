@@ -4,6 +4,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
+import { apiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -64,6 +65,16 @@ export async function GET(
   try {
     const session = await getServerSession(authOptions);
     const { tripId } = await params;
+
+    if (session?.user?.id) {
+      const rateLimitResult = await checkRateLimit(apiRateLimiter, session.user.id);
+      if (!rateLimitResult.success) {
+        return NextResponse.json(
+          { error: 'Too many requests. Please try again later.' },
+          { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
+        );
+      }
+    }
 
     const trip = await prisma.trip.findUnique({
       where: { id: tripId },
@@ -193,6 +204,14 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, session.user.id);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
+      );
+    }
+
     // Check if user is owner or admin
     const membership = await prisma.tripMember.findFirst({
       where: {
@@ -274,6 +293,14 @@ export async function DELETE(
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, session.user.id);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
+      );
     }
 
     // Only owner can delete

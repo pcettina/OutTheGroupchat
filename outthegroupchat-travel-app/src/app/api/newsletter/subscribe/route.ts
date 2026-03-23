@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
+import { apiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 
 const NewsletterSubscribeSchema = z.object({
   email: z.string().email(),
@@ -22,6 +23,12 @@ export async function POST(req: Request) {
         { error: 'Unauthorized - Invalid API key' },
         { status: 401 }
       );
+    }
+
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, `newsletter:${ip}`);
+    if (!rateLimitResult.success) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429, headers: getRateLimitHeaders(rateLimitResult) });
     }
 
     const body = await req.json();

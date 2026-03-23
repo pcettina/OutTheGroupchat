@@ -6,6 +6,7 @@ import { generateEmbedding, cosineSimilarity, buildActivityText } from '@/lib/ai
 import { z } from 'zod';
 import { ActivityCategory, PriceRange } from '@prisma/client';
 import { logError } from '@/lib/logger';
+import { aiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 
 const semanticSearchSchema = z.object({
   query: z.string().min(1).max(500),
@@ -27,6 +28,15 @@ export async function POST(req: Request) {
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Rate limit by authenticated user ID
+    const rateLimitResult = await checkRateLimit(aiRateLimiter, session.user.id);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { success: false, error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
+      );
     }
 
     const body = await req.json();
