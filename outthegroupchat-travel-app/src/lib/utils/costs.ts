@@ -38,6 +38,16 @@ const TRANSPORTATION_TIERS: CostTier = {
 
 export type TierType = 'budget' | 'moderate' | 'luxury';
 
+/**
+ * Returns estimated daily travel costs broken down by category for a given spending tier.
+ *
+ * @param tier - The budget tier to use for cost estimates: `'budget'`, `'moderate'`, or `'luxury'` (default: `'moderate'`).
+ * @returns A `DailyCosts` object with per-day costs for accommodation, food, activities, transportation, and a total.
+ *
+ * @example
+ * const costs = calculateDailyCosts('budget');
+ * // { accommodation: 50, food: 30, activities: 20, transportation: 10, total: 110 }
+ */
 export function calculateDailyCosts(tier: TierType = 'moderate'): DailyCosts {
   const accommodation = ACCOMMODATION_TIERS[tier];
   const food = FOOD_TIERS[tier];
@@ -53,6 +63,18 @@ export function calculateDailyCosts(tier: TierType = 'moderate'): DailyCosts {
   };
 }
 
+/**
+ * Calculates the total estimated cost for a trip based on duration, spending tier, and any additional expenses.
+ *
+ * @param numberOfDays - The number of days the trip will last.
+ * @param tier - The budget tier to use for daily cost estimates (default: `'moderate'`).
+ * @param additionalCosts - One-time or miscellaneous costs to add on top of daily totals, e.g. flights (default: `0`).
+ * @returns The total estimated trip cost in USD.
+ *
+ * @example
+ * const total = calculateTripCost(7, 'moderate', 500);
+ * // 7 days × $290/day + $500 = $2530
+ */
 export function calculateTripCost(
   numberOfDays: number,
   tier: TierType = 'moderate',
@@ -62,6 +84,19 @@ export function calculateTripCost(
   return dailyCosts.total * numberOfDays + additionalCosts;
 }
 
+/**
+ * Suggests a recommended total trip budget by adding a contingency buffer to the base trip cost.
+ * The result is rounded up to the nearest whole dollar to avoid under-budgeting.
+ *
+ * @param numberOfDays - The number of days the trip will last.
+ * @param preferredTier - The budget tier to base the estimate on (default: `'moderate'`).
+ * @param buffer - Fractional buffer to add as a contingency, e.g. `0.1` for 10% (default: `0.1`).
+ * @returns The suggested total budget in USD, rounded up to the nearest dollar.
+ *
+ * @example
+ * const budget = suggestBudget(5, 'budget', 0.15);
+ * // Math.ceil($550 base × 1.15) = $633
+ */
 export function suggestBudget(
   numberOfDays: number,
   preferredTier: TierType = 'moderate',
@@ -72,6 +107,19 @@ export function suggestBudget(
   return Math.ceil(baseCost + bufferAmount);
 }
 
+/**
+ * Divides a total trip cost evenly among a group, rounding each person's share up to the nearest dollar.
+ * Throws if `numberOfPeople` is zero or negative.
+ *
+ * @param totalCost - The total trip cost in USD to split among the group.
+ * @param numberOfPeople - The number of people sharing the cost. Must be greater than 0.
+ * @returns The per-person cost in USD, rounded up to the nearest dollar.
+ * @throws {Error} If `numberOfPeople` is less than or equal to 0.
+ *
+ * @example
+ * const share = calculatePerPersonCost(1000, 3);
+ * // Math.ceil(1000 / 3) = 334
+ */
 export function calculatePerPersonCost(
   totalCost: number,
   numberOfPeople: number
@@ -82,6 +130,18 @@ export function calculatePerPersonCost(
   return Math.ceil(totalCost / numberOfPeople);
 }
 
+/**
+ * Estimates the total accommodation cost for a stay based on spending tier, duration, and number of rooms.
+ *
+ * @param tier - The budget tier that determines the nightly room rate (default: `'moderate'`).
+ * @param numberOfNights - The number of nights to stay.
+ * @param numberOfRooms - The number of rooms to book (default: `1`).
+ * @returns The total estimated accommodation cost in USD.
+ *
+ * @example
+ * const cost = estimateAccommodationCost('luxury', 3, 2);
+ * // $300/night × 3 nights × 2 rooms = $1800
+ */
 export function estimateAccommodationCost(
   tier: TierType = 'moderate',
   numberOfNights: number,

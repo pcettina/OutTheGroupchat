@@ -191,13 +191,13 @@
 
 | Metric | Target | Current | Previous |
 |--------|--------|---------|---------|
-| Test count | 500+ | ~577 (31 test files) | 542 |
+| Test count | 500+ | ~661 (37 test files) | ~577 |
 | `any` types | 0 | 0 ✅ | 0 |
 | `console.*` in prod code | 0 | 0 ✅ | 0 |
-| TSC errors (test files) | 0 | 0 ✅ | 104 |
-| Sentry configured | Yes | Infrastructure ready | No |
+| TSC errors (test files) | 0 | 0 ✅ | 0 |
+| Sentry configured | Yes | Infrastructure ready | Infrastructure ready |
 | `<img>` warnings on build | 0 | 0 ✅ | 0 |
-| Launch readiness | 85% | 74% | 72% |
+| Launch readiness | 85% | 75% | 74% |
 
 ---
 
@@ -222,6 +222,31 @@
 **Tests: 382 total (+78 from tonight)**
 
 *Updated: 2026-03-20*
+---
+
+## 🟢 Completed 2026-03-22 (Nightly Build)
+
+### Wave 1 — New Test Files (84 new tests, 7 new test files; total ~661 tests across 37 files)
+- [L1] auth-signup.test.ts — 15 tests for POST /api/auth/signup
+- [L2] trips-tripid.test.ts — 20 tests for GET/PATCH/DELETE /api/trips/[tripId]
+- [L3] ai-chat.test.ts + ai-recommend.test.ts — 24 tests for /api/ai/chat and /api/ai/recommend
+- [M1] trips-tripid-invitations.test.ts — 14 tests for GET/POST /api/trips/[tripId]/invitations
+- [M2] trips-tripid-recommendations.test.ts — 11 tests for GET/POST /api/trips/[tripId]/recommendations
+
+### Wave 2 — Features & Security Hardening
+- [L4] Security: /api/beta/status response narrowed to {exists, passwordInitialized} (data minimization)
+- [L5] Security: /api/auth/demo DEMO_MODE guard added (requires DEMO_MODE=true env var; hardcoded password removed)
+- [L6] /api/inspiration: Zod coerce.number on query params + POST body schema added
+- [M3] JSDoc added to 5 functions in src/lib/utils/costs.ts
+- [M4] /api/notifications: Zod pagination params improved
+- [M6] /api/cron: CRON_SECRET validation hardened
+
+### Shared File Consolidation
+- setup.ts expanded: verificationToken mock added, tripSurvey mock added, notification.createMany added
+- TSC fixes: trips-tripid-invitations.test.ts (reason → error in InvitationResult mock); trips-tripid-recommendations.test.ts (double-cast for NotificationDelegate, generateRecommendations, applyRecommendation)
+**Tests: ~661 total (+84 from tonight); TSC errors: 0**
+
+*Updated: 2026-03-22*
 ---
 
 ## 🟢 Completed 2026-03-21 (Nightly Build)

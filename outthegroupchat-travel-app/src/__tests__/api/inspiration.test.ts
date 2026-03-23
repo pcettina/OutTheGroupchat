@@ -260,7 +260,7 @@ describe('GET /api/inspiration — template filtering', () => {
     const body = await parseJson(res);
 
     expect(res.status).toBe(400);
-    expect(body.error).toBe('Invalid parameters');
+    expect(body.error).toBe('Invalid request');
   });
 
   it('returns 400 for invalid sortBy value', async () => {
@@ -268,7 +268,7 @@ describe('GET /api/inspiration — template filtering', () => {
     const body = await parseJson(res);
 
     expect(res.status).toBe(400);
-    expect(body.error).toBe('Invalid parameters');
+    expect(body.error).toBe('Invalid request');
   });
 });
 
@@ -327,7 +327,7 @@ describe('POST /api/inspiration — template retrieval', () => {
     const body = await parseJson(res);
 
     expect(res.status).toBe(400);
-    expect(body.error).toBe('Invalid action');
+    expect(body.error).toBe('Invalid request');
   });
 
   it('includes suggestedItinerary for austin-music template', async () => {

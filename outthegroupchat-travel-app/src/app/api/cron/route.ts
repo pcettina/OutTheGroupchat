@@ -1,6 +1,7 @@
+// Protected by CRON_SECRET bearer token — set CRON_SECRET env var before deploying
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { logError } from '@/lib/logger';
+import { logError, apiLogger } from '@/lib/logger';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -10,9 +11,20 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
   try {
+    // Guard: CRON_SECRET must be configured before any auth comparison
+    const cronSecret = process.env.CRON_SECRET;
+    if (!cronSecret) {
+      apiLogger.error({ context: 'CRON' }, 'CRON_SECRET env var is not set');
+      return NextResponse.json(
+        { error: 'Cron configuration error: CRON_SECRET not set' },
+        { status: 500 }
+      );
+    }
+
     // Verify cron secret (set in Vercel environment)
     const authHeader = req.headers.get('authorization');
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    if (authHeader !== `Bearer ${cronSecret}`) {
+      apiLogger.warn({ context: 'CRON' }, 'Unauthorized cron request — invalid or missing bearer token');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
