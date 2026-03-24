@@ -1,3 +1,8 @@
+/**
+ * @module auth
+ * @description NextAuth.js configuration for the application, including Google OAuth and
+ * credentials-based authentication providers, JWT session strategy, and Prisma adapter.
+ */
 import { NextAuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import CredentialsProvider from 'next-auth/providers/credentials';
@@ -25,6 +30,11 @@ declare module 'next-auth/jwt' {
   }
 }
 
+/**
+ * @description NextAuth.js options object configuring the Prisma adapter, JWT session strategy,
+ * custom sign-in/error pages, Google and credentials providers, and session/JWT callbacks
+ * that populate the session with the user's database ID.
+ */
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   session: {

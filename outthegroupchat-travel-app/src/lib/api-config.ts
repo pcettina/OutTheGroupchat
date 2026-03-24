@@ -1,9 +1,13 @@
 /**
- * Shared API route configurations for security and performance
+ * @module api-config
+ * @description Shared Next.js API route configuration objects for controlling body parser size
+ * limits and response limits. Export the appropriate config constant as `config` from any
+ * API route file to apply these settings.
  */
 
 /**
- * Standard API route config with body size limit
+ * @description Standard API route configuration with a 1 MB body size limit and no response
+ * size limit (suitable for streaming responses).
  * Use: export { apiConfig as config } from '@/lib/api-config';
  */
 export const apiConfig = {
@@ -17,7 +21,8 @@ export const apiConfig = {
 };
 
 /**
- * Config for file upload routes (larger body size)
+ * @description API route configuration for file upload routes with a 10 MB body size limit
+ * and no response size limit.
  * Use: export { uploadConfig as config } from '@/lib/api-config';
  */
 export const uploadConfig = {
@@ -30,7 +35,8 @@ export const uploadConfig = {
 };
 
 /**
- * Config for AI streaming routes
+ * @description API route configuration for AI streaming routes with a 1 MB body size limit,
+ * no response size limit, and a 60-second max duration to accommodate long AI operations.
  * Use: export { streamingConfig as config } from '@/lib/api-config';
  */
 export const streamingConfig = {
@@ -45,8 +51,8 @@ export const streamingConfig = {
 };
 
 /**
- * Route segment config for App Router
- * Add to route.ts files that need custom configurations
+ * @description Default route segment configuration for the App Router with a 30-second max
+ * duration. Add to route.ts files that require custom timeout settings.
  */
 export const routeSegmentConfig = {
   // Default body size limit

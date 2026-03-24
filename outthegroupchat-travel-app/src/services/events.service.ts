@@ -22,6 +22,9 @@ const CITY_COORDINATES: Record<string, { lat: number; lng: number }> = {
   'Charleston': { lat: 32.7765, lng: -79.9311 },
 };
 
+/**
+ * @description Parameters for searching Ticketmaster events in a city during a date range.
+ */
 export interface SearchEventsParams {
   city: string;
   startDate: Date;
@@ -29,12 +32,18 @@ export interface SearchEventsParams {
   categories?: string[];
 }
 
+/**
+ * @description Parameters for searching places (restaurants, bars, attractions, hotels) in a city.
+ */
 export interface SearchPlacesParams {
   city: string;
   type?: 'restaurant' | 'bar' | 'attraction' | 'hotel' | 'all';
   limit?: number;
 }
 
+/**
+ * @description Parameters for searching available flights between two locations.
+ */
 export interface SearchFlightsParams {
   origin: string;
   destination: string;
@@ -43,6 +52,10 @@ export interface SearchFlightsParams {
   adults: number;
 }
 
+/**
+ * @description Service class providing static methods to query events, places, and flight data
+ * from external APIs in support of group trip planning and destination discovery.
+ */
 export class EventsService {
   /**
    * Search for events in a city during a date range

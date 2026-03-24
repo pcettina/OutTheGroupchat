@@ -191,13 +191,13 @@
 
 | Metric | Target | Current | Previous |
 |--------|--------|---------|---------|
-| Test count | 500+ | ~661 (37 test files) | ~577 |
+| Test count | 500+ | 910+ (46 test files) | ~661 (37 files) |
 | `any` types | 0 | 0 ✅ | 0 |
 | `console.*` in prod code | 0 | 0 ✅ | 0 |
 | TSC errors (test files) | 0 | 0 ✅ | 0 |
 | Sentry configured | Yes | Infrastructure ready | Infrastructure ready |
 | `<img>` warnings on build | 0 | 0 ✅ | 0 |
-| Launch readiness | 85% | 75% | 74% |
+| Launch readiness | 85% | 78% | 75% |
 
 ---
 
@@ -222,6 +222,33 @@
 **Tests: 382 total (+78 from tonight)**
 
 *Updated: 2026-03-20*
+---
+
+## 🟢 Completed 2026-03-23 (Nightly Build)
+
+### Wave 1 — Test Fixes & New Test Files (164 new tests, 4 new test files; total 910+ tests across 46 files)
+- [L1] recommendation.service.test.ts — Fixed 9 TSC errors (joinedAt/budgetRange fields, TripMemberRole enum usage); all tests now passing
+- [L2] reset-password.test.ts — Fixed timeout failures (root cause: missing vi.mock('@/lib/rate-limit')); ai.test.ts was already passing
+- [L3] trips-voting.test.ts — 50 new tests for GET/POST/PUT /api/trips/[tripId]/voting with full voting session lifecycle
+- [M1] trips-invitations.test.ts — 33 new tests for GET/POST /api/trips/[tripId]/invitations with edge cases
+- [M2] pusher-feed-social.test.ts — 38 new tests for pusher/auth, feed/comments, feed/engagement, feed/share social routes
+- [M6] trips-itinerary.test.ts — 43 new tests for GET/POST/PUT /api/trips/[tripId]/itinerary
+
+### Wave 2 — Route Completion & Documentation
+- [L4] /api/trips/[tripId]/itinerary — Added missing POST handler, fixed async params pattern, used $transaction for atomicity in PUT
+- [L5] /api/ai/suggest-activities + /api/ai/generate-itinerary — Added isOpenAIConfigured() guard returning 503 when API key absent; prevents hangs
+- [L6] JSDoc — Added @module headers and function-level docs to src/lib/auth.ts, logger.ts, prisma.ts, pusher.ts, sanitize.ts, api-config.ts, api-middleware.ts, providers.tsx, services/events.service.ts
+- [M3] .env.example — Added 8 undocumented env vars: GOOGLE_CLIENT_ID/SECRET, ANTHROPIC_API_KEY, GOOGLE_PLACES_API_KEY, AMADEUS_API_KEY/SECRET, TICKETMASTER_API_KEY, LOG_LEVEL
+- [M4] Dead export fix — Removed SharePreview/SocialShareCard from feed barrel; added auth guard + improved error handling to /api/discover/search
+- [M5] /api/discover/recommendations + /api/discover/import — Added category filter, rate limiting, pino logging, typed helper functions, fixed empty catch blocks
+
+### Shared File Consolidation
+- setup.ts expanded: tripMember.count added; savedActivity gains findUnique/upsert/deleteMany/count; votingSession mock added (findMany, findUnique, create, update); vote mock added (upsert, groupBy)
+- API_STATUS.md updated: 6 routes marked complete; completion rate updated to 88%
+- CODEMAP.md: TS files updated to 250, test files to 46, 4 new test files added to test table
+**Tests: 910+ total (+164 new tests from tonight); TSC errors: 0**
+
+*Updated: 2026-03-23*
 ---
 
 ## 🟢 Completed 2026-03-22 (Nightly Build)

@@ -22,6 +22,7 @@ vi.mock('@/lib/prisma', () => ({
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
+      count: vi.fn(),
     },
     user: {
       findUnique: vi.fn(),
@@ -78,8 +79,13 @@ vi.mock('@/lib/prisma', () => ({
     savedActivity: {
       findFirst: vi.fn(),
       findMany: vi.fn(),
+      findUnique: vi.fn(),
       create: vi.fn(),
+      update: vi.fn(),
+      upsert: vi.fn(),
       delete: vi.fn(),
+      deleteMany: vi.fn(),
+      count: vi.fn(),
     },
     notification: {
       create: vi.fn(),
@@ -142,6 +148,16 @@ vi.mock('@/lib/prisma', () => ({
       create: vi.fn(),
       update: vi.fn(),
       upsert: vi.fn(),
+    },
+    votingSession: {
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+    },
+    vote: {
+      upsert: vi.fn(),
+      groupBy: vi.fn(),
     },
   },
 }));

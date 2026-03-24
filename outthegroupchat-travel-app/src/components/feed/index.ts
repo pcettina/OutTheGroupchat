@@ -5,5 +5,4 @@ export { ReactionPicker } from './ReactionPicker';
 export { MediaGallery } from './MediaGallery';
 export { CommentThread } from './CommentThread';
 export { ShareModal } from './ShareModal';
-export { SharePreview, SocialShareCard } from './SharePreview';
 

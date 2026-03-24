@@ -68,6 +68,7 @@
 - [ ] Trip deletion/archiving
 - [x] Member invitation via email ✅ Dec 17
 - [x] Activity management ✅ Dec 17
+- [x] Itinerary route complete (GET/POST/PUT with $transaction atomicity) ✅ 2026-03-23
 
 ### Social Features 🔶
 - [x] Basic feed display
@@ -91,6 +92,8 @@
 - [x] Connect to real AI (OpenAI) ✅ Dec 17
 - [x] Streaming responses ✅ Dec 17
 - [x] Trip context awareness ✅ Dec 17
+- [x] suggest-activities route complete (503 guard when OPENAI_API_KEY absent) ✅ 2026-03-23
+- [x] generate-itinerary route complete (503 guard when OPENAI_API_KEY absent) ✅ 2026-03-23
 
 ---
 
@@ -148,7 +151,7 @@
 ## 🧪 PHASE 4: Testing
 
 ### Unit Tests
-- [ ] Service layer tests
+- [x] Service layer tests ✅ 2026-03-23 (recommendation.service.test.ts TSC errors fixed; all tests passing)
 - [x] Utility function tests (email, geocoding, invitations, rate-limit) ✅ 2026-03-11
 - [x] API route tests (trips 30, voting 10, survey 11, feed 12) ✅ 2026-03-10
 - [x] API route tests (auth/signup, notifications, profile) ✅ 2026-03-11
@@ -156,6 +159,7 @@
 - [x] API route tests (verify-email 9, pusher-auth 14, trips-members POST +12) ✅ 2026-03-21 — total: ~577 tests across 31 files
 - [x] API route tests (signup 15, trips-tripid 20, ai-chat+recommend 24, tripid-invitations 14, tripid-recommendations 11) ✅ 2026-03-22 — total: ~661 tests across 37 files
 - [x] API route tests (ai-search 12, discover ~20, images-search 10, newsletter 10, geocoding-api 12) + lib tests (recommendation.service) ✅ 2026-03-23 — total: 746 tests across 42 files
+- [x] API route tests (trips-voting 50, trips-invitations 33, pusher-feed-social 38, trips-itinerary 43) ✅ 2026-03-23 — total: 910+ tests across 46 files
 
 ### Integration Tests
 - [ ] Auth flow tests
@@ -360,4 +364,4 @@ git push origin main  # Auto-deploys to Vercel
 
 *This checklist should be reviewed daily during launch preparation.*
 
-*Last Updated: 2026-03-23 - 85 new tests (746 total, 42 files); rate limiting added to 8 routes (ai/search, auth/signup, auth/reset-password, newsletter/subscribe, images/search, geocoding, trips GET/POST, trips/[tripId] GET/PATCH/DELETE); CORS headers added to next.config.js; DEMO_MODE added to .env.example; Playwright E2E auth-flow spec created; recommendation.service unit tests added*
+*Last Updated: 2026-03-23 - 164 new tests (910+ total, 46 files); itinerary route completed (POST handler added, $transaction atomicity on PUT); AI routes suggest-activities + generate-itinerary completed with 503 guard; discover/search, discover/recommendations, discover/import completed; service layer tests (recommendation.service.test.ts) fixed; JSDoc added to 9 lib/service files; .env.example updated with 8 missing vars*
