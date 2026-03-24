@@ -4,7 +4,7 @@ import { generateText } from 'ai';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
-import { getModel } from '@/lib/ai/client';
+import { getModel, isOpenAIConfigured } from '@/lib/ai/client';
 import { aiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 import { itinerarySystemPrompt, buildItineraryPrompt } from '@/lib/ai/prompts';
 import { logError } from '@/lib/logger';
@@ -73,6 +73,14 @@ export async function POST(req: Request) {
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Fail fast if the AI service is not configured
+    if (!isOpenAIConfigured()) {
+      return NextResponse.json(
+        { error: 'AI service is not available. OPENAI_API_KEY is not configured.' },
+        { status: 503 }
+      );
     }
 
     // Redis-based rate limiting for serverless environments

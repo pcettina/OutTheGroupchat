@@ -1,3 +1,9 @@
+/**
+ * @module pusher
+ * @description Pusher integration utilities for real-time event broadcasting. Provides singleton
+ * server-side and client-side Pusher instances, typed channel name factories, a constant map of
+ * event type strings, and helper functions to broadcast events to trip or user channels.
+ */
 import Pusher from 'pusher';
 import PusherClient from 'pusher-js';
 

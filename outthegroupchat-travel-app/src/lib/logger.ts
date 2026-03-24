@@ -1,3 +1,9 @@
+/**
+ * @module logger
+ * @description Structured logging utilities using Pino. Provides a root application logger,
+ * component-scoped child loggers, and helper functions for standardized error and success logging.
+ * Sensitive fields (passwords, tokens, cookies) are automatically redacted from all log output.
+ */
 import pino from 'pino';
 
 /**

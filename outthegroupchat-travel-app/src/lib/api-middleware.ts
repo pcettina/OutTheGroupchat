@@ -1,3 +1,9 @@
+/**
+ * @module api-middleware
+ * @description Higher-order functions and utilities for Next.js App Router API routes.
+ * Provides composable middleware for authentication, rate limiting, and Zod body/query
+ * validation, along with standardized success/error response helpers and common Zod schemas.
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { ZodSchema, ZodError } from 'zod';
@@ -9,11 +15,19 @@ import { logger } from '@/lib/logger';
 // Types
 // ============================================
 
+/**
+ * @description Generic API route handler type for Next.js App Router route handlers
+ * that do not require an authenticated session.
+ */
 export type ApiHandler<T = unknown> = (
   req: NextRequest,
   context: { params: Record<string, string> }
 ) => Promise<NextResponse<T>>;
 
+/**
+ * @description API route handler type for routes that require an authenticated session.
+ * The `context` argument includes the resolved session user alongside route params.
+ */
 export type AuthenticatedHandler<T = unknown> = (
   req: NextRequest,
   context: {
@@ -22,12 +36,18 @@ export type AuthenticatedHandler<T = unknown> = (
   }
 ) => Promise<NextResponse<T>>;
 
+/**
+ * @description Standard shape for API error responses returned by all route handlers.
+ */
 export interface ApiErrorResponse {
   success: false;
   error: string;
   details?: unknown;
 }
 
+/**
+ * @description Standard shape for API success responses returned by all route handlers.
+ */
 export interface ApiSuccessResponse<T> {
   success: true;
   data: T;
@@ -265,19 +285,33 @@ export function handleApiError(error: unknown): NextResponse<ApiErrorResponse> {
 
 import { z } from 'zod';
 
+/**
+ * @description Zod schema for pagination query parameters. Validates and coerces `page`
+ * (positive integer, default 1) and `limit` (positive integer up to 100, default 20).
+ */
 export const paginationSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(20),
 });
 
+/**
+ * @description Zod schema that validates a single CUID `id` route parameter.
+ */
 export const idParamSchema = z.object({
   id: z.string().cuid(),
 });
 
+/**
+ * @description Zod schema that validates a single CUID `tripId` route parameter.
+ */
 export const tripIdParamSchema = z.object({
   tripId: z.string().cuid(),
 });
 
+/**
+ * @description Zod schema for search query parameters. Validates an optional search string `q`
+ * (1–100 characters) combined with pagination fields from `paginationSchema`.
+ */
 export const searchQuerySchema = z.object({
   q: z.string().min(1).max(100).optional(),
   ...paginationSchema.shape,

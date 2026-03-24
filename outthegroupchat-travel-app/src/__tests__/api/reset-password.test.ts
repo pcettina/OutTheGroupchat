@@ -72,6 +72,19 @@ vi.mock('resend', () => ({
 }));
 
 // ---------------------------------------------------------------------------
+// Mock: @/lib/rate-limit
+// Without this mock the real @upstash/redis module is imported at module
+// level, which attempts a network connection and causes all tests that hit
+// an authenticated route to stall for ~4-5 s before timing out.
+// ---------------------------------------------------------------------------
+vi.mock('@/lib/rate-limit', () => ({
+  authRateLimiter: {},
+  aiRateLimiter: {},
+  checkRateLimit: vi.fn().mockResolvedValue({ success: true, limit: 10, remaining: 9, reset: 0 }),
+  getRateLimitHeaders: vi.fn().mockReturnValue({}),
+}));
+
+// ---------------------------------------------------------------------------
 // Helper to build a NextRequest-compatible Request
 // ---------------------------------------------------------------------------
 function makeRequest(method: string, body: unknown): Request {

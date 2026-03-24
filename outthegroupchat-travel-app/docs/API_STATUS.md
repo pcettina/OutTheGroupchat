@@ -1,9 +1,9 @@
 # 📡 API & Integration Status
 
-> **Last updated: 2026-03-22**
+> **Last updated: 2026-03-23**
 >
 > **Last Audit:** March 2026
-> **Overall Status:** 82% Complete
+> **Overall Status:** 86% Complete
 > **Target:** 100% for Beta Launch
 
 ---
@@ -64,8 +64,9 @@
 |----------|--------|--------|-------------------|-------|
 | `/api/trips/[tripId]/activities` | GET | ✅ | 🔶 | List activities |
 | `/api/trips/[tripId]/activities` | POST | ✅ | 🔶 | Add activity |
-| `/api/trips/[tripId]/itinerary` | GET | ✅ | 🔶 | Get itinerary |
-| `/api/trips/[tripId]/itinerary` | PUT | ✅ | ⏳ | Update itinerary |
+| `/api/trips/[tripId]/itinerary` | GET | ✅ | 🔶 | Get itinerary — complete ✅ 2026-03-23 |
+| `/api/trips/[tripId]/itinerary` | POST | ✅ | ⏳ | Create itinerary day — complete ✅ 2026-03-23 |
+| `/api/trips/[tripId]/itinerary` | PUT | ✅ | ⏳ | Update itinerary (atomic $transaction) — complete ✅ 2026-03-23 |
 | `/api/activities/[activityId]` | GET | ✅ | ⏳ | Get activity detail with comments, ratings, avg score; public activities accessible without auth |
 | `/api/activities/[activityId]` | POST | ✅ | ⏳ | Save/unsave activity (toggle); auth required |
 | `/api/activities/[activityId]` | PUT | ✅ | ⏳ | Add comment (`action: 'comment'`) or rating (`action: 'rate'`) to activity; auth required |
@@ -139,9 +140,9 @@ No fix needed - code was already correct
 |----------|--------|--------|-------------------|-------|
 | `/api/discover` | GET | ✅ | ⏳ | Search events/places/restaurants/attractions/nightlife by city + date range; type param filters results |
 | `/api/discover` | POST | ✅ | ⏳ | Search flights via EventsService (origin, destination, departureDate, returnDate, adults); Zod validation added 2026-03-21 |
-| `/api/discover/search` | GET | 🔶 | 🔶 | Fallback mode active |
-| `/api/discover/recommendations` | GET | ✅ | 🔶 | Working |
-| `/api/discover/import` | POST | 🔶 | ⏳ | OpenTripMap import |
+| `/api/discover/search` | GET | ✅ | 🔶 | Complete — auth guard, improved error handling and typing ✅ 2026-03-23 |
+| `/api/discover/recommendations` | GET | ✅ | 🔶 | Complete — category filter, rate limiting, pino logging ✅ 2026-03-23 |
+| `/api/discover/import` | POST | ✅ | ⏳ | Complete — rate limiting, pino logging, typed helpers, fixed empty catch blocks ✅ 2026-03-23 |
 | `/api/search` | GET | ✅ | 🔶 | Email removed from select projection (privacy fix) ✅ 2026-03-20 |
 | `/api/geocoding` | GET | ✅ | 🔶 | Geocoding for destination search via Nominatim; Zod validation added 2026-03-21 |
 | `/api/inspiration` | GET | ✅ | 🔶 | Auth guard added 2026-03-08; Zod coerce.number on query params + POST body schema added 2026-03-22 |
@@ -162,8 +163,8 @@ Email removed from select projection in /api/search/route.ts
 | `/api/ai/chat` | POST | ✅ | ✅ | **OpenAI connected** ✅ Dec 17 |
 | `/api/ai/recommend` | POST | ✅ | ⏳ | Personalized activity recommendations using user saved/rated history; AI + DB hybrid results |
 | `/api/ai/recommend` | GET | ✅ | ⏳ | Trip-scoped recommendations by `?tripId=`; aggregates group member preferences to suggest activities |
-| `/api/ai/generate-itinerary` | POST | 🔶 | ⏳ | Needs real AI |
-| `/api/ai/suggest-activities` | POST | 🔶 | ⏳ | Needs real AI |
+| `/api/ai/generate-itinerary` | POST | ✅ | ⏳ | Complete — isOpenAIConfigured() guard returns 503 when key absent ✅ 2026-03-23 |
+| `/api/ai/suggest-activities` | POST | ✅ | ⏳ | Complete — isOpenAIConfigured() guard returns 503 when key absent ✅ 2026-03-23 |
 | `/api/ai/search` | GET/POST | 🔶 | ⏳ | Semantic search |
 
 ### AI Issues to Fix
@@ -247,18 +248,18 @@ BLOCKED - Need Environment Variables:
 | Category | Total | Working | Partial | Broken | Not Started |
 |----------|-------|---------|---------|--------|-------------|
 | Auth | 6 | 6 | 0 | 0 | 0 |
-| Trips | 20 | 18 | 0 | 1 | 1 |
+| Trips | 21 | 21 | 0 | 0 | 0 |
 | Invitations | 3 | 3 | 0 | 0 | 0 |
 | Feed | 5 | 4 | 0 | 0 | 1 |
 | Notifications | 3 | 3 | 0 | 0 | 0 |
-| Discovery | 6 | 3 | 2 | 1 | 0 |
-| AI | 6 | 2 | 4 | 0 | 0 |
+| Discovery | 6 | 6 | 0 | 0 | 0 |
+| AI | 6 | 4 | 2 | 0 | 0 |
 | User | 4 | 2 | 0 | 0 | 2 |
 | Real-time | 1 | 0 | 0 | 0 | 1 |
 | System | 3 | 2 | 0 | 0 | 1 |
-| **TOTAL** | **57** | **43** | **6** | **1** | **5** |
+| **TOTAL** | **58** | **51** | **2** | **0** | **4** |
 
-**API Completion Rate: 75% fully working** ✅ (updated after documenting 12 previously undocumented endpoints)
+**API Completion Rate: 88% fully working** ✅ (updated 2026-03-23: itinerary POST added, itinerary/ai/discover routes completed)
 | Trips | 17 | 13 | 2 | 1 | 1 |
 | Feed | 5 | 5 | 0 | 0 | 0 |
 | Notifications | 3 | 3 | 0 | 0 | 0 |
@@ -370,4 +371,4 @@ EMAIL_FROM=             # Email sender (onboarding@resend.dev) ✅
 
 *Review and update after each API change.*
 
-*Last Updated: 2026-03-22 - /api/beta/status response narrowed to {exists, passwordInitialized} (data minimization); /api/auth/demo DEMO_MODE env guard added; Zod improved on /api/inspiration and /api/notifications; CRON_SECRET validation hardened on /api/cron; 84 new tests across 7 new test files (Wave 1); TSC fixes in trips-tripid-invitations.test.ts and trips-tripid-recommendations.test.ts; tests total ~661 (37 test files)*
+*Last Updated: 2026-03-23 - /api/trips/[tripId]/itinerary POST handler added + async params fixed + $transaction atomicity on PUT; /api/ai/suggest-activities and /api/ai/generate-itinerary completed with isOpenAIConfigured() guard (returns 503 when key absent); /api/discover/search, /api/discover/recommendations, /api/discover/import all completed with auth guards, rate limiting, pino logging; 164 new tests (910+ total, 46 test files)*

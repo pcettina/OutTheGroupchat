@@ -1,3 +1,9 @@
+/**
+ * @module sanitize
+ * @description Input sanitization utilities using isomorphic-dompurify to prevent XSS attacks.
+ * Provides functions for sanitizing plain text, HTML, markdown, URLs, JSON objects, email
+ * addresses, search queries, and a configurable body sanitizer factory for API routes.
+ */
 import DOMPurify from 'isomorphic-dompurify';
 
 /**

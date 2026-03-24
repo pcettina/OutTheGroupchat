@@ -26,6 +26,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { prisma } from '@/lib/prisma';
+import { TripMemberRole } from '@prisma/client';
 import type { SurveyAnalysis } from '@/types';
 
 // ---------------------------------------------------------------------------
@@ -86,12 +87,11 @@ function makeMember(
     id: `tm-${userId}`,
     tripId: 'trip-1',
     userId,
-    role: 'MEMBER',
-    status: 'ACCEPTED',
+    role: TripMemberRole.MEMBER,
+    joinedAt: new Date(),
+    budgetRange: null,
     departureCity: departureCity ?? null,
     flightDetails: null,
-    createdAt: new Date(),
-    updatedAt: new Date(),
     user: {
       id: userId,
       name,
