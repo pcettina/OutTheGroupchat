@@ -17,6 +17,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
+import * as suggestActivitiesRoute from '@/app/api/ai/suggest-activities/route';
 
 // ---------------------------------------------------------------------------
 // Mock: ai (Vercel AI SDK)
@@ -110,12 +111,10 @@ const mockSession = {
 // POST /api/ai/suggest-activities
 // ---------------------------------------------------------------------------
 describe('POST /api/ai/suggest-activities', () => {
-  let POST: (req: Request) => Promise<Response>;
+  const POST = suggestActivitiesRoute.POST;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks();
-    const mod = await import('@/app/api/ai/suggest-activities/route');
-    POST = mod.POST;
   });
 
   it('returns 401 when unauthenticated', async () => {

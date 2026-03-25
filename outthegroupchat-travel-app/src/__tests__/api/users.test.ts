@@ -15,6 +15,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
+import * as healthRoute from '@/app/api/health/route';
+import * as usersRoute from '@/app/api/users/[userId]/route';
 
 // ---------------------------------------------------------------------------
 // Mock: @/lib/prisma — extend global setup
@@ -92,12 +94,10 @@ const mockUser = {
 // GET /api/users/[userId]
 // ---------------------------------------------------------------------------
 describe('GET /api/users/[userId]', () => {
-  let GET: (req: Request, ctx: { params: { userId: string } }) => Promise<Response>;
+  const GET = usersRoute.GET;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks();
-    const mod = await import('@/app/api/users/[userId]/route');
-    GET = mod.GET;
   });
 
   it('returns 404 when user does not exist', async () => {
@@ -182,12 +182,10 @@ describe('GET /api/users/[userId]', () => {
 // POST /api/users/[userId] — follow / unfollow
 // ---------------------------------------------------------------------------
 describe('POST /api/users/[userId] (follow/unfollow)', () => {
-  let POST: (req: Request, ctx: { params: { userId: string } }) => Promise<Response>;
+  const POST = usersRoute.POST;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks();
-    const mod = await import('@/app/api/users/[userId]/route');
-    POST = mod.POST;
   });
 
   it('returns 401 when unauthenticated', async () => {
@@ -269,12 +267,10 @@ describe('POST /api/users/[userId] (follow/unfollow)', () => {
 // GET /api/health
 // ---------------------------------------------------------------------------
 describe('GET /api/health', () => {
-  let GET: () => Promise<Response>;
+  const GET = healthRoute.GET;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks();
-    const mod = await import('@/app/api/health/route');
-    GET = mod.GET;
   });
 
   it('returns 200 with ok status when database is healthy', async () => {

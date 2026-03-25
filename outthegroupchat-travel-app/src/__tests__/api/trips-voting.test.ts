@@ -63,7 +63,7 @@ Object.defineProperty(prisma, 'vote', {
 });
 
 // Ensure tripMember.count is available
-if (!(prisma.tripMember as Record<string, unknown>).count) {
+if (!(prisma.tripMember as unknown as Record<string, unknown>).count) {
   Object.defineProperty(prisma.tripMember, 'count', {
     value: vi.fn(),
     writable: true,

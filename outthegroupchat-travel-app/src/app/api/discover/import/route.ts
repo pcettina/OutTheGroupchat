@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { checkRateLimit, apiRateLimiter } from '@/lib/rate-limit';
 import { logError } from '@/lib/logger';
 import { z } from 'zod';
 
@@ -91,6 +92,16 @@ function generateTags(kinds: string, name: string): string[] {
 // Import places from OpenTripMap for a location
 export async function POST(req: NextRequest) {
   try {
+    // Rate limiting
+    const ip = req.headers.get('x-forwarded-for') || 'anonymous';
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, ip);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429 }
+      );
+    }
+
     // Check authentication - only admins can import
     const session = await getServerSession(authOptions);
     if (!session?.user) {

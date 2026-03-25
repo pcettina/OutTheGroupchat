@@ -5,11 +5,13 @@ import { prisma } from '@/lib/prisma';
 import { checkRateLimit, apiRateLimiter } from '@/lib/rate-limit';
 import { logError } from '@/lib/logger';
 import { z } from 'zod';
+import type { ActivityCategory } from '@prisma/client';
 
 const RecommendationsQuerySchema = z.object({
   tripId: z.string().optional(),
   city: z.string().optional(),
   country: z.string().optional(),
+  category: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(30).optional().default(10),
 });
 
@@ -30,12 +32,20 @@ export async function GET(req: NextRequest) {
     }
 
     const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const { searchParams } = new URL(req.url);
 
     const parsed = RecommendationsQuerySchema.safeParse({
       tripId: searchParams.get('tripId') ?? undefined,
       city: searchParams.get('city') ?? undefined,
       country: searchParams.get('country') ?? undefined,
+      category: searchParams.get('category') ?? undefined,
       limit: searchParams.get('limit') ?? undefined,
     });
     if (!parsed.success) {
@@ -45,7 +55,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const { tripId, city = '', country = '', limit } = parsed.data;
+    const { tripId, city = '', country = '', category, limit } = parsed.data;
     
     // Build recommendation context
     let userPreferences: string[] = [];
@@ -99,6 +109,7 @@ export async function GET(req: NextRequest) {
       where: {
         isPublic: true,
         id: { notIn: excludeActivityIds },
+        ...(category ? { category: category as ActivityCategory } : {}),
         trip: {
           destination: {
             path: ['city'],
