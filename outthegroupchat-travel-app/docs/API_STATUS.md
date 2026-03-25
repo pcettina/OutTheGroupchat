@@ -1,6 +1,6 @@
 # 📡 API & Integration Status
 
-> **Last updated: 2026-03-23**
+> **Last updated: 2026-03-24**
 >
 > **Last Audit:** March 2026
 > **Overall Status:** 86% Complete
@@ -26,7 +26,7 @@
 |----------|--------|--------|-------------------|-------|
 | `/api/auth/[...nextauth]` | ALL | ✅ | ✅ | NextAuth handler |
 | `/api/auth/signup` | POST | ✅ | ✅ | Zod validation added 2026-03-18; email verification sending added 2026-03-21 |
-| `/api/auth/demo` | POST | ✅ | ✅ | Demo credentials in env vars ✅ 2026-03-10; DEMO_MODE env guard added 2026-03-22 (requires DEMO_MODE=true to activate) |
+| `/api/auth/demo` | POST | ✅ | ✅ | Demo credentials in env vars ✅ 2026-03-10; DEMO_MODE env guard added 2026-03-22; Zod input validation added 2026-03-24 |
 | `/api/auth/demo` | GET | ✅ | ✅ | Returns demo account info (hides password in prod); requires DEMO_MODE=true env var ✅ 2026-03-22 |
 | `/api/auth/reset-password` | POST | ✅ | ✅ | Request reset token; email-safe 200 response ✅ 2026-03-12; UI page added 2026-03-14 |
 | `/api/auth/reset-password` | PATCH | ✅ | ✅ | Confirm reset with token + new password ✅ 2026-03-12; UI confirm page added 2026-03-14 |
@@ -140,9 +140,9 @@ No fix needed - code was already correct
 |----------|--------|--------|-------------------|-------|
 | `/api/discover` | GET | ✅ | ⏳ | Search events/places/restaurants/attractions/nightlife by city + date range; type param filters results |
 | `/api/discover` | POST | ✅ | ⏳ | Search flights via EventsService (origin, destination, departureDate, returnDate, adults); Zod validation added 2026-03-21 |
-| `/api/discover/search` | GET | ✅ | 🔶 | Complete — auth guard, improved error handling and typing ✅ 2026-03-23 |
-| `/api/discover/recommendations` | GET | ✅ | 🔶 | Complete — category filter, rate limiting, pino logging ✅ 2026-03-23 |
-| `/api/discover/import` | POST | ✅ | ⏳ | Complete — rate limiting, pino logging, typed helpers, fixed empty catch blocks ✅ 2026-03-23 |
+| `/api/discover/search` | GET | ✅ | 🔶 | Auth guard added 2026-03-24 (was unauthenticated — security improvement); rate limiting, Zod validation ✅ |
+| `/api/discover/recommendations` | GET | ✅ | 🔶 | Auth guard added 2026-03-24; category filter, rate limiting, pino logging ✅ |
+| `/api/discover/import` | POST | ✅ | ⏳ | Rate limiting + auth guard ✅ 2026-03-24; pino logging, typed helpers, fixed empty catch blocks |
 | `/api/search` | GET | ✅ | 🔶 | Email removed from select projection (privacy fix) ✅ 2026-03-20 |
 | `/api/geocoding` | GET | ✅ | 🔶 | Geocoding for destination search via Nominatim; Zod validation added 2026-03-21 |
 | `/api/inspiration` | GET | ✅ | 🔶 | Auth guard added 2026-03-08; Zod coerce.number on query params + POST body schema added 2026-03-22 |
@@ -371,4 +371,4 @@ EMAIL_FROM=             # Email sender (onboarding@resend.dev) ✅
 
 *Review and update after each API change.*
 
-*Last Updated: 2026-03-23 - /api/trips/[tripId]/itinerary POST handler added + async params fixed + $transaction atomicity on PUT; /api/ai/suggest-activities and /api/ai/generate-itinerary completed with isOpenAIConfigured() guard (returns 503 when key absent); /api/discover/search, /api/discover/recommendations, /api/discover/import all completed with auth guards, rate limiting, pino logging; 164 new tests (910+ total, 46 test files)*
+*Last Updated: 2026-03-24 - /api/discover/search auth guard added (security improvement — was unauthenticated); /api/discover/recommendations auth guard added; /api/discover/import rate limiting + auth guard confirmed; /api/auth/demo Zod input validation added; 60 new tests tonight (925+ total, 49 test files)*

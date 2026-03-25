@@ -6,13 +6,18 @@ This document outlines the test cases needed to validate the OutTheGroupchat pla
 
 ---
 
-## Testing Stack Recommendation
+## Testing Stack
+
+> **Status (2026-03-24):** Vitest and Playwright are already installed and configured. 865+ tests passing across 45 test files.
 
 ```bash
-# Install testing dependencies
+# Install testing dependencies (already in package.json — run npm install)
 npm install -D vitest @testing-library/react @testing-library/jest-dom
 npm install -D @playwright/test
 npm install -D msw  # Mock Service Worker for API mocking
+
+# Install Playwright browsers for E2E tests
+npx playwright install chromium
 ```
 
 ### Configuration Files Needed
@@ -899,9 +904,9 @@ jobs:
 
 | Category | Target | Current |
 |----------|--------|---------|
-| Unit Tests | 80% | TBD |
-| Integration Tests | 70% | TBD |
-| E2E Tests | Critical paths | TBD |
+| Unit Tests | 80% | 865+ passing (45 test files) |
+| Integration Tests | 70% | Included in Vitest suite |
+| E2E Tests | Critical paths | e2e/auth-flow.spec.ts (requires `npx playwright install chromium`) |
 
 ### Priority Test Areas
 
@@ -927,5 +932,5 @@ jobs:
 
 ---
 
-*Last Updated: December 2024*
+*Last Updated: 2026-03-24*
 

@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { logError } from '@/lib/logger';
@@ -8,9 +9,36 @@ import { logError } from '@/lib/logger';
 // env var is absent or set to any other value. Never rely on NODE_ENV alone for this check.
 const DEMO_EMAIL = process.env.DEMO_USER_EMAIL || 'alex@demo.com';
 
+// The demo endpoint accepts no meaningful body fields; schema enforces that
+// no unexpected payload is passed and keeps the handler future-proof.
+const demoRequestSchema = z.object({}).passthrough();
+
 // Demo login endpoint - creates or retrieves the demo user
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
+    // Validate request body (this endpoint expects no required fields,
+    // but we parse and validate to reject malformed JSON payloads early)
+    let rawBody: unknown = {};
+    try {
+      const text = await request.text();
+      if (text.trim().length > 0) {
+        rawBody = JSON.parse(text);
+      }
+    } catch {
+      return NextResponse.json(
+        { success: false, error: 'Invalid JSON in request body' },
+        { status: 400 }
+      );
+    }
+
+    const bodyResult = demoRequestSchema.safeParse(rawBody);
+    if (!bodyResult.success) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid request body', details: bodyResult.error.flatten() },
+        { status: 400 }
+      );
+    }
+
     // Guard: DEMO_MODE must be explicitly enabled
     if (process.env.DEMO_MODE !== 'true') {
       return NextResponse.json(

@@ -263,12 +263,33 @@ describe('GET /api/discover/search', () => {
     expect(body.error).toMatch(/too many requests/i);
   });
 
+  it('returns 401 when unauthenticated', async () => {
+    mockCheckRateLimit.mockResolvedValueOnce({
+      success: true,
+      limit: 100,
+      remaining: 99,
+      reset: 0,
+    });
+    mockGetServerSession.mockResolvedValueOnce(null);
+
+    const req = makeNextRequest('http://localhost:3000/api/discover/search?q=museums');
+    const res = await searchGET(req);
+
+    expect(res.status).toBe(401);
+    const body = await res.json();
+    expect(body.error).toMatch(/unauthorized/i);
+  });
+
   it('returns 400 when limit param is invalid', async () => {
     mockCheckRateLimit.mockResolvedValueOnce({
       success: true,
       limit: 100,
       remaining: 99,
       reset: 0,
+    });
+    mockGetServerSession.mockResolvedValueOnce({
+      user: { id: 'user-1', email: 'test@example.com', name: 'Test User' },
+      expires: '2099-01-01',
     });
 
     // limit=0 fails min(1)
@@ -286,6 +307,10 @@ describe('GET /api/discover/search', () => {
       limit: 100,
       remaining: 99,
       reset: 0,
+    });
+    mockGetServerSession.mockResolvedValueOnce({
+      user: { id: 'user-1', email: 'test@example.com', name: 'Test User' },
+      expires: '2099-01-01',
     });
 
     mockPrismaActivity.findMany.mockResolvedValueOnce([
@@ -352,6 +377,10 @@ describe('GET /api/discover/search', () => {
       remaining: 99,
       reset: 0,
     });
+    mockGetServerSession.mockResolvedValueOnce({
+      user: { id: 'user-1', email: 'test@example.com', name: 'Test User' },
+      expires: '2099-01-01',
+    });
 
     mockPrismaExternalActivity.findMany.mockResolvedValueOnce([]);
 
@@ -376,6 +405,12 @@ describe('POST /api/discover/import', () => {
   });
 
   it('returns 401 when unauthenticated', async () => {
+    mockCheckRateLimit.mockResolvedValueOnce({
+      success: true,
+      limit: 100,
+      remaining: 99,
+      reset: 0,
+    });
     mockGetServerSession.mockResolvedValueOnce(null);
 
     const req = makeNextRequest(
@@ -391,6 +426,12 @@ describe('POST /api/discover/import', () => {
   });
 
   it('returns 400 when body is invalid (missing latitude/longitude)', async () => {
+    mockCheckRateLimit.mockResolvedValueOnce({
+      success: true,
+      limit: 100,
+      remaining: 99,
+      reset: 0,
+    });
     mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
 
     const req = makeNextRequest(
@@ -406,6 +447,12 @@ describe('POST /api/discover/import', () => {
   });
 
   it('returns 400 when radius is out of range', async () => {
+    mockCheckRateLimit.mockResolvedValueOnce({
+      success: true,
+      limit: 100,
+      remaining: 99,
+      reset: 0,
+    });
     mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
 
     const req = makeNextRequest(
@@ -421,6 +468,12 @@ describe('POST /api/discover/import', () => {
   });
 
   it('returns 500 when OPENTRIPMAP_API_KEY is not configured', async () => {
+    mockCheckRateLimit.mockResolvedValueOnce({
+      success: true,
+      limit: 100,
+      remaining: 99,
+      reset: 0,
+    });
     mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
 
     // Ensure env var is not set (it won't be in test environment)
@@ -448,6 +501,12 @@ describe('POST /api/discover/import', () => {
     // time — it cannot be overridden via process.env in tests. This test verifies that
     // a fully valid, authenticated request still returns 500 with the correct error body
     // when the API key constant is empty (as it always is in the test environment).
+    mockCheckRateLimit.mockResolvedValueOnce({
+      success: true,
+      limit: 100,
+      remaining: 99,
+      reset: 0,
+    });
     mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
 
     const req = makeNextRequest(
@@ -487,8 +546,15 @@ describe('GET /api/discover/recommendations', () => {
       remaining: 99,
       reset: 0,
     });
-    // No session needed — route checks after rate limit
-    mockGetServerSession.mockResolvedValueOnce(null);
+    // Auth guard — route requires session before checking params
+    mockGetServerSession.mockResolvedValueOnce({
+      user: { id: 'user-1', email: 'test@example.com', name: 'Test User' },
+      expires: '2099-01-01',
+    });
+    // User preferences lookup
+    mockPrismaUser.findUnique.mockResolvedValueOnce(null);
+    // No saved activities
+    mockPrismaSavedActivity.findMany.mockResolvedValueOnce([]);
 
     const req = makeNextRequest('http://localhost:3000/api/discover/recommendations');
     const res = await recoGET(req);
@@ -671,31 +737,24 @@ describe('GET /api/discover/recommendations', () => {
     expect(body.data.context.tripId).toBe('trip-42');
   });
 
-  it('returns 200 with unauthenticated request (anonymous recommendations)', async () => {
+  it('returns 401 when unauthenticated (auth guard added 2026-03-24)', async () => {
     mockCheckRateLimit.mockResolvedValueOnce({
       success: true,
       limit: 100,
       remaining: 99,
       reset: 0,
     });
-    // No session — anonymous user
+    // No session — anonymous users are now rejected
     mockGetServerSession.mockResolvedValueOnce(null);
-
-    // No user/savedActivities lookups occur for anonymous users
-    // Internal results
-    mockPrismaActivity.findMany.mockResolvedValueOnce([]);
-
-    // External results
-    mockPrismaExternalActivity.findMany.mockResolvedValueOnce([]);
 
     const req = makeNextRequest(
       'http://localhost:3000/api/discover/recommendations?country=France',
     );
     const res = await recoGET(req);
 
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body.success).toBe(true);
-    expect(body.data.context.country).toBe('France');
+    expect(body.error).toMatch(/unauthorized/i);
   });
+
 });

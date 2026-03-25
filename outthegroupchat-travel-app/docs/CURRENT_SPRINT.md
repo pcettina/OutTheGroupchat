@@ -224,6 +224,33 @@
 *Updated: 2026-03-20*
 ---
 
+## 🟢 Completed 2026-03-24 (Nightly Build)
+
+### Wave 1 — Test Writers (48 tests added)
+- [L1] Created trips-itinerary.test.ts (21 tests for GET/PUT itinerary operations)
+- [L2] Updated discover.test.ts (4 tests for auth guards + category filter on recommendations/import)
+- [M1] Fixed trips-voting.test.ts TSC error + users.test.ts health route timeout
+- [M2] Created auth-demo.test.ts (13 tests) + cron.test.ts (10 tests)
+
+### Wave 2 — Features & Refactors (12 tests added)
+- [L3] Itinerary route already had correct auth/error codes (no changes needed)
+- [L4] discover/recommendations: auth guard + category filter; discover/import: rate limiting + auth guard
+- [L5] AI LLM output validation already in place (no changes needed)
+- [L6] discover/search: auth guard added; created discover-search.test.ts (12 tests)
+- [M3] ai/chat Zod validation already in place
+- [M4] README.md updated (fixed db:seed claim, updated counts)
+- [M5] SECURITY_AUDIT.md, TEST_CASES.md, CODE_CHECKING_AGENT_GUIDE.md refreshed
+- [M6] auth/demo: Zod input validation added
+
+### Metrics
+- Tests: 865 → 925+ passing (estimated after fixes)
+- Test files: 45 → 49
+- Routes: 48
+- any types: 0 | console.*: 0 | TODO: 0 | Files >600 lines (prod): 0
+
+*Updated: 2026-03-24*
+---
+
 ## 🟢 Completed 2026-03-23 (Nightly Build)
 
 ### Wave 1 — Test Fixes & New Test Files (164 new tests, 4 new test files; total 910+ tests across 46 files)

@@ -164,10 +164,6 @@ const trips = await prisma.trip.findMany({
 
 ### Critical (Block deployment)
 ```typescript
-// File: src/lib/ai/client.ts
-// Issue: In-memory rate limiting
-const requestCounts = new Map(); // ← Must use Redis
-
 // File: src/lib/auth.ts
 // Issue: DB query on every JWT callback
 const dbUser = await prisma.user.findFirst(); // ← Add trigger check
@@ -176,6 +172,8 @@ const dbUser = await prisma.user.findFirst(); // ← Add trigger check
 // Issue: Typo in field name
 oderId   String   // ← Should be "orderId"
 ```
+
+> **Resolved (2026-03-23):** In-memory rate limiting replaced with Redis-backed `@upstash/ratelimit` in `src/lib/rate-limit.ts`. Applied to 8+ routes.
 
 ### High Priority
 ```typescript
@@ -308,10 +306,11 @@ return NextResponse.json({
 
 | Metric | Target | Current |
 |--------|--------|---------|
-| TypeScript Coverage | 100% | ~95% |
+| TypeScript Coverage | 100% | ~98% |
 | Any Types | 0 | 0 ✅ |
 | Console Statements | 0 (prod) | 0 ✅ |
-| Test Coverage | >80% | 283 tests passing (18 files) |
+| Test Coverage | >80% | 865+ tests passing (45 files) ✅ |
+| API Routes | 48 | 48 ✅ |
 | Cyclomatic Complexity | <10 | Varies |
 | Bundle Size | <500KB | TBD |
 
@@ -375,5 +374,5 @@ These patterns should automatically fail code review:
 
 *Quality is not negotiable. Every line of code should serve the mission.*
 
-*Last Updated: 2026-03-17*
+*Last Updated: 2026-03-24*
 

@@ -55,7 +55,7 @@ A modern web application that helps groups coordinate trip planning through surv
 4. Set up the database:
    ```bash
    npm run db:push
-   # npm run db:seed  # Not yet configured — seed script is not in package.json
+   npm run db:seed  # Seeds demo users and sample data
    ```
 
 5. Start the development server:
@@ -70,7 +70,7 @@ A modern web application that helps groups coordinate trip planning through surv
 ```
 src/
 ├── app/                    # Next.js App Router pages
-│   ├── api/               # API routes
+│   ├── api/               # API routes (48 routes)
 │   │   ├── ai/           # AI endpoints
 │   │   ├── trips/        # Trip CRUD
 │   │   └── ...
@@ -117,7 +117,7 @@ npm run lint       # Run ESLint
 npm run db:push    # Push schema to database
 npm run db:migrate # Create migration
 npm run db:studio  # Open Prisma Studio
-# npm run db:seed  # Not yet configured — seed script is not in package.json
+npm run db:seed    # Seed demo users and sample data
 ```
 
 ## Deployment
@@ -169,7 +169,7 @@ The project includes:
 
 ## Demo Accounts
 
-> Note: `npm run db:seed` is not yet configured. These accounts must be created manually.
+> Note: Run `npm run db:seed` to create demo accounts, or use the `/api/auth/demo` endpoint (requires `DEMO_MODE=true`).
 
 | Email | Password |
 |-------|----------|
@@ -192,3 +192,7 @@ MIT License - see LICENSE file for details.
 ---
 
 Built with ❤️ by the OutTheGroupchat Team
+
+---
+
+*Last Updated: 2026-03-24 | 865+ tests passing | 48 API routes*

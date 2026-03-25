@@ -18,7 +18,7 @@
 
 **Overall Readiness: 78%** → Target: 85% for Beta Launch
 
-> Last updated: 2026-03-23
+> Last updated: 2026-03-24
 
 ---
 
@@ -110,7 +110,10 @@
 - [x] SQL injection prevention (Prisma)
 - [x] Rate limiting infrastructure (Upstash)
 - [ ] Rate limiting on ALL endpoints
-- [x] Input validation on major API routes (Zod) ✅ 2026-03-22 — notifications, feed/comments, feed/engagement, pusher/auth, users/[userId], discover/*, images/search, inspiration, cron added
+- [x] Input validation on major API routes (Zod) ✅ 2026-03-24 — notifications, feed/comments, feed/engagement, pusher/auth, users/[userId], discover/*, images/search, inspiration, cron, auth/demo added
+- [x] /api/discover/search requires authentication ✅ 2026-03-24 (security improvement — was unauthenticated)
+- [x] /api/discover/recommendations requires authentication ✅ 2026-03-24
+- [x] /api/auth/demo has Zod input validation ✅ 2026-03-24
 - [ ] XSS prevention (DOMPurify)
 - [x] CORS configured properly ✅ 2026-03-23 — /api/:path* CORS headers added to next.config.js
 
@@ -160,6 +163,7 @@
 - [x] API route tests (signup 15, trips-tripid 20, ai-chat+recommend 24, tripid-invitations 14, tripid-recommendations 11) ✅ 2026-03-22 — total: ~661 tests across 37 files
 - [x] API route tests (ai-search 12, discover ~20, images-search 10, newsletter 10, geocoding-api 12) + lib tests (recommendation.service) ✅ 2026-03-23 — total: 746 tests across 42 files
 - [x] API route tests (trips-voting 50, trips-invitations 33, pusher-feed-social 38, trips-itinerary 43) ✅ 2026-03-23 — total: 910+ tests across 46 files
+- [x] API route tests (trips-itinerary +21, auth-demo 13, cron 10, discover-search 12) + discover.test.ts auth fixes ✅ 2026-03-24 — total: 925+ tests across 49 files
 
 ### Integration Tests
 - [ ] Auth flow tests
@@ -364,4 +368,4 @@ git push origin main  # Auto-deploys to Vercel
 
 *This checklist should be reviewed daily during launch preparation.*
 
-*Last Updated: 2026-03-23 - 164 new tests (910+ total, 46 files); itinerary route completed (POST handler added, $transaction atomicity on PUT); AI routes suggest-activities + generate-itinerary completed with 503 guard; discover/search, discover/recommendations, discover/import completed; service layer tests (recommendation.service.test.ts) fixed; JSDoc added to 9 lib/service files; .env.example updated with 8 missing vars*
+*Last Updated: 2026-03-24 - 60 new tests (925+ total, 49 files); discover/search + discover/recommendations auth guards added (security improvement); auth/demo Zod input validation added; trips-itinerary.test.ts, auth-demo.test.ts, cron.test.ts, discover-search.test.ts created; discover.test.ts auth regression fixed (import + search + recommendations tests updated to mock rate limiting + auth)*

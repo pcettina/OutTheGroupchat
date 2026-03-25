@@ -1,6 +1,6 @@
 # OutTheGroupchat — Full Codemap
 
-> Auto-generated 2026-03-10. Last updated 2026-03-23. Comprehensive reference for agents and developers.
+> Auto-generated 2026-03-10. Last updated 2026-03-24. Comprehensive reference for agents and developers.
 
 ## Table of Contents
 
@@ -29,7 +29,7 @@ Full-stack Next.js 14 collaborative travel planning app. Groups plan trips toget
 
 **App root:** `outthegroupchat-travel-app/`
 **Source:** `outthegroupchat-travel-app/src/`
-**Stats:** ~250 TS/TSX files | ~33,500 LOC | 48 API routes | 94 components | 20 pages
+**Stats:** ~253 TS/TSX files | ~33,500 LOC | 48 API routes | 94 components | 20 pages
 
 ---
 
@@ -805,7 +805,7 @@ db:seed        → npx tsx prisma/seed/index.ts
 
 ## Tests
 
-**Total: 910+ tests across 46 Vitest unit/integration test files** (0 TSC errors in production code, 0 in test files as of 2026-03-23)
+**Total: 925+ tests across 49 Vitest unit/integration test files** (0 TSC errors in production code, 0 in test files as of 2026-03-24)
 
 | File | Lines | Tests | Coverage |
 |------|-------|-------|----------|
@@ -825,6 +825,10 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `src/__tests__/api/trips-invitations.test.ts` | — | 33 | GET/POST /api/trips/[tripId]/invitations with edge cases ✅ 2026-03-23 |
 | `src/__tests__/api/pusher-feed-social.test.ts` | — | 38 | pusher/auth, feed/comments, feed/engagement, feed/share social routes ✅ 2026-03-23 |
 | `src/__tests__/api/trips-itinerary.test.ts` | — | 43 | GET/POST/PUT /api/trips/[tripId]/itinerary ✅ 2026-03-23 |
+| `src/__tests__/api/trips-itinerary.test.ts` | — | 21 | GET/PUT /api/trips/[tripId]/itinerary (expanded) ✅ 2026-03-24 |
+| `src/__tests__/api/auth-demo.test.ts` | — | 13 | POST/GET /api/auth/demo — DEMO_MODE guard, Zod validation ✅ 2026-03-24 |
+| `src/__tests__/api/cron.test.ts` | — | 10 | GET /api/cron — CRON_SECRET validation, job execution ✅ 2026-03-24 |
+| `src/__tests__/api/discover-search.test.ts` | — | 12 | GET /api/discover/search — auth guard, rate limiting, Zod params ✅ 2026-03-24 |
 | `src/__tests__/api/voting.test.ts` | — | 10 | Voting API (create, vote, close session) |
 | `src/__tests__/api/survey.test.ts` | — | 11 | Survey API (create, respond, analyze) |
 | `src/__tests__/api/feed.test.ts` | — | 12 | Feed API (pagination, comments, engagement) |
@@ -893,7 +897,7 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `any` types | 0 ✅ |
 | `console.*` | 0 ✅ |
 | TSC errors (prod + test) | 0 ✅ |
-| Vitest tests | 910+ passing (46 files) |
+| Vitest tests | 925+ passing (49 files) |
 | E2E tests | 11 Playwright smoke tests (4 suites) |
 | Error monitoring | Sentry installed (server + client + edge) — needs `SENTRY_DSN` in Vercel |
 | Files >400 lines | ~10 (0 files exceed 600 lines) |
