@@ -1,407 +1,288 @@
-# 🚀 OutTheGroupchat - Production Deployment & Feature Roadmap
+# OutTheGroupchat - Production Deployment & Feature Roadmap
 
-> **Target:** Live production deployment within 4 weeks with real users
-> **Version:** 2.0 | **Last Updated:** December 2024
+> **Target:** Q2 2026 Beta Launch
+> **Version:** 3.0 | **Last Updated:** 2026-03-25
 
 ---
 
-## 📊 Current System Status
+## Current System Status (as of 2026-03-25)
 
-### ✅ Implemented & Working (Score: 9/10) ✅ Dec 17
+### Overall Launch Readiness: 78% (Target: 85% for Beta)
+
+| Category | Score | Target | Status |
+|----------|-------|--------|--------|
+| Infrastructure | 92% | 100% | Almost Ready |
+| Core Features | 77% | 90% | In Progress |
+| Security | 83% | 100% | In Progress |
+| Testing | 72% | 80% | In Progress |
+| Monitoring | 55% | 80% | In Progress |
+
+### Implemented & Working
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Authentication (Email/Password) | ✅ Working | NextAuth with credentials provider |
-| Navigation & Routing | ✅ Working | Fixed Discover page nav |
-| Feed System | ✅ Working | Basic feed with engagement bar |
-| Like/React System | ✅ Working | Optimistic updates, emoji reactions |
-| Comment UI | ✅ Working | Trip support added ✅ Dec 17 |
-| Share Modal | ✅ Working | Copy link, social share buttons |
-| Profile Page | ✅ Working | Full profile with stats, preferences |
-| Discover Page | ✅ Working | Category filters, search |
-| Inspiration Page | ✅ Working | Trip discovery |
-| Trip Creation | ✅ Working | Basic creation working ✅ Dec 17 |
-| AI Chat Assistant | ✅ Working | OpenAI connected, streaming ✅ Dec 17 |
-| Real-time Context | ⚠️ Partial | Pusher configured, needs env vars |
-| Accessibility | ✅ Good | Skip links, ARIA patterns |
-| Responsive Design | ✅ Good | Mobile-first approach |
+| Authentication (Email/Password) | Working | NextAuth with credentials provider |
+| Email Verification | Working | VerificationToken created + email sent at signup (2026-03-21) |
+| Password Reset | Working | API + UI complete (2026-03-14) |
+| Navigation & Routing | Working | App Router, all pages functional |
+| Feed System | Working | Basic feed with engagement bar |
+| Like/React System | Working | Optimistic updates, emoji reactions |
+| Comment System | Working | Trip support added |
+| Share Modal | Working | POST /api/feed/share implemented with Zod + notification |
+| Profile Page | Working | Full profile with stats, preferences |
+| Discover Page | Working | Auth-guarded (2026-03-24); category filters, search |
+| Inspiration Page | Working | Zod coerce.number on query params |
+| Trip Creation | Working | Basic creation working; wizard flow pending |
+| Trip Itinerary | Working | GET/PUT with $transaction atomicity (2026-03-23) |
+| AI Chat Assistant | Working | OpenAI connected, streaming; 503 guard when key absent |
+| AI Activity Suggestions | Working | 503 guard when OPENAI_API_KEY absent (2026-03-23) |
+| AI Itinerary Generation | Working | 503 guard when OPENAI_API_KEY absent (2026-03-23) |
+| Survey API | Working | API structure complete; frontend integration pending |
+| Voting API | Working | API structure complete; frontend integration pending |
+| Member Invitations | Working | Email-based via Resend |
+| Rate Limiting | Working | Upstash Redis-based on all major routes |
+| CORS | Working | Configured in next.config.js (2026-03-23) |
+| Security Headers | Working | HSTS, X-Frame-Options, CSP in next.config.js (2026-03-10) |
+| Error Boundaries | Working | global-error.tsx, error.tsx, not-found.tsx |
+| Sentry | Partial | Installed & configured; needs real DSN in Vercel |
+| Real-time (Pusher) | Partial | Configured; env vars missing in production |
+| Accessibility | Good | Skip links, ARIA patterns |
+| Responsive Design | Good | Mobile-first, 44px touch targets |
 
-### 🔧 Requires Immediate Attention
+### Active Blockers (Must Fix Before Launch)
 
-| Issue | Priority | Impact |
+| Issue | Priority | Status |
 |-------|----------|--------|
-| ~~Comments API Authentication~~ | ✅ Fixed | Trip support added ✅ Dec 17 |
-| Trip Builder UX | 🔴 High | Core feature needs better flow |
-| Survey/Voting System | 🔴 High | Group coordination is key value prop |
-| Pusher Environment Setup | 🟠 Medium | Real-time features blocked |
-| ~~AI API Integration~~ | ✅ Fixed | OpenAI connected ✅ Dec 17 |
+| OPENAI_API_KEY not set in Vercel | Critical | Blocked by config |
+| Pusher env vars missing in production | High | Blocked by config |
+| Sentry DSN not set in Vercel | High | Blocked by config |
+| Resend domain not verified | Medium | Email may go to spam |
+| Rate limiting not on ALL endpoints | Medium | In progress |
+| NEXTAUTH_SECRET strength unverified | Medium | Manual check needed |
 
 ---
 
-## 🎯 Week-by-Week Production Plan
+## Completed Milestones
 
-### Week 1: Foundation & Critical Fixes
+### December 2025 Sprint (COMPLETE)
 
-**Goal:** Fix blocking issues, complete authentication flow
+- Redis-based rate limiting replacing in-memory implementation
+- JWT callback optimization (only queries DB on signIn/update)
+- Email removed from user search (privacy fix)
+- Placeholder user creation fix (PendingInvitation model)
+- Email service via Resend (`src/lib/email.ts`)
+- Geocoding with Nominatim (`src/lib/geocoding.ts`)
+- AI chat connected to OpenAI (gpt-4o-mini, streaming)
+- TripComment + TripLike models added to schema
+- Invitation acceptance flow with auto-accept on signup
 
-#### Backend Tasks
-```
-□ Complete Comments API authentication
-  - File: src/app/api/feed/comments/route.ts
-  - Add proper session validation
-  - Enable authenticated users to post comments
+### March 2026 Sprint (In Progress)
 
-□ Fix AI Chat Integration
-  - File: src/components/ai/TripChat.tsx
-  - Connect to actual OpenAI/Claude API
-  - Replace simulated streaming with real AI SDK
-
-□ Pusher Configuration
-  - Add PUSHER_APP_ID, PUSHER_KEY, PUSHER_SECRET to .env
-  - Test real-time notifications
-  - Verify RealtimeContext initializes
-```
-
-#### Frontend Tasks
-```
-□ Trip Builder Enhancement
-  - Add step-by-step wizard flow
-  - Destination search with autocomplete
-  - Date picker with range selection
-  - Budget calculator
-
-□ Survey/Voting UI
-  - Create survey builder component
-  - Voting cards with real-time results
-  - Deadline indicators
-```
-
-#### Security Tasks
-```
-□ Rate Limiting
-  - Apply @upstash/ratelimit to all API routes
-  - Configure limits: 100 req/min general, 10 req/min for AI
-
-□ Input Sanitization
-  - Validate all user inputs with Zod
-  - Sanitize HTML content (already have isomorphic-dompurify)
-
-□ Session Security
-  - Secure cookie settings for production
-  - CSRF protection verification
-```
+- `img` → `next/image` migration complete (0 remaining)
+- `console.*` cleanup complete (0 in production code)
+- `any` type elimination complete (0 remaining)
+- Zod validation on all major API routes
+- Test suite from 0 to 925+ tests (49 test files)
+- Vitest + Testing Library configured
+- Playwright E2E framework configured (browsers need `npx playwright install chromium`)
+- Password reset API + UI complete
+- Email verification endpoint created and wired into signup
+- Global error boundary + custom 404/500 pages
+- Sentry installed and configured (needs production DSN)
+- Vercel Analytics enabled
+- Structured logging via pino (`@/lib/logger`)
+- Security hardening: /api/beta/initialize-password, /api/beta/status, /api/auth/demo
+- CORS configured (next.config.js)
+- Security headers added (HSTS, X-Frame-Options, CSP)
+- InviteMemberModal component
+- /api/feed/share implemented
+- discover/* routes require authentication (2026-03-24)
+- auth/demo Zod input validation (2026-03-24)
 
 ---
 
-### Week 2: Core Features & UX Polish
+## Remaining Work Before Beta Launch
 
-**Goal:** Complete trip planning flow, group coordination
+### Phase 1: Critical Fixes (Do First)
 
-#### Trip Management
 ```
-□ Trip Detail Page Overhaul
-  - Interactive itinerary view
-  - Member management panel
-  - Activity cards with drag-drop (future)
-  - Budget tracking display
-
-□ Trip Templates
-  - Bachelor/Bachelorette party
-  - Family vacation
-  - Weekend getaway
-  - International adventure
-```
-
-#### Group Features
-```
-□ Voting System Implementation
-  - POST /api/trips/[tripId]/voting/route.ts
-  - Multiple voting types (single, ranked, approval)
-  - Real-time vote updates via Pusher
-  - Voting deadline enforcement
-
-□ Survey System
-  - Preference collection
-  - Budget range gathering
-  - Availability calendar
+[ ] Set OPENAI_API_KEY in Vercel production
+[ ] Set Pusher env vars in Vercel production
+[ ] Obtain real Sentry DSN + set in Vercel
+[ ] Verify Resend domain for email deliverability
+[ ] NEXTAUTH_SECRET rotation (32+ chars)
+[ ] Session timeout configuration
+[ ] Failed login attempt limiting
+[ ] Rate limiting on remaining unguarded endpoints
+[ ] XSS prevention (DOMPurify) verification
+[ ] Trip editing flow
+[ ] Trip deletion/archiving
+[ ] Trip wizard (multi-step creation)
 ```
 
-#### Notifications
+### Phase 2: Core Feature Completion
+
 ```
-□ In-App Notification Center
-  - Create /app/notifications/page.tsx (currently 404)
-  - Real-time notification bell updates
-  - Mark as read/unread
-  - Notification preferences
+[ ] Survey frontend integration
+[ ] Voting frontend integration
+[ ] Real-time vote updates via Pusher
+[ ] Survey results display
+[ ] Follow system integration
+[ ] No search results empty state
+[ ] Form validation errors inline
+```
+
+### Phase 3: Pre-Beta Infrastructure
+
+```
+[ ] Uptime monitoring (BetterStack/Checkly)
+[ ] Status page
+[ ] Alert channels (Slack/Email)
+[ ] Log aggregation
+[ ] Database backup schedule
+[ ] Playwright browsers installed in CI
+[ ] Auth flow E2E tests complete
+[ ] Custom domain (optional for beta)
+```
+
+### Phase 4: Legal & Content
+
+```
+[ ] Privacy Policy page
+[ ] Terms of Service page
+[ ] Meta titles/descriptions on all pages
+[ ] Open Graph tags
+[ ] Favicon configured
 ```
 
 ---
 
-### Week 3: Production Infrastructure
-
-**Goal:** Deploy to production with monitoring
-
-#### Hosting Setup (Vercel Recommended)
-```
-□ Vercel Project Configuration
-  - Connect GitHub repository
-  - Set environment variables
-  - Configure build settings
-
-□ Database Production
-  - PlanetScale or Neon for Prisma
-  - Connection pooling setup
-  - Backup configuration
-
-□ Domain & SSL
-  - Custom domain setup
-  - SSL certificate (automatic with Vercel)
-  - DNS configuration
-```
-
-#### Environment Variables Required
-```env
-# Authentication
-NEXTAUTH_SECRET=<generate-secure-secret>
-NEXTAUTH_URL=https://outthegroupchat.com
-
-# Database
-DATABASE_URL=<production-postgres-url>
-
-# AI Services
-OPENAI_API_KEY=<openai-key>  # ✅ SET Dec 17
-ANTHROPIC_API_KEY=<anthropic-key>  # Optional
-
-# Real-time
-PUSHER_APP_ID=<pusher-app-id>
-PUSHER_KEY=<pusher-key>
-PUSHER_SECRET=<pusher-secret>
-PUSHER_CLUSTER=<pusher-cluster>
-
-# Rate Limiting
-UPSTASH_REDIS_REST_URL=<upstash-url>
-UPSTASH_REDIS_REST_TOKEN=<upstash-token>
-
-# Monitoring (Optional but Recommended)
-SENTRY_DSN=<sentry-dsn>
-```
-
-#### Monitoring Setup
-```
-□ Sentry Error Tracking
-  - Install @sentry/nextjs
-  - Configure error boundaries
-  - Set up alerting
-
-□ Vercel Analytics
-  - Enable built-in analytics
-  - Configure performance monitoring
-
-□ Uptime Monitoring
-  - BetterStack or Checkly
-  - Set up status page
-```
-
----
-
-### Week 4: Launch & User Onboarding
-
-**Goal:** Soft launch with initial users
-
-#### Onboarding Flow
-```
-□ Welcome Experience
-  - First-time user wizard
-  - Travel style quiz
-  - Interests selection
-  - First trip prompt
-
-□ Empty States
-  - Engaging empty states for all pages
-  - Call-to-action buttons
-  - Helper text
-```
-
-#### Launch Checklist
-```
-□ Pre-Launch
-  - [ ] All critical bugs fixed
-  - [ ] Security audit passed
-  - [ ] Performance tested (Lighthouse > 80)
-  - [ ] Mobile responsive verified
-  - [ ] SEO meta tags complete
-  - [ ] Error pages styled
-  - [ ] 404 page friendly
-
-□ Launch Day
-  - [ ] DNS propagated
-  - [ ] Database seeded with sample data
-  - [ ] Monitoring dashboards ready
-  - [ ] Support channel ready (Discord/Slack)
-  - [ ] Analytics tracking verified
-
-□ Post-Launch
-  - [ ] Monitor error rates
-  - [ ] Collect user feedback
-  - [ ] Quick-fix critical issues
-  - [ ] Daily check-ins for first week
-```
-
----
-
-## 🏗️ Technical Architecture for 24/7 Operations
-
-### Recommended Production Stack
+## Technical Architecture (Current State)
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    PRODUCTION ARCHITECTURE                   │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐     │
-│  │   Vercel    │    │  Vercel     │    │  Cloudflare │     │
-│  │   Edge      │ ←─ │  Functions  │ ←─ │     CDN     │     │
-│  │  (SSR/ISR)  │    │  (API)      │    │             │     │
-│  └─────────────┘    └─────────────┘    └─────────────┘     │
-│         │                  │                                 │
-│         ▼                  ▼                                 │
-│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐     │
-│  │ PlanetScale │    │   Upstash   │    │   Pusher    │     │
-│  │   (MySQL)   │    │   Redis     │    │  (Realtime) │     │
-│  │  Serverless │    │ Rate Limit  │    │             │     │
-│  └─────────────┘    └─────────────┘    └─────────────┘     │
-│         │                                                    │
-│         ▼                                                    │
-│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐     │
-│  │   Sentry    │    │  BetterStack│    │   OpenAI    │     │
-│  │   Errors    │    │   Uptime    │    │   Claude    │     │
-│  └─────────────┘    └─────────────┘    └─────────────┘     │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
++-----------------------------------------------------------------------+
+|                          PRODUCTION ARCHITECTURE                       |
++-----------------------------------------------------------------------+
+|                                                                        |
+|  +---------------+    +---------------+    +-------------------+      |
+|  |  Vercel       |    |  Next.js 14   |    |  Cloudflare CDN   |      |
+|  |  Hosting      | <- |  App Router   | <- |  (via Vercel)     |      |
+|  |  (SSR/ISR)    |    |  API Routes   |    |                   |      |
+|  +---------------+    +---------------+    +-------------------+      |
+|         |                    |                                         |
+|         v                    v                                         |
+|  +---------------+    +---------------+    +-------------------+      |
+|  | Supabase      |    |  Upstash      |    |  Pusher           |      |
+|  | PostgreSQL    |    |  Redis        |    |  (Real-time)      |      |
+|  | (via Prisma5) |    |  Rate Limit   |    |  [needs env vars] |      |
+|  +---------------+    +---------------+    +-------------------+      |
+|         |                                                              |
+|         v                                                              |
+|  +---------------+    +---------------+    +-------------------+      |
+|  |  Sentry       |    |  BetterStack  |    |  OpenAI           |      |
+|  |  [needs DSN]  |    |  [pending]    |    |  [needs Vercel key]|     |
+|  +---------------+    +---------------+    +-------------------+      |
+|                                                                        |
++-----------------------------------------------------------------------+
 ```
+
+### Actual Database: Supabase PostgreSQL
+> Note: An earlier version of this document referenced PlanetScale (MySQL). The actual database is Supabase PostgreSQL, connected via Prisma 5.22.0.
 
 ### Cost Estimation (Monthly)
 
 | Service | Free Tier | Starter | Growth |
 |---------|-----------|---------|--------|
 | **Vercel** (Hosting) | $0 | $20 | $70 |
-| **PlanetScale** (Database) | $0 (1 DB) | $29 | $59 |
+| **Supabase** (Database) | $0 | $25 | $100 |
 | **Upstash** (Redis) | $0 (10k/day) | $10 | $25 |
 | **Pusher** (Real-time) | $0 (200k msg) | $49 | $99 |
 | **OpenAI** (AI) | Pay-as-go | ~$20 | ~$100 |
 | **Sentry** (Errors) | $0 (5k events) | $26 | $80 |
-| **Total** | **~$0-20** | **~$154** | **~$433** |
-
-### Scaling Considerations
-
-```
-Users 0-1,000       → Free tiers sufficient
-Users 1,000-10,000  → Starter plans (~$150/mo)
-Users 10,000-50,000 → Growth plans (~$500/mo)
-Users 50,000+       → Custom infrastructure
-```
+| **Total** | **~$0-20** | **~$150** | **~$474** |
 
 ---
 
-## 📁 File Changes Required
+## Security Checklist
 
-### New Files to Create
-
-```
-src/app/notifications/page.tsx      # Notification center
-src/app/trips/new/page.tsx          # Trip wizard (enhanced)
-src/app/trips/[tripId]/vote/page.tsx # Voting interface
-src/app/trips/[tripId]/survey/page.tsx # Survey builder
-src/components/trips/TripWizard.tsx # Step-by-step wizard
-src/components/voting/VotingSystem.tsx # Real-time voting
-src/components/survey/SurveyBuilder.tsx # Survey creation
-src/components/onboarding/Welcome.tsx # First-time experience
-```
-
-### Files to Modify
-
-```
-~~src/app/api/feed/comments/route.ts~~  # ✅ COMPLETE Dec 17 - Trip support added
-~~src/components/ai/TripChat.tsx~~      # ✅ COMPLETE Dec 17 - OpenAI connected
-src/contexts/RealtimeContext.tsx    # Verify Pusher init
-src/app/api/trips/route.ts          # Add template support
-```
-
----
-
-## 🔒 Security Checklist for Production
-
-### Critical (Must Have)
+### Critical (Must Have Before Beta)
 
 - [x] HTTPS only (Vercel handles this)
-- [ ] NEXTAUTH_SECRET is strong (32+ chars)
-- [ ] Database credentials not in code
-- [ ] API keys not exposed to client
-- [ ] Rate limiting on all endpoints
-- [ ] Input validation on all forms
-- [ ] SQL injection prevention (Prisma handles)
-- [ ] XSS prevention (React handles, plus DOMPurify)
-
-### Important (Should Have)
-
-- [ ] CORS configured properly
-- [ ] Security headers (CSP, HSTS, etc.)
+- [ ] NEXTAUTH_SECRET is strong (32+ chars) — verify
+- [x] Database credentials not in code
+- [x] API keys not exposed to client
+- [x] Rate limiting on major endpoints (Upstash)
+- [x] Input validation on major API routes (Zod)
+- [x] SQL injection prevention (Prisma)
+- [x] XSS prevention (React handles, plus DOMPurify installed)
+- [x] CORS configured (next.config.js, 2026-03-23)
+- [x] Security headers (HSTS, X-Frame-Options, CSP — 2026-03-10)
+- [ ] Rate limiting on ALL endpoints (in progress)
 - [ ] Session timeout configuration
 - [ ] Failed login attempt limiting
-- [ ] Audit logging for sensitive operations
 
-### Nice to Have
+### Completed Security Fixes
+
+- [x] In-memory rate limiting replaced with Upstash Redis
+- [x] JWT callback DB query optimized (signIn/update only)
+- [x] Email removed from user search (privacy)
+- [x] Placeholder user creation abuse fixed (PendingInvitation model)
+- [x] /api/beta/initialize-password protected by N8N_API_KEY auth (2026-03-19)
+- [x] /api/beta/status response narrowed to {exists, passwordInitialized} (2026-03-22)
+- [x] /api/auth/demo guarded by DEMO_MODE env var (2026-03-22)
+- [x] /api/discover/search requires auth (2026-03-24)
+- [x] /api/discover/recommendations requires auth (2026-03-24)
+
+### Post-Beta (Nice to Have)
 
 - [ ] Two-factor authentication
 - [ ] OAuth providers (Google, Apple)
 - [ ] IP-based rate limiting
-- [ ] Honeypot fields on forms
+- [ ] Audit logging for sensitive operations
 
 ---
 
-## 📈 Success Metrics
+## Success Metrics for Beta Launch
 
-### Week 1-2 Goals
+### Technical Targets
+
 - [ ] 0 critical bugs in production
-- [ ] < 2s page load time
-- [ ] 100% uptime
+- [ ] < 3s page load time (Vercel Analytics)
+- [ ] > 99% uptime (BetterStack)
+- [ ] Error rate < 1% (Sentry)
 
-### Week 3-4 Goals
-- [ ] 50 beta users signed up
-- [ ] 10 trips created
-- [ ] 80% feature completion
+### User Targets
 
-### Month 2 Goals
-- [ ] 500 users
-- [ ] 100 trips created
-- [ ] 4.0+ user satisfaction rating
+- [ ] 20-50 beta users signed up
+- [ ] 10+ trips created
+- [ ] Survey/voting flows tested end-to-end
 
 ---
 
-## 🆘 Emergency Procedures
+## Emergency Procedures
 
 ### If Site Goes Down
 1. Check Vercel status page
-2. Check PlanetScale status
+2. Check Supabase status
 3. Review Sentry for errors
-4. Check BetterStack alerts
+4. Check BetterStack alerts (once configured)
 5. Rollback to previous deployment if needed
 
 ### If Database Issues
-1. Check PlanetScale dashboard
+1. Check Supabase dashboard
 2. Verify connection string
-3. Check for query timeouts
-4. Scale up if needed
+3. Check for query timeouts in Sentry
+4. Scale connection pool if needed
 
 ### If AI Not Working
-1. Check OpenAI/Anthropic status
-2. Verify API keys
-3. Fall back to cached responses
-4. Implement graceful degradation
+1. Verify OPENAI_API_KEY is set in Vercel environment
+2. Check OpenAI status page
+3. Routes return 503 gracefully when key absent (implemented 2026-03-23)
+4. Fall back to manual itinerary planning UI
 
 ---
 
-*Document Version: 2.0*
-*Target Launch: End of Week 4*
+*Document Version: 3.0*
+*Target Launch: Q2 2026 (Beta)*
+*Last Updated: 2026-03-25*
 *Owner: Development Team*
-

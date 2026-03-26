@@ -1,3 +1,7 @@
+/**
+ * System prompt establishing the AI's role as a travel budget expert.
+ * Instructs the model to produce structured JSON budget advice for groups.
+ */
 export const budgetOptimizationSystemPrompt = `You are a travel budget expert who helps groups maximize their experience while staying within budget. You know how to find deals, identify where to splurge vs save, and create realistic cost estimates.
 
 Guidelines:
@@ -9,6 +13,19 @@ Guidelines:
 
 Always respond in structured JSON format.`;
 
+/**
+ * Builds a detailed budget-analysis prompt for an AI model.
+ *
+ * @param params - Trip parameters used to populate the prompt.
+ * @param params.destination - City or region the group is visiting.
+ * @param params.duration - Length of the trip in days.
+ * @param params.groupSize - Number of travelers in the group.
+ * @param params.targetBudget - Total trip budget across the whole group.
+ * @param params.currency - ISO currency code (e.g., "USD").
+ * @param params.activities - List of planned activity names.
+ * @param params.accommodationStyle - Desired accommodation tier.
+ * @returns A prompt string ready to send to the AI model.
+ */
 export function buildBudgetAnalysisPrompt(params: {
   destination: string;
   duration: number;
@@ -89,6 +106,9 @@ Provide a comprehensive budget analysis in this format:
 }`;
 }
 
+/**
+ * Short follow-up prompt for comparing activity costs and identifying best-value options.
+ */
 export const costComparisonPrompt = `Compare the cost of activities and suggest the best value options.
 Consider quality, location, timing, and group dynamics.
 Identify which splurges are worth it and where to save.`;

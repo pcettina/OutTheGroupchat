@@ -32,9 +32,52 @@ type TripMemberWithUser = Prisma.TripMemberGetPayload<{
   include: { user: { select: { id: true; name: true; city: true; preferences: true } } };
 }>;
 
+/**
+ * RecommendationService
+ *
+ * Generates and applies AI-assisted trip recommendations for a group trip.
+ * All methods are static — no instance is required.
+ *
+ * Typical flow:
+ *   1. Call `generateRecommendations` after survey responses have been collected.
+ *      This analyzes member preferences and produces a ranked list of
+ *      destination recommendations with budget breakdowns and day-by-day itineraries.
+ *   2. After the group selects a recommendation (e.g. via a vote), call
+ *      `applyRecommendation` to persist the chosen destination, itinerary days,
+ *      itinerary items, and per-member flight estimates to the database.
+ *
+ * Static destination metadata (DESTINATIONS, DESTINATION_ACTIVITIES, BASE_DAILY_COSTS,
+ * AIRPORT_CODES, FLIGHT_DISTANCE_FACTORS) is imported from `./recommendation-data`
+ * to keep this file under the 600-line limit.
+ *
+ * @example
+ * ```ts
+ * const recs = await RecommendationService.generateRecommendations(tripId, surveyId, 5);
+ * await RecommendationService.applyRecommendation(tripId, recs[0]);
+ * ```
+ */
 export class RecommendationService {
   /**
-   * Generate trip recommendations based on survey analysis
+   * Generate a ranked list of trip recommendations derived from survey responses.
+   *
+   * Steps performed:
+   *   1. Calls `SurveyService.analyzeSurveyResponses` to obtain ranked location
+   *      preferences, activity preferences, budget analysis, and optimal date range.
+   *   2. Fetches all current trip members (with departure city and user preferences)
+   *      from the database.
+   *   3. For each of the top `count` locations returned by the survey analysis:
+   *      - Builds a `Destination` object from the DESTINATIONS lookup.
+   *      - Calculates a `TripBudget` using base daily costs and a destination multiplier.
+   *      - Generates a day-by-day `ItineraryDayData[]` tailored to group activity prefs.
+   *      - Estimates per-member flight costs based on each member's departure city.
+   *      - Computes a 0–100 match score weighting location score, rank, and top-choice votes.
+   *   4. Returns all recommendations sorted descending by match score.
+   *
+   * @param tripId - The ID of the trip for which recommendations are being generated.
+   * @param surveyId - The ID of the survey whose responses drive the analysis.
+   * @param count - Maximum number of destination candidates to evaluate (default: 5).
+   * @returns A promise that resolves to an array of `TripRecommendation` objects,
+   *   sorted from highest to lowest match score.
    */
   static async generateRecommendations(
     tripId: string,
@@ -399,7 +442,21 @@ export class RecommendationService {
   }
 
   /**
-   * Save selected recommendation to the trip
+   * Persist a selected recommendation to the database, transitioning the trip
+   * into the VOTING status with fully populated itinerary and cost data.
+   *
+   * Operations performed (in order):
+   *   1. Updates the `Trip` record: sets `destination`, `startDate`, `endDate`,
+   *      `budget`, and advances `status` to `'VOTING'`.
+   *   2. For each day in `recommendation.itinerary`, creates an `ItineraryDay` row,
+   *      then creates an `ItineraryItem` row for every item within that day.
+   *      Items are written sequentially to respect foreign-key ordering.
+   *   3. For each entry in `recommendation.individualCosts`, updates the matching
+   *      `TripMember` row with an estimated flight cost stored in `flightDetails`.
+   *
+   * @param tripId - The ID of the trip to update.
+   * @param recommendation - The `TripRecommendation` object selected by the group.
+   * @returns A promise that resolves when all database writes have completed.
    */
   static async applyRecommendation(
     tripId: string,

@@ -1,5 +1,10 @@
 import { TripPreferences, SurveyAnalysis } from '@/types';
 
+/**
+ * System prompt establishing the AI's role as an expert group-trip planner.
+ * Covers budget optimisation, weather awareness, and group-dynamics guidelines.
+ * Instructs the model to respond with structured JSON.
+ */
 export const itinerarySystemPrompt = `You are an expert travel planner specializing in group trips. Your job is to create personalized, detailed itineraries that balance different group members' preferences while maximizing fun and minimizing conflict.
 
 CORE GUIDELINES:
@@ -30,6 +35,18 @@ GROUP DYNAMICS:
 
 Always format your response as structured JSON that can be parsed.`;
 
+/**
+ * Builds a day-by-day itinerary prompt for an AI model.
+ *
+ * @param params - Trip details used to populate the prompt.
+ * @param params.destination - City or region the group is visiting.
+ * @param params.dates - ISO date strings for trip start and end.
+ * @param params.groupSize - Number of travelers in the group.
+ * @param params.preferences - Per-member travel preference objects.
+ * @param params.surveyAnalysis - Optional aggregated survey results for the trip.
+ * @param params.budget - Optional total budget with currency code.
+ * @returns A prompt string ready to send to the AI model.
+ */
 export function buildItineraryPrompt(params: {
   destination: string;
   dates: { start: string; end: string };
@@ -117,7 +134,11 @@ Please create the itinerary in the following JSON format:
 }`;
 }
 
-export const itineraryRefinementPrompt = `You are refining an existing itinerary based on user feedback. 
+/**
+ * Follow-up prompt for refining an existing itinerary based on user feedback.
+ * Instructs the model to preserve liked sections and return the full updated JSON.
+ */
+export const itineraryRefinementPrompt = `You are refining an existing itinerary based on user feedback.
 Keep the parts they liked, adjust the parts they didn't, and maintain the overall structure.
 Respond with the complete updated itinerary in the same JSON format.`;
 

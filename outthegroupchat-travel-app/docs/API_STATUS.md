@@ -1,6 +1,6 @@
 # 📡 API & Integration Status
 
-> **Last updated: 2026-03-24**
+> **Last updated: 2026-03-25**
 >
 > **Last Audit:** March 2026
 > **Overall Status:** 86% Complete
@@ -26,7 +26,7 @@
 |----------|--------|--------|-------------------|-------|
 | `/api/auth/[...nextauth]` | ALL | ✅ | ✅ | NextAuth handler |
 | `/api/auth/signup` | POST | ✅ | ✅ | Zod validation added 2026-03-18; email verification sending added 2026-03-21 |
-| `/api/auth/demo` | POST | ✅ | ✅ | Demo credentials in env vars ✅ 2026-03-10; DEMO_MODE env guard added 2026-03-22; Zod input validation added 2026-03-24 |
+| `/api/auth/demo` | POST | ✅ | ✅ | Demo credentials in env vars ✅ 2026-03-10; DEMO_MODE env guard added 2026-03-22; Zod input validation added 2026-03-24; z.object({}).strict() replacing passthrough 2026-03-25 |
 | `/api/auth/demo` | GET | ✅ | ✅ | Returns demo account info (hides password in prod); requires DEMO_MODE=true env var ✅ 2026-03-22 |
 | `/api/auth/reset-password` | POST | ✅ | ✅ | Request reset token; email-safe 200 response ✅ 2026-03-12; UI page added 2026-03-14 |
 | `/api/auth/reset-password` | PATCH | ✅ | ✅ | Confirm reset with token + new password ✅ 2026-03-12; UI confirm page added 2026-03-14 |
@@ -45,7 +45,7 @@
 |----------|--------|--------|-------------------|-------|
 | `/api/trips` | GET | ✅ | 🔶 | Lists user's trips |
 | `/api/trips` | POST | ✅ | 🔶 | Creates new trip |
-| `/api/trips/[tripId]` | GET | ✅ | 🔶 | Get trip details |
+| `/api/trips/[tripId]` | GET | ✅ | 🔶 | Get trip details; email stripped from unauthenticated public responses (security hardened 2026-03-25) |
 | `/api/trips/[tripId]` | PATCH | ✅ | ⏳ | Update trip |
 | `/api/trips/[tripId]` | DELETE | ✅ | ⏳ | Delete trip |
 
@@ -213,7 +213,8 @@ BLOCKED - Need Environment Variables:
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
 | `/api/cron` | GET | ✅ | N/A | Background jobs; CRON_SECRET validation hardened 2026-03-22 |
-| `/api/health` | GET | ✅ | N/A | DB connectivity check, env info, 503 on degraded ✅ 2026-03-10 |
+| Sentry lib | N/A | ✅ | N/A | `src/lib/sentry.ts` created 2026-03-25 — centralized Sentry helpers (captureException, addBreadcrumb, setUser) |
+| `/api/health` | GET | ✅ | N/A | DB connectivity check, 503 on degraded ✅ 2026-03-10; response hardened 2026-03-25 (NODE_ENV + version removed for data minimization — returns {status, timestamp, database}) |
 | `/api/users/me` | GET | ✅ | 🔶 | Get current authenticated user |
 | `/api/users/me` | PATCH | ✅ | 🔶 | Update current user profile + preferences |
 
@@ -371,4 +372,4 @@ EMAIL_FROM=             # Email sender (onboarding@resend.dev) ✅
 
 *Review and update after each API change.*
 
-*Last Updated: 2026-03-24 - /api/discover/search auth guard added (security improvement — was unauthenticated); /api/discover/recommendations auth guard added; /api/discover/import rate limiting + auth guard confirmed; /api/auth/demo Zod input validation added; 60 new tests tonight (925+ total, 49 test files)*
+*Last Updated: 2026-03-25 - /api/trips/[tripId] GET: email stripped from unauthenticated public responses (security); /api/health response hardened (NODE_ENV/version removed); /api/auth/demo z.object({}).strict() added; src/lib/sentry.ts created (Sentry helpers); DOMPurify XSS protection added to RichFeedItem.tsx; JSDoc added to recommendation.service.ts, survey.service.ts, ai/embeddings.ts, ai/prompts; 79 new tests tonight (1003 total, 53 test files)*

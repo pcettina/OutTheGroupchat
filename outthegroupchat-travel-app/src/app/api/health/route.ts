@@ -5,34 +5,28 @@ export const dynamic = 'force-dynamic';
 
 /**
  * Health check endpoint.
- * Returns service status and basic connectivity info for monitoring.
- * Safe to expose publicly — contains no sensitive data.
+ * Returns minimal service status for uptime monitoring.
+ * NODE_ENV and version metadata are intentionally omitted to reduce
+ * information exposure to unauthenticated callers.
  */
 export async function GET() {
-  const start = Date.now();
-
-  const checks: Record<string, { status: 'ok' | 'error'; latencyMs?: number; error?: string }> = {};
+  let databaseStatus: 'connected' | 'error' = 'error';
 
   // Check database connectivity
   try {
     await prisma.$queryRaw`SELECT 1`;
-    checks.database = { status: 'ok', latencyMs: Date.now() - start };
-  } catch (err) {
-    checks.database = {
-      status: 'error',
-      error: err instanceof Error ? err.message : 'Unknown database error',
-    };
+    databaseStatus = 'connected';
+  } catch {
+    databaseStatus = 'error';
   }
 
-  const allOk = Object.values(checks).every(c => c.status === 'ok');
+  const allOk = databaseStatus === 'connected';
 
   return NextResponse.json(
     {
       status: allOk ? 'ok' : 'degraded',
-      version: process.env.npm_package_version ?? 'unknown',
-      environment: process.env.NODE_ENV,
       timestamp: new Date().toISOString(),
-      checks,
+      database: databaseStatus,
     },
     { status: allOk ? 200 : 503 }
   );

@@ -5,10 +5,41 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
 import Image from 'next/image';
 import Link from 'next/link';
+import DOMPurify from 'isomorphic-dompurify';
 import { ReactionPicker } from './ReactionPicker';
 import { MediaGallery } from './MediaGallery';
 import { CommentThread } from './CommentThread';
 import { ShareModal } from './ShareModal';
+
+/**
+ * Sanitize a plain text string to remove any HTML/script injection.
+ * Returns an empty string if input is null/undefined.
+ */
+function sanitizeText(value: string | null | undefined): string {
+  if (!value) return '';
+  return DOMPurify.sanitize(value, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] });
+}
+
+/**
+ * Sanitize a URL string. Returns an empty string if the URL contains
+ * a dangerous scheme (e.g. javascript:) or any injected HTML.
+ */
+function sanitizeUrl(value: string | null | undefined): string {
+  if (!value) return '';
+  const cleaned = DOMPurify.sanitize(value, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] });
+  // Block javascript: and data: schemes
+  if (/^(javascript|data|vbscript):/i.test(cleaned.trim())) return '';
+  return cleaned;
+}
+
+/**
+ * Sanitize a route segment used in hrefs (e.g. user.id, trip.id).
+ * Strips HTML and ensures the value is safe for interpolation into a path.
+ */
+function sanitizeRouteSegment(value: string | null | undefined): string {
+  if (!value) return '';
+  return DOMPurify.sanitize(value, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] });
+}
 
 interface MediaItem {
   id: string;
@@ -122,6 +153,19 @@ export function RichFeedItem({
   const config = typeConfig[type] || typeConfig.trip_created;
   const timeAgo = formatDistanceToNow(new Date(timestamp), { addSuffix: true });
 
+  // Sanitize user-supplied values used in hrefs and image src attributes
+  const safeUserId = sanitizeRouteSegment(user.id);
+  const safeUserImage = sanitizeUrl(user.image);
+  const safeUserName = sanitizeText(user.name);
+  const safeTripId = trip ? sanitizeRouteSegment(trip.id) : '';
+  const safeTripCoverImage = trip ? sanitizeUrl(trip.coverImage) : '';
+  const safeTripTitle = trip ? sanitizeText(trip.title) : '';
+  const safeTripCity = trip ? sanitizeText(trip.destination.city) : '';
+  const safeTripCountry = trip ? sanitizeText(trip.destination.country) : '';
+  const safeActivityName = activity ? sanitizeText(activity.name) : '';
+  const safeActivityDescription = activity ? sanitizeText(activity.description) : '';
+  const safeContent = sanitizeText(content);
+
   const handleAddComment = useCallback((text: string) => {
     const newComment: Comment = {
       id: `temp-${Date.now()}`,
@@ -151,15 +195,15 @@ export function RichFeedItem({
       <div className="p-4 pb-3">
         <div className="flex items-start gap-3">
           {/* Avatar */}
-          <Link href={`/profile/${user.id}`}>
+          <Link href={`/profile/${safeUserId}`}>
             <motion.div
               whileHover={{ scale: 1.05 }}
               className="w-11 h-11 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white font-semibold overflow-hidden flex-shrink-0"
             >
-              {user.image ? (
-                <Image src={user.image} alt={user.name || ''} width={44} height={44} className="w-full h-full object-cover" />
+              {safeUserImage ? (
+                <Image src={safeUserImage} alt={safeUserName} width={44} height={44} className="w-full h-full object-cover" />
               ) : (
-                user.name?.charAt(0) || '?'
+                safeUserName.charAt(0) || '?'
               )}
             </motion.div>
           </Link>
@@ -168,10 +212,10 @@ export function RichFeedItem({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <Link
-                href={`/profile/${user.id}`}
+                href={`/profile/${safeUserId}`}
                 className="font-semibold text-slate-900 dark:text-white hover:underline"
               >
-                {user.name || 'Anonymous'}
+                {safeUserName || 'Anonymous'}
               </Link>
               <span className="text-slate-500 dark:text-slate-400 text-sm">
                 {config.action}
@@ -219,50 +263,50 @@ export function RichFeedItem({
         </div>
 
         {/* Content Text */}
-        {content && (
+        {safeContent && (
           <p className="mt-3 text-slate-700 dark:text-slate-300 whitespace-pre-wrap">
-            {content}
+            {safeContent}
           </p>
         )}
       </div>
 
       {/* Trip Card */}
       {trip && (
-        <Link href={`/trips/${trip.id}`} className="block mx-4 mb-3">
+        <Link href={`/trips/${safeTripId}`} className="block mx-4 mb-3">
           <motion.div
             whileHover={{ scale: 1.01 }}
             className="bg-slate-50 dark:bg-slate-700/50 rounded-xl overflow-hidden border border-slate-100 dark:border-slate-600"
           >
             {/* Cover Image */}
-            {trip.coverImage && (
+            {safeTripCoverImage && (
               <div className="h-36 relative">
                 <Image
-                  src={trip.coverImage}
-                  alt={trip.title}
+                  src={safeTripCoverImage}
+                  alt={safeTripTitle}
                   fill
                   className="object-cover"
                   sizes="(max-width: 768px) 100vw, 600px"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                 <div className="absolute bottom-3 left-3 right-3">
-                  <h3 className="font-semibold text-white text-lg">{trip.title}</h3>
+                  <h3 className="font-semibold text-white text-lg">{safeTripTitle}</h3>
                   <p className="text-white/80 text-sm flex items-center gap-1">
                     <span>📍</span>
-                    {trip.destination.city}, {trip.destination.country}
+                    {safeTripCity}, {safeTripCountry}
                   </p>
                 </div>
               </div>
             )}
 
             {/* No Cover Image */}
-            {!trip.coverImage && (
+            {!safeTripCoverImage && (
               <div className="p-4">
                 <h3 className="font-semibold text-slate-900 dark:text-white">
-                  {trip.title}
+                  {safeTripTitle}
                 </h3>
                 <p className="text-sm text-slate-600 dark:text-slate-400 flex items-center gap-1">
                   <span>📍</span>
-                  {trip.destination.city}, {trip.destination.country}
+                  {safeTripCity}, {safeTripCountry}
                 </p>
               </div>
             )}
@@ -306,11 +350,11 @@ export function RichFeedItem({
             </div>
             <div className="flex-1">
               <h4 className="font-medium text-slate-900 dark:text-white">
-                {activity.name}
+                {safeActivityName}
               </h4>
-              {activity.description && (
+              {safeActivityDescription && (
                 <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 line-clamp-2">
-                  {activity.description}
+                  {safeActivityDescription}
                 </p>
               )}
               {activity.cost && (
@@ -399,7 +443,7 @@ export function RichFeedItem({
 
       {/* Comments Modal */}
       <CommentThread
-        itemId={trip?.id || activity?.id || id}
+        itemId={safeTripId || sanitizeRouteSegment(activity?.id) || sanitizeRouteSegment(id)}
         itemType={trip ? 'trip' : 'activity'}
         isOpen={showComments}
         onClose={() => setShowComments(false)}
@@ -411,18 +455,18 @@ export function RichFeedItem({
         isOpen={showShareModal}
         onClose={() => setShowShareModal(false)}
         shareData={trip ? {
-          id: trip.id,
+          id: safeTripId,
           type: 'trip',
-          title: trip.title,
-          destination: `${trip.destination.city}, ${trip.destination.country}`,
-          imageUrl: trip.coverImage,
-          userName: user.name || undefined,
+          title: safeTripTitle,
+          destination: `${safeTripCity}, ${safeTripCountry}`,
+          imageUrl: safeTripCoverImage || undefined,
+          userName: safeUserName || undefined,
         } : activity ? {
-          id: activity.id,
+          id: sanitizeRouteSegment(activity.id),
           type: 'activity',
-          title: activity.name,
-          description: activity.description || undefined,
-          userName: user.name || undefined,
+          title: safeActivityName,
+          description: safeActivityDescription || undefined,
+          userName: safeUserName || undefined,
         } : null}
       />
     </motion.article>
