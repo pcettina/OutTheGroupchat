@@ -191,7 +191,7 @@
 
 | Metric | Target | Current | Previous |
 |--------|--------|---------|---------|
-| Test count | 500+ | 910+ (46 test files) | ~661 (37 files) |
+| Test count | 500+ | 1003 (53 test files) | 924 (49 files) |
 | `any` types | 0 | 0 ✅ | 0 |
 | `console.*` in prod code | 0 | 0 ✅ | 0 |
 | TSC errors (test files) | 0 | 0 ✅ | 0 |
@@ -224,6 +224,40 @@
 *Updated: 2026-03-20*
 ---
 
+## 🟢 Completed 2026-03-25 (Nightly Build)
+
+### Wave 1 — Test Writers (79 tests added)
+- [L1] Created invitations-post.test.ts (18 tests for POST /api/trips/[tripId]/invitations)
+- [L2] Created ai-get-methods.test.ts (16 tests for GET /api/ai/chat + GET /api/ai/recommend); TSC errors fixed (TS2345 double-cast on getModel return type)
+- [M1] Created beta-extended.test.ts (21 tests for extended beta route coverage)
+- [M2] Created users-follow.test.ts (24 tests for POST /api/users/[userId] follow/unfollow)
+
+### Wave 2 — Features & Security (0 new tests, intentional changes)
+- [L3] /api/trips/[tripId] GET: email stripped from unauthenticated public trip responses (security hardening)
+- [L4] src/lib/sentry.ts created — centralized Sentry helpers (captureException, addBreadcrumb, setUser)
+- [L5] src/components/feed/RichFeedItem.tsx: DOMPurify XSS protection added
+- [L6] src/services/recommendation.service.ts: JSDoc added throughout
+- [M3] src/app/api/auth/demo/route.ts: z.object({}).strict() replacing passthrough
+- [M4] src/app/api/health/route.ts: NODE_ENV + npm_package_version removed (data minimization — response shape narrowed to {status, timestamp, database})
+- [M5] JSDoc added to survey.service.ts, ai/prompts/budget.ts, ai/prompts/itinerary.ts, ai/prompts/recommendations.ts, lib/ai/embeddings.ts
+- [M6] docs/PRODUCTION_ROADMAP.md, IMPLEMENTATION_STACK.md, FUTURE_IMPLEMENTATION.md updated from Dec 2024 → 2026-03-25
+
+### Shared File Consolidation
+- ai-get-methods.test.ts TSC errors fixed (TS2345: getModel returns LanguageModelV1 not string — double-cast applied)
+- users.test.ts health route assertions updated to match new response shape ({database} vs {checks.database})
+- API_STATUS.md updated: trips/[tripId] security note, health route shape change, sentry.ts noted, auth/demo strict validation
+- CURRENT_SPRINT.md, CODEMAP.md, LAUNCH_CHECKLIST.md all updated to 2026-03-25
+
+### Metrics
+- Tests: 924 → 1003 passing (79 new tests)
+- Test files: 49 → 53
+- Routes: 48 (unchanged)
+- TS files: ~263
+- any types: 0 | console.*: 0 | TODO: 0 | Files >600 lines (prod): 0
+
+*Updated: 2026-03-25*
+---
+
 ## 🟢 Completed 2026-03-24 (Nightly Build)
 
 ### Wave 1 — Test Writers (48 tests added)
@@ -243,7 +277,7 @@
 - [M6] auth/demo: Zod input validation added
 
 ### Metrics
-- Tests: 865 → 925+ passing (estimated after fixes)
+- Tests: 865 → 924 passing
 - Test files: 45 → 49
 - Routes: 48
 - any types: 0 | console.*: 0 | TODO: 0 | Files >600 lines (prod): 0

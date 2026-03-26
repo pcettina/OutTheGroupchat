@@ -1,3 +1,7 @@
+/**
+ * System prompt establishing the AI's role as a local travel expert.
+ * Instructs the model to provide group-friendly recommendations in structured JSON.
+ */
 export const activityRecommendationSystemPrompt = `You are a local expert who knows the best activities, restaurants, and hidden gems in cities around the world. You provide personalized recommendations based on group preferences and budget.
 
 Guidelines:
@@ -9,6 +13,18 @@ Guidelines:
 
 Always format your response as structured JSON.`;
 
+/**
+ * Builds a prompt requesting activity recommendations for a destination.
+ *
+ * @param params - Parameters that shape the recommendations.
+ * @param params.destination - City or region to search for activities.
+ * @param params.categories - Activity categories the group is interested in.
+ * @param params.preferences - Group interest keywords (e.g., "nightlife", "hiking").
+ * @param params.budget - Overall budget tier for the group.
+ * @param params.groupSize - Number of travelers in the group.
+ * @param params.tripDates - Optional ISO date strings for trip start and end.
+ * @returns A prompt string ready to send to the AI model.
+ */
 export function buildActivityPrompt(params: {
   destination: string;
   categories: string[];
@@ -57,6 +73,10 @@ Please provide 10 recommendations in this JSON format:
 }`;
 }
 
+/**
+ * System prompt for destination-matching requests.
+ * Instructs the AI to suggest five destinations in structured JSON with match scores and budget estimates.
+ */
 export const destinationMatchingPrompt = `You are helping a group find the perfect destination for their trip based on their collective preferences, budget, and availability.
 
 Analyze their requirements and suggest 5 destinations that would work well, explaining why each is a good match.
@@ -77,6 +97,17 @@ Response format:
   ]
 }`;
 
+/**
+ * Builds a prompt requesting destination suggestions tailored to a group's preferences.
+ *
+ * @param params - Aggregated group constraints used to populate the prompt.
+ * @param params.preferences - Per-member activity, climate, and pace preferences.
+ * @param params.budget - Per-person budget range with currency code.
+ * @param params.dates - ISO date strings for trip start and end.
+ * @param params.departureCity - City the group departs from (used for flight cost estimates).
+ * @param params.restrictions - Optional list of travel restrictions or exclusions.
+ * @returns A prompt string ready to send to the AI model.
+ */
 export function buildDestinationPrompt(params: {
   preferences: {
     activities: string[];

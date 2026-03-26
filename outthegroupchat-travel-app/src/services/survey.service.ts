@@ -15,7 +15,10 @@ type SurveyResponseWithUser = Prisma.SurveyResponseGetPayload<{
   include: { user: true };
 }>;
 
-// Default survey templates
+/**
+ * Default survey template for capturing individual user travel preferences.
+ * Covers travel style, budget range, interests, accommodation type, and activity level.
+ */
 export const INITIAL_USER_SURVEY: SurveyQuestion[] = [
   {
     id: 'travel_style',
@@ -74,6 +77,11 @@ export const INITIAL_USER_SURVEY: SurveyQuestion[] = [
   },
 ];
 
+/**
+ * Default survey template for planning a specific group trip.
+ * Collects availability windows, duration ranking, destination and activity rankings,
+ * budget, accommodation type, room-sharing preference, dining preferences, and departure city.
+ */
 export const TRIP_PLANNING_SURVEY: SurveyQuestion[] = [
   {
     id: 'availability',
@@ -235,6 +243,12 @@ export class SurveyService {
     };
   }
 
+  /**
+   * Derives a group-optimal budget and min/max range from individual survey responses.
+   *
+   * @param responses - Raw survey response records including user data.
+   * @returns Budget analysis with the group-optimal figure, minimum, and maximum.
+   */
   private static analyzeBudgets(responses: SurveyResponseWithUser[]): SurveyAnalysis['budgetAnalysis'] {
     const budgets = responses
       .map(r => {
@@ -260,6 +274,12 @@ export class SurveyService {
     return { groupOptimal, min, max };
   }
 
+  /**
+   * Aggregates availability answers to identify the most popular date windows.
+   *
+   * @param responses - Raw survey response records including user data.
+   * @returns Date analysis with the optimal range and a sorted availability list.
+   */
   private static analyzeDatePreferences(responses: SurveyResponseWithUser[]): SurveyAnalysis['dateAnalysis'] {
     const availabilityCount: Record<string, number> = {};
 
@@ -295,6 +315,13 @@ export class SurveyService {
     };
   }
 
+  /**
+   * Scores destinations based on ranking answers (inverse-rank scoring) and returns them
+   * sorted from highest to lowest group interest.
+   *
+   * @param responses - Raw survey response records including user data.
+   * @returns Sorted array of location preference scores with top-choice counts.
+   */
   private static analyzeLocationPreferences(responses: SurveyResponseWithUser[]): SurveyAnalysis['locationPreferences'] {
     const locationScores: Record<string, { total: number; topChoice: number }> = {};
     const locations = ['Nashville', 'NYC', 'Chicago', 'LA', 'Austin', 'Boston', 'Charleston'];
@@ -329,6 +356,13 @@ export class SurveyService {
       .sort((a, b) => b.score - a.score);
   }
 
+  /**
+   * Scores activities based on ranking answers (inverse-rank scoring) and returns them
+   * sorted from highest to lowest group interest.
+   *
+   * @param responses - Raw survey response records including user data.
+   * @returns Sorted array of activity preference scores.
+   */
   private static analyzeActivityPreferences(responses: SurveyResponseWithUser[]): SurveyAnalysis['activityPreferences'] {
     const activityScores: Record<string, number> = {};
     const activities = ['Golf', 'Concert', 'Sporting Event', 'Beach Activities', 'Outdoor Adventures', 'Casino', 'Bars/Nightlife'];

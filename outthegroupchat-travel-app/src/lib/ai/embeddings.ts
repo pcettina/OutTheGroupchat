@@ -68,36 +68,64 @@ export function cosineSimilarity(a: number[], b: number[]): number {
   return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
 }
 
-// Semantic search interface
+/**
+ * An item that can be stored in and searched against the {@link InMemoryVectorStore}.
+ */
 export interface SearchableItem {
+  /** Unique identifier for the item. */
   id: string;
+  /** Raw text used to generate the embedding vector. */
   text: string;
+  /** Pre-computed embedding vector; populated automatically by the store. */
   embedding?: number[];
+  /** Arbitrary key-value metadata attached to the item. */
   metadata?: Record<string, unknown>;
 }
 
-// In-memory vector store (for development/small datasets)
-// For production, use Pinecone, Supabase pgvector, or similar
+/**
+ * Lightweight in-memory vector store suitable for development and small datasets.
+ *
+ * Stores {@link SearchableItem} objects with their OpenAI-generated embeddings and
+ * supports cosine-similarity semantic search. For production workloads, replace with
+ * a persistent vector database such as Pinecone or Supabase pgvector.
+ */
 export class InMemoryVectorStore {
   private items: SearchableItem[] = [];
 
+  /**
+   * Generates an embedding for `item.text` and stores the item in the store.
+   *
+   * @param item - The item to add (without a pre-computed embedding).
+   */
   async add(item: Omit<SearchableItem, 'embedding'>): Promise<void> {
     const embedding = await generateEmbedding(item.text);
     this.items.push({ ...item, embedding });
   }
 
+  /**
+   * Generates embeddings for all items in a single batch API call and stores them.
+   *
+   * @param items - Array of items to add (without pre-computed embeddings).
+   */
   async addMany(items: Omit<SearchableItem, 'embedding'>[]): Promise<void> {
     const texts = items.map(item => item.text);
     const embeddings = await generateEmbeddings(texts);
-    
+
     items.forEach((item, index) => {
       this.items.push({ ...item, embedding: embeddings[index] });
     });
   }
 
+  /**
+   * Performs a semantic similarity search against all stored items.
+   *
+   * @param query - Natural-language query string to embed and compare.
+   * @param limit - Maximum number of results to return (default: 10).
+   * @returns Array of `{ item, score }` pairs sorted by descending cosine similarity.
+   */
   async search(query: string, limit = 10): Promise<{ item: SearchableItem; score: number }[]> {
     const queryEmbedding = await generateEmbedding(query);
-    
+
     const results = this.items
       .map(item => ({
         item,
@@ -105,14 +133,20 @@ export class InMemoryVectorStore {
       }))
       .sort((a, b) => b.score - a.score)
       .slice(0, limit);
-    
+
     return results;
   }
 
+  /**
+   * Removes all items from the store.
+   */
   clear(): void {
     this.items = [];
   }
 
+  /**
+   * Returns the number of items currently held in the store.
+   */
   get size(): number {
     return this.items.length;
   }

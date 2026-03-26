@@ -1,6 +1,6 @@
 # OutTheGroupchat — Full Codemap
 
-> Auto-generated 2026-03-10. Last updated 2026-03-24. Comprehensive reference for agents and developers.
+> Auto-generated 2026-03-10. Last updated 2026-03-25. Comprehensive reference for agents and developers.
 
 ## Table of Contents
 
@@ -29,7 +29,7 @@ Full-stack Next.js 14 collaborative travel planning app. Groups plan trips toget
 
 **App root:** `outthegroupchat-travel-app/`
 **Source:** `outthegroupchat-travel-app/src/`
-**Stats:** ~253 TS/TSX files | ~33,500 LOC | 48 API routes | 94 components | 20 pages
+**Stats:** ~263 TS/TSX files | ~33,500 LOC | 48 API routes | 94 components | 20 pages
 
 ---
 
@@ -110,6 +110,7 @@ outthegroupchat-travel-app/
 │   │   ├── email.ts               # Resend email templates
 │   │   ├── rate-limit.ts          # Upstash rate limiter
 │   │   ├── sanitize.ts            # XSS prevention
+│   │   ├── sentry.ts              # Centralized Sentry helpers (captureException, addBreadcrumb, setUser) ✅ 2026-03-25
 │   │   ├── geocoding.ts           # Nominatim reverse geocoding
 │   │   ├── invitations.ts         # Invite token generation/validation
 │   │   ├── api-config.ts          # API constants
@@ -805,7 +806,7 @@ db:seed        → npx tsx prisma/seed/index.ts
 
 ## Tests
 
-**Total: 925+ tests across 49 Vitest unit/integration test files** (0 TSC errors in production code, 0 in test files as of 2026-03-24)
+**Total: 1003 tests across 53 Vitest unit/integration test files** (0 TSC errors in production code, 0 in test files as of 2026-03-25)
 
 | File | Lines | Tests | Coverage |
 |------|-------|-------|----------|
@@ -829,6 +830,10 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `src/__tests__/api/auth-demo.test.ts` | — | 13 | POST/GET /api/auth/demo — DEMO_MODE guard, Zod validation ✅ 2026-03-24 |
 | `src/__tests__/api/cron.test.ts` | — | 10 | GET /api/cron — CRON_SECRET validation, job execution ✅ 2026-03-24 |
 | `src/__tests__/api/discover-search.test.ts` | — | 12 | GET /api/discover/search — auth guard, rate limiting, Zod params ✅ 2026-03-24 |
+| `src/__tests__/api/invitations-post.test.ts` | — | 18 | POST /api/trips/[tripId]/invitations — accept/decline flows ✅ 2026-03-25 |
+| `src/__tests__/api/ai-get-methods.test.ts` | — | 16 | GET /api/ai/chat + GET /api/ai/recommend ✅ 2026-03-25 |
+| `src/__tests__/api/beta-extended.test.ts` | — | 21 | Extended beta route coverage ✅ 2026-03-25 |
+| `src/__tests__/api/users-follow.test.ts` | — | 24 | POST /api/users/[userId] follow/unfollow lifecycle ✅ 2026-03-25 |
 | `src/__tests__/api/voting.test.ts` | — | 10 | Voting API (create, vote, close session) |
 | `src/__tests__/api/survey.test.ts` | — | 11 | Survey API (create, respond, analyze) |
 | `src/__tests__/api/feed.test.ts` | — | 12 | Feed API (pagination, comments, engagement) |
@@ -897,7 +902,7 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `any` types | 0 ✅ |
 | `console.*` | 0 ✅ |
 | TSC errors (prod + test) | 0 ✅ |
-| Vitest tests | 925+ passing (49 files) |
+| Vitest tests | 1003 passing (53 files) |
 | E2E tests | 11 Playwright smoke tests (4 suites) |
 | Error monitoring | Sentry installed (server + client + edge) — needs `SENTRY_DSN` in Vercel |
 | Files >400 lines | ~10 (0 files exceed 600 lines) |

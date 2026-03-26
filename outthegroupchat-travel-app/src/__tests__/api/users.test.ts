@@ -280,7 +280,7 @@ describe('GET /api/health', () => {
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.status).toBe('ok');
-    expect(json.checks.database.status).toBe('ok');
+    expect(json.database).toBe('connected');
   });
 
   it('returns 503 with degraded status when database is down', async () => {
@@ -290,8 +290,7 @@ describe('GET /api/health', () => {
     expect(res.status).toBe(503);
     const json = await res.json();
     expect(json.status).toBe('degraded');
-    expect(json.checks.database.status).toBe('error');
-    expect(json.checks.database.error).toContain('Connection refused');
+    expect(json.database).toBe('error');
   });
 
   it('includes timestamp in response', async () => {
@@ -303,20 +302,22 @@ describe('GET /api/health', () => {
     expect(new Date(json.timestamp).toString()).not.toBe('Invalid Date');
   });
 
-  it('includes environment in response', async () => {
+  it('returns minimal response shape (no environment or nested checks)', async () => {
     vi.mocked(prisma.$queryRaw).mockResolvedValue([]);
 
     const res = await GET();
     const json = await res.json();
-    expect(json.environment).toBeDefined();
+    // Health route intentionally omits NODE_ENV/version to reduce info exposure
+    expect(json.environment).toBeUndefined();
+    expect(json.checks).toBeUndefined();
+    expect(json.database).toBeDefined();
   });
 
-  it('includes latencyMs in database check on success', async () => {
+  it('includes database field in response on success', async () => {
     vi.mocked(prisma.$queryRaw).mockResolvedValue([]);
 
     const res = await GET();
     const json = await res.json();
-    expect(typeof json.checks.database.latencyMs).toBe('number');
-    expect(json.checks.database.latencyMs).toBeGreaterThanOrEqual(0);
+    expect(json.database).toBe('connected');
   });
 });

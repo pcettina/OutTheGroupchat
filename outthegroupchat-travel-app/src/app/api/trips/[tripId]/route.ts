@@ -76,6 +76,8 @@ export async function GET(
       }
     }
 
+    const isAuthenticated = !!session?.user?.id;
+
     const trip = await prisma.trip.findUnique({
       where: { id: tripId },
       include: {
@@ -83,7 +85,7 @@ export async function GET(
           select: {
             id: true,
             name: true,
-            email: true,
+            ...(isAuthenticated && { email: true }),
             image: true,
           },
         },
@@ -93,7 +95,7 @@ export async function GET(
               select: {
                 id: true,
                 name: true,
-                email: true,
+                ...(isAuthenticated && { email: true }),
                 image: true,
                 city: true,
               },
@@ -138,7 +140,7 @@ export async function GET(
               select: {
                 id: true,
                 name: true,
-                email: true,
+                ...(isAuthenticated && { email: true }),
                 image: true,
               },
             },

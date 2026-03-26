@@ -9,9 +9,10 @@ import { logError } from '@/lib/logger';
 // env var is absent or set to any other value. Never rely on NODE_ENV alone for this check.
 const DEMO_EMAIL = process.env.DEMO_USER_EMAIL || 'alex@demo.com';
 
-// The demo endpoint accepts no meaningful body fields; schema enforces that
-// no unexpected payload is passed and keeps the handler future-proof.
-const demoRequestSchema = z.object({}).passthrough();
+// The demo endpoint accepts no body fields. The strict schema (no passthrough)
+// rejects any unexpected keys, preventing callers from silently passing data
+// that the handler will never use and that could indicate a misuse of this endpoint.
+const demoRequestSchema = z.object({}).strict();
 
 // Demo login endpoint - creates or retrieves the demo user
 export async function POST(request: NextRequest) {

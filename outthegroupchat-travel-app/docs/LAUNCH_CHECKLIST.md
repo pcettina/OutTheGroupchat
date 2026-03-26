@@ -18,7 +18,7 @@
 
 **Overall Readiness: 78%** → Target: 85% for Beta Launch
 
-> Last updated: 2026-03-24
+> Last updated: 2026-03-25
 
 ---
 
@@ -114,7 +114,7 @@
 - [x] /api/discover/search requires authentication ✅ 2026-03-24 (security improvement — was unauthenticated)
 - [x] /api/discover/recommendations requires authentication ✅ 2026-03-24
 - [x] /api/auth/demo has Zod input validation ✅ 2026-03-24
-- [ ] XSS prevention (DOMPurify)
+- [x] XSS prevention (DOMPurify) ✅ 2026-03-25 (RichFeedItem.tsx)
 - [x] CORS configured properly ✅ 2026-03-23 — /api/:path* CORS headers added to next.config.js
 
 ### Critical Fixes Required
@@ -141,6 +141,12 @@
 
 7. [x] Guard /api/auth/demo behind DEMO_MODE env var ✅ 2026-03-22
    File: src/app/api/auth/demo/route.ts (hardcoded password removed; requires DEMO_MODE=true)
+
+8. [x] Strip email from unauthenticated public trip responses ✅ 2026-03-25
+   File: src/app/api/trips/[tripId]/route.ts (email removed from public GET)
+
+9. [x] Remove NODE_ENV/version from /api/health (data minimization) ✅ 2026-03-25
+   File: src/app/api/health/route.ts (response shape narrowed to {status, timestamp, database})
 ```
 
 ### Security Headers
@@ -163,7 +169,8 @@
 - [x] API route tests (signup 15, trips-tripid 20, ai-chat+recommend 24, tripid-invitations 14, tripid-recommendations 11) ✅ 2026-03-22 — total: ~661 tests across 37 files
 - [x] API route tests (ai-search 12, discover ~20, images-search 10, newsletter 10, geocoding-api 12) + lib tests (recommendation.service) ✅ 2026-03-23 — total: 746 tests across 42 files
 - [x] API route tests (trips-voting 50, trips-invitations 33, pusher-feed-social 38, trips-itinerary 43) ✅ 2026-03-23 — total: 910+ tests across 46 files
-- [x] API route tests (trips-itinerary +21, auth-demo 13, cron 10, discover-search 12) + discover.test.ts auth fixes ✅ 2026-03-24 — total: 925+ tests across 49 files
+- [x] API route tests (trips-itinerary +21, auth-demo 13, cron 10, discover-search 12) + discover.test.ts auth fixes ✅ 2026-03-24 — total: 924 tests across 49 files
+- [x] API route tests (invitations-post 18, ai-get-methods 16, beta-extended 21, users-follow 24) ✅ 2026-03-25 — total: 1003 tests across 53 files
 
 ### Integration Tests
 - [ ] Auth flow tests
@@ -194,7 +201,7 @@
 ## 📊 PHASE 5: Monitoring & Observability
 
 ### Error Tracking
-- [x] Sentry installed and configured ✅ 2026-03-10 (instrumentation-client.ts onRouterTransitionStart fixed 2026-03-20; needs real DSN in Vercel)
+- [x] Sentry installed and configured ✅ 2026-03-10 (instrumentation-client.ts onRouterTransitionStart fixed 2026-03-20; src/lib/sentry.ts helper created 2026-03-25; needs real DSN in Vercel)
 - [ ] Error alerts configured (pending Sentry DSN)
 - [ ] Source maps uploaded (pending Sentry DSN)
 
@@ -368,4 +375,4 @@ git push origin main  # Auto-deploys to Vercel
 
 *This checklist should be reviewed daily during launch preparation.*
 
-*Last Updated: 2026-03-24 - 60 new tests (925+ total, 49 files); discover/search + discover/recommendations auth guards added (security improvement); auth/demo Zod input validation added; trips-itinerary.test.ts, auth-demo.test.ts, cron.test.ts, discover-search.test.ts created; discover.test.ts auth regression fixed (import + search + recommendations tests updated to mock rate limiting + auth)*
+*Last Updated: 2026-03-25 - 79 new tests (1003 total, 53 files); email stripped from unauthenticated public trip responses (security); health route narrowed to {status, timestamp, database} (data minimization); DOMPurify XSS protection added to RichFeedItem.tsx; src/lib/sentry.ts created; invitations-post.test.ts, ai-get-methods.test.ts, beta-extended.test.ts, users-follow.test.ts created*
