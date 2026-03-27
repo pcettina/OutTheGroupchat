@@ -191,7 +191,7 @@
 
 | Metric | Target | Current | Previous |
 |--------|--------|---------|---------|
-| Test count | 500+ | 1003 (53 test files) | 924 (49 files) |
+| Test count | 500+ | 1156 (56 test files) | 1003 (53 files) |
 | `any` types | 0 | 0 ✅ | 0 |
 | `console.*` in prod code | 0 | 0 ✅ | 0 |
 | TSC errors (test files) | 0 | 0 ✅ | 0 |
@@ -255,7 +255,39 @@
 - TS files: ~263
 - any types: 0 | console.*: 0 | TODO: 0 | Files >600 lines (prod): 0
 
-*Updated: 2026-03-25*
+*Updated: 2026-03-26*
+---
+
+## 🟢 Completed 2026-03-26 (Nightly Build)
+
+### Wave 1 — Test Writers (153 new tests, 3 new test files)
+- [L1] Created recommendation.service.test.ts (45 tests — SurveyService recommendation logic, analyze, dateAnalysis, locationPreferences, activityPreferences, createTripSurvey)
+- [L2] Created survey.service.test.ts (36 tests — createTripSurvey expiry, closeSurvey, analyzeSurveyResponses, getUserPreferencesSurvey, getTripPlanningSurvey)
+- [M1] Created geocoding-images.test.ts (32 tests — geocoding API + images/search routes)
+- [M2] Extended inspiration.test.ts (+39 new tests for additional inspiration route coverage)
+
+### Wave 2 — Features & Security (intentional changes)
+- [L3] /api/newsletter/subscribe: auth now required (was unauthenticated — security improvement)
+- [L4] /api/ai/search: semantic search GET + POST fully implemented (destinations branch added)
+- [L5] Deleted src/components/notifications/NotificationCenter.tsx and src/components/feed/SharePreview.tsx (both confirmed unused dead code)
+- [L6] /api/auth/signup, /api/auth/reset-password, /api/auth/verify-email: rate limiting added as first operation (before any DB queries)
+- [M3+M4] JSDoc added to src/lib/utils/costs.ts; README updated to 1155+ tests
+- [M5+M6] 5 docs refreshed: N8N docs + agent guides
+
+### Shared File Consolidation
+- survey.service.test.ts TSC errors fixed (lines 700, 712: `call.data.expiresAt` cast to `Date` — `string | Date` union requires explicit cast for `.getTime()`)
+- setup.ts expanded: tripMember.updateMany added; follow model (create, delete, findUnique, findMany); surveyResponse model (create, findMany, findUnique, upsert)
+- API_STATUS.md: ai/search marked complete; newsletter/subscribe auth noted; auth endpoints rate limiting noted
+- CODEMAP.md, LAUNCH_CHECKLIST.md updated to 2026-03-26
+
+### Metrics
+- Tests: 1003 → 1156 passing (+153 new tests)
+- Test files: 53 → 56
+- Routes: 48 (unchanged)
+- TS files: 263 (3 new test files, 2 component files deleted = net +1)
+- any types: 0 | console.*: 0 | TODO: 0 | Files >600 lines (prod): 0
+
+*Updated: 2026-03-26*
 ---
 
 ## 🟢 Completed 2026-03-24 (Nightly Build)

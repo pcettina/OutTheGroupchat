@@ -16,6 +16,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { NextRequest } from 'next/server';
+import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 
 import { POST as betaSignupPOST } from '@/app/api/beta/signup/route';
@@ -249,10 +250,15 @@ describe('GET /api/beta/status', () => {
 // ---------------------------------------------------------------------------
 // POST /api/newsletter/subscribe
 // ---------------------------------------------------------------------------
+const MOCK_NEWSLETTER_SESSION = { user: { id: 'user-1', email: 'user@example.com', name: 'Test User' }, expires: '9999-01-01' };
+const mockGetServerSession = vi.mocked(getServerSession);
+
 describe('POST /api/newsletter/subscribe', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubEnv('N8N_API_KEY', VALID_API_KEY);
+    // newsletter/subscribe now requires auth — provide session by default for success paths
+    mockGetServerSession.mockResolvedValue(MOCK_NEWSLETTER_SESSION as never);
   });
 
   afterEach(() => {
@@ -261,6 +267,13 @@ describe('POST /api/newsletter/subscribe', () => {
 
   it('returns 401 without valid API key', async () => {
     const req = makeNewsletterRequest({ email: 'user@example.com' });
+    const res = await newsletterSubscribePOST(req);
+    expect(res.status).toBe(401);
+  });
+
+  it('returns 401 when not authenticated', async () => {
+    mockGetServerSession.mockResolvedValueOnce(null);
+    const req = makeNewsletterRequest({ email: 'user@example.com' }, VALID_API_KEY);
     const res = await newsletterSubscribePOST(req);
     expect(res.status).toBe(401);
   });

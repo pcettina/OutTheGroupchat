@@ -355,4 +355,469 @@ describe('POST /api/inspiration — template retrieval', () => {
     expect(Array.isArray(body.data.suggestedItinerary)).toBe(true);
     expect(body.data.suggestedItinerary).toHaveLength(0);
   });
+
+  it('returns 400 when templateId is missing', async () => {
+    const res = await POST(makeRequest('/api/inspiration', {
+      method: 'POST',
+      body: { action: 'get-template' },
+    }));
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(400);
+    expect(body.error).toBe('Invalid request');
+    expect(body.details).toBeDefined();
+  });
+
+  it('returns 400 when action is missing', async () => {
+    const res = await POST(makeRequest('/api/inspiration', {
+      method: 'POST',
+      body: { templateId: 'nashville-bachelor' },
+    }));
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(400);
+    expect(body.error).toBe('Invalid request');
+  });
+
+  it('returns 400 when body is completely empty', async () => {
+    const res = await POST(makeRequest('/api/inspiration', {
+      method: 'POST',
+      body: {},
+    }));
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(400);
+    expect(body.error).toBe('Invalid request');
+  });
+
+  it('returns template data for miami-beach with itinerary', async () => {
+    const res = await POST(makeRequest('/api/inspiration', {
+      method: 'POST',
+      body: { templateId: 'miami-beach', action: 'get-template' },
+    }));
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(200);
+    expect(body.success).toBe(true);
+    expect(body.data.id).toBe('miami-beach');
+    expect(body.data.suggestedItinerary.length).toBeGreaterThan(0);
+  });
+
+  it('returns template data for nola-jazz with empty itinerary', async () => {
+    // nola-jazz has no pre-built itinerary
+    const res = await POST(makeRequest('/api/inspiration', {
+      method: 'POST',
+      body: { templateId: 'nola-jazz', action: 'get-template' },
+    }));
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(200);
+    expect(body.data.id).toBe('nola-jazz');
+    expect(Array.isArray(body.data.suggestedItinerary)).toBe(true);
+  });
+
+  it('returns 500 when an unexpected error occurs during POST', async () => {
+    // Force req.json() to throw by passing an invalid content-type body
+    const url = 'http://localhost:3000/api/inspiration';
+    const badReq = new Request(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: 'not-valid-json{{{',
+    });
+
+    const res = await POST(badReq);
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(500);
+    expect(body.error).toBe('Failed to process request');
+  });
+});
+
+// ===========================================================================
+// GET /api/inspiration — sorting
+// ===========================================================================
+describe('GET /api/inspiration — sorting', () => {
+  beforeEach(() => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+  });
+
+  it('sorts templates by usageCount desc when sortBy=popular', async () => {
+    const res = await GET(makeRequest('/api/inspiration?sortBy=popular'));
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(200);
+    const templates = body.data.templates as Array<{ usageCount: number }>;
+    for (let i = 0; i < templates.length - 1; i++) {
+      expect(templates[i].usageCount).toBeGreaterThanOrEqual(templates[i + 1].usageCount);
+    }
+  });
+
+  it('sorts templates by rating desc when sortBy=rating', async () => {
+    const res = await GET(makeRequest('/api/inspiration?sortBy=rating'));
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(200);
+    const templates = body.data.templates as Array<{ rating: number }>;
+    for (let i = 0; i < templates.length - 1; i++) {
+      expect(templates[i].rating).toBeGreaterThanOrEqual(templates[i + 1].rating);
+    }
+  });
+
+  it('accepts sortBy=recent without error', async () => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+    const res = await GET(makeRequest('/api/inspiration?sortBy=recent'));
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(200);
+    expect(body.success).toBe(true);
+    expect(Array.isArray(body.data.templates)).toBe(true);
+  });
+
+  it('accepts sortBy=budget-low without error', async () => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+    const res = await GET(makeRequest('/api/inspiration?sortBy=budget-low'));
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(200);
+    expect(body.success).toBe(true);
+  });
+
+  it('accepts sortBy=budget-high without error', async () => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+    const res = await GET(makeRequest('/api/inspiration?sortBy=budget-high'));
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(200);
+    expect(body.success).toBe(true);
+  });
+});
+
+// ===========================================================================
+// GET /api/inspiration — pagination
+// ===========================================================================
+describe('GET /api/inspiration — pagination', () => {
+  beforeEach(() => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+  });
+
+  it('defaults to page=1 and limit=12', async () => {
+    const res = await GET(makeRequest('/api/inspiration'));
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(200);
+    expect(body.data.pagination.page).toBe(1);
+    expect(body.data.pagination.limit).toBe(12);
+  });
+
+  it('correctly calculates hasMore=true when more trips exist', async () => {
+    // 3 trips returned, but totalCount is 10 — page=1, limit=3 → hasMore=true
+    const tripRows = [MOCK_TRIP_ROW, MOCK_TRIP_ROW, MOCK_TRIP_ROW];
+    mockPrismaTrip.findMany.mockResolvedValueOnce(tripRows as never[]);
+    mockPrismaTrip.count.mockResolvedValueOnce(10);
+
+    const res = await GET(makeRequest('/api/inspiration?page=1&limit=3'));
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(200);
+    expect(body.data.pagination.hasMore).toBe(true);
+    expect(body.data.pagination.totalPages).toBe(4); // ceil(10/3) = 4
+  });
+
+  it('correctly calculates hasMore=false on last page', async () => {
+    mockPrismaTrip.findMany.mockResolvedValueOnce([MOCK_TRIP_ROW] as never[]);
+    mockPrismaTrip.count.mockResolvedValueOnce(4);
+
+    // page=2, limit=3 → skip=3, 1 result returned → 3+1=4 == totalCount → no more
+    const res = await GET(makeRequest('/api/inspiration?page=2&limit=3'));
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(200);
+    expect(body.data.pagination.hasMore).toBe(false);
+  });
+
+  it('returns 400 when page is less than 1', async () => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+    const res = await GET(makeRequest('/api/inspiration?page=0'));
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(400);
+    expect(body.error).toBe('Invalid request');
+  });
+
+  it('returns 400 when limit exceeds maximum of 50', async () => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+    const res = await GET(makeRequest('/api/inspiration?limit=51'));
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(400);
+    expect(body.error).toBe('Invalid request');
+  });
+
+  it('accepts limit=50 (maximum boundary)', async () => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+    const res = await GET(makeRequest('/api/inspiration?limit=50'));
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(200);
+    expect(body.data.pagination.limit).toBe(50);
+  });
+});
+
+// ===========================================================================
+// GET /api/inspiration — popular destinations
+// ===========================================================================
+describe('GET /api/inspiration — popular destinations', () => {
+  beforeEach(() => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+  });
+
+  it('returns all 8 pre-defined popular destinations', async () => {
+    const res = await GET(makeRequest('/api/inspiration'));
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(200);
+    expect(body.data.destinations).toHaveLength(8);
+  });
+
+  it('each destination has city, country, tripCount, and topType fields', async () => {
+    const res = await GET(makeRequest('/api/inspiration'));
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(200);
+    body.data.destinations.forEach((dest: {
+      city: string;
+      country: string;
+      tripCount: number;
+      topType: string;
+    }) => {
+      expect(typeof dest.city).toBe('string');
+      expect(typeof dest.country).toBe('string');
+      expect(typeof dest.tripCount).toBe('number');
+      expect(typeof dest.topType).toBe('string');
+    });
+  });
+
+  it('includes Las Vegas as a popular destination', async () => {
+    const res = await GET(makeRequest('/api/inspiration'));
+    const body = await parseJson(res);
+
+    const cities = body.data.destinations.map((d: { city: string }) => d.city);
+    expect(cities).toContain('Las Vegas');
+  });
+});
+
+// ===========================================================================
+// GET /api/inspiration — trending activity fields
+// ===========================================================================
+describe('GET /api/inspiration — trending activity field mapping', () => {
+  beforeEach(() => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+  });
+
+  it('maps saveCount and commentCount from _count', async () => {
+    mockPrismaActivity.findMany.mockResolvedValueOnce([MOCK_ACTIVITY_ROW as never]);
+
+    const res = await GET(makeRequest('/api/inspiration'));
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(200);
+    expect(body.data.trending[0].saveCount).toBe(12);
+    expect(body.data.trending[0].commentCount).toBe(3);
+  });
+
+  it('maps destination city from nested trip.destination', async () => {
+    mockPrismaActivity.findMany.mockResolvedValueOnce([MOCK_ACTIVITY_ROW as never]);
+
+    const res = await GET(makeRequest('/api/inspiration'));
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(200);
+    expect(body.data.trending[0].destination).toBe('Nashville');
+  });
+
+  it('exposes activity id, name, description, and category', async () => {
+    mockPrismaActivity.findMany.mockResolvedValueOnce([MOCK_ACTIVITY_ROW as never]);
+
+    const res = await GET(makeRequest('/api/inspiration'));
+    const body = await parseJson(res);
+
+    const trending = body.data.trending[0];
+    expect(trending.id).toBe(MOCK_ACTIVITY_ROW.id);
+    expect(trending.name).toBe(MOCK_ACTIVITY_ROW.name);
+    expect(trending.description).toBe(MOCK_ACTIVITY_ROW.description);
+    expect(trending.category).toBe(MOCK_ACTIVITY_ROW.category);
+  });
+});
+
+// ===========================================================================
+// GET /api/inspiration — additional tripType filter values
+// ===========================================================================
+describe('GET /api/inspiration — all valid tripType enum values', () => {
+  beforeEach(() => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+  });
+
+  it.each([
+    ['bachelorette'],
+    ['girls-trip'],
+    ['adventure'],
+    ['relaxation'],
+    ['cultural'],
+    ['food'],
+    ['nightlife'],
+  ])('filters templates by tripType=%s without error', async (tripType) => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+    const res = await GET(makeRequest(`/api/inspiration?tripType=${tripType}`));
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(200);
+    expect(body.success).toBe(true);
+    body.data.templates.forEach((t: { tags: string[] }) => {
+      expect(t.tags).toContain(tripType);
+    });
+  });
+});
+
+// ===========================================================================
+// GET /api/inspiration — combined filters
+// ===========================================================================
+describe('GET /api/inspiration — combined filters', () => {
+  beforeEach(() => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+  });
+
+  it('combines query and tripType filters (intersection)', async () => {
+    // "Vegas" + bachelor: vegas-birthday has both
+    const res = await GET(makeRequest('/api/inspiration?query=Vegas&tripType=bachelor'));
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(200);
+    const templates = body.data.templates as Array<{ tags: string[]; title: string }>;
+    templates.forEach((t) => {
+      const titleOrTagMatches =
+        t.title.toLowerCase().includes('vegas') ||
+        t.tags.some((tag: string) => tag.includes('vegas'));
+      expect(titleOrTagMatches).toBe(true);
+      expect(t.tags).toContain('bachelor');
+    });
+  });
+
+  it('returns empty templates when combined filters match nothing', async () => {
+    // adventure + destination=Nashville: no Nashville templates tagged adventure
+    const res = await GET(makeRequest('/api/inspiration?destination=Nashville&tripType=adventure'));
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(200);
+    expect(body.data.templates).toHaveLength(0);
+  });
+});
+
+// ===========================================================================
+// GET /api/inspiration — trip response field mapping
+// ===========================================================================
+describe('GET /api/inspiration — trip response field mapping', () => {
+  beforeEach(() => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+  });
+
+  it('maps memberCount from members array length', async () => {
+    mockPrismaTrip.findMany.mockResolvedValueOnce([MOCK_TRIP_ROW as never]);
+    mockPrismaTrip.count.mockResolvedValueOnce(1);
+
+    const res = await GET(makeRequest('/api/inspiration'));
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(200);
+    expect(body.data.trips[0].memberCount).toBe(2);
+  });
+
+  it('maps activityCount from _count.activities', async () => {
+    mockPrismaTrip.findMany.mockResolvedValueOnce([MOCK_TRIP_ROW as never]);
+    mockPrismaTrip.count.mockResolvedValueOnce(1);
+
+    const res = await GET(makeRequest('/api/inspiration'));
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(200);
+    expect(body.data.trips[0].activityCount).toBe(3);
+  });
+
+  it('maps activities with only name and category fields', async () => {
+    mockPrismaTrip.findMany.mockResolvedValueOnce([MOCK_TRIP_ROW as never]);
+    mockPrismaTrip.count.mockResolvedValueOnce(1);
+
+    const res = await GET(makeRequest('/api/inspiration'));
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(200);
+    const activity = body.data.trips[0].activities[0];
+    expect(activity.name).toBe('Broadway Bar Crawl');
+    expect(activity.category).toBe('Nightlife');
+    // Should not expose internal fields like id, tripId, etc.
+    expect(activity.id).toBeUndefined();
+  });
+
+  it('includes owner name and image in trip response', async () => {
+    mockPrismaTrip.findMany.mockResolvedValueOnce([MOCK_TRIP_ROW as never]);
+    mockPrismaTrip.count.mockResolvedValueOnce(1);
+
+    const res = await GET(makeRequest('/api/inspiration'));
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(200);
+    expect(body.data.trips[0].owner).toEqual({ name: 'Trip Owner', image: null });
+  });
+});
+
+// ===========================================================================
+// GET /api/inspiration — 500 error path
+// ===========================================================================
+describe('GET /api/inspiration — 500 error path', () => {
+  it('returns 500 when prisma throws an unexpected error', async () => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+    mockPrismaTrip.findMany.mockRejectedValueOnce(new Error('Database connection lost'));
+
+    const res = await GET(makeRequest('/api/inspiration'));
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(500);
+    expect(body.error).toBe('Failed to fetch inspiration');
+  });
+});
+
+// ===========================================================================
+// GET /api/inspiration — auth edge cases
+// ===========================================================================
+describe('GET /api/inspiration — auth edge cases', () => {
+  beforeEach(() => {
+    // Fully reset the session mock to clear any permanent mockResolvedValue
+    // from other suites (vi.clearAllMocks does not clear implementations).
+    mockGetServerSession.mockReset();
+  });
+
+  it('returns 401 when session exists but user.id is missing', async () => {
+    mockGetServerSession.mockResolvedValueOnce({
+      user: { name: 'No ID User', email: 'noid@example.com' },
+      expires: '2099-01-01',
+    } as never);
+
+    const res = await GET(makeRequest('/api/inspiration'));
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(401);
+    expect(body.error).toBe('Unauthorized');
+  });
+
+  it('returns 401 when session.user is null', async () => {
+    mockGetServerSession.mockResolvedValueOnce({
+      user: null,
+      expires: '2099-01-01',
+    } as never);
+
+    const res = await GET(makeRequest('/api/inspiration'));
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(401);
+    expect(body.error).toBe('Unauthorized');
+  });
 });

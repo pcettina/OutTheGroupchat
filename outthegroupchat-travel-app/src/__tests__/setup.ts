@@ -21,6 +21,7 @@ vi.mock('@/lib/prisma', () => ({
       findUnique: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
       delete: vi.fn(),
       count: vi.fn(),
     },
@@ -158,6 +159,18 @@ vi.mock('@/lib/prisma', () => ({
     vote: {
       upsert: vi.fn(),
       groupBy: vi.fn(),
+    },
+    follow: {
+      create: vi.fn(),
+      delete: vi.fn(),
+      findUnique: vi.fn(),
+      findMany: vi.fn(),
+    },
+    surveyResponse: {
+      create: vi.fn(),
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      upsert: vi.fn(),
     },
   },
 }));

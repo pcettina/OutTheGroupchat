@@ -82,15 +82,16 @@ Use this for every new feature:
 - **Database:** PostgreSQL + Prisma
 - **Auth:** NextAuth.js
 - **AI:** Vercel AI SDK (OpenAI primary)
-- **Real-time:** Pusher (configured, not fully integrated)
+- **Real-time:** Pusher (configured, env vars missing in production)
 - **Styling:** TailwindCSS + Framer Motion
+- **Monitoring:** Sentry (infrastructure in `src/lib/sentry.ts` — awaiting DSN env var in Vercel)
 
 ### Recommended Additions for Social Scale
-1. **Redis** - Caching, rate limiting, sessions
+1. **Redis** - Caching, rate limiting, sessions (Upstash already wired for rate limiting)
 2. **CDN** - Cloudinary/Uploadcare for media
 3. **Search** - Algolia or Elasticsearch
 4. **Analytics** - Mixpanel or Amplitude
-5. **Monitoring** - Sentry + Vercel Analytics
+5. **Monitoring** - Sentry (code in place via `src/lib/sentry.ts`; needs `SENTRY_DSN` in Vercel) + Vercel Analytics
 
 ---
 
@@ -236,5 +237,5 @@ Before any feature is approved:
 
 *Remember: We're not building a trip planner. We're building a social network for experiences.*
 
-*Last Updated: March 2026*
+*Last Updated: 2026-03-26*
 

@@ -17,6 +17,7 @@ vi.mock('@/lib/logger', () => ({
 
 import { POST } from '@/app/api/newsletter/subscribe/route';
 import { prisma } from '@/lib/prisma';
+import { getServerSession } from 'next-auth';
 
 // ---------------------------------------------------------------------------
 // Typed prisma accessor helpers
@@ -30,12 +31,19 @@ type PrismaUserMock = {
 const mockUser = () =>
   (prisma as unknown as { user: PrismaUserMock }).user;
 
+const mockGetServerSession = vi.mocked(getServerSession);
+
 // ---------------------------------------------------------------------------
 // Shared test data
 // ---------------------------------------------------------------------------
 const VALID_EMAIL = 'subscriber@example.com';
 const VALID_NAME = 'Jane Subscriber';
 const API_KEY = 'test-api-key';
+
+const MOCK_SESSION = {
+  user: { id: 'user-session-001', name: 'Auth User', email: 'auth@example.com' },
+  expires: '2099-01-01',
+};
 
 const EXISTING_USER = {
   id: 'user-existing-001',
@@ -92,6 +100,8 @@ describe('POST /api/newsletter/subscribe', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubEnv('N8N_API_KEY', API_KEY);
+    // Default: authenticated session for all tests (overridden per-test where needed)
+    mockGetServerSession.mockResolvedValue(MOCK_SESSION);
   });
 
   afterEach(() => {
@@ -121,7 +131,20 @@ describe('POST /api/newsletter/subscribe', () => {
   });
 
   // -------------------------------------------------------------------------
-  // 3. Missing email → 400
+  // 3. No session (valid API key) → 401 Authentication required
+  // -------------------------------------------------------------------------
+  it('returns 401 when no session exists (unauthenticated user)', async () => {
+    mockGetServerSession.mockResolvedValueOnce(null);
+
+    const res = await POST(makeRequest({ email: VALID_EMAIL }));
+    const body = await res.json();
+
+    expect(res.status).toBe(401);
+    expect(body.error).toBe('Authentication required');
+  });
+
+  // -------------------------------------------------------------------------
+  // 4. Missing email → 400
   // -------------------------------------------------------------------------
   it('returns 400 when body is missing the email field', async () => {
     const res = await POST(makeRequest({ name: VALID_NAME }));
@@ -132,7 +155,7 @@ describe('POST /api/newsletter/subscribe', () => {
   });
 
   // -------------------------------------------------------------------------
-  // 4. Invalid email format → 400
+  // 5. Invalid email format → 400
   // -------------------------------------------------------------------------
   it('returns 400 when email is not a valid email format', async () => {
     const res = await POST(makeRequest({ email: 'not-an-email' }));
@@ -144,7 +167,7 @@ describe('POST /api/newsletter/subscribe', () => {
   });
 
   // -------------------------------------------------------------------------
-  // 5. Empty string name (fails z.string().min(1)) → 400
+  // 6. Empty string name (fails z.string().min(1)) → 400
   // -------------------------------------------------------------------------
   it('returns 400 when name is an empty string', async () => {
     const res = await POST(makeRequest({ email: VALID_EMAIL, name: '' }));
@@ -155,7 +178,7 @@ describe('POST /api/newsletter/subscribe', () => {
   });
 
   // -------------------------------------------------------------------------
-  // 6. Existing user → 200, updates newsletterSubscribed
+  // 7. Existing user → 200, updates newsletterSubscribed
   // -------------------------------------------------------------------------
   it('returns 200 and updates existing user when email already exists', async () => {
     mockUser().findUnique.mockResolvedValueOnce(EXISTING_USER);
@@ -172,7 +195,7 @@ describe('POST /api/newsletter/subscribe', () => {
   });
 
   // -------------------------------------------------------------------------
-  // 7. New user → 200, creates passwordless user
+  // 8. New user → 200, creates passwordless user
   // -------------------------------------------------------------------------
   it('returns 200 and creates a new passwordless user when email does not exist', async () => {
     mockUser().findUnique.mockResolvedValueOnce(null);
@@ -196,7 +219,7 @@ describe('POST /api/newsletter/subscribe', () => {
   });
 
   // -------------------------------------------------------------------------
-  // 8. Existing user without name in body → preserves existing name
+  // 9. Existing user without name in body → preserves existing name
   // -------------------------------------------------------------------------
   it('preserves existing user name when name is not provided in body', async () => {
     mockUser().findUnique.mockResolvedValueOnce(EXISTING_USER);
@@ -214,7 +237,7 @@ describe('POST /api/newsletter/subscribe', () => {
   });
 
   // -------------------------------------------------------------------------
-  // 9. Correct response shape on success (new user path)
+  // 10. Correct response shape on success (new user path)
   // -------------------------------------------------------------------------
   it('returns correct response shape with user object on success', async () => {
     mockUser().findUnique.mockResolvedValueOnce(null);
@@ -240,7 +263,7 @@ describe('POST /api/newsletter/subscribe', () => {
   });
 
   // -------------------------------------------------------------------------
-  // 10. Database error on findUnique → 500
+  // 11. Database error on findUnique → 500
   // -------------------------------------------------------------------------
   it('returns 500 when prisma.user.findUnique throws an unexpected error', async () => {
     mockUser().findUnique.mockRejectedValueOnce(new Error('DB connection lost'));
@@ -253,7 +276,7 @@ describe('POST /api/newsletter/subscribe', () => {
   });
 
   // -------------------------------------------------------------------------
-  // 11. email is lowercased before querying the database
+  // 12. email is lowercased before querying the database
   // -------------------------------------------------------------------------
   it('lowercases the email before querying the database', async () => {
     const mixedCaseEmail = 'Subscriber@EXAMPLE.COM';
@@ -271,7 +294,7 @@ describe('POST /api/newsletter/subscribe', () => {
   });
 
   // -------------------------------------------------------------------------
-  // 12. Newsletter subscribe sets newsletterSubscribed = true on create
+  // 13. Newsletter subscribe sets newsletterSubscribed = true on create
   // -------------------------------------------------------------------------
   it('sets newsletterSubscribed to true and newsletterSubscribedAt on new user create', async () => {
     mockUser().findUnique.mockResolvedValueOnce(null);
