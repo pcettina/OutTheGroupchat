@@ -45,8 +45,24 @@ let lastRequestTime = 0;
 const MIN_REQUEST_INTERVAL = 1100; // 1.1 seconds to stay under Nominatim's rate limit
 
 /**
- * Search for destinations matching a query
- * Uses OpenStreetMap Nominatim API
+ * Search for destinations matching a free-text query using the OpenStreetMap
+ * Nominatim API.
+ *
+ * Results are filtered to city-level place types (`city`, `town`, `village`,
+ * `municipality`, `administrative`) and de-duplicated by city + country pair.
+ * Responses are cached in memory for one hour to minimise API round-trips.
+ * Nominatim's rate limit of one request per second is enforced internally with
+ * a 1.1-second minimum interval between outbound requests.
+ *
+ * @param query - Free-text location search term (e.g. `"Paris"`, `"New Yor"`).
+ *   Queries shorter than 2 characters are returned as an empty array immediately.
+ *
+ * @returns A promise that resolves to an array of {@link Destination} objects
+ *   matching the query, ordered by Nominatim relevance.  Returns an empty array
+ *   on API failure.
+ *
+ * @throws Never — network and parse errors are caught internally and logged via
+ *   the application logger.
  */
 export async function searchDestinations(query: string): Promise<Destination[]> {
   if (!query || query.length < 2) {
@@ -144,8 +160,23 @@ function extractCityName(result: NominatimResult): string {
 }
 
 /**
- * Get coordinates for a specific destination
- * Uses a more precise lookup
+ * Resolve the geographic coordinates for a known city/country pair.
+ *
+ * Performs a precise single-result lookup against the Nominatim API using the
+ * combined `"city, country"` string and returns the first match.  Results are
+ * cached in memory (same 1-hour TTL as {@link searchDestinations}) so repeated
+ * lookups for the same pair avoid redundant network requests.  The 1.1-second
+ * inter-request rate limit is enforced.
+ *
+ * @param city - Name of the city (e.g. `"Tokyo"`).
+ * @param country - Name of the country (e.g. `"Japan"`).
+ *
+ * @returns A promise that resolves to a `{ lat, lng }` coordinate object when a
+ *   match is found, or `null` when the API returns no results, the request fails,
+ *   or a network/parse error occurs.
+ *
+ * @throws Never — errors are caught internally and logged; `null` is returned
+ *   instead.
  */
 export async function getDestinationCoordinates(
   city: string,
@@ -213,8 +244,12 @@ export async function getDestinationCoordinates(
 }
 
 /**
- * Popular destinations fallback
- * Used when API fails or for quick suggestions
+ * Curated list of popular travel destinations used as a fast fallback.
+ *
+ * Referenced by {@link searchDestinationsWithFallback} when the Nominatim API
+ * is unavailable or when the query already matches three or more entries here,
+ * avoiding an unnecessary outbound request.  Each entry includes pre-computed
+ * coordinates so downstream components can render a map pin immediately.
  */
 export const popularDestinations: Destination[] = [
   { city: 'Miami', country: 'USA', coordinates: { lat: 25.7617, lng: -80.1918 } },
@@ -236,8 +271,26 @@ export const popularDestinations: Destination[] = [
 ];
 
 /**
- * Search with fallback to popular destinations
- * Combines API results with popular destinations for better UX
+ * Search for destinations with an automatic fallback to {@link popularDestinations}.
+ *
+ * Strategy:
+ * 1. If the query is blank or fewer than 2 characters, return the first 8
+ *    popular destinations immediately (no API call).
+ * 2. Filter {@link popularDestinations} for city/country matches.
+ * 3. If three or more popular matches are found, return them immediately
+ *    (avoids an API round-trip for common queries like `"paris"`).
+ * 4. Otherwise call {@link searchDestinations} and merge de-duplicated API
+ *    results after the popular matches, capped at 8 total entries.
+ * 5. On API error, return the popular matches (or the first 8 popular
+ *    destinations if there are no popular matches either).
+ *
+ * @param query - Free-text location search term.
+ *
+ * @returns A promise that resolves to up to 8 {@link Destination} objects,
+ *   always non-null (empty array only if {@link popularDestinations} is empty).
+ *
+ * @throws Never — API errors are caught and the fallback list is returned
+ *   instead.
  */
 export async function searchDestinationsWithFallback(query: string): Promise<Destination[]> {
   if (!query || query.length < 2) {
@@ -281,8 +334,12 @@ export async function searchDestinationsWithFallback(query: string): Promise<Des
 }
 
 /**
- * Clear the geocoding cache
- * Useful for testing or when cache gets stale
+ * Evict all entries from the in-memory geocoding cache.
+ *
+ * Clears both the result cache and the associated timestamp map so the next
+ * call to {@link searchDestinations} or {@link getDestinationCoordinates} for
+ * any key will trigger a fresh API request.  Intended for use in tests and for
+ * administrative cache invalidation.
  */
 export function clearGeocodingCache(): void {
   geocodeCache.clear();

@@ -233,6 +233,125 @@ describe('GET /api/trips/[tripId]/voting', () => {
     expect(session.results[0].votes).toBe(0);
     expect(session.results[0].percentage).toBe(0);
   });
+
+  it('returns 200 with an empty array when no voting sessions exist', async () => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+    mockPrismaTripMember.findFirst.mockResolvedValueOnce(MOCK_MEMBER);
+    mockPrismaVotingSession.findMany.mockResolvedValueOnce([]);
+
+    const req = makeRequest(`/api/trips/${MOCK_TRIP_ID}/voting`);
+    const res = await votingGET(req, ROUTE_PARAMS);
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(200);
+    expect(body.success).toBe(true);
+    expect(body.data).toEqual([]);
+  });
+
+  it('returns 500 when Prisma throws during session fetch', async () => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+    mockPrismaTripMember.findFirst.mockResolvedValueOnce(MOCK_MEMBER);
+    mockPrismaVotingSession.findMany.mockRejectedValueOnce(new Error('DB connection lost'));
+
+    const req = makeRequest(`/api/trips/${MOCK_TRIP_ID}/voting`);
+    const res = await votingGET(req, ROUTE_PARAMS);
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(500);
+    expect(body.success).toBe(false);
+    expect(body.error).toBe('Failed to fetch voting sessions');
+  });
+
+  it('populates userVote when the current user has already cast a vote', async () => {
+    const sessionWithUserVote = {
+      ...MOCK_VOTING_SESSION,
+      votes: [
+        { id: 'vote-001', sessionId: MOCK_SESSION_ID, orderId: MOCK_USER_ID, optionId: 'opt-1', rank: null },
+      ],
+      _count: { votes: 1 },
+    };
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+    mockPrismaTripMember.findFirst.mockResolvedValueOnce(MOCK_MEMBER);
+    mockPrismaVotingSession.findMany.mockResolvedValueOnce([sessionWithUserVote]);
+
+    const req = makeRequest(`/api/trips/${MOCK_TRIP_ID}/voting`);
+    const res = await votingGET(req, ROUTE_PARAMS);
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(200);
+    expect(body.data[0].userVote).toBe('opt-1');
+  });
+
+  it('leaves userVote undefined when the current user has not voted', async () => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+    mockPrismaTripMember.findFirst.mockResolvedValueOnce(MOCK_MEMBER);
+    mockPrismaVotingSession.findMany.mockResolvedValueOnce([MOCK_VOTING_SESSION]);
+
+    const req = makeRequest(`/api/trips/${MOCK_TRIP_ID}/voting`);
+    const res = await votingGET(req, ROUTE_PARAMS);
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(200);
+    expect(body.data[0].userVote).toBeUndefined();
+  });
+
+  it('computes vote percentages correctly when multiple votes exist', async () => {
+    const sessionWithVotes = {
+      ...MOCK_VOTING_SESSION,
+      votes: [
+        { id: 'v-1', sessionId: MOCK_SESSION_ID, orderId: MOCK_USER_ID, optionId: 'opt-1', rank: null },
+        { id: 'v-2', sessionId: MOCK_SESSION_ID, orderId: 'other-user', optionId: 'opt-1', rank: null },
+        { id: 'v-3', sessionId: MOCK_SESSION_ID, orderId: 'yet-another', optionId: 'opt-2', rank: null },
+      ],
+      _count: { votes: 3 },
+    };
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+    mockPrismaTripMember.findFirst.mockResolvedValueOnce(MOCK_MEMBER);
+    mockPrismaVotingSession.findMany.mockResolvedValueOnce([sessionWithVotes]);
+
+    const req = makeRequest(`/api/trips/${MOCK_TRIP_ID}/voting`);
+    const res = await votingGET(req, ROUTE_PARAMS);
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(200);
+    const session = body.data[0];
+    expect(session.totalVotes).toBe(3);
+
+    const opt1Result = session.results.find((r: { optionId: string }) => r.optionId === 'opt-1');
+    const opt2Result = session.results.find((r: { optionId: string }) => r.optionId === 'opt-2');
+    expect(opt1Result.votes).toBe(2);
+    expect(opt1Result.percentage).toBe(67); // Math.round(2/3 * 100)
+    expect(opt2Result.votes).toBe(1);
+    expect(opt2Result.percentage).toBe(33); // Math.round(1/3 * 100)
+  });
+
+  it('queries the DB with the correct tripId for membership check', async () => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+    mockPrismaTripMember.findFirst.mockResolvedValueOnce(MOCK_MEMBER);
+    mockPrismaVotingSession.findMany.mockResolvedValueOnce([]);
+
+    const req = makeRequest(`/api/trips/${MOCK_TRIP_ID}/voting`);
+    await votingGET(req, ROUTE_PARAMS);
+
+    expect(mockPrismaTripMember.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { tripId: MOCK_TRIP_ID, userId: MOCK_USER_ID },
+      })
+    );
+  });
+
+  it('returns sessions ordered by createdAt descending', async () => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+    mockPrismaTripMember.findFirst.mockResolvedValueOnce(MOCK_MEMBER);
+    mockPrismaVotingSession.findMany.mockResolvedValueOnce([]);
+
+    const req = makeRequest(`/api/trips/${MOCK_TRIP_ID}/voting`);
+    await votingGET(req, ROUTE_PARAMS);
+
+    expect(mockPrismaVotingSession.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ orderBy: { createdAt: 'desc' } })
+    );
+  });
 });
 
 // ===========================================================================
@@ -329,6 +448,163 @@ describe('POST /api/trips/[tripId]/voting', () => {
     expect(createCall.data.title).toBe(VALID_BODY.title);
     expect(createCall.data.status).toBe('ACTIVE');
   });
+
+  it('returns 201 when an ADMIN (not just OWNER) creates a session', async () => {
+    const ADMIN_MEMBER = { userId: MOCK_USER_ID, tripId: MOCK_TRIP_ID, role: 'ADMIN' };
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+    mockPrismaTripMember.findFirst.mockResolvedValueOnce(ADMIN_MEMBER);
+    mockPrismaVotingSession.create.mockResolvedValueOnce(MOCK_VOTING_SESSION);
+    vi.mocked(prisma.trip.update).mockResolvedValueOnce({} as never);
+    mockPrismaTripMember.findMany.mockResolvedValueOnce([]);
+    vi.mocked(prisma.notification.createMany).mockResolvedValueOnce({ count: 0 });
+
+    const req = makeRequest(`/api/trips/${MOCK_TRIP_ID}/voting`, {
+      method: 'POST',
+      body: VALID_BODY,
+    });
+    const res = await votingPOST(req, ROUTE_PARAMS);
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(201);
+    expect(body.success).toBe(true);
+  });
+
+  it('returns 400 when type is an unrecognised enum value', async () => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+    mockPrismaTripMember.findFirst.mockResolvedValueOnce(MOCK_OWNER_MEMBER);
+
+    const invalidBody = { type: 'FOOD', title: 'Dinner vote', options: MOCK_OPTIONS };
+    const req = makeRequest(`/api/trips/${MOCK_TRIP_ID}/voting`, {
+      method: 'POST',
+      body: invalidBody,
+    });
+    const res = await votingPOST(req, ROUTE_PARAMS);
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(400);
+    expect(body.success).toBe(false);
+    expect(body.details).toBeDefined();
+    expect(mockPrismaVotingSession.create).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when expirationHours exceeds the maximum of 168', async () => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+    mockPrismaTripMember.findFirst.mockResolvedValueOnce(MOCK_OWNER_MEMBER);
+
+    const invalidBody = { ...VALID_BODY, expirationHours: 169 };
+    const req = makeRequest(`/api/trips/${MOCK_TRIP_ID}/voting`, {
+      method: 'POST',
+      body: invalidBody,
+    });
+    const res = await votingPOST(req, ROUTE_PARAMS);
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(400);
+    expect(body.success).toBe(false);
+    expect(mockPrismaVotingSession.create).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when expirationHours is below the minimum of 1', async () => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+    mockPrismaTripMember.findFirst.mockResolvedValueOnce(MOCK_OWNER_MEMBER);
+
+    const invalidBody = { ...VALID_BODY, expirationHours: 0 };
+    const req = makeRequest(`/api/trips/${MOCK_TRIP_ID}/voting`, {
+      method: 'POST',
+      body: invalidBody,
+    });
+    const res = await votingPOST(req, ROUTE_PARAMS);
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(400);
+    expect(body.success).toBe(false);
+    expect(mockPrismaVotingSession.create).not.toHaveBeenCalled();
+  });
+
+  it('updates trip status to VOTING after session creation', async () => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+    mockPrismaTripMember.findFirst.mockResolvedValueOnce(MOCK_OWNER_MEMBER);
+    mockPrismaVotingSession.create.mockResolvedValueOnce(MOCK_VOTING_SESSION);
+    vi.mocked(prisma.trip.update).mockResolvedValueOnce({} as never);
+    mockPrismaTripMember.findMany.mockResolvedValueOnce([]);
+    vi.mocked(prisma.notification.createMany).mockResolvedValueOnce({ count: 0 });
+
+    const req = makeRequest(`/api/trips/${MOCK_TRIP_ID}/voting`, {
+      method: 'POST',
+      body: VALID_BODY,
+    });
+    await votingPOST(req, ROUTE_PARAMS);
+
+    expect(vi.mocked(prisma.trip.update)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: MOCK_TRIP_ID },
+        data: { status: 'VOTING' },
+      })
+    );
+  });
+
+  it('succeeds even when the trip status update throws (error is swallowed)', async () => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+    mockPrismaTripMember.findFirst.mockResolvedValueOnce(MOCK_OWNER_MEMBER);
+    mockPrismaVotingSession.create.mockResolvedValueOnce(MOCK_VOTING_SESSION);
+    vi.mocked(prisma.trip.update).mockRejectedValueOnce(new Error('Trip not found'));
+    mockPrismaTripMember.findMany.mockResolvedValueOnce([]);
+    vi.mocked(prisma.notification.createMany).mockResolvedValueOnce({ count: 0 });
+
+    const req = makeRequest(`/api/trips/${MOCK_TRIP_ID}/voting`, {
+      method: 'POST',
+      body: VALID_BODY,
+    });
+    const res = await votingPOST(req, ROUTE_PARAMS);
+
+    // The catch() on trip.update must not bubble up as a 500
+    expect(res.status).toBe(201);
+  });
+
+  it('sends VOTE_REMINDER notifications to other members after creation', async () => {
+    const otherMembers = [
+      { userId: 'user-other-1', tripId: MOCK_TRIP_ID, role: 'MEMBER' },
+      { userId: 'user-other-2', tripId: MOCK_TRIP_ID, role: 'MEMBER' },
+    ];
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+    mockPrismaTripMember.findFirst.mockResolvedValueOnce(MOCK_OWNER_MEMBER);
+    mockPrismaVotingSession.create.mockResolvedValueOnce(MOCK_VOTING_SESSION);
+    vi.mocked(prisma.trip.update).mockResolvedValueOnce({} as never);
+    mockPrismaTripMember.findMany.mockResolvedValueOnce(otherMembers);
+    vi.mocked(prisma.notification.createMany).mockResolvedValueOnce({ count: 2 });
+
+    const req = makeRequest(`/api/trips/${MOCK_TRIP_ID}/voting`, {
+      method: 'POST',
+      body: VALID_BODY,
+    });
+    await votingPOST(req, ROUTE_PARAMS);
+
+    expect(vi.mocked(prisma.notification.createMany)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.arrayContaining([
+          expect.objectContaining({ userId: 'user-other-1', type: 'VOTE_REMINDER' }),
+          expect.objectContaining({ userId: 'user-other-2', type: 'VOTE_REMINDER' }),
+        ]),
+      })
+    );
+  });
+
+  it('returns 500 when Prisma throws during session creation', async () => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+    mockPrismaTripMember.findFirst.mockResolvedValueOnce(MOCK_OWNER_MEMBER);
+    mockPrismaVotingSession.create.mockRejectedValueOnce(new Error('DB write failure'));
+
+    const req = makeRequest(`/api/trips/${MOCK_TRIP_ID}/voting`, {
+      method: 'POST',
+      body: VALID_BODY,
+    });
+    const res = await votingPOST(req, ROUTE_PARAMS);
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(500);
+    expect(body.success).toBe(false);
+    expect(body.error).toBe('Failed to create voting session');
+  });
 });
 
 // ===========================================================================
@@ -399,5 +675,249 @@ describe('PUT /api/trips/[tripId]/voting', () => {
 
     // Session must NOT be closed because not all members have voted yet
     expect(mockPrismaVotingSession.update).not.toHaveBeenCalled();
+  });
+
+  it('returns 403 when the authenticated user is not a trip member', async () => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+    mockPrismaTripMember.findFirst.mockResolvedValueOnce(null);
+
+    const req = makeRequest(`/api/trips/${MOCK_TRIP_ID}/voting`, {
+      method: 'PUT',
+      body: VALID_VOTE_BODY,
+    });
+    const res = await votingPUT(req, ROUTE_PARAMS);
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(403);
+    expect(body.success).toBe(false);
+    expect(body.error).toMatch(/not a member/i);
+    expect(mockPrismaVote.upsert).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when the request body fails Zod validation (sessionId missing)', async () => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+    mockPrismaTripMember.findFirst.mockResolvedValueOnce(MOCK_MEMBER);
+
+    const req = makeRequest(`/api/trips/${MOCK_TRIP_ID}/voting`, {
+      method: 'PUT',
+      body: { optionId: 'opt-1' }, // missing sessionId
+    });
+    const res = await votingPUT(req, ROUTE_PARAMS);
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(400);
+    expect(body.success).toBe(false);
+    expect(body.error).toMatch(/validation failed/i);
+    expect(body.details).toBeDefined();
+    expect(mockPrismaVote.upsert).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when the request body fails Zod validation (optionId missing)', async () => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+    mockPrismaTripMember.findFirst.mockResolvedValueOnce(MOCK_MEMBER);
+
+    const req = makeRequest(`/api/trips/${MOCK_TRIP_ID}/voting`, {
+      method: 'PUT',
+      body: { sessionId: MOCK_SESSION_ID }, // missing optionId
+    });
+    const res = await votingPUT(req, ROUTE_PARAMS);
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(400);
+    expect(body.success).toBe(false);
+    expect(mockPrismaVote.upsert).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when the voting session is CLOSED (not active)', async () => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+    mockPrismaTripMember.findFirst.mockResolvedValueOnce(MOCK_MEMBER);
+    mockPrismaVotingSession.findUnique.mockResolvedValueOnce({
+      ...MOCK_VOTING_SESSION,
+      status: 'CLOSED',
+    });
+
+    const req = makeRequest(`/api/trips/${MOCK_TRIP_ID}/voting`, {
+      method: 'PUT',
+      body: VALID_VOTE_BODY,
+    });
+    const res = await votingPUT(req, ROUTE_PARAMS);
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(400);
+    expect(body.success).toBe(false);
+    expect(body.error).toBe('Voting session is not active');
+    expect(mockPrismaVote.upsert).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when the voting session is CANCELLED', async () => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+    mockPrismaTripMember.findFirst.mockResolvedValueOnce(MOCK_MEMBER);
+    mockPrismaVotingSession.findUnique.mockResolvedValueOnce({
+      ...MOCK_VOTING_SESSION,
+      status: 'CANCELLED',
+    });
+
+    const req = makeRequest(`/api/trips/${MOCK_TRIP_ID}/voting`, {
+      method: 'PUT',
+      body: VALID_VOTE_BODY,
+    });
+    const res = await votingPUT(req, ROUTE_PARAMS);
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(400);
+    expect(body.success).toBe(false);
+    expect(body.error).toBe('Voting session is not active');
+    expect(mockPrismaVote.upsert).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 and closes the session when expiresAt is in the past', async () => {
+    const expiredSession = {
+      ...MOCK_VOTING_SESSION,
+      expiresAt: new Date(Date.now() - 60_000), // 1 minute ago
+    };
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+    mockPrismaTripMember.findFirst.mockResolvedValueOnce(MOCK_MEMBER);
+    mockPrismaVotingSession.findUnique.mockResolvedValueOnce(expiredSession);
+    mockPrismaVotingSession.update.mockResolvedValueOnce({});
+
+    const req = makeRequest(`/api/trips/${MOCK_TRIP_ID}/voting`, {
+      method: 'PUT',
+      body: VALID_VOTE_BODY,
+    });
+    const res = await votingPUT(req, ROUTE_PARAMS);
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(400);
+    expect(body.success).toBe(false);
+    expect(body.error).toBe('Voting session has expired');
+    // Handler must set status → CLOSED on the expired session
+    expect(mockPrismaVotingSession.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: MOCK_SESSION_ID },
+        data: { status: 'CLOSED' },
+      })
+    );
+    expect(mockPrismaVote.upsert).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when the optionId does not exist in the session options', async () => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+    mockPrismaTripMember.findFirst.mockResolvedValueOnce(MOCK_MEMBER);
+    mockPrismaVotingSession.findUnique.mockResolvedValueOnce(MOCK_VOTING_SESSION);
+
+    const req = makeRequest(`/api/trips/${MOCK_TRIP_ID}/voting`, {
+      method: 'PUT',
+      body: { sessionId: MOCK_SESSION_ID, optionId: 'opt-does-not-exist' },
+    });
+    const res = await votingPUT(req, ROUTE_PARAMS);
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(400);
+    expect(body.success).toBe(false);
+    expect(body.error).toBe('Invalid option');
+    expect(mockPrismaVote.upsert).not.toHaveBeenCalled();
+  });
+
+  it('accepts an optional rank field and passes it through to the upsert', async () => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+    mockPrismaTripMember.findFirst.mockResolvedValueOnce(MOCK_MEMBER);
+    mockPrismaVotingSession.findUnique.mockResolvedValueOnce(MOCK_VOTING_SESSION);
+    mockPrismaVote.upsert.mockResolvedValueOnce({ ...MOCK_VOTE, rank: 2 });
+    mockPrismaTripMember.count.mockResolvedValueOnce(5);
+    mockPrismaVote.groupBy.mockResolvedValueOnce([{ orderId: MOCK_USER_ID }]);
+
+    const req = makeRequest(`/api/trips/${MOCK_TRIP_ID}/voting`, {
+      method: 'PUT',
+      body: { ...VALID_VOTE_BODY, rank: 2 },
+    });
+    const res = await votingPUT(req, ROUTE_PARAMS);
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(200);
+    expect(mockPrismaVote.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({ rank: 2 }),
+        update: expect.objectContaining({ rank: 2 }),
+      })
+    );
+    expect(body.data.rank).toBe(2);
+  });
+
+  it('closes the session automatically when all members have voted', async () => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+    mockPrismaTripMember.findFirst.mockResolvedValueOnce(MOCK_MEMBER);
+    mockPrismaVotingSession.findUnique.mockResolvedValueOnce(MOCK_VOTING_SESSION);
+    mockPrismaVote.upsert.mockResolvedValueOnce(MOCK_VOTE);
+    // 2 members total, 2 unique voters → all have voted
+    mockPrismaTripMember.count.mockResolvedValueOnce(2);
+    mockPrismaVote.groupBy.mockResolvedValueOnce([
+      { orderId: MOCK_USER_ID },
+      { orderId: 'other-user-id' },
+    ]);
+    mockPrismaVotingSession.update.mockResolvedValueOnce({});
+
+    const req = makeRequest(`/api/trips/${MOCK_TRIP_ID}/voting`, {
+      method: 'PUT',
+      body: VALID_VOTE_BODY,
+    });
+    const res = await votingPUT(req, ROUTE_PARAMS);
+
+    expect(res.status).toBe(200);
+    expect(mockPrismaVotingSession.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: MOCK_SESSION_ID },
+        data: { status: 'CLOSED' },
+      })
+    );
+  });
+
+  it('returns 500 when Prisma throws during vote upsert', async () => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+    mockPrismaTripMember.findFirst.mockResolvedValueOnce(MOCK_MEMBER);
+    mockPrismaVotingSession.findUnique.mockResolvedValueOnce(MOCK_VOTING_SESSION);
+    mockPrismaVote.upsert.mockRejectedValueOnce(new Error('Unique constraint failed'));
+
+    const req = makeRequest(`/api/trips/${MOCK_TRIP_ID}/voting`, {
+      method: 'PUT',
+      body: VALID_VOTE_BODY,
+    });
+    const res = await votingPUT(req, ROUTE_PARAMS);
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(500);
+    expect(body.success).toBe(false);
+    expect(body.error).toBe('Failed to submit vote');
+  });
+
+  it('upserts with the correct composite key (sessionId + orderId + optionId)', async () => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+    mockPrismaTripMember.findFirst.mockResolvedValueOnce(MOCK_MEMBER);
+    mockPrismaVotingSession.findUnique.mockResolvedValueOnce(MOCK_VOTING_SESSION);
+    mockPrismaVote.upsert.mockResolvedValueOnce(MOCK_VOTE);
+    mockPrismaTripMember.count.mockResolvedValueOnce(5);
+    mockPrismaVote.groupBy.mockResolvedValueOnce([{ orderId: MOCK_USER_ID }]);
+
+    const req = makeRequest(`/api/trips/${MOCK_TRIP_ID}/voting`, {
+      method: 'PUT',
+      body: VALID_VOTE_BODY,
+    });
+    await votingPUT(req, ROUTE_PARAMS);
+
+    expect(mockPrismaVote.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          sessionId_orderId_optionId: {
+            sessionId: MOCK_SESSION_ID,
+            orderId: MOCK_USER_ID,
+            optionId: 'opt-1',
+          },
+        },
+        create: expect.objectContaining({
+          sessionId: MOCK_SESSION_ID,
+          orderId: MOCK_USER_ID,
+          optionId: 'opt-1',
+        }),
+      })
+    );
   });
 });

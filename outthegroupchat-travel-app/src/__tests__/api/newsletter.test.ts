@@ -1,9 +1,17 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-
 // ---------------------------------------------------------------------------
 // Module-level mocks — hoisted before any imports that use them.
 // setup.ts already mocks prisma.user and @/lib/logger, so we rely on those.
 // ---------------------------------------------------------------------------
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+vi.mock('@/lib/rate-limit', () => ({
+  apiRateLimiter: null,
+  authRateLimiter: null,
+  aiRateLimiter: null,
+  checkRateLimit: vi.fn().mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: 0 }),
+  getRateLimitHeaders: vi.fn().mockReturnValue({}),
+}));
+
 vi.mock('@/lib/logger', () => ({
   logger: {
     info: vi.fn(),
@@ -17,6 +25,8 @@ vi.mock('@/lib/logger', () => ({
 
 import { POST } from '@/app/api/newsletter/subscribe/route';
 import { prisma } from '@/lib/prisma';
+import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
+import { getServerSession } from 'next-auth';
 
 // ---------------------------------------------------------------------------
 // Typed prisma accessor helpers
@@ -92,6 +102,8 @@ describe('POST /api/newsletter/subscribe', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubEnv('N8N_API_KEY', API_KEY);
+    // Default: authenticated session (L5 added getServerSession check to this route)
+    vi.mocked(getServerSession).mockResolvedValue({ user: { id: 'user-newsletter-001', email: 'subscriber@example.com', name: 'Subscriber' } } as never);
   });
 
   afterEach(() => {
@@ -284,5 +296,85 @@ describe('POST /api/newsletter/subscribe', () => {
     };
     expect(createArg.data.newsletterSubscribed).toBe(true);
     expect(createArg.data.newsletterSubscribedAt).toBeInstanceOf(Date);
+  });
+
+  // -------------------------------------------------------------------------
+  // 13. Rate limit exceeded → 429
+  // -------------------------------------------------------------------------
+  it('returns 429 when rate limit is exceeded', async () => {
+    vi.mocked(checkRateLimit).mockResolvedValueOnce({
+      success: false,
+      limit: 100,
+      remaining: 0,
+      reset: 1743033600,
+    });
+
+    const res = await POST(makeRequest({ email: VALID_EMAIL, name: VALID_NAME }));
+    const body = await res.json();
+
+    expect(res.status).toBe(429);
+    expect(body.error).toMatch(/too many requests/i);
+  });
+
+  // -------------------------------------------------------------------------
+  // 14. Rate limit exceeded → includes rate-limit headers in response
+  // -------------------------------------------------------------------------
+  it('includes rate limit headers in 429 response', async () => {
+    const rateLimitResult = {
+      success: false,
+      limit: 100,
+      remaining: 0,
+      reset: 1743033600,
+    };
+    vi.mocked(checkRateLimit).mockResolvedValueOnce(rateLimitResult);
+    vi.mocked(getRateLimitHeaders).mockReturnValueOnce({
+      'X-RateLimit-Limit': '100',
+      'X-RateLimit-Remaining': '0',
+      'X-RateLimit-Reset': '1743033600',
+    });
+
+    const res = await POST(makeRequest({ email: VALID_EMAIL, name: VALID_NAME }));
+
+    expect(res.status).toBe(429);
+    // getRateLimitHeaders must be called with the result from checkRateLimit
+    expect(getRateLimitHeaders).toHaveBeenCalledWith(rateLimitResult);
+  });
+
+  // -------------------------------------------------------------------------
+  // 15. Rate limit not checked when API key is invalid (401 returned first)
+  // -------------------------------------------------------------------------
+  it('does not call checkRateLimit when x-api-key is invalid', async () => {
+    const res = await POST(makeRequest({ email: VALID_EMAIL }, 'bad-key'));
+
+    expect(res.status).toBe(401);
+    expect(checkRateLimit).not.toHaveBeenCalled();
+  });
+
+  // -------------------------------------------------------------------------
+  // 16. Prisma create throws → 500
+  // -------------------------------------------------------------------------
+  it('returns 500 when prisma.user.create throws an unexpected error', async () => {
+    mockUser().findUnique.mockResolvedValueOnce(null);
+    mockUser().create.mockRejectedValueOnce(new Error('Unique constraint violation'));
+
+    const res = await POST(makeRequest({ email: VALID_EMAIL, name: VALID_NAME }));
+    const body = await res.json();
+
+    expect(res.status).toBe(500);
+    expect(body.error).toBeDefined();
+  });
+
+  // -------------------------------------------------------------------------
+  // 17. Prisma update throws → 500
+  // -------------------------------------------------------------------------
+  it('returns 500 when prisma.user.update throws an unexpected error', async () => {
+    mockUser().findUnique.mockResolvedValueOnce(EXISTING_USER);
+    mockUser().update.mockRejectedValueOnce(new Error('Deadlock detected'));
+
+    const res = await POST(makeRequest({ email: VALID_EMAIL, name: VALID_NAME }));
+    const body = await res.json();
+
+    expect(res.status).toBe(500);
+    expect(body.error).toBeDefined();
   });
 });

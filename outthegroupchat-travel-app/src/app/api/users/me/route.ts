@@ -24,13 +24,23 @@ const updateProfileSchema = z.object({
   }).optional(),
 });
 
-// Get current user profile
+/**
+ * GET /api/users/me
+ *
+ * Returns the full profile of the currently authenticated user, including
+ * follower/following counts, recent trips, and saved activities.
+ *
+ * @returns 200 with `{ success: true, data: { ...user, recentTrips, savedActivities } }`
+ * @returns 401 if the request is unauthenticated
+ * @returns 404 if the user record is not found in the database
+ * @returns 500 on unexpected database errors
+ */
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     const user = await prisma.user.findUnique({
@@ -120,13 +130,25 @@ export async function GET() {
   }
 }
 
-// Update current user profile
+/**
+ * PATCH /api/users/me
+ *
+ * Updates the profile of the currently authenticated user. Accepts a partial
+ * payload validated against `updateProfileSchema`. Preferences are deep-merged
+ * with the user's existing preferences rather than replaced wholesale.
+ *
+ * @param req - The incoming request containing the JSON update payload
+ * @returns 200 with `{ success: true, data: { ...updatedUser } }`
+ * @returns 400 if the request body fails Zod validation
+ * @returns 401 if the request is unauthenticated
+ * @returns 500 on unexpected database errors
+ */
 export async function PATCH(req: Request) {
   try {
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await req.json();

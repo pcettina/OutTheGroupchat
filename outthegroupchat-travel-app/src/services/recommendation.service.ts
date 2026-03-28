@@ -28,6 +28,10 @@ import {
   FLIGHT_DISTANCE_FACTORS,
 } from './recommendation-data';
 
+/**
+ * A `TripMember` record with selected user fields (id, name, city, preferences) included.
+ * Used internally to map departure cities and names when computing per-member cost estimates.
+ */
 type TripMemberWithUser = Prisma.TripMemberGetPayload<{
   include: { user: { select: { id: true; name: true; city: true; preferences: true } } };
 }>;

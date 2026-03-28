@@ -28,6 +28,16 @@ const confirmResetSchema = z.object({
  */
 export async function POST(req: Request) {
   try {
+    // Rate limit by IP — unauthenticated endpoint
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? req.headers.get('x-real-ip') ?? 'unknown';
+    const rateLimitResult = await checkRateLimit(authRateLimiter, ip);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
+      );
+    }
+
     const body = await req.json();
     const parsed = requestResetSchema.safeParse(body);
 
@@ -39,16 +49,6 @@ export async function POST(req: Request) {
     }
 
     const { email } = parsed.data;
-
-    // Rate limit by IP — unauthenticated endpoint
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? req.headers.get('x-real-ip') ?? 'unknown';
-    const rateLimitResult = await checkRateLimit(authRateLimiter, ip);
-    if (!rateLimitResult.success) {
-      return NextResponse.json(
-        { error: 'Too many requests. Please try again later.' },
-        { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
-      );
-    }
 
     // Look up user — do not reveal existence to prevent enumeration
     const user = await prisma.user.findUnique({
@@ -134,6 +134,16 @@ export async function POST(req: Request) {
  */
 export async function PATCH(req: Request) {
   try {
+    // Rate limit by IP — unauthenticated endpoint
+    const patchIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? req.headers.get('x-real-ip') ?? 'unknown';
+    const patchRateLimitResult = await checkRateLimit(authRateLimiter, patchIp);
+    if (!patchRateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: getRateLimitHeaders(patchRateLimitResult) }
+      );
+    }
+
     const body = await req.json();
     const parsed = confirmResetSchema.safeParse(body);
 
@@ -145,16 +155,6 @@ export async function PATCH(req: Request) {
     }
 
     const { token, email, password } = parsed.data;
-
-    // Rate limit by IP — unauthenticated endpoint
-    const patchIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? req.headers.get('x-real-ip') ?? 'unknown';
-    const patchRateLimitResult = await checkRateLimit(authRateLimiter, patchIp);
-    if (!patchRateLimitResult.success) {
-      return NextResponse.json(
-        { error: 'Too many requests. Please try again later.' },
-        { status: 429, headers: getRateLimitHeaders(patchRateLimitResult) }
-      );
-    }
 
     // Look up the reset token
     const verificationToken = await prisma.verificationToken.findUnique({

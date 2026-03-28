@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
-import { generateEmbedding, cosineSimilarity, buildActivityText } from '@/lib/ai/embeddings';
+import { generateEmbedding, cosineSimilarity, buildActivityText, buildDestinationText } from '@/lib/ai/embeddings';
 import { z } from 'zod';
 import { ActivityCategory, PriceRange } from '@prisma/client';
 import { logError } from '@/lib/logger';
@@ -21,6 +21,9 @@ const semanticSearchSchema = z.object({
 
 // Cache for activity embeddings (in production, use Redis or similar)
 const embeddingCache = new Map<string, number[]>();
+
+// Cache for destination embeddings keyed by destination string
+const destinationCache = new Map<string, number[]>();
 
 export async function POST(req: Request) {
   try {
@@ -56,6 +59,7 @@ export async function POST(req: Request) {
 
     const results: {
       activities?: { id: string; name: string; score: number; metadata: Record<string, unknown> }[];
+      destinations?: { destination: string; score: number; tripCount: number }[];
     } = {};
 
     if (type === 'all' || type === 'activities') {
@@ -129,13 +133,61 @@ export async function POST(req: Request) {
         .filter(a => a.score > 0.5); // Only return reasonably relevant results
     }
 
+    if (type === 'all' || type === 'destinations') {
+      // Fetch distinct public trip destinations
+      const trips = await prisma.trip.findMany({
+        where: { isPublic: true },
+        select: { destination: true, description: true, id: true },
+        distinct: ['destination'],
+      });
+
+      // Group by destination string to count trips per destination
+      const destinationTripCounts = new Map<string, number>();
+      for (const trip of trips) {
+        const dest = trip.destination as { city?: string; country?: string } | null;
+        const destKey = dest ? `${dest.city ?? ''} ${dest.country ?? ''}`.trim() : '';
+        if (destKey) {
+          destinationTripCounts.set(destKey, (destinationTripCounts.get(destKey) ?? 0) + 1);
+        }
+      }
+
+      // Score each unique destination against the query
+      const scoredDestinations = await Promise.all(
+        Array.from(destinationTripCounts.keys()).map(async (destKey) => {
+          let destEmbedding = destinationCache.get(destKey);
+
+          if (!destEmbedding) {
+            const parts = destKey.split(' ');
+            const city = parts[0] ?? destKey;
+            const country = parts.slice(1).join(' ') || city;
+            const text = buildDestinationText({ city, country });
+            destEmbedding = await generateEmbedding(text);
+            destinationCache.set(destKey, destEmbedding);
+          }
+
+          const score = cosineSimilarity(queryEmbedding, destEmbedding);
+
+          return {
+            destination: destKey,
+            score,
+            tripCount: destinationTripCounts.get(destKey) ?? 1,
+          };
+        })
+      );
+
+      results.destinations = scoredDestinations
+        .sort((a, b) => b.score - a.score)
+        .slice(0, limit)
+        .filter(d => d.score > 0.5);
+    }
+
     return NextResponse.json({
       success: true,
       data: results,
       meta: {
         query,
         type,
-        totalResults: results.activities?.length || 0,
+        totalResults: (results.activities?.length ?? 0) + (results.destinations?.length ?? 0),
       },
     });
   } catch (error) {

@@ -1,6 +1,6 @@
 # 📡 API & Integration Status
 
-> **Last updated: 2026-03-25**
+> **Last updated: 2026-03-27**
 >
 > **Last Audit:** March 2026
 > **Overall Status:** 86% Complete
@@ -80,8 +80,8 @@
 | `/api/trips/[tripId]/voting` | GET | ✅ | 🔶 | Get voting session |
 | `/api/trips/[tripId]/voting` | POST | ✅ | 🔶 | Create/cast vote |
 | `/api/trips/[tripId]/recommendations` | GET | ✅ | ⏳ | AI recommendations |
-| `/api/trips/[tripId]/flights` | GET | ✅ | ⏳ | Search flights for trip dates using user's profile city as origin; uses Amadeus API |
-| `/api/trips/[tripId]/suggestions` | GET | ✅ | ⏳ | Fetch events (Ticketmaster), attractions, and restaurants for trip destination; includes daily cost estimate |
+| `/api/trips/[tripId]/flights` | GET | ✅ | ⏳ | Search flights for trip dates using user's profile city as origin; uses Amadeus API; Zod query param validation added 2026-03-27 |
+| `/api/trips/[tripId]/suggestions` | GET | ✅ | ⏳ | Fetch events (Ticketmaster), attractions, and restaurants for trip destination; includes daily cost estimate; Zod query param validation added 2026-03-27 |
 
 ### Invitation Management APIs
 
@@ -165,7 +165,7 @@ Email removed from select projection in /api/search/route.ts
 | `/api/ai/recommend` | GET | ✅ | ⏳ | Trip-scoped recommendations by `?tripId=`; aggregates group member preferences to suggest activities |
 | `/api/ai/generate-itinerary` | POST | ✅ | ⏳ | Complete — isOpenAIConfigured() guard returns 503 when key absent ✅ 2026-03-23 |
 | `/api/ai/suggest-activities` | POST | ✅ | ⏳ | Complete — isOpenAIConfigured() guard returns 503 when key absent ✅ 2026-03-23 |
-| `/api/ai/search` | GET/POST | 🔶 | ⏳ | Semantic search |
+| `/api/ai/search` | GET/POST | ✅ | ⏳ | Semantic search complete 2026-03-27 — GET + POST, activities + destinations branches, cosine similarity scoring, rate limiting, auth guard |
 
 ### AI Issues to Fix
 ```
@@ -240,7 +240,7 @@ BLOCKED - Need Environment Variables:
 | `/api/beta/signup` | POST | ✅ | ✅ | Beta waitlist signup |
 | `/api/beta/status` | GET | ✅ | ✅ | Check beta access status; IP rate limiting added 2026-03-21; response narrowed to {exists, passwordInitialized} only (data minimization) ✅ 2026-03-22 |
 | `/api/beta/initialize-password` | POST | ✅ | ✅ | Beta user password init — now protected with N8N_API_KEY auth ✅ 2026-03-19 (was unauthenticated — account takeover vulnerability fixed) |
-| `/api/newsletter/subscribe` | POST | ✅ | ✅ | Newsletter subscription |
+| `/api/newsletter/subscribe` | POST | ✅ | ✅ | Newsletter subscription; auth (getServerSession) required 2026-03-27 |
 
 ---
 

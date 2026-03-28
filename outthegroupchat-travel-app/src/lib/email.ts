@@ -13,14 +13,38 @@ const DEFAULT_FROM = process.env.EMAIL_FROM || 'OutTheGroupchat <noreply@outtheg
 const APP_URL = process.env.NEXTAUTH_URL || 'https://outthegroupchat.com';
 
 /**
- * Check if email service is configured
+ * Check if the email service is configured and ready to send.
+ *
+ * Returns `true` only when `RESEND_API_KEY` is present in the environment
+ * and the Resend client was successfully initialised at module load time.
+ *
+ * @returns `true` if the Resend client is available, `false` otherwise.
  */
 export function isEmailConfigured(): boolean {
   return !!resend;
 }
 
 /**
- * Send a trip invitation email to a non-registered user
+ * Send a trip invitation email to a user who is not yet registered on the platform.
+ *
+ * Constructs a branded HTML + plain-text email via the Resend API that contains
+ * a sign-up link pre-populated with a redirect to the target trip.  The function
+ * validates the recipient address format before attempting delivery and logs both
+ * successes and failures via the application logger.
+ *
+ * @param params - Email delivery parameters.
+ * @param params.to - Recipient email address.
+ * @param params.tripTitle - Human-readable title of the trip being shared.
+ * @param params.inviterName - Display name of the user sending the invitation.
+ * @param params.tripId - Database ID of the trip, used to construct the redirect URL.
+ * @param params.expiresAt - Optional expiration date shown in the email body.
+ *
+ * @returns A promise that resolves to an object with:
+ *   - `success` — whether the email was accepted by Resend.
+ *   - `messageId` — Resend message ID on success.
+ *   - `error` — human-readable error description on failure.
+ *
+ * @throws Never — all errors are caught internally and returned as `{ success: false, error }`.
  */
 export async function sendInvitationEmail(params: {
   to: string;
@@ -131,7 +155,27 @@ export async function sendInvitationEmail(params: {
 }
 
 /**
- * Send a notification email (generic)
+ * Send a generic notification email to a registered user.
+ *
+ * Renders a minimal branded template with an optional call-to-action button.
+ * Suitable for any transactional notification (e.g. new comment, trip update)
+ * where a fully custom template is not required.
+ *
+ * @param params - Email delivery parameters.
+ * @param params.to - Recipient email address.
+ * @param params.subject - Email subject line.
+ * @param params.title - Heading displayed prominently in the email body.
+ * @param params.message - Body copy shown beneath the heading.
+ * @param params.actionUrl - Optional URL for the call-to-action button.
+ * @param params.actionText - Label text for the call-to-action button; only
+ *   rendered when `actionUrl` is also provided.
+ *
+ * @returns A promise that resolves to an object with:
+ *   - `success` — whether the email was accepted by Resend.
+ *   - `messageId` — Resend message ID on success.
+ *   - `error` — human-readable error description on failure.
+ *
+ * @throws Never — all errors are caught internally and returned as `{ success: false, error }`.
  */
 export async function sendNotificationEmail(params: {
   to: string;

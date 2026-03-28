@@ -21,6 +21,17 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { prisma } from '@/lib/prisma';
 
 // ---------------------------------------------------------------------------
+// Mock rate-limit so tests don't hit real Upstash Redis (avoids ~4500ms latency).
+// ---------------------------------------------------------------------------
+vi.mock('@/lib/rate-limit', () => ({
+  authRateLimiter: null,
+  apiRateLimiter: null,
+  aiRateLimiter: null,
+  checkRateLimit: vi.fn().mockResolvedValue({ success: true, limit: 5, remaining: 4, reset: 0 }),
+  getRateLimitHeaders: vi.fn().mockReturnValue({}),
+}));
+
+// ---------------------------------------------------------------------------
 // Mock bcryptjs so hash() is deterministic and fast in tests.
 // ---------------------------------------------------------------------------
 vi.mock('bcryptjs', () => ({

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { searchEvents } from '@/lib/api/ticketmaster';
@@ -7,11 +8,28 @@ import { searchPlaces } from '@/lib/api/places';
 import { calculateDailyCosts } from '@/lib/utils/costs';
 import { logger } from '@/lib/logger';
 
+const suggestionsQuerySchema = z.object({
+  date: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(50).optional().default(20),
+  category: z.string().optional(),
+});
+
 export async function GET(
   req: Request,
   { params }: { params: { tripId: string } }
 ) {
   try {
+    const { searchParams } = new URL(req.url);
+    const queryResult = suggestionsQuerySchema.safeParse(
+      Object.fromEntries(searchParams.entries())
+    );
+    if (!queryResult.success) {
+      return NextResponse.json(
+        { error: 'Invalid query parameters', details: queryResult.error.flatten() },
+        { status: 400 }
+      );
+    }
+
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {

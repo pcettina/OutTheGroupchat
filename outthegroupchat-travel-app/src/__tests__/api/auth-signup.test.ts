@@ -5,6 +5,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // setup.ts does NOT include verificationToken, so we declare a full prisma
 // mock here that overrides the setup.ts mock for this file.
 // ---------------------------------------------------------------------------
+vi.mock('@/lib/rate-limit', () => ({
+  apiRateLimiter: null,
+  authRateLimiter: null,
+  aiRateLimiter: null,
+  checkRateLimit: vi.fn().mockResolvedValue({ success: true, limit: 5, remaining: 4, reset: 0 }),
+  getRateLimitHeaders: vi.fn().mockReturnValue({}),
+}));
+
 vi.mock('@/lib/prisma', () => ({
   prisma: {
     user: {
@@ -64,6 +72,7 @@ vi.mock('@/lib/email', () => ({
 
 import { prisma } from '@/lib/prisma';
 import { sendNotificationEmail } from '@/lib/email';
+import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 import { POST } from '@/app/api/auth/signup/route';
 
 // ---------------------------------------------------------------------------
@@ -301,7 +310,51 @@ describe('POST /api/auth/signup', () => {
   });
 
   // -------------------------------------------------------------------------
-  // 12. Invalid email format → 400 Zod error
+  // 12. Rate limit exceeded → 429
+  // -------------------------------------------------------------------------
+  it('returns 429 when rate limit is exceeded', async () => {
+    vi.mocked(checkRateLimit).mockResolvedValueOnce({
+      success: false,
+      limit: 5,
+      remaining: 0,
+      reset: Date.now() + 60000,
+    });
+
+    const res = await POST(makeRequest(VALID_BODY));
+    const body = await res.json();
+
+    expect(res.status).toBe(429);
+    expect(body.error).toMatch(/too many requests/i);
+  });
+
+  // -------------------------------------------------------------------------
+  // 13. Rate limit exceeded → getRateLimitHeaders called to attach headers
+  // -------------------------------------------------------------------------
+  it('rate limit headers are present in 429 response (getRateLimitHeaders was called)', async () => {
+    const resetTime = Date.now() + 60000;
+    vi.mocked(checkRateLimit).mockResolvedValueOnce({
+      success: false,
+      limit: 5,
+      remaining: 0,
+      reset: resetTime,
+    });
+    vi.mocked(getRateLimitHeaders).mockReturnValueOnce({
+      'X-RateLimit-Limit': '5',
+      'X-RateLimit-Remaining': '0',
+      'X-RateLimit-Reset': String(resetTime),
+    });
+
+    const res = await POST(makeRequest(VALID_BODY));
+
+    expect(res.status).toBe(429);
+    expect(vi.mocked(getRateLimitHeaders)).toHaveBeenCalledOnce();
+    expect(vi.mocked(getRateLimitHeaders)).toHaveBeenCalledWith(
+      expect.objectContaining({ success: false, remaining: 0 })
+    );
+  });
+
+  // -------------------------------------------------------------------------
+  // 14. Invalid email format → 400 Zod error
   // -------------------------------------------------------------------------
   it('returns 400 when the email is not a valid email format', async () => {
     const res = await POST(makeRequest({ ...VALID_BODY, email: 'not-an-email' }));

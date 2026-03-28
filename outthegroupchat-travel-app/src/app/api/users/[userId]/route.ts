@@ -12,7 +12,20 @@ const patchUserSchema = z.object({
   image: z.string().url().optional(),
 });
 
-// Get user profile
+/**
+ * GET /api/users/[userId]
+ *
+ * Returns the public profile of a user by ID. When the requesting user is
+ * authenticated and viewing another user's profile, the response includes an
+ * `isFollowing` flag. Public trips owned by the user are always included.
+ * The user's email is only exposed when viewing one's own profile.
+ *
+ * @param req - The incoming request (used only for context; no body expected)
+ * @param params.userId - The ID of the user profile to fetch
+ * @returns 200 with `{ success: true, data: { ...user, isFollowing, publicTrips } }`
+ * @returns 404 if no user with the given ID exists
+ * @returns 500 on unexpected database errors
+ */
 export async function GET(
   req: Request,
   { params }: { params: { userId: string } }
@@ -102,7 +115,22 @@ export async function GET(
   }
 }
 
-// Follow/unfollow user
+/**
+ * POST /api/users/[userId]
+ *
+ * Toggles the follow relationship between the authenticated user and the target
+ * user. If the authenticated user is not yet following the target, a follow
+ * record and a FOLLOW notification are created. If they are already following,
+ * the follow record is deleted (unfollow). Self-follow is rejected with 400.
+ *
+ * @param req - The incoming request (body is not read; action is derived from follow state)
+ * @param params.userId - The ID of the target user to follow or unfollow
+ * @returns 200 with `{ success: true, message: "Following"|"Unfollowed", isFollowing: boolean }`
+ * @returns 400 if the authenticated user attempts to follow themselves
+ * @returns 401 if the request is unauthenticated
+ * @returns 404 if the target user does not exist
+ * @returns 500 on unexpected database errors
+ */
 export async function POST(
   req: Request,
   { params }: { params: { userId: string } }
@@ -112,7 +140,7 @@ export async function POST(
     const { userId } = params;
 
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     if (session.user.id === userId) {
@@ -188,7 +216,22 @@ export async function POST(
   }
 }
 
-// Update user profile (owner only)
+/**
+ * PATCH /api/users/[userId]
+ *
+ * Updates the profile of the specified user. Only the owner of the profile
+ * (i.e., the authenticated user whose ID matches `userId`) may update it.
+ * Accepts a partial payload validated against `patchUserSchema`. Email is
+ * never returned in the response to prevent unintended exposure.
+ *
+ * @param req - The incoming request containing the JSON update payload
+ * @param params.userId - The ID of the user whose profile should be updated
+ * @returns 200 with `{ success: true, data: { id, name, image, bio, city } }`
+ * @returns 400 if the request body fails Zod validation
+ * @returns 401 if the request is unauthenticated
+ * @returns 403 if the authenticated user is not the profile owner
+ * @returns 500 on unexpected database errors
+ */
 export async function PATCH(
   req: Request,
   { params }: { params: { userId: string } }
@@ -198,7 +241,7 @@ export async function PATCH(
     const { userId } = params;
 
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     if (session.user.id !== userId) {

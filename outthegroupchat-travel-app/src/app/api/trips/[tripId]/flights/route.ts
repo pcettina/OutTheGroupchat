@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { searchFlights, getAirportCode } from '@/lib/api/flights';
@@ -9,11 +10,30 @@ interface TripMember {
   id: string;
 }
 
+const flightsQuerySchema = z.object({
+  adults: z.coerce.number().int().min(1).max(9).optional(),
+  returnDate: z.string().optional(),
+  nonStop: z.enum(['true', 'false']).optional().transform((v) => v === undefined ? true : v === 'true'),
+  max: z.coerce.number().int().min(1).max(50).optional().default(5),
+});
+
 export async function GET(
   req: Request,
   { params }: { params: { tripId: string } }
 ) {
   try {
+    const { searchParams } = new URL(req.url);
+    const queryResult = flightsQuerySchema.safeParse(
+      Object.fromEntries(searchParams.entries())
+    );
+    if (!queryResult.success) {
+      return NextResponse.json(
+        { error: 'Invalid query parameters', details: queryResult.error.flatten() },
+        { status: 400 }
+      );
+    }
+    const query = queryResult.data;
+
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
@@ -68,10 +88,10 @@ export async function GET(
       originLocationCode: originCode,
       destinationLocationCode: destinationCode,
       departureDate: trip.startDate.toISOString().split('T')[0],
-      returnDate: trip.endDate.toISOString().split('T')[0],
-      adults: trip.members.length || 1,
-      nonStop: true,
-      max: 5,
+      returnDate: query.returnDate ?? trip.endDate.toISOString().split('T')[0],
+      adults: query.adults || trip.members.length || 1,
+      nonStop: query.nonStop ?? true,
+      max: query.max,
     });
 
     return NextResponse.json({

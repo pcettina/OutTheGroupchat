@@ -11,6 +11,10 @@ import { prisma } from '@/lib/prisma';
 import type { Prisma, TripSurvey } from '@prisma/client';
 import type { SurveyQuestion, SurveyAnalysis, SurveyAnswers } from '@/types';
 
+/**
+ * A `SurveyResponse` record with its related `user` fully included.
+ * Used internally by analysis helpers to read per-member answer payloads.
+ */
 type SurveyResponseWithUser = Prisma.SurveyResponseGetPayload<{
   include: { user: true };
 }>;
@@ -177,23 +181,62 @@ export const TRIP_PLANNING_SURVEY: SurveyQuestion[] = [
   },
 ];
 
+/**
+ * SurveyService
+ *
+ * Provides static methods for managing trip surveys: retrieving default question
+ * templates, creating survey records, collecting and analyzing responses, and
+ * closing surveys once the group has finished responding.
+ *
+ * All methods are static — no instance is required.
+ *
+ * @example
+ * ```ts
+ * const survey = await SurveyService.createTripSurvey(tripId, 48);
+ * const analysis = await SurveyService.analyzeSurveyResponses(survey.id);
+ * await SurveyService.closeSurvey(survey.id);
+ * ```
+ */
 export class SurveyService {
   /**
-   * Get the default user preferences survey
+   * Return the default user-preferences survey question set.
+   *
+   * This template is used for initial onboarding to capture individual travel
+   * style, budget range, interests, accommodation preference, and activity level.
+   *
+   * @returns The static {@link INITIAL_USER_SURVEY} question array.
    */
   static getUserPreferencesSurvey(): SurveyQuestion[] {
     return INITIAL_USER_SURVEY;
   }
 
   /**
-   * Get the default trip planning survey
+   * Return the default trip-planning survey question set.
+   *
+   * This template is used when planning a specific group trip. It collects
+   * availability windows, duration ranking, destination and activity rankings,
+   * budget, accommodation type, room-sharing preference, dining preferences,
+   * and each member's departure city.
+   *
+   * @returns The static {@link TRIP_PLANNING_SURVEY} question array.
    */
   static getTripPlanningSurvey(): SurveyQuestion[] {
     return TRIP_PLANNING_SURVEY;
   }
 
   /**
-   * Analyze survey responses for a trip
+   * Aggregate all responses for a survey and return a structured analysis.
+   *
+   * Performs the following steps:
+   *   1. Fetches the `TripSurvey` record and all associated responses from the DB.
+   *   2. Counts trip members to compute a response-rate percentage.
+   *   3. Analyzes budgets, date availability, location preferences, and activity
+   *      preferences via private helper methods.
+   *
+   * @param surveyId - The ID of the `TripSurvey` to analyze.
+   * @returns A promise resolving to a {@link SurveyAnalysis} object containing
+   *   response counts, budget range, date availability, and ranked preferences.
+   * @throws {Error} If no survey with the given `surveyId` exists in the database.
    */
   static async analyzeSurveyResponses(surveyId: string): Promise<SurveyAnalysis> {
     const survey = await prisma.tripSurvey.findUnique({
@@ -390,7 +433,15 @@ export class SurveyService {
   }
 
   /**
-   * Close a survey and trigger analysis
+   * Mark a survey as closed in the database.
+   *
+   * Sets the survey's `status` field to `'CLOSED'`. After calling this method
+   * no further responses should be accepted by the API routes that guard on
+   * survey status. Call {@link analyzeSurveyResponses} before or after closing
+   * to obtain the final analysis.
+   *
+   * @param surveyId - The ID of the `TripSurvey` to close.
+   * @returns A promise that resolves when the database update has completed.
    */
   static async closeSurvey(surveyId: string): Promise<void> {
     await prisma.tripSurvey.update({
@@ -400,7 +451,15 @@ export class SurveyService {
   }
 
   /**
-   * Create a default trip planning survey for a trip
+   * Create a new trip-planning survey record for the given trip.
+   *
+   * Persists a `TripSurvey` row using the {@link TRIP_PLANNING_SURVEY} question
+   * template, sets status to `'ACTIVE'`, and assigns an expiration timestamp
+   * calculated as `now + expirationHours`.
+   *
+   * @param tripId - The ID of the `Trip` this survey belongs to.
+   * @param expirationHours - Number of hours until the survey expires (default: 48).
+   * @returns A promise resolving to the newly created `TripSurvey` record.
    */
   static async createTripSurvey(tripId: string, expirationHours: number = 48): Promise<TripSurvey> {
     const expiresAt = new Date(Date.now() + expirationHours * 60 * 60 * 1000);

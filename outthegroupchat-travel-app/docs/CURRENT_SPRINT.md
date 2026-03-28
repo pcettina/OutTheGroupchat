@@ -191,17 +191,17 @@
 
 | Metric | Target | Current | Previous |
 |--------|--------|---------|---------|
-| Test count | 500+ | 1003 (53 test files) | 924 (49 files) |
+| Test count | 500+ | 1058 (53 test files) | 1003 (53 files) |
 | `any` types | 0 | 0 ✅ | 0 |
 | `console.*` in prod code | 0 | 0 ✅ | 0 |
 | TSC errors (test files) | 0 | 0 ✅ | 0 |
 | Sentry configured | Yes | Infrastructure ready | Infrastructure ready |
 | `<img>` warnings on build | 0 | 0 ✅ | 0 |
-| Launch readiness | 85% | 78% | 75% |
+| Launch readiness | 85% | 80% | 78% |
 
 ---
 
-*Updated: 2026-03-21*
+*Updated: 2026-03-27*
 ---
 
 ## 🟢 Completed 2026-03-20 (Nightly Build)
@@ -222,6 +222,41 @@
 **Tests: 382 total (+78 from tonight)**
 
 *Updated: 2026-03-20*
+---
+
+## 🟢 Completed 2026-03-27 (Nightly Build)
+
+### Wave 1 — Test Expansion (55 new tests, 0 new test files)
+- [L1] trips.test.ts: rate-limit mock added; all 30 tests now execute in <1ms each (was ~4300ms/test via live Redis)
+- [L2] auth-signup.test.ts: rate-limit mock + 429/rate-limit-exceeded test cases added
+- [M1] ai-search.test.ts: expanded 12 → 41 tests — GET endpoint, destinations branch, auth, rate limit, score threshold, type filter, meta
+- [M2] newsletter.test.ts: rate-limit mock + getServerSession mock wired (L5 added auth to route); all 17 tests passing
+- [M3] voting.test.ts: expanded 10 → 25 tests — full lifecycle, 400 validation, concurrent vote handling
+- auth.test.ts / beta.test.ts: rate-limit mocks + getServerSession session stubs added (fixes from L5/L6 route changes)
+
+### Wave 2 — Features & Security (0 new tests, intentional route improvements)
+- [L3] /api/ai/search: destinations semantic search branch completed — type='destinations'/'all', prisma.trip.findMany, destinationCache, cosine similarity scoring
+- [L4] /api/trips/[tripId]/flights + /api/trips/[tripId]/suggestions: Zod query param validation added (adults, returnDate, nonStop, max); nonStop defaults to true when absent
+- [L5] /api/newsletter/subscribe: getServerSession auth guard added (order: API key → rate limit → auth → business logic)
+- [L6] /api/auth/signup + reset-password + verify-email: rate limit check moved to first operation
+- [M4] src/services/recommendation.service.ts + survey.service.ts: JSDoc added to all exported functions/types
+- [M5] src/lib/email.ts + invitations.ts + geocoding.ts: JSDoc added to exported functions
+- [M6] /api/users/me + /api/users/[userId]: response shapes standardized, JSDoc added
+
+### Shared File Consolidation
+- beta.test.ts: getServerSession mock added to newsletter describe block (fixes 401 regression from L5)
+- API_STATUS.md: /api/ai/search marked ✅ complete; newsletter auth noted; flights/suggestions Zod noted
+- CURRENT_SPRINT.md, sprint metrics updated to 2026-03-27
+
+### Metrics
+- Tests: 1003 → 1058 passing (+55 new tests)
+- Test files: 53 (unchanged — all expansions to existing files)
+- Routes: 48
+- TS files: ~263
+- any types: 0 | console.*: 0 | TODO: 0 | Files >600 lines (prod): 0
+
+*Updated: 2026-03-27*
+
 ---
 
 ## 🟢 Completed 2026-03-25 (Nightly Build)

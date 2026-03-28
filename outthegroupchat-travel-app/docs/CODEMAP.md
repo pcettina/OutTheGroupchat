@@ -1,6 +1,6 @@
 # OutTheGroupchat — Full Codemap
 
-> Auto-generated 2026-03-10. Last updated 2026-03-25. Comprehensive reference for agents and developers.
+> Auto-generated 2026-03-10. Last updated 2026-03-27. Comprehensive reference for agents and developers.
 
 ## Table of Contents
 
@@ -806,7 +806,7 @@ db:seed        → npx tsx prisma/seed/index.ts
 
 ## Tests
 
-**Total: 1003 tests across 53 Vitest unit/integration test files** (0 TSC errors in production code, 0 in test files as of 2026-03-25)
+**Total: 1058 tests across 53 Vitest unit/integration test files** (0 TSC errors in production code, 0 in test files as of 2026-03-27)
 
 | File | Lines | Tests | Coverage |
 |------|-------|-------|----------|

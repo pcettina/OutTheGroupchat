@@ -17,6 +17,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getServerSession } from 'next-auth';
 
 import { POST as betaSignupPOST } from '@/app/api/beta/signup/route';
 import { GET as betaStatusGET } from '@/app/api/beta/status/route';
@@ -253,6 +254,8 @@ describe('POST /api/newsletter/subscribe', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubEnv('N8N_API_KEY', VALID_API_KEY);
+    // L5 added getServerSession auth to this route — provide a valid session by default
+    vi.mocked(getServerSession).mockResolvedValue({ user: { id: 'user-beta-newsletter-001', email: 'test@example.com', name: 'Test' } } as never);
   });
 
   afterEach(() => {

@@ -12,9 +12,20 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+// Mock rate-limit before any route imports to prevent real Upstash Redis calls
+vi.mock('@/lib/rate-limit', () => ({
+  apiRateLimiter: null,
+  aiRateLimiter: null,
+  authRateLimiter: null,
+  checkRateLimit: vi.fn().mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: 0 }),
+  getRateLimitHeaders: vi.fn().mockReturnValue({}),
+}));
+
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { TripStatus, TripMemberRole } from '@prisma/client';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 // Import the route handlers under test
 import { GET as tripsGET, POST as tripsPOST } from '@/app/api/trips/route';
@@ -28,6 +39,7 @@ import {
 // Typed references to mocked modules
 // ---------------------------------------------------------------------------
 const mockGetServerSession = vi.mocked(getServerSession);
+const mockCheckRateLimit = vi.mocked(checkRateLimit);
 const mockPrismaTrip = vi.mocked(prisma.trip);
 const mockPrismaTripMember = vi.mocked(prisma.tripMember);
 
@@ -163,6 +175,30 @@ describe('GET /api/trips', () => {
 
     expect(res.status).toBe(500);
     expect(body.success).toBe(false);
+  });
+
+  it('returns 429 when checkRateLimit reports limit exceeded', async () => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+    mockCheckRateLimit.mockResolvedValueOnce({ success: false, limit: 100, remaining: 0, reset: Date.now() + 60000 });
+
+    const req = makeRequest('/api/trips');
+    const res = await tripsGET(req);
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(429);
+    expect(body.error).toMatch(/too many requests/i);
+    expect(mockPrismaTrip.findMany).not.toHaveBeenCalled();
+  });
+
+  it('does not call Prisma when rate limit is exceeded', async () => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+    mockCheckRateLimit.mockResolvedValueOnce({ success: false, limit: 100, remaining: 0, reset: Date.now() + 60000 });
+
+    const req = makeRequest('/api/trips');
+    await tripsGET(req);
+
+    expect(mockCheckRateLimit).toHaveBeenCalledOnce();
+    expect(mockPrismaTrip.findMany).not.toHaveBeenCalled();
   });
 });
 
