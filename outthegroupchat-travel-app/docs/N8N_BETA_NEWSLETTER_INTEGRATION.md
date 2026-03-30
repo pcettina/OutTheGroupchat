@@ -1,7 +1,7 @@
 # n8n Beta Signup & Newsletter Integration Guide
 
-> **Last Updated:** December 2025  
-> **Status:** ✅ **IMPLEMENTED** - Option 1 (Separate Beta Endpoint)  
+> **Last Updated:** 2026-03-26
+> **Status:** ✅ **IMPLEMENTED** - Option 1 (Separate Beta Endpoint)
 > **Purpose:** Connect n8n workflows for beta signups and newsletter subscriptions to user database
 
 ## ✅ Implementation Status
@@ -41,7 +41,7 @@ n8n Form Submission
 | Endpoint | Method | Purpose | Auth |
 |----------|--------|---------|------|
 | `/api/beta/signup` | POST | Create passwordless user from beta signup | API Key |
-| `/api/newsletter/subscribe` | POST | Subscribe email to newsletter | API Key |
+| `/api/newsletter/subscribe` | POST | Subscribe email to newsletter | API Key + Session |
 | `/api/beta/initialize-password` | POST | Set password for beta user | None (public) |
 | `/api/beta/status` | GET | Check beta signup status | None |
 
@@ -133,6 +133,8 @@ npx prisma generate
 **Endpoint:** `POST /api/newsletter/subscribe`
 
 **Purpose:** Subscribe an email to newsletter (can be existing user or new subscriber)
+
+> **Note (2026-03-26):** This endpoint now requires **both** a valid `x-api-key` header **and** an authenticated session (`getServerSession`). Unauthenticated requests — including anonymous n8n form submissions — will receive a `401 Authentication required` response. n8n workflows calling this endpoint must operate on behalf of an authenticated user or use the `/api/beta/signup` endpoint instead for unauthenticated beta signups.
 
 **Request Body:**
 ```json
@@ -349,16 +351,25 @@ export async function POST(req: Request) {
 
 **File:** `src/app/api/newsletter/subscribe/route.ts` - **CREATED**
 
+> **Updated 2026-03-26:** The route now requires both API key validation and an authenticated session. The code below reflects the current implementation.
+
 ```typescript
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
+import { apiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 
-const N8N_API_KEY = process.env.N8N_API_KEY;
+const NewsletterSubscribeSchema = z.object({
+  email: z.string().email(),
+  name: z.string().min(1).optional(),
+});
 
 function validateApiKey(request: Request): boolean {
   const apiKey = request.headers.get('x-api-key');
-  return apiKey === N8N_API_KEY;
+  return apiKey === process.env.N8N_API_KEY; // read per-request for testability
 }
 
 export async function POST(req: Request) {
@@ -371,7 +382,29 @@ export async function POST(req: Request) {
       );
     }
 
-    const { email, name } = await req.json();
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, `newsletter:${ip}`);
+    if (!rateLimitResult.success) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429, headers: getRateLimitHeaders(rateLimitResult) });
+    }
+
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const body = await req.json();
+    const parseResult = NewsletterSubscribeSchema.safeParse(body);
+    if (!parseResult.success) {
+      return NextResponse.json(
+        { error: 'Invalid input', details: parseResult.error.issues },
+        { status: 400 }
+      );
+    }
+    const { email, name } = parseResult.data;
 
     if (!email) {
       return NextResponse.json(
@@ -715,6 +748,8 @@ Body:
 
 ### Workflow 2: Newsletter Subscription
 
+> **Important (2026-03-26):** `/api/newsletter/subscribe` now requires an authenticated session in addition to the API key. Direct anonymous form submissions from n8n will return `401 Authentication required`. For unauthenticated newsletter capture, use `/api/beta/signup` with `newsletterSubscribed` logic, or implement a server-side session mechanism in the n8n HTTP Request node.
+
 #### Trigger: Form Trigger or Manual Trigger
 - Fields: `email`, `name` (optional)
 
@@ -722,9 +757,10 @@ Body:
 ```
 Method: POST
 URL: https://your-domain.com/api/newsletter/subscribe
-Authentication: Header Auth
+Authentication: Header Auth + Session Cookie
 Header Name: x-api-key
 Header Value: {{ $env.N8N_API_KEY }}
+Note: Also requires a valid NextAuth session cookie — anonymous requests will be rejected
 Body:
 {
   "email": "{{ $json.email }}",
@@ -907,6 +943,6 @@ For issues or questions:
 
 ---
 
-**Last Updated:** December 2025  
-**Version:** 1.1 - Implementation Complete ✅
+**Last Updated:** 2026-03-26
+**Version:** 1.2 - Auth requirement added to `/api/newsletter/subscribe` ✅
 

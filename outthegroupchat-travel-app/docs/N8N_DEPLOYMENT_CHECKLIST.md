@@ -173,10 +173,12 @@ Invoke-RestMethod -Uri "$domain/api/beta/signup" `
 
 **Test Newsletter Subscribe:**
 
+> **Note (2026-03-26):** This endpoint now also requires an authenticated session. The request below will return `401 Authentication required` without a valid session cookie. Include a `Cookie: next-auth.session-token=...` header or test from an authenticated browser session.
+
 ```powershell
 Invoke-RestMethod -Uri "$domain/api/newsletter/subscribe" `
   -Method POST `
-  -Headers @{"x-api-key"="$apiKey"; "Content-Type"="application/json"} `
+  -Headers @{"x-api-key"="$apiKey"; "Content-Type"="application/json"; "Cookie"="next-auth.session-token=<your-session-token>"} `
   -Body '{"email":"newsletter@example.com","name":"Newsletter User"}' | ConvertTo-Json
 ```
 
@@ -325,6 +327,8 @@ Once deployed, you'll have:
 
 ---
 
-**Last Updated:** December 2025  
+**Last Updated:** 2026-03-26
 **Next Step:** Complete migration → Deploy → Configure n8n workflows
+
+> **Note (2026-03-26):** `/api/newsletter/subscribe` now requires an authenticated session in addition to the API key. See [N8N_BETA_NEWSLETTER_INTEGRATION.md](./N8N_BETA_NEWSLETTER_INTEGRATION.md) for updated workflow guidance.
 

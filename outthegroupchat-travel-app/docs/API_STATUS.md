@@ -1,6 +1,6 @@
 # 📡 API & Integration Status
 
-> **Last updated: 2026-03-25**
+> **Last updated: 2026-03-26**
 >
 > **Last Audit:** March 2026
 > **Overall Status:** 86% Complete
@@ -25,12 +25,12 @@
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
 | `/api/auth/[...nextauth]` | ALL | ✅ | ✅ | NextAuth handler |
-| `/api/auth/signup` | POST | ✅ | ✅ | Zod validation added 2026-03-18; email verification sending added 2026-03-21 |
+| `/api/auth/signup` | POST | ✅ | ✅ | Zod validation added 2026-03-18; email verification sending added 2026-03-21; rate limiting now first operation 2026-03-26 |
 | `/api/auth/demo` | POST | ✅ | ✅ | Demo credentials in env vars ✅ 2026-03-10; DEMO_MODE env guard added 2026-03-22; Zod input validation added 2026-03-24; z.object({}).strict() replacing passthrough 2026-03-25 |
 | `/api/auth/demo` | GET | ✅ | ✅ | Returns demo account info (hides password in prod); requires DEMO_MODE=true env var ✅ 2026-03-22 |
-| `/api/auth/reset-password` | POST | ✅ | ✅ | Request reset token; email-safe 200 response ✅ 2026-03-12; UI page added 2026-03-14 |
+| `/api/auth/reset-password` | POST | ✅ | ✅ | Request reset token; email-safe 200 response ✅ 2026-03-12; UI page added 2026-03-14; rate limiting now first operation 2026-03-26 |
 | `/api/auth/reset-password` | PATCH | ✅ | ✅ | Confirm reset with token + new password ✅ 2026-03-12; UI confirm page added 2026-03-14 |
-| `/api/auth/verify-email` | GET | ✅ | ✅ | Email token verification ✅ 2026-03-19; signup now sends verification email ✅ 2026-03-21 |
+| `/api/auth/verify-email` | GET | ✅ | ✅ | Email token verification ✅ 2026-03-19; signup now sends verification email ✅ 2026-03-21; rate limiting now first operation 2026-03-26 |
 
 ### Auth Issues to Fix
 - [x] Add password reset endpoint ✅ 2026-03-12
@@ -165,7 +165,7 @@ Email removed from select projection in /api/search/route.ts
 | `/api/ai/recommend` | GET | ✅ | ⏳ | Trip-scoped recommendations by `?tripId=`; aggregates group member preferences to suggest activities |
 | `/api/ai/generate-itinerary` | POST | ✅ | ⏳ | Complete — isOpenAIConfigured() guard returns 503 when key absent ✅ 2026-03-23 |
 | `/api/ai/suggest-activities` | POST | ✅ | ⏳ | Complete — isOpenAIConfigured() guard returns 503 when key absent ✅ 2026-03-23 |
-| `/api/ai/search` | GET/POST | 🔶 | ⏳ | Semantic search |
+| `/api/ai/search` | GET/POST | ✅ | ⏳ | Semantic search with embeddings — GET + POST fully implemented (destinations branch added) ✅ 2026-03-26 |
 
 ### AI Issues to Fix
 ```
@@ -240,7 +240,7 @@ BLOCKED - Need Environment Variables:
 | `/api/beta/signup` | POST | ✅ | ✅ | Beta waitlist signup |
 | `/api/beta/status` | GET | ✅ | ✅ | Check beta access status; IP rate limiting added 2026-03-21; response narrowed to {exists, passwordInitialized} only (data minimization) ✅ 2026-03-22 |
 | `/api/beta/initialize-password` | POST | ✅ | ✅ | Beta user password init — now protected with N8N_API_KEY auth ✅ 2026-03-19 (was unauthenticated — account takeover vulnerability fixed) |
-| `/api/newsletter/subscribe` | POST | ✅ | ✅ | Newsletter subscription |
+| `/api/newsletter/subscribe` | POST | ✅ | ✅ | Newsletter subscription; auth now required 2026-03-26 |
 
 ---
 
@@ -254,7 +254,7 @@ BLOCKED - Need Environment Variables:
 | Feed | 5 | 4 | 0 | 0 | 1 |
 | Notifications | 3 | 3 | 0 | 0 | 0 |
 | Discovery | 6 | 6 | 0 | 0 | 0 |
-| AI | 6 | 4 | 2 | 0 | 0 |
+| AI | 6 | 5 | 1 | 0 | 0 |
 | User | 4 | 2 | 0 | 0 | 2 |
 | Real-time | 1 | 0 | 0 | 0 | 1 |
 | System | 3 | 2 | 0 | 0 | 1 |
@@ -372,4 +372,4 @@ EMAIL_FROM=             # Email sender (onboarding@resend.dev) ✅
 
 *Review and update after each API change.*
 
-*Last Updated: 2026-03-25 - /api/trips/[tripId] GET: email stripped from unauthenticated public responses (security); /api/health response hardened (NODE_ENV/version removed); /api/auth/demo z.object({}).strict() added; src/lib/sentry.ts created (Sentry helpers); DOMPurify XSS protection added to RichFeedItem.tsx; JSDoc added to recommendation.service.ts, survey.service.ts, ai/embeddings.ts, ai/prompts; 79 new tests tonight (1003 total, 53 test files)*
+*Last Updated: 2026-03-26 - /api/ai/search GET+POST fully implemented (semantic search, destinations branch); /api/newsletter/subscribe now requires auth; /api/auth/signup, /api/auth/reset-password, /api/auth/verify-email: rate limiting now first operation; 153 new tests tonight (1156 total, 56 test files); dead components (NotificationCenter.tsx, SharePreview.tsx) removed; JSDoc added to costs.ts; README updated*
