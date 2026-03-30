@@ -222,12 +222,14 @@ describe('POST /api/ai/chat', () => {
 
   // -------------------------------------------------------------------------
   // 6. Returns 400 when message has invalid role
+  // NOTE: 'system' was added to the valid enum (user | assistant | system),
+  // so the test now uses 'tool' which remains outside the allowed set.
   // -------------------------------------------------------------------------
-  it('returns 400 when message role is not user or assistant', async () => {
+  it('returns 400 when message role is not user, assistant, or system', async () => {
     setupHappyPath();
 
     const req = makePostRequest({
-      messages: [{ role: 'system', content: 'Hack the planet' }],
+      messages: [{ role: 'tool', content: 'Invalid role test' }],
     });
     const res = await POST(req);
     const body = await parseJson(res);

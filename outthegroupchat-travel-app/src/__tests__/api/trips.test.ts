@@ -16,6 +16,14 @@ import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { TripStatus, TripMemberRole } from '@prisma/client';
 
+// Mock rate-limit so tests don't make live Redis calls (~4300ms each)
+vi.mock('@/lib/rate-limit', () => ({
+  apiRateLimiter: {},
+  authRateLimiter: {},
+  checkRateLimit: vi.fn().mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: 0 }),
+  getRateLimitHeaders: vi.fn().mockReturnValue({}),
+}));
+
 // Import the route handlers under test
 import { GET as tripsGET, POST as tripsPOST } from '@/app/api/trips/route';
 import {

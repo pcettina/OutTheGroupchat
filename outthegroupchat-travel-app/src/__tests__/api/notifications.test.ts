@@ -70,7 +70,7 @@ const mockPrismaNotification = prisma.notification as unknown as {
 
 const MOCK_USER_ID = 'user-notif-111';
 const MOCK_OTHER_USER_ID = 'user-notif-999';
-const MOCK_NOTIF_ID = 'notif-abc-222';
+const MOCK_NOTIF_ID = 'clh7nz5vr0000mg0hb9gkfxe0';
 
 const MOCK_SESSION = {
   user: {

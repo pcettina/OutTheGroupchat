@@ -110,7 +110,7 @@
 - [x] SQL injection prevention (Prisma)
 - [x] Rate limiting infrastructure (Upstash)
 - [ ] Rate limiting on ALL endpoints
-- [x] Input validation on major API routes (Zod) ✅ 2026-03-24 — notifications, feed/comments, feed/engagement, pusher/auth, users/[userId], discover/*, images/search, inspiration, cron, auth/demo added
+- [x] Input validation on major API routes (Zod) ✅ 2026-03-24 — notifications, feed/comments, feed/engagement, pusher/auth, users/[userId], discover/*, images/search, inspiration, cron, auth/demo added; ai/chat Zod strengthened + JSON.parse safety on 5 AI routes + notifications/[notificationId] ✅ 2026-03-29
 - [x] /api/discover/search requires authentication ✅ 2026-03-24 (security improvement — was unauthenticated)
 - [x] /api/discover/recommendations requires authentication ✅ 2026-03-24
 - [x] /api/auth/demo has Zod input validation ✅ 2026-03-24
@@ -171,6 +171,7 @@
 - [x] API route tests (trips-voting 50, trips-invitations 33, pusher-feed-social 38, trips-itinerary 43) ✅ 2026-03-23 — total: 910+ tests across 46 files
 - [x] API route tests (trips-itinerary +21, auth-demo 13, cron 10, discover-search 12) + discover.test.ts auth fixes ✅ 2026-03-24 — total: 924 tests across 49 files
 - [x] API route tests (invitations-post 18, ai-get-methods 16, beta-extended 21, users-follow 24) ✅ 2026-03-25 — total: 1003 tests across 53 files
+- [x] API route tests (ai-generate-itinerary 31, ai-suggest-activities 25, discover-import 21) ✅ 2026-03-29 — total: 1080 tests across 56 files
 
 ### Integration Tests
 - [ ] Auth flow tests
@@ -375,4 +376,4 @@ git push origin main  # Auto-deploys to Vercel
 
 *This checklist should be reviewed daily during launch preparation.*
 
-*Last Updated: 2026-03-25 - 79 new tests (1003 total, 53 files); email stripped from unauthenticated public trip responses (security); health route narrowed to {status, timestamp, database} (data minimization); DOMPurify XSS protection added to RichFeedItem.tsx; src/lib/sentry.ts created; invitations-post.test.ts, ai-get-methods.test.ts, beta-extended.test.ts, users-follow.test.ts created*
+*Last Updated: 2026-03-29 - 77 new tests (1080 total, 56 files); JSON.parse safety added to 5 AI routes + notifications/[notificationId]; Zod strengthened on ai/chat (role enum, content limits, max 50 messages); Zod GET params on ai/recommend; notifications/[notificationId] bugfix (read was hardcoded true); JSDoc added to src/lib/geocoding.ts; ai-generate-itinerary.test.ts, ai-suggest-activities.test.ts, discover-import.test.ts created*

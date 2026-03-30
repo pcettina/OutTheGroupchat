@@ -191,7 +191,7 @@
 
 | Metric | Target | Current | Previous |
 |--------|--------|---------|---------|
-| Test count | 500+ | 1003 (53 test files) | 924 (49 files) |
+| Test count | 500+ | 1080 (56 test files) | 1003 (53 files) |
 | `any` types | 0 | 0 ✅ | 0 |
 | `console.*` in prod code | 0 | 0 ✅ | 0 |
 | TSC errors (test files) | 0 | 0 ✅ | 0 |
@@ -222,6 +222,34 @@
 **Tests: 382 total (+78 from tonight)**
 
 *Updated: 2026-03-20*
+---
+
+## 🟢 Completed 2026-03-29 (Nightly Build)
+
+### Wave 1 — Test Writers (77 tests added)
+- [L1] Created ai-generate-itinerary.test.ts (31 tests for POST /api/ai/generate-itinerary — auth guard, 503 OpenAI guard, 429 rate-limit, validation, 404/403, successful generation, multi-day, customInstructions, no-budget, multi-member, JSON-in-prose, AI/DB failures)
+- [L2] Created ai-suggest-activities.test.ts (25 tests for POST /api/ai/suggest-activities — pure AI generation route, no Prisma calls)
+- [M1] Rate-limit mock audit: ai-chat.test.ts already had vi.mock('@/lib/rate-limit'); fixed 1 failing test (role='system' → role='tool' after L3 added 'system' to Zod role enum)
+- [M2] Created discover-import.test.ts (21 tests for POST /api/discover/import — rate limiting, auth guard, prisma.externalActivity.upsert, OpenTripMap fetch)
+
+### Wave 2 — Features & Hardening (0 new tests; intentional route changes)
+- [L3] /api/ai/chat: Zod strengthened (system added to role enum, content length limits, message array max 50, tripContext limits, memberCount .int().positive()); req.json() wrapped in try-catch → 400
+- [L4] /api/ai/recommend: getQuerySchema for GET params (tripId required, limit clamped 1-20 default 8); req.json() in POST wrapped in try-catch; silent error swallow in GET parse catch fixed
+- [L5] /api/ai/suggest-activities: req.json() wrapped in try-catch → 400; body typed as unknown before safeParse
+- [L6] /api/notifications/[notificationId]: Zod paramsSchema (z.string().cuid()) on PATCH and DELETE; req.json() wrapped in try-catch; bugfix — PATCH now uses parsed.data.read instead of hardcoded true
+- [M3] /api/ai/generate-itinerary: req.json() wrapped in try-catch → 400 (auth/demo was already safe)
+- [M4] JSDoc added to src/lib/geocoding.ts (searchDestinations, getDestinationCoordinates, searchDestinationsWithFallback, clearGeocodingCache, popularDestinations)
+- [M5] README.md updated: footer date 2026-03-24 → 2026-03-29, tests 865+ → 1003+
+- [M6] docs/N8N_BETA_NEWSLETTER_INTEGRATION.md + docs/N8N_DEPLOYMENT_CHECKLIST.md: deprecation notices added, Last Updated dates set to 2026-03-29
+
+### Metrics
+- Tests: 1003 → 1080 passing (77 new tests)
+- Test files: 53 → 56
+- Routes: 48 (unchanged)
+- TS files: ~262
+- any types: 0 | console.*: 0 | TODO: 0 | Files >600 lines (prod): 0
+
+*Updated: 2026-03-29*
 ---
 
 ## 🟢 Completed 2026-03-25 (Nightly Build)

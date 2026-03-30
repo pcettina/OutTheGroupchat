@@ -1,7 +1,9 @@
 # n8n Beta Signup & Newsletter Integration Guide
 
-> **Last Updated:** December 2025  
-> **Status:** ✅ **IMPLEMENTED** - Option 1 (Separate Beta Endpoint)  
+> ⚠️ **DEPRECATED (2026-03-29)**: The API endpoints described in this document (`/api/beta/signup`, `/api/newsletter/subscribe`, `/api/beta/initialize-password`, `/api/beta/status`) were implemented and exist in the codebase. However, the N8N workflow automation side was never configured — `N8N_API_KEY` is not set in Vercel production and no n8n workflows were deployed. The newsletter subscription route (`/api/newsletter/subscribe`) has since been updated with Zod validation, rate limiting, and `getServerSession` auth in ways that diverge from the code shown here. This document is preserved for historical reference. For the current newsletter route implementation, read the source directly at `src/app/api/newsletter/subscribe/route.ts`.
+
+> **Last Updated:** 2026-03-29 (originally December 2025)
+> **Status:** API endpoints exist; N8N workflows never configured; `N8N_API_KEY` not set in Vercel production
 > **Purpose:** Connect n8n workflows for beta signups and newsletter subscriptions to user database
 
 ## ✅ Implementation Status
@@ -907,6 +909,6 @@ For issues or questions:
 
 ---
 
-**Last Updated:** December 2025  
-**Version:** 1.1 - Implementation Complete ✅
+**Last Updated:** 2026-03-29 (originally December 2025)
+**Version:** 1.1 - API endpoints implemented; N8N workflows not deployed
 

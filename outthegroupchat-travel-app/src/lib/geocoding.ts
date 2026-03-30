@@ -45,8 +45,20 @@ let lastRequestTime = 0;
 const MIN_REQUEST_INTERVAL = 1100; // 1.1 seconds to stay under Nominatim's rate limit
 
 /**
- * Search for destinations matching a query
- * Uses OpenStreetMap Nominatim API
+ * Searches for destinations matching the provided query string using the
+ * OpenStreetMap Nominatim API. Results are filtered to city/town/municipality
+ * types, de-duplicated, and cached in memory for 1 hour to reduce API calls.
+ * A 1.1-second inter-request delay is enforced to comply with Nominatim's
+ * rate-limit policy.
+ *
+ * @param query - The search string (e.g. "Paris", "New York"). Must be at
+ *   least 2 characters; shorter strings return an empty array immediately.
+ * @returns A promise that resolves to an array of {@link Destination} objects
+ *   each containing `city`, `country`, and `coordinates` (`lat`/`lng`).
+ *   Returns an empty array on API error or when no matching cities are found.
+ * @example
+ * const results = await searchDestinations('Tokyo')
+ * // results[0] => { city: 'Tokyo', country: 'Japan', coordinates: { lat: 35.68, lng: 139.69 } }
  */
 export async function searchDestinations(query: string): Promise<Destination[]> {
   if (!query || query.length < 2) {
@@ -144,8 +156,19 @@ function extractCityName(result: NominatimResult): string {
 }
 
 /**
- * Get coordinates for a specific destination
- * Uses a more precise lookup
+ * Retrieves the latitude/longitude coordinates for a specific city and country
+ * using a precise Nominatim lookup. The result is cached in memory (keyed on
+ * `"coords:<city>, <country>"`) to avoid repeated API calls for the same
+ * destination. The same 1.1-second inter-request rate limit is applied.
+ *
+ * @param city - The city name (e.g. "Barcelona").
+ * @param country - The country name (e.g. "Spain").
+ * @returns A promise that resolves to an object `{ lat, lng }` when the
+ *   destination is found, or `null` if the API returns no results, the
+ *   request fails, or an exception is thrown.
+ * @example
+ * const coords = await getDestinationCoordinates('Rome', 'Italy')
+ * // coords => { lat: 41.9028, lng: 12.4964 }
  */
 export async function getDestinationCoordinates(
   city: string,
@@ -213,8 +236,10 @@ export async function getDestinationCoordinates(
 }
 
 /**
- * Popular destinations fallback
- * Used when API fails or for quick suggestions
+ * Curated list of popular travel destinations used as an instant fallback
+ * when the Nominatim API is unavailable or when a query matches too few
+ * API results. Each entry includes pre-computed coordinates so no network
+ * request is needed to serve these suggestions.
  */
 export const popularDestinations: Destination[] = [
   { city: 'Miami', country: 'USA', coordinates: { lat: 25.7617, lng: -80.1918 } },
@@ -236,8 +261,21 @@ export const popularDestinations: Destination[] = [
 ];
 
 /**
- * Search with fallback to popular destinations
- * Combines API results with popular destinations for better UX
+ * Searches for destinations with a two-tier strategy for improved UX and
+ * resilience. First checks {@link popularDestinations} for instant matches;
+ * if 3 or more popular matches are found they are returned immediately without
+ * an API call. Otherwise calls {@link searchDestinations} via the Nominatim
+ * API and merges the results with any popular matches, capped at 8 entries.
+ * Falls back gracefully to popular matches (or the full popular list) when
+ * the API throws.
+ *
+ * @param query - The search string typed by the user. When shorter than 2
+ *   characters the first 8 entries of {@link popularDestinations} are returned.
+ * @returns A promise that resolves to an array of up to 8 {@link Destination}
+ *   objects. Never rejects — API errors are caught and handled internally.
+ * @example
+ * const suggestions = await searchDestinationsWithFallback('Bali')
+ * // suggestions[0] => { city: 'Bali', country: 'Indonesia', coordinates: { lat: -8.34, lng: 115.09 } }
  */
 export async function searchDestinationsWithFallback(query: string): Promise<Destination[]> {
   if (!query || query.length < 2) {
@@ -281,8 +319,16 @@ export async function searchDestinationsWithFallback(query: string): Promise<Des
 }
 
 /**
- * Clear the geocoding cache
- * Useful for testing or when cache gets stale
+ * Clears the in-memory geocoding cache and its associated timestamp map,
+ * forcing subsequent calls to `searchDestinations` and
+ * `getDestinationCoordinates` to fetch fresh data from the Nominatim API.
+ * Primarily useful in tests to prevent cross-test state leakage, and in
+ * production scenarios where cache invalidation is explicitly required.
+ *
+ * @returns void
+ * @example
+ * clearGeocodingCache()
+ * // All cached geocode results and timestamps are now cleared.
  */
 export function clearGeocodingCache(): void {
   geocodeCache.clear();

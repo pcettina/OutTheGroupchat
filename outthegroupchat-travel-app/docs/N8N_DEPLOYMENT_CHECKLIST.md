@@ -1,7 +1,10 @@
 # n8n Integration - Deployment Checklist
 
-> **Purpose:** Step-by-step guide to complete n8n integration setup and deploy to Vercel  
-> **Status:** Implementation complete, ready for deployment
+> ⚠️ **DEPRECATED (2026-03-29)**: This checklist describes deployment steps for an N8N workflow integration that was never completed. The API endpoints exist in the codebase but `N8N_API_KEY` has not been set in Vercel production and no n8n workflows have been configured. The Prisma migration for beta/newsletter fields (`betaSignupDate`, `newsletterSubscribed`, `newsletterSubscribedAt`, `passwordInitialized`, `betaLaunchEmailSent`) may or may not have been applied to the production database. This document is preserved for historical reference. Completing this integration remains a future enhancement option.
+
+> **Last Updated:** 2026-03-29 (originally December 2025)
+> **Purpose:** Step-by-step guide to complete n8n integration setup and deploy to Vercel
+> **Status:** Not deployed — API endpoints exist but N8N_API_KEY missing in Vercel production; n8n workflows not configured
 
 ---
 
@@ -325,6 +328,6 @@ Once deployed, you'll have:
 
 ---
 
-**Last Updated:** December 2025  
-**Next Step:** Complete migration → Deploy → Configure n8n workflows
+**Last Updated:** 2026-03-29 (originally December 2025)
+**Next Step:** Complete migration → Deploy → Configure n8n workflows (integration not yet started)
 

@@ -32,44 +32,66 @@ vi.mock('bcryptjs', () => ({
   compare: vi.fn().mockResolvedValue(true),
 }));
 
-// Extend the global prisma mock with the additional models and methods the
-// signup handler calls beyond what setup.ts provides.
-vi.mock('@/lib/prisma', async (importOriginal) => {
-  const original = await importOriginal<typeof import('@/lib/prisma')>();
-  return {
-    ...original,
-    prisma: {
-      ...original.prisma,
-      user: {
-        findUnique: vi.fn(),
-        findFirst: vi.fn(),
-        create: vi.fn(),
-        update: vi.fn(),
-      },
-      pendingInvitation: {
-        findFirst: vi.fn(),
-        findMany: vi.fn(),
-        create: vi.fn(),
-        update: vi.fn(),
-        deleteMany: vi.fn(),
-      },
-      tripInvitation: {
-        findFirst: vi.fn(),
-        create: vi.fn(),
-        update: vi.fn(),
-      },
-      notification: {
-        create: vi.fn(),
-        findMany: vi.fn(),
-        count: vi.fn(),
-        updateMany: vi.fn(),
-        findUnique: vi.fn(),
-        update: vi.fn(),
-        delete: vi.fn(),
-      },
+// Mock rate-limit so tests don't make live Upstash Redis calls.
+vi.mock('@/lib/rate-limit', () => ({
+  authRateLimiter: {},
+  apiRateLimiter: {},
+  checkRateLimit: vi.fn().mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: 0 }),
+  getRateLimitHeaders: vi.fn().mockReturnValue({}),
+}));
+
+// Mock @/lib/email so verification emails are not sent during tests.
+vi.mock('@/lib/email', () => ({
+  sendNotificationEmail: vi.fn().mockResolvedValue({ success: true, messageId: 'mock-msg-id' }),
+  sendInvitationEmail: vi.fn().mockResolvedValue({ success: true, messageId: 'mock-msg-id' }),
+  isEmailConfigured: vi.fn().mockReturnValue(true),
+}));
+
+// Provide a standalone prisma mock for this file (does NOT use importOriginal,
+// which would attempt to load the real PrismaClient and crash the worker).
+vi.mock('@/lib/prisma', () => ({
+  prisma: {
+    user: {
+      findUnique: vi.fn(),
+      findFirst: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      findMany: vi.fn(),
+      delete: vi.fn(),
+      count: vi.fn(),
     },
-  };
-});
+    pendingInvitation: {
+      findFirst: vi.fn(),
+      findMany: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      deleteMany: vi.fn(),
+    },
+    tripInvitation: {
+      findFirst: vi.fn(),
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      updateMany: vi.fn(),
+    },
+    notification: {
+      create: vi.fn(),
+      findMany: vi.fn(),
+      count: vi.fn(),
+      updateMany: vi.fn(),
+      findUnique: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+    },
+    verificationToken: {
+      create: vi.fn(),
+      findUnique: vi.fn(),
+      delete: vi.fn(),
+      deleteMany: vi.fn(),
+    },
+  },
+}));
 
 // Import the handler after the mock declarations.
 import { POST } from '@/app/api/auth/signup/route';

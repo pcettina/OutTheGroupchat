@@ -31,6 +31,16 @@ const recommendSchema = z.object({
   limit: z.number().min(1).max(20).default(10),
 });
 
+const getQuerySchema = z.object({
+  tripId: z.string().min(1, 'tripId is required'),
+  limit: z
+    .string()
+    .regex(/^\d+$/, 'limit must be a positive integer')
+    .optional()
+    .transform(v => (v !== undefined ? Number(v) : 8))
+    .pipe(z.number().min(1).max(20)),
+});
+
 const recommendationPrompt = `You are a travel activity recommendation engine. Based on user preferences and past activity, suggest personalized travel activities.
 
 Output Format (JSON array):
@@ -69,7 +79,16 @@ export async function POST(req: Request) {
       );
     }
 
-    const body = await req.json();
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json(
+        { error: 'Invalid JSON in request body' },
+        { status: 400 }
+      );
+    }
+
     const validation = recommendSchema.safeParse(body);
 
     if (!validation.success) {
@@ -242,14 +261,19 @@ export async function GET(req: Request) {
     }
 
     const { searchParams } = new URL(req.url);
-    const tripId = searchParams.get('tripId');
+    const queryValidation = getQuerySchema.safeParse({
+      tripId: searchParams.get('tripId') ?? undefined,
+      limit: searchParams.get('limit') ?? undefined,
+    });
 
-    if (!tripId) {
+    if (!queryValidation.success) {
       return NextResponse.json(
-        { error: 'tripId is required' },
+        { error: 'Validation failed', details: queryValidation.error.flatten() },
         { status: 400 }
       );
     }
+
+    const { tripId, limit: getLimit } = queryValidation.data;
 
     // Get trip with all context
     const trip = await prisma.trip.findUnique({
@@ -306,7 +330,7 @@ TRIP CONTEXT:
 - Common Group Interests: ${topInterests.join(', ') || 'varied'}
 - Already Planned Categories: ${existingCategories.join(', ') || 'none'}
 
-Generate 8 activities that would complement existing plans and appeal to the whole group. Prioritize categories NOT already in their itinerary. Return ONLY valid JSON.`;
+Generate ${getLimit} activities that would complement existing plans and appeal to the whole group. Prioritize categories NOT already in their itinerary. Return ONLY valid JSON.`;
 
     const model = getModel('recommendations');
     const { text } = await generateText({
@@ -325,7 +349,8 @@ Generate 8 activities that would complement existing plans and appeal to the who
           issues: parseValidation.error.flatten(),
         });
       }
-    } catch {
+    } catch (parseErr) {
+      logError('AI_RECOMMEND_GET_PARSE', new Error('Failed to parse AI recommendations'), { parseErr });
       recommendations = [];
     }
 
