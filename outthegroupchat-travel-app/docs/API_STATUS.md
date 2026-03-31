@@ -1,6 +1,6 @@
 # 📡 API & Integration Status
 
-> **Last updated: 2026-03-26**
+> **Last updated: 2026-03-30**
 >
 > **Last Audit:** March 2026
 > **Overall Status:** 86% Complete
@@ -46,8 +46,8 @@
 | `/api/trips` | GET | ✅ | 🔶 | Lists user's trips |
 | `/api/trips` | POST | ✅ | 🔶 | Creates new trip |
 | `/api/trips/[tripId]` | GET | ✅ | 🔶 | Get trip details; email stripped from unauthenticated public responses (security hardened 2026-03-25) |
-| `/api/trips/[tripId]` | PATCH | ✅ | ⏳ | Update trip |
-| `/api/trips/[tripId]` | DELETE | ✅ | ⏳ | Delete trip |
+| `/api/trips/[tripId]` | PATCH | ✅ | ⏳ | Update trip; Zod cuid() param validation + JSON parse safety added 2026-03-30 |
+| `/api/trips/[tripId]` | DELETE | ✅ | ⏳ | Delete trip; Zod cuid() param validation + JSON parse safety added 2026-03-30 |
 
 ### Trip Member APIs
 
@@ -80,8 +80,8 @@
 | `/api/trips/[tripId]/voting` | GET | ✅ | 🔶 | Get voting session |
 | `/api/trips/[tripId]/voting` | POST | ✅ | 🔶 | Create/cast vote |
 | `/api/trips/[tripId]/recommendations` | GET | ✅ | ⏳ | AI recommendations |
-| `/api/trips/[tripId]/flights` | GET | ✅ | ⏳ | Search flights for trip dates using user's profile city as origin; uses Amadeus API |
-| `/api/trips/[tripId]/suggestions` | GET | ✅ | ⏳ | Fetch events (Ticketmaster), attractions, and restaurants for trip destination; includes daily cost estimate |
+| `/api/trips/[tripId]/flights` | GET | ✅ | ⏳ | Search flights for trip dates using user's profile city as origin; uses Amadeus API; Zod cuid() param validation added + TripMember auth bypass fixed (member.id → member.userId) 2026-03-30 |
+| `/api/trips/[tripId]/suggestions` | GET | ✅ | ⏳ | Fetch events (Ticketmaster), attractions, and restaurants for trip destination; includes daily cost estimate; Zod cuid() param validation added + TripMember auth bypass fixed (member.id → member.userId) 2026-03-30 |
 
 ### Invitation Management APIs
 
@@ -90,8 +90,8 @@
 | `/api/invitations` | GET | ✅ | ⏳ | List all invitations for current user; auto-marks expired PENDING invitations |
 | `/api/invitations/[invitationId]` | GET | ✅ | ⏳ | Get invitation details including trip + members; auth + ownership check |
 | `/api/invitations/[invitationId]` | POST | ✅ | ⏳ | Accept or decline invitation (`action: 'accept'|'decline'`); on accept adds user as TripMember and notifies owner |
-| `/api/trips/[tripId]/suggestions` | GET | 🔶 | ⏳ | Activity suggestions via Ticketmaster + Places APIs; requires ext API keys |
-| `/api/trips/[tripId]/flights` | GET | 🔶 | ⏳ | Flight search via Amadeus-style integration; requires AMADEUS_API_KEY |
+| `/api/trips/[tripId]/suggestions` | GET | ✅ | ⏳ | Activity suggestions via Ticketmaster + Places APIs; requires ext API keys; auth bypass fixed + Zod cuid() 2026-03-30 |
+| `/api/trips/[tripId]/flights` | GET | ✅ | ⏳ | Flight search via Amadeus-style integration; requires AMADEUS_API_KEY; auth bypass fixed + Zod cuid() 2026-03-30 |
 
 ---
 
@@ -140,7 +140,7 @@ No fix needed - code was already correct
 |----------|--------|--------|-------------------|-------|
 | `/api/discover` | GET | ✅ | ⏳ | Search events/places/restaurants/attractions/nightlife by city + date range; type param filters results |
 | `/api/discover` | POST | ✅ | ⏳ | Search flights via EventsService (origin, destination, departureDate, returnDate, adults); Zod validation added 2026-03-21 |
-| `/api/discover/search` | GET | ✅ | 🔶 | Auth guard added 2026-03-24 (was unauthenticated — security improvement); rate limiting, Zod validation ✅ |
+| `/api/discover/search` | GET | ✅ | 🔶 | Auth guard added 2026-03-24 (was unauthenticated — security improvement); rate limiting, Zod validation ✅; HTTP cache control headers added 2026-03-30 |
 | `/api/discover/recommendations` | GET | ✅ | 🔶 | Auth guard added 2026-03-24; category filter, rate limiting, pino logging ✅ |
 | `/api/discover/import` | POST | ✅ | ⏳ | Rate limiting + auth guard ✅ 2026-03-24; pino logging, typed helpers, fixed empty catch blocks |
 | `/api/search` | GET | ✅ | 🔶 | Email removed from select projection (privacy fix) ✅ 2026-03-20 |
@@ -165,7 +165,7 @@ Email removed from select projection in /api/search/route.ts
 | `/api/ai/recommend` | GET | ✅ | ⏳ | Trip-scoped recommendations by `?tripId=`; Zod getQuerySchema (tripId required, limit clamped 1-20) added 2026-03-29; aggregates group member preferences to suggest activities |
 | `/api/ai/generate-itinerary` | POST | ✅ | ⏳ | Complete — isOpenAIConfigured() guard returns 503 when key absent ✅ 2026-03-23; JSON.parse safety added 2026-03-29 |
 | `/api/ai/suggest-activities` | POST | ✅ | ⏳ | Complete — isOpenAIConfigured() guard returns 503 when key absent ✅ 2026-03-23; JSON.parse safety added 2026-03-29 |
-| `/api/ai/search` | GET/POST | ✅ | ⏳ | Semantic search with embeddings — GET + POST fully implemented (destinations branch added) ✅ 2026-03-26 |
+| `/api/ai/search` | GET/POST | ✅ | ✅ | Semantic search with embeddings — GET + POST fully implemented (destinations branch added) ✅ 2026-03-26; wired to frontend via useAiSearch.ts hook + discover page 2026-03-30 |
 
 ### AI Issues to Fix
 ```
@@ -238,7 +238,7 @@ BLOCKED - Need Environment Variables:
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
 | `/api/beta/signup` | POST | ✅ | ✅ | Beta waitlist signup |
-| `/api/beta/status` | GET | ✅ | ✅ | Check beta access status; IP rate limiting added 2026-03-21; response narrowed to {exists, passwordInitialized} only (data minimization) ✅ 2026-03-22 |
+| `/api/beta/status` | GET | ✅ | ✅ | Check beta access status; IP rate limiting added 2026-03-21; response narrowed to {exists, passwordInitialized} only (data minimization) ✅ 2026-03-22; user enumeration vulnerability fixed 2026-03-30 |
 | `/api/beta/initialize-password` | POST | ✅ | ✅ | Beta user password init — now protected with N8N_API_KEY auth ✅ 2026-03-19 (was unauthenticated — account takeover vulnerability fixed) |
 | `/api/newsletter/subscribe` | POST | ✅ | ✅ | Newsletter subscription; auth now required 2026-03-26 |
 
@@ -372,4 +372,4 @@ EMAIL_FROM=             # Email sender (onboarding@resend.dev) ✅
 
 *Review and update after each API change.*
 
-*Last Updated: 2026-03-26 - /api/ai/search GET+POST fully implemented (semantic search, destinations branch); /api/newsletter/subscribe now requires auth; /api/auth/signup, /api/auth/reset-password, /api/auth/verify-email: rate limiting now first operation; 153 new tests tonight (1156 total, 56 test files); dead components (NotificationCenter.tsx, SharePreview.tsx) removed; JSDoc added to costs.ts; README updated. Also includes 2026-03-29 changes: /api/ai/chat Zod strengthened + JSON.parse safety; /api/ai/recommend Zod GET params + JSON.parse safety; /api/ai/suggest-activities + generate-itinerary JSON.parse safety; /api/notifications/[notificationId] Zod params (cuid) + bugfix (read was hardcoded true); JSDoc added to src/lib/geocoding.ts; N8N docs deprecated*
+*Last Updated: 2026-03-30 - TripMember auth bypass fixed in flights + suggestions routes (member.id → member.userId); Zod cuid() param validation added to flights, suggestions, trips/[tripId]; /api/ai/search wired to frontend (useAiSearch.ts hook + discover page); user enumeration fixed in /api/beta/status; HTTP cache control headers added to /api/discover/search; 74 new tests (~1231 total, 59 test files); 9 stale doc timestamps updated. Includes 2026-03-29 changes: /api/ai/chat Zod strengthened + JSON.parse safety; /api/ai/recommend Zod GET params + JSON.parse safety; /api/ai/suggest-activities + generate-itinerary JSON.parse safety; /api/notifications/[notificationId] Zod params (cuid) + bugfix (read was hardcoded true); JSDoc added to src/lib/geocoding.ts; N8N docs deprecated*

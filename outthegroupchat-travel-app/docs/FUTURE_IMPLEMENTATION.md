@@ -4,7 +4,7 @@
 
 This document outlines future features, improvements, and technical debt to address for the OutTheGroupchat platform. Items already completed as of 2026-03-25 are marked accordingly.
 
-*Last Updated: 2026-03-25*
+*Last Updated: 2026-03-30*
 
 ---
 
@@ -360,4 +360,4 @@ Q1 2027 — Social & Mobile
 
 ---
 
-*Last Updated: 2026-03-25*
+*Last Updated: 2026-03-30*

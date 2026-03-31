@@ -63,8 +63,8 @@ const mockCalculateDailyCosts = vi.mocked(calculateDailyCosts);
 // Shared fixtures
 // ---------------------------------------------------------------------------
 
-const MOCK_USER_ID = 'user-abc-123';
-const MOCK_TRIP_ID = 'trip-xyz-456';
+const MOCK_USER_ID = 'clh7nz5vr0001mg0hb9gkfxe1';
+const MOCK_TRIP_ID = 'clh7nz5vr0000mg0hb9gkfxe0';
 
 const MOCK_SESSION = {
   user: {
@@ -91,7 +91,7 @@ const MOCK_TRIP = {
   budget: null,
   createdAt: new Date('2026-01-01'),
   updatedAt: new Date('2026-01-01'),
-  members: [{ id: MOCK_USER_ID, name: 'Test User', email: 'test@example.com' }],
+  members: [{ id: MOCK_USER_ID, userId: MOCK_USER_ID, name: 'Test User', email: 'test@example.com' }],
 };
 
 /** Trip owned by a different user with no overlapping members. */
@@ -120,7 +120,7 @@ async function parseText(res: Response) {
 // Reset all mocks between tests to prevent state leakage.
 // ---------------------------------------------------------------------------
 beforeEach(() => {
-  vi.clearAllMocks();
+  vi.resetAllMocks();
 });
 
 // ===========================================================================
@@ -199,7 +199,7 @@ describe('GET /api/trips/[tripId]/suggestions', () => {
   it('returns 200 when the user is a trip member (not owner)', async () => {
     const tripAsMember = {
       ...MOCK_TRIP_OTHER_OWNER,
-      members: [{ id: MOCK_USER_ID, name: 'Test User', email: 'test@example.com' }],
+      members: [{ id: MOCK_USER_ID, userId: MOCK_USER_ID, name: 'Test User', email: 'test@example.com' }],
     };
     mockPrismaTrip.findUnique.mockResolvedValueOnce(tripAsMember as unknown as Awaited<ReturnType<typeof prisma.trip.findUnique>>);
     mockSearchEvents.mockResolvedValueOnce([]);
@@ -387,7 +387,7 @@ describe('GET /api/trips/[tripId]/flights', () => {
   it('returns 200 as a trip member (not owner)', async () => {
     const tripAsMember = {
       ...MOCK_TRIP_OTHER_OWNER,
-      members: [{ id: MOCK_USER_ID, name: 'Test User', email: 'test@example.com' }],
+      members: [{ id: MOCK_USER_ID, userId: MOCK_USER_ID, name: 'Test User', email: 'test@example.com' }],
     };
     mockPrismaTrip.findUnique.mockResolvedValueOnce(tripAsMember as unknown as Awaited<ReturnType<typeof prisma.trip.findUnique>>);
     mockPrismaUser.findUnique.mockResolvedValueOnce({ city: 'Los Angeles' } as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>);

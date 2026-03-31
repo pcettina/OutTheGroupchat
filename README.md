@@ -2,6 +2,8 @@
 
 A Next.js 14 web app for group travel planning with AI-powered recommendations and real-time collaboration.
 
+> Last Updated: 2026-03-30 | Tests: ~1231 passing (59 test files)
+
 ## Tech Stack
 
 - **Framework:** Next.js 14 (App Router), React 18, TypeScript

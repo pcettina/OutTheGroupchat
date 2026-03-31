@@ -18,7 +18,7 @@
 
 **Overall Readiness: 78%** → Target: 85% for Beta Launch
 
-> Last updated: 2026-03-26
+> Last updated: 2026-03-30
 
 ---
 
@@ -94,6 +94,7 @@
 - [x] Trip context awareness ✅ Dec 17
 - [x] suggest-activities route complete (503 guard when OPENAI_API_KEY absent) ✅ 2026-03-23
 - [x] generate-itinerary route complete (503 guard when OPENAI_API_KEY absent) ✅ 2026-03-23
+- [x] /api/ai/search wired to frontend (useAiSearch.ts hook + discover page integration) ✅ 2026-03-30
 
 ---
 
@@ -174,6 +175,7 @@
 - [x] API route tests (invitations-post 18, ai-get-methods 16, beta-extended 21, users-follow 24) ✅ 2026-03-25 — total: 1003 tests across 53 files
 - [x] Service tests + API tests (recommendation.service 45, survey.service 36, geocoding-images 32, inspiration +39) ✅ 2026-03-26 — total: 1156 tests across 56 files
 - [x] API route tests (ai-generate-itinerary 31, ai-suggest-activities 25, discover-import 21) ✅ 2026-03-29
+- [x] API route tests (users-patch 34, ai-chat-validation 20, newsletter-edge 20) ✅ 2026-03-30 — total: ~1231 tests across 59 files
 
 ### Integration Tests
 - [ ] Auth flow tests
@@ -378,4 +380,4 @@ git push origin main  # Auto-deploys to Vercel
 
 *This checklist should be reviewed daily during launch preparation.*
 
-*Last Updated: 2026-03-26 - 153 new tests (1156 total, 56 files); rate limiting added as first operation on auth/signup, auth/reset-password, auth/verify-email; newsletter/subscribe now requires auth; ai/search GET+POST fully implemented; dead components removed (NotificationCenter.tsx, SharePreview.tsx); recommendation.service.test.ts, survey.service.test.ts, geocoding-images.test.ts created. Also includes 2026-03-29 changes: JSON.parse safety on 5 AI routes + notifications/[notificationId]; Zod strengthened on ai/chat; notifications/[notificationId] bugfix (read was hardcoded true); JSDoc added to geocoding.ts; 3 new test files (ai-generate-itinerary, ai-suggest-activities, discover-import)*
+*Last Updated: 2026-03-30 - 74 new tests (~1231 total, 59 files); /api/ai/search wired to frontend (useAiSearch.ts hook); TripMember auth bypass fixed in flights/suggestions routes; Zod cuid() added to trips/[tripId], flights, suggestions; user enumeration fixed in beta/status; cache control headers added to discover/search; 9 stale doc timestamps updated. Includes 2026-03-29: JSON.parse safety on 5 AI routes + notifications/[notificationId]; Zod strengthened on ai/chat; notifications/[notificationId] bugfix; JSDoc added to geocoding.ts; 3 test files (ai-generate-itinerary, ai-suggest-activities, discover-import)*

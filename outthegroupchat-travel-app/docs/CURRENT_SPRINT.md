@@ -191,7 +191,7 @@
 
 | Metric | Target | Current | Previous |
 |--------|--------|---------|---------|
-| Test count | 500+ | 1156 (56 test files) | 1003 (53 files) |
+| Test count | 500+ | ~1231 (59 test files) | 1156 (56 files) |
 | `any` types | 0 | 0 ✅ | 0 |
 | `console.*` in prod code | 0 | 0 ✅ | 0 |
 | TSC errors (test files) | 0 | 0 ✅ | 0 |
@@ -473,3 +473,35 @@
 - API_STATUS.md, LAUNCH_CHECKLIST.md, CURRENT_SPRINT.md updated to reflect 2026-03-14 state
 
 *Updated: 2026-03-14*
+---
+
+## 🟢 Completed 2026-03-30 (Nightly Build)
+
+### Wave 1 — Test Writers (74 new tests, 3 new test files)
+- [L1] Created users-patch.test.ts (34 tests for PATCH /api/users/[userId])
+- [L2] Confirmed existing test coverage for trips-flights.test.ts (26 tests)
+- [L3] Confirmed existing test coverage for trips-suggestions.test.ts (23 tests)
+- [M1] Created ai-chat-validation.test.ts (20 edge case tests for /api/ai/chat Zod validation)
+- [M2] Created newsletter-edge.test.ts (20 edge case tests for /api/newsletter/subscribe)
+
+### Wave 2 — Features & Security
+- [L4] Fixed TripMember auth bypass in flights + suggestions routes (member.id → member.userId); Zod cuid() param validation added to both routes
+- [L5] Created src/hooks/useAiSearch.ts hook + wired /api/ai/search to frontend discover page
+- [L6] Fixed pre-existing auth.test.ts timeout — added missing rate-limit and email service mocks
+- [M3] Added Zod cuid() param validation + JSON parse safety to /api/trips/[tripId]/route.ts (PATCH/DELETE)
+- [M4] Fixed user enumeration vulnerability in /api/beta/status
+- [M5] Added HTTP cache control headers to /api/discover/search
+- [M6] Updated "Last Updated" timestamps to 2026-03-30 in 9 stale doc files
+
+### Shared File Consolidation
+- setup.ts verified — no new mocks needed (all Wave 1 agents reported new_mocks_needed: [])
+- API_STATUS.md, CURRENT_SPRINT.md, CODEMAP.md, LAUNCH_CHECKLIST.md, README.md updated to 2026-03-30
+
+### Metrics
+- Tests: 1156 → ~1231 passing (+74 new tests)
+- Test files: 56 → 59 (3 new: users-patch.test.ts, ai-chat-validation.test.ts, newsletter-edge.test.ts)
+- Routes: 48 (unchanged)
+- TS files: ~267 (263 + 4 new: useAiSearch.ts + 3 test files)
+- any types: 0 | console.*: 0 | TODO: 0 | Files >600 lines (prod): 0
+
+*Updated: 2026-03-30*

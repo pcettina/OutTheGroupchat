@@ -9,6 +9,9 @@ import { apiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
 
+// Validation schema for tripId path parameter
+const tripIdSchema = z.string().cuid();
+
 // Validation schema for trip updates
 const updateTripSchema = z.object({
   title: z.string().min(1).optional(),
@@ -64,7 +67,16 @@ export async function GET(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    const { tripId } = await params;
+    const { tripId: rawTripId } = await params;
+
+    const tripIdResult = tripIdSchema.safeParse(rawTripId);
+    if (!tripIdResult.success) {
+      return NextResponse.json(
+        { success: false, error: 'Validation failed', details: tripIdResult.error.flatten() },
+        { status: 400 }
+      );
+    }
+    const tripId = tripIdResult.data;
 
     if (session?.user?.id) {
       const rateLimitResult = await checkRateLimit(apiRateLimiter, session.user.id);
@@ -200,11 +212,20 @@ export async function PATCH(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    const { tripId } = await params;
+    const { tripId: rawTripId } = await params;
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const tripIdResult = tripIdSchema.safeParse(rawTripId);
+    if (!tripIdResult.success) {
+      return NextResponse.json(
+        { success: false, error: 'Validation failed', details: tripIdResult.error.flatten() },
+        { status: 400 }
+      );
+    }
+    const tripId = tripIdResult.data;
 
     const rateLimitResult = await checkRateLimit(apiRateLimiter, session.user.id);
     if (!rateLimitResult.success) {
@@ -230,7 +251,16 @@ export async function PATCH(
       );
     }
 
-    const body = await req.json();
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json(
+        { success: false, error: 'Invalid JSON in request body' },
+        { status: 400 }
+      );
+    }
+
     const validationResult = updateTripSchema.safeParse(body);
 
     if (!validationResult.success) {
@@ -291,11 +321,20 @@ export async function DELETE(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    const { tripId } = await params;
+    const { tripId: rawTripId } = await params;
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const tripIdResult = tripIdSchema.safeParse(rawTripId);
+    if (!tripIdResult.success) {
+      return NextResponse.json(
+        { success: false, error: 'Validation failed', details: tripIdResult.error.flatten() },
+        { status: 400 }
+      );
+    }
+    const tripId = tripIdResult.data;
 
     const rateLimitResult = await checkRateLimit(apiRateLimiter, session.user.id);
     if (!rateLimitResult.success) {

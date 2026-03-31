@@ -26,19 +26,23 @@ export async function GET(req: NextRequest) {
     const ip = req.headers.get('x-forwarded-for') || 'anonymous';
     const rateLimitResult = await checkRateLimit(apiRateLimiter, ip);
     if (!rateLimitResult.success) {
-      return NextResponse.json(
+      const rateLimitResponse = NextResponse.json(
         { error: 'Too many requests. Please try again later.' },
         { status: 429 }
       );
+      rateLimitResponse.headers.set('Cache-Control', 'no-store');
+      return rateLimitResponse;
     }
 
     // Auth guard — require an active session
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json(
+      const unauthorizedResponse = NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       );
+      unauthorizedResponse.headers.set('Cache-Control', 'no-store');
+      return unauthorizedResponse;
     }
 
     const { searchParams } = new URL(req.url);
@@ -53,10 +57,12 @@ export async function GET(req: NextRequest) {
     };
     const parseResult = DiscoverSearchSchema.safeParse(rawParams);
     if (!parseResult.success) {
-      return NextResponse.json(
+      const validationErrorResponse = NextResponse.json(
         { error: 'Invalid query parameters', details: parseResult.error.issues },
         { status: 400 }
       );
+      validationErrorResponse.headers.set('Cache-Control', 'no-store');
+      return validationErrorResponse;
     }
     const { q: query, city, country, category, source, limit, offset } = parseResult.data;
 
@@ -206,15 +212,19 @@ export async function GET(req: NextRequest) {
 
     results.total = results.internal.length + results.external.length;
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       data: results,
     });
+    response.headers.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
+    return response;
   } catch (error) {
     logger.error({ error }, '[DISCOVER/SEARCH] Failed to search activities');
-    return NextResponse.json(
+    const errorResponse = NextResponse.json(
       { error: 'Failed to search activities' },
       { status: 500 }
     );
+    errorResponse.headers.set('Cache-Control', 'no-store');
+    return errorResponse;
   }
 }

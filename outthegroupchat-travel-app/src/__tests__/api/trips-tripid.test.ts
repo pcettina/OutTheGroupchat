@@ -45,9 +45,9 @@ const mockPrismaTripMember = vi.mocked(prisma.tripMember) as typeof prisma.tripM
 // ---------------------------------------------------------------------------
 // Shared fixtures
 // ---------------------------------------------------------------------------
-const MOCK_USER_ID = 'user-tripid-001';
-const MOCK_TRIP_ID = 'trip-tripid-001';
-const OTHER_USER_ID = 'user-tripid-other-002';
+const MOCK_USER_ID = 'clh7nz5vr0001mg0hb9gkfxe1';
+const MOCK_TRIP_ID = 'clh7nz5vr0000mg0hb9gkfxe0';
+const OTHER_USER_ID = 'clh7nz5vr0002mg0hb9gkfxe2';
 
 const MOCK_SESSION = {
   user: { id: MOCK_USER_ID, name: 'Trip Owner', email: 'owner@example.com' },
@@ -364,7 +364,7 @@ describe('PATCH /api/trips/[tripId]', () => {
     // With no membership row, the route returns 403 before reaching the update.
     mockPrismaTripMember.findFirst.mockResolvedValueOnce(null);
 
-    const res = await callPatch('nonexistent-trip', { title: 'Ghost Update' });
+    const res = await callPatch('clh7nz5vr0009mg0hb9gkfxe9', { title: 'Ghost Update' });
     const body = await parseJson(res);
 
     // Route returns 403 when membership not found regardless of trip existence
@@ -451,7 +451,7 @@ describe('DELETE /api/trips/[tripId]', () => {
     // (Route has no separate 404 path for DELETE)
     mockPrismaTrip.findFirst.mockResolvedValueOnce(null);
 
-    const res = await callDelete('nonexistent-trip');
+    const res = await callDelete('clh7nz5vr0009mg0hb9gkfxe9');
     const body = await parseJson(res);
 
     expect(res.status).toBe(403);

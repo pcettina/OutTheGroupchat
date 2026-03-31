@@ -19,6 +19,15 @@ import { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 
+// Mock rate-limit to avoid real Upstash Redis calls
+vi.mock('@/lib/rate-limit', () => ({
+  checkRateLimit: vi.fn().mockResolvedValue({ success: true, limit: 5, remaining: 4, reset: 0 }),
+  authRateLimiter: {},
+  aiRateLimiter: {},
+  apiRateLimiter: {},
+  getRateLimitHeaders: vi.fn().mockReturnValue({}),
+}));
+
 import { POST as betaSignupPOST } from '@/app/api/beta/signup/route';
 import { GET as betaStatusGET } from '@/app/api/beta/status/route';
 import { POST as newsletterSubscribePOST } from '@/app/api/newsletter/subscribe/route';
@@ -202,16 +211,19 @@ describe('GET /api/beta/status', () => {
     expect(res.status).toBe(400);
   });
 
-  it('returns exists: false for unknown email', async () => {
+  it('returns passwordInitialized: false for unknown email (no enumeration)', async () => {
     mockPrismaUser.findUnique.mockResolvedValueOnce(null);
     const req = makeStatusRequest('unknown@example.com');
     const res = await betaStatusGET(req);
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.exists).toBe(false);
+    // The `exists` field has been removed to prevent user enumeration.
+    // Both found and not-found cases return { passwordInitialized: boolean }.
+    expect(body.exists).toBeUndefined();
+    expect(body.passwordInitialized).toBe(false);
   });
 
-  it('returns user status fields when user exists', async () => {
+  it('returns passwordInitialized: true when user exists and has set a password', async () => {
     const now = new Date();
     mockPrismaUser.findUnique.mockResolvedValueOnce({
       id: 'user-1',
@@ -226,7 +238,8 @@ describe('GET /api/beta/status', () => {
     const res = await betaStatusGET(req);
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.exists).toBe(true);
+    // The `exists` field is intentionally omitted to prevent user enumeration.
+    expect(body.exists).toBeUndefined();
     expect(body.passwordInitialized).toBe(true);
   });
 

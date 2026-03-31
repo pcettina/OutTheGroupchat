@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
+import { checkRateLimit, authRateLimiter } from '@/lib/rate-limit';
 
 // Force dynamic rendering — this route reads request.url query params
 export const dynamic = 'force-dynamic';
@@ -10,39 +11,12 @@ const StatusQuerySchema = z.object({
   email: z.string().email('Invalid email format'),
 });
 
-// In-memory rate limiter: max 10 requests per minute per IP
-const RATE_LIMIT_MAX = 10;
-const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
-
-interface RateLimitEntry {
-  count: number;
-  windowStart: number;
-}
-
-const rateLimitStore = new Map<string, RateLimitEntry>();
-
-function checkBetaRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const entry = rateLimitStore.get(ip);
-
-  if (!entry || now - entry.windowStart >= RATE_LIMIT_WINDOW_MS) {
-    rateLimitStore.set(ip, { count: 1, windowStart: now });
-    return true;
-  }
-
-  if (entry.count >= RATE_LIMIT_MAX) {
-    return false;
-  }
-
-  entry.count += 1;
-  return true;
-}
-
 export async function GET(req: NextRequest) {
   try {
+    // Use the shared auth rate limiter (5 req/min per IP) to prevent enumeration via brute force.
     const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'anonymous';
-    const allowed = checkBetaRateLimit(ip);
-    if (!allowed) {
+    const rateLimitResult = await checkRateLimit(authRateLimiter, `beta-status:${ip}`);
+    if (!rateLimitResult.success) {
       logger.warn({ ip, context: 'BETA_STATUS' }, 'Rate limit exceeded');
       return NextResponse.json(
         { error: 'Too many requests. Please try again later.' },
@@ -70,10 +44,10 @@ export async function GET(req: NextRequest) {
 
     const normalizedEmail = parseResult.data.email.toLowerCase();
 
-    // Data minimization: omit betaSignupDate, newsletterSubscribed, newsletterSubscribedAt, and
-    // email from the response. Exposing those fields to unauthenticated callers would allow
-    // account enumeration and reveal account metadata. Only passwordInitialized is returned
-    // because it is required by the client to decide which onboarding flow to show.
+    // Security: do NOT expose whether the email exists in the database. Return the same
+    // response shape regardless of whether the account is found to prevent user enumeration.
+    // The client only needs `passwordInitialized` to select the correct onboarding flow; when
+    // the account does not exist, false is the appropriate default.
     const user = await prisma.user.findUnique({
       where: { email: normalizedEmail },
       select: {
@@ -81,16 +55,8 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    if (!user) {
-      return NextResponse.json({
-        exists: false,
-        passwordInitialized: false,
-      });
-    }
-
     return NextResponse.json({
-      exists: true,
-      passwordInitialized: user.passwordInitialized,
+      passwordInitialized: user?.passwordInitialized ?? false,
     });
   } catch (error) {
     logger.error({ err: error, context: 'BETA_STATUS' }, 'Error checking beta status');

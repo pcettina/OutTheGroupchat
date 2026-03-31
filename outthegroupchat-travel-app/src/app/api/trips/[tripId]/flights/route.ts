@@ -1,19 +1,29 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { searchFlights, getAirportCode } from '@/lib/api/flights';
 import { logger } from '@/lib/logger';
 
-interface TripMember {
-  id: string;
-}
+const paramsSchema = z.object({
+  tripId: z.string().cuid(),
+});
 
 export async function GET(
   req: Request,
   { params }: { params: { tripId: string } }
 ) {
   try {
+    const parsed = paramsSchema.safeParse(params);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: parsed.error.flatten() },
+        { status: 400 }
+      );
+    }
+    const { tripId } = parsed.data;
+
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
@@ -22,7 +32,7 @@ export async function GET(
 
     const trip = await prisma.trip.findUnique({
       where: {
-        id: params.tripId,
+        id: tripId,
       },
       include: {
         members: true,
@@ -36,7 +46,7 @@ export async function GET(
     // Check if user is authorized to view this trip
     if (
       trip.ownerId !== session.user.id &&
-      !trip.members.some((member: TripMember) => member.id === session.user.id)
+      !trip.members.some((member) => member.userId === session.user.id)
     ) {
       return new NextResponse('Unauthorized', { status: 401 });
     }

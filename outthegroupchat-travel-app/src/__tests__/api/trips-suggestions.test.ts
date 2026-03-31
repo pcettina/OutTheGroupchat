@@ -51,9 +51,9 @@ const mockCalculateDailyCosts = vi.mocked(calculateDailyCosts);
 // Shared fixtures
 // ---------------------------------------------------------------------------
 
-const MOCK_USER_ID = 'user-suggestions-123';
-const MOCK_OTHER_USER_ID = 'user-other-456';
-const MOCK_TRIP_ID = 'trip-suggestions-789';
+const MOCK_USER_ID = 'clh7nz5vr0001mg0hb9gkfxe1';
+const MOCK_OTHER_USER_ID = 'clh7nz5vr0002mg0hb9gkfxe2';
+const MOCK_TRIP_ID = 'clh7nz5vr0000mg0hb9gkfxe0';
 
 const MOCK_SESSION = {
   user: {
@@ -80,14 +80,14 @@ const MOCK_TRIP = {
   budget: null,
   createdAt: new Date('2026-01-01'),
   updatedAt: new Date('2026-01-01'),
-  members: [{ id: MOCK_USER_ID, name: 'Test User', email: 'test@example.com' }],
+  members: [{ id: MOCK_USER_ID, userId: MOCK_USER_ID, name: 'Test User', email: 'test@example.com' }],
 };
 
 /** A trip owned by someone else with no matching members. */
 const MOCK_FOREIGN_TRIP = {
   ...MOCK_TRIP,
   ownerId: MOCK_OTHER_USER_ID,
-  members: [{ id: MOCK_OTHER_USER_ID, name: 'Other User', email: 'other@example.com' }],
+  members: [{ id: MOCK_OTHER_USER_ID, userId: MOCK_OTHER_USER_ID, name: 'Other User', email: 'other@example.com' }],
 };
 
 /** Sample Ticketmaster events. */
@@ -161,7 +161,7 @@ async function callGet(tripId: string) {
 // Reset all mocks between tests to avoid state leakage.
 // ---------------------------------------------------------------------------
 beforeEach(() => {
-  vi.clearAllMocks();
+  vi.resetAllMocks();
 });
 
 // ===========================================================================
@@ -259,8 +259,8 @@ describe('GET /api/trips/[tripId]/suggestions', () => {
     const memberTrip = {
       ...MOCK_FOREIGN_TRIP,
       members: [
-        { id: MOCK_OTHER_USER_ID, name: 'Other User', email: 'other@example.com' },
-        { id: MOCK_USER_ID, name: 'Test User', email: 'test@example.com' },
+        { id: MOCK_OTHER_USER_ID, userId: MOCK_OTHER_USER_ID, name: 'Other User', email: 'other@example.com' },
+        { id: MOCK_USER_ID, userId: MOCK_USER_ID, name: 'Test User', email: 'test@example.com' },
       ],
     };
 

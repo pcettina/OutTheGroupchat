@@ -38,8 +38,8 @@ const mockGetAirportCode = vi.mocked(getAirportCode);
 // Shared fixtures
 // ---------------------------------------------------------------------------
 
-const MOCK_USER_ID = 'user-abc-123';
-const MOCK_TRIP_ID = 'trip-xyz-456';
+const MOCK_USER_ID = 'clh7nz5vr0001mg0hb9gkfxe1';
+const MOCK_TRIP_ID = 'clh7nz5vr0000mg0hb9gkfxe0';
 
 const MOCK_SESSION = {
   user: {

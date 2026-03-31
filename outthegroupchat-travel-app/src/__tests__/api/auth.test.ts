@@ -32,7 +32,11 @@ vi.mock('bcryptjs', () => ({
   compare: vi.fn().mockResolvedValue(true),
 }));
 
-// Mock rate-limit so tests don't make live Upstash Redis calls.
+// ---------------------------------------------------------------------------
+// Mock @/lib/rate-limit so tests never make real HTTP calls to Upstash Redis.
+// Without this mock, checkRateLimit triggers a network request (~4300ms/test)
+// that causes the 5000ms timeout to fire on the happy-path test.
+// ---------------------------------------------------------------------------
 vi.mock('@/lib/rate-limit', () => ({
   authRateLimiter: {},
   apiRateLimiter: {},
@@ -40,7 +44,11 @@ vi.mock('@/lib/rate-limit', () => ({
   getRateLimitHeaders: vi.fn().mockReturnValue({}),
 }));
 
-// Mock @/lib/email so verification emails are not sent during tests.
+// ---------------------------------------------------------------------------
+// Mock @/lib/email so sendNotificationEmail never makes real network calls.
+// The signup route calls this after user creation; without a mock it would
+// attempt an outbound SMTP/Resend request and could slow or fail tests.
+// ---------------------------------------------------------------------------
 vi.mock('@/lib/email', () => ({
   sendNotificationEmail: vi.fn().mockResolvedValue({ success: true, messageId: 'mock-msg-id' }),
   sendInvitationEmail: vi.fn().mockResolvedValue({ success: true, messageId: 'mock-msg-id' }),

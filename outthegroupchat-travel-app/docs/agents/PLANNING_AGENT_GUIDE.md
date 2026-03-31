@@ -237,5 +237,5 @@ Before any feature is approved:
 
 *Remember: We're not building a trip planner. We're building a social network for experiences.*
 
-*Last Updated: 2026-03-26*
+*Last Updated: 2026-03-30*
 
