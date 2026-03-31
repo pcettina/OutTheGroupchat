@@ -80,7 +80,15 @@ export async function POST(req: Request) {
       );
     }
 
-    const body = await req.json();
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json(
+        { success: false, error: 'Invalid JSON in request body' },
+        { status: 400 }
+      );
+    }
     const validationResult = suggestActivitiesSchema.safeParse(body);
 
     if (!validationResult.success) {

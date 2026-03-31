@@ -13,17 +13,17 @@ export const dynamic = 'force-dynamic';
 
 const chatSchema = z.object({
   messages: z.array(z.object({
-    role: z.enum(['user', 'assistant']),
-    content: z.string(),
-  })).min(1),
+    role: z.enum(['user', 'assistant', 'system']),
+    content: z.string().min(1).max(10000),
+  })).min(1).max(50),
   tripContext: z.object({
-    tripId: z.string(),
-    tripTitle: z.string(),
-    destination: z.string(),
-    startDate: z.string(),
-    endDate: z.string(),
-    memberCount: z.number(),
-    budget: z.number().optional(),
+    tripId: z.string().min(1),
+    tripTitle: z.string().min(1).max(500),
+    destination: z.string().min(1).max(500),
+    startDate: z.string().min(1),
+    endDate: z.string().min(1),
+    memberCount: z.number().int().positive(),
+    budget: z.number().positive().optional(),
   }).optional(),
 });
 
@@ -81,7 +81,15 @@ export async function POST(req: Request) {
       );
     }
 
-    const body = await req.json();
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json(
+        { success: false, error: 'Invalid JSON in request body' },
+        { status: 400 }
+      );
+    }
     const validationResult = chatSchema.safeParse(body);
 
     if (!validationResult.success) {

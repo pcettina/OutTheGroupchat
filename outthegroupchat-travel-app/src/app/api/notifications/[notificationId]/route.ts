@@ -5,6 +5,10 @@ import { authOptions } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 import { z } from 'zod';
 
+const paramsSchema = z.object({
+  notificationId: z.string().cuid(),
+});
+
 const patchNotificationSchema = z.object({
   read: z.boolean().optional().default(true),
 });
@@ -14,17 +18,30 @@ export async function PATCH(
   req: Request,
   { params }: { params: { notificationId: string } }
 ) {
+  const parsedParams = paramsSchema.safeParse(params);
+  if (!parsedParams.success) {
+    return NextResponse.json({ error: 'Invalid notification ID' }, { status: 400 });
+  }
+  const { notificationId } = parsedParams.data;
+
   try {
     const session = await getServerSession(authOptions);
-    const { notificationId } = params;
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const rawBody = await req.text();
-    const body = rawBody ? JSON.parse(rawBody) : {};
-    const parsed = patchNotificationSchema.safeParse(body);
+    let bodyJson: unknown = {};
+    if (rawBody) {
+      try {
+        bodyJson = JSON.parse(rawBody);
+      } catch {
+        return NextResponse.json({ error: 'Invalid JSON in request body' }, { status: 400 });
+      }
+    }
+
+    const parsed = patchNotificationSchema.safeParse(bodyJson);
     if (!parsed.success) {
       return NextResponse.json(
         { error: 'Invalid input', issues: parsed.error.issues },
@@ -52,7 +69,7 @@ export async function PATCH(
 
     const updated = await prisma.notification.update({
       where: { id: notificationId },
-      data: { read: true },
+      data: { read: parsed.data.read },
     });
 
     return NextResponse.json({ success: true, data: updated });
@@ -70,9 +87,14 @@ export async function DELETE(
   req: Request,
   { params }: { params: { notificationId: string } }
 ) {
+  const parsedParams = paramsSchema.safeParse(params);
+  if (!parsedParams.success) {
+    return NextResponse.json({ error: 'Invalid notification ID' }, { status: 400 });
+  }
+  const { notificationId } = parsedParams.data;
+
   try {
     const session = await getServerSession(authOptions);
-    const { notificationId } = params;
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

@@ -123,7 +123,7 @@ COMPLETED ✅ Dec 17:
 |----------|--------|--------|-------------------|-------|
 | `/api/notifications` | GET | ✅ | ✅ | **Data structure verified** ✅ Dec 17; Zod pagination params improved 2026-03-22 |
 | `/api/notifications` | PATCH | ✅ | ✅ | Mark as read |
-| `/api/notifications/[id]` | PATCH | ✅ | ✅ | Mark individual notification read; Zod validation added 2026-03-13 |
+| `/api/notifications/[id]` | PATCH | ✅ | ✅ | Mark individual notification read; Zod validation added 2026-03-13; Zod params (cuid), JSON.parse safety, bugfix (read field was hardcoded true) 2026-03-29 |
 
 ### Notification Issues to Fix
 ```
@@ -160,11 +160,11 @@ Email removed from select projection in /api/search/route.ts
 
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
-| `/api/ai/chat` | POST | ✅ | ✅ | **OpenAI connected** ✅ Dec 17 |
-| `/api/ai/recommend` | POST | ✅ | ⏳ | Personalized activity recommendations using user saved/rated history; AI + DB hybrid results |
-| `/api/ai/recommend` | GET | ✅ | ⏳ | Trip-scoped recommendations by `?tripId=`; aggregates group member preferences to suggest activities |
-| `/api/ai/generate-itinerary` | POST | ✅ | ⏳ | Complete — isOpenAIConfigured() guard returns 503 when key absent ✅ 2026-03-23 |
-| `/api/ai/suggest-activities` | POST | ✅ | ⏳ | Complete — isOpenAIConfigured() guard returns 503 when key absent ✅ 2026-03-23 |
+| `/api/ai/chat` | POST | ✅ | ✅ | **OpenAI connected** ✅ Dec 17; Zod strengthened (role enum, content limits, max 50 messages, tripContext limits) + JSON.parse safety added 2026-03-29 |
+| `/api/ai/recommend` | POST | ✅ | ⏳ | Personalized activity recommendations using user saved/rated history; AI + DB hybrid results; JSON.parse safety added 2026-03-29 |
+| `/api/ai/recommend` | GET | ✅ | ⏳ | Trip-scoped recommendations by `?tripId=`; Zod getQuerySchema (tripId required, limit clamped 1-20) added 2026-03-29; aggregates group member preferences to suggest activities |
+| `/api/ai/generate-itinerary` | POST | ✅ | ⏳ | Complete — isOpenAIConfigured() guard returns 503 when key absent ✅ 2026-03-23; JSON.parse safety added 2026-03-29 |
+| `/api/ai/suggest-activities` | POST | ✅ | ⏳ | Complete — isOpenAIConfigured() guard returns 503 when key absent ✅ 2026-03-23; JSON.parse safety added 2026-03-29 |
 | `/api/ai/search` | GET/POST | ✅ | ⏳ | Semantic search with embeddings — GET + POST fully implemented (destinations branch added) ✅ 2026-03-26 |
 
 ### AI Issues to Fix
@@ -372,4 +372,4 @@ EMAIL_FROM=             # Email sender (onboarding@resend.dev) ✅
 
 *Review and update after each API change.*
 
-*Last Updated: 2026-03-26 - /api/ai/search GET+POST fully implemented (semantic search, destinations branch); /api/newsletter/subscribe now requires auth; /api/auth/signup, /api/auth/reset-password, /api/auth/verify-email: rate limiting now first operation; 153 new tests tonight (1156 total, 56 test files); dead components (NotificationCenter.tsx, SharePreview.tsx) removed; JSDoc added to costs.ts; README updated*
+*Last Updated: 2026-03-26 - /api/ai/search GET+POST fully implemented (semantic search, destinations branch); /api/newsletter/subscribe now requires auth; /api/auth/signup, /api/auth/reset-password, /api/auth/verify-email: rate limiting now first operation; 153 new tests tonight (1156 total, 56 test files); dead components (NotificationCenter.tsx, SharePreview.tsx) removed; JSDoc added to costs.ts; README updated. Also includes 2026-03-29 changes: /api/ai/chat Zod strengthened + JSON.parse safety; /api/ai/recommend Zod GET params + JSON.parse safety; /api/ai/suggest-activities + generate-itinerary JSON.parse safety; /api/notifications/[notificationId] Zod params (cuid) + bugfix (read was hardcoded true); JSDoc added to src/lib/geocoding.ts; N8N docs deprecated*

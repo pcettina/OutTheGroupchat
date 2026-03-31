@@ -111,7 +111,7 @@
 - [x] Rate limiting infrastructure (Upstash)
 - [x] Rate limiting on all authentication endpoints ✅ 2026-03-26 (signup, reset-password, verify-email — rate limiting now first operation)
 - [ ] Rate limiting on ALL remaining endpoints
-- [x] Input validation on major API routes (Zod) ✅ 2026-03-24 — notifications, feed/comments, feed/engagement, pusher/auth, users/[userId], discover/*, images/search, inspiration, cron, auth/demo added
+- [x] Input validation on major API routes (Zod) ✅ 2026-03-24 — notifications, feed/comments, feed/engagement, pusher/auth, users/[userId], discover/*, images/search, inspiration, cron, auth/demo added; ai/chat Zod strengthened + JSON.parse safety on 5 AI routes + notifications/[notificationId] ✅ 2026-03-29
 - [x] /api/discover/search requires authentication ✅ 2026-03-24 (security improvement — was unauthenticated)
 - [x] /api/discover/recommendations requires authentication ✅ 2026-03-24
 - [x] /api/auth/demo has Zod input validation ✅ 2026-03-24
@@ -173,6 +173,7 @@
 - [x] API route tests (trips-itinerary +21, auth-demo 13, cron 10, discover-search 12) + discover.test.ts auth fixes ✅ 2026-03-24 — total: 924 tests across 49 files
 - [x] API route tests (invitations-post 18, ai-get-methods 16, beta-extended 21, users-follow 24) ✅ 2026-03-25 — total: 1003 tests across 53 files
 - [x] Service tests + API tests (recommendation.service 45, survey.service 36, geocoding-images 32, inspiration +39) ✅ 2026-03-26 — total: 1156 tests across 56 files
+- [x] API route tests (ai-generate-itinerary 31, ai-suggest-activities 25, discover-import 21) ✅ 2026-03-29
 
 ### Integration Tests
 - [ ] Auth flow tests
@@ -377,4 +378,4 @@ git push origin main  # Auto-deploys to Vercel
 
 *This checklist should be reviewed daily during launch preparation.*
 
-*Last Updated: 2026-03-26 - 153 new tests (1156 total, 56 files); rate limiting added as first operation on auth/signup, auth/reset-password, auth/verify-email; newsletter/subscribe now requires auth; ai/search GET+POST fully implemented; dead components removed (NotificationCenter.tsx, SharePreview.tsx); recommendation.service.test.ts, survey.service.test.ts, geocoding-images.test.ts created*
+*Last Updated: 2026-03-26 - 153 new tests (1156 total, 56 files); rate limiting added as first operation on auth/signup, auth/reset-password, auth/verify-email; newsletter/subscribe now requires auth; ai/search GET+POST fully implemented; dead components removed (NotificationCenter.tsx, SharePreview.tsx); recommendation.service.test.ts, survey.service.test.ts, geocoding-images.test.ts created. Also includes 2026-03-29 changes: JSON.parse safety on 5 AI routes + notifications/[notificationId]; Zod strengthened on ai/chat; notifications/[notificationId] bugfix (read was hardcoded true); JSDoc added to geocoding.ts; 3 new test files (ai-generate-itinerary, ai-suggest-activities, discover-import)*

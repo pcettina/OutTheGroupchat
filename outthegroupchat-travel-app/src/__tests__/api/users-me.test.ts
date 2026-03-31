@@ -16,6 +16,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
+import { GET, PATCH } from '@/app/api/users/me/route';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -99,12 +100,8 @@ const mockUpdatedUser = {
 // GET /api/users/me
 // ---------------------------------------------------------------------------
 describe('GET /api/users/me', () => {
-  let GET: () => Promise<Response>;
-
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks();
-    const mod = await import('@/app/api/users/me/route');
-    GET = mod.GET;
   });
 
   it('returns 401 when not authenticated', async () => {
@@ -226,12 +223,8 @@ describe('GET /api/users/me', () => {
 // PATCH /api/users/me
 // ---------------------------------------------------------------------------
 describe('PATCH /api/users/me', () => {
-  let PATCH: (req: Request) => Promise<Response>;
-
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks();
-    const mod = await import('@/app/api/users/me/route');
-    PATCH = mod.PATCH;
   });
 
   it('returns 401 when not authenticated', async () => {

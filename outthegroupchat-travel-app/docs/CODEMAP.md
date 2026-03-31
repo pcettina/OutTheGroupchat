@@ -838,6 +838,9 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `src/__tests__/services/recommendation.service.test.ts` | — | 45 | RecommendationService: analyzeSurveyResponses, dateAnalysis, locationPreferences, activityPreferences, createTripSurvey ✅ 2026-03-26 |
 | `src/__tests__/services/survey.service.test.ts` | — | 36 | SurveyService: getUserPreferencesSurvey, getTripPlanningSurvey, analyzeSurveyResponses, closeSurvey, createTripSurvey (default+custom expiry) ✅ 2026-03-26 |
 | `src/__tests__/api/geocoding-images.test.ts` | — | 32 | GET /api/geocoding + GET /api/images/search ✅ 2026-03-26 |
+| `src/__tests__/api/ai-generate-itinerary.test.ts` | — | 31 | POST /api/ai/generate-itinerary — auth, 503 guard, rate-limit, validation, 404/403, multi-day, AI/DB failures ✅ 2026-03-29 |
+| `src/__tests__/api/ai-suggest-activities.test.ts` | — | 25 | POST /api/ai/suggest-activities — pure AI generation, no Prisma ✅ 2026-03-29 |
+| `src/__tests__/api/discover-import.test.ts` | — | 21 | POST /api/discover/import — rate limiting, auth guard, externalActivity.upsert, OpenTripMap fetch ✅ 2026-03-29 |
 | `src/__tests__/api/voting.test.ts` | — | 10 | Voting API (create, vote, close session) |
 | `src/__tests__/api/survey.test.ts` | — | 11 | Survey API (create, respond, analyze) |
 | `src/__tests__/api/feed.test.ts` | — | 12 | Feed API (pagination, comments, engagement) |

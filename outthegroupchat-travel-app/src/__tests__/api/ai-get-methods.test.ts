@@ -277,7 +277,7 @@ describe('GET /api/ai/recommend', () => {
     const res = await GET(makeRecommendGetRequest());
     expect(res.status).toBe(400);
     const json = await res.json();
-    expect(json.error).toBe('tripId is required');
+    expect(json.error).toBe('Validation failed');
   });
 
   it('returns 404 when trip is not found', async () => {
