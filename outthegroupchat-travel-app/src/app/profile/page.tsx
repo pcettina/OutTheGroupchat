@@ -6,7 +6,9 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { Navigation } from '@/components/Navigation';
-import { ProfileStatsTab } from '@/components/profile';
+import { ProfileStatsTab, BadgeShowcase, TripHistory } from '@/components/profile';
+import type { Destination } from '@/types';
+import type { Trip } from '@prisma/client';
 
 interface UserProfile {
   id: string;
@@ -33,6 +35,11 @@ interface UserProfile {
   };
 }
 
+type TripWithDestination = Trip & {
+  destination: Destination;
+  _count?: { members: number };
+};
+
 const travelStyles = [
   { value: 'adventure', label: 'Adventure Seeker', emoji: '🏔️' },
   { value: 'relaxation', label: 'Relaxation', emoji: '🏖️' },
@@ -51,7 +58,8 @@ export default function ProfilePage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'profile' | 'preferences' | 'stats'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'preferences' | 'stats' | 'history'>('profile');
+  const [trips, setTrips] = useState<TripWithDestination[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [profile, setProfile] = useState<UserProfile>({
@@ -91,12 +99,19 @@ export default function ProfilePage() {
 
   const fetchProfile = async () => {
     try {
-      const response = await fetch('/api/profile');
-      if (!response.ok) {
+      const [profileRes, tripsRes] = await Promise.all([
+        fetch('/api/profile'),
+        fetch('/api/trips'),
+      ]);
+      if (!profileRes.ok) {
         throw new Error('Failed to fetch profile');
       }
-      const data = await response.json();
+      const data = await profileRes.json();
       setProfile(data);
+      if (tripsRes.ok) {
+        const tripsData = await tripsRes.json();
+        setTrips(tripsData as TripWithDestination[]);
+      }
     } catch (error) {
       setError('Failed to load profile');
     } finally {
@@ -272,6 +287,7 @@ export default function ProfilePage() {
                 { id: 'profile' as const, label: 'Profile', icon: '👤' },
                 { id: 'preferences' as const, label: 'Preferences', icon: '⚙️' },
                 { id: 'stats' as const, label: 'Travel Stats', icon: '📊' },
+                { id: 'history' as const, label: 'History', icon: '🗺️' },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -503,8 +519,15 @@ export default function ProfilePage() {
 
               {activeTab === 'stats' && <ProfileStatsTab />}
 
+              {activeTab === 'history' && (
+                <div className="space-y-6">
+                  <BadgeShowcase badges={[]} />
+                  <TripHistory trips={trips} />
+                </div>
+              )}
+
               {/* Save Button */}
-              {activeTab !== 'stats' && (
+              {activeTab !== 'stats' && activeTab !== 'history' && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}

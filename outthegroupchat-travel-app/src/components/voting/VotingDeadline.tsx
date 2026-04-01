@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { differenceInSeconds, differenceInMinutes, differenceInHours, differenceInDays, format } from 'date-fns';
+import { differenceInSeconds, differenceInMinutes, differenceInHours, differenceInDays } from 'date-fns';
 
 interface VotingDeadlineProps {
   expiresAt: string;

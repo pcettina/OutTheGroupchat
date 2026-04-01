@@ -1,6 +1,6 @@
 # OutTheGroupchat — Full Codemap
 
-> Auto-generated 2026-03-10. Last updated 2026-03-26. Comprehensive reference for agents and developers.
+> Auto-generated 2026-03-10. Last updated 2026-03-31. Comprehensive reference for agents and developers.
 
 ## Table of Contents
 
@@ -29,7 +29,7 @@ Full-stack Next.js 14 collaborative travel planning app. Groups plan trips toget
 
 **App root:** `outthegroupchat-travel-app/`
 **Source:** `outthegroupchat-travel-app/src/`
-**Stats:** ~263 TS/TSX files | ~33,500 LOC | 48 API routes | 92 components | 20 pages
+**Stats:** ~271 TS/TSX files | ~33,500 LOC | 48 API routes | ~101 components | 25 pages
 
 ---
 
@@ -519,7 +519,12 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `/inspiration` | `app/inspiration/page.tsx` | Client | Public | Trending trips, events |
 | `/feed` | `app/feed/page.tsx` | Client | Required | Social activity feed |
 | `/notifications` | `app/notifications/page.tsx` | Client | Required | Notification inbox |
-| `/profile` | `app/profile/page.tsx` | Client | Required | User profile, badges, trip history |
+| `/profile` | `app/profile/page.tsx` | Client | Required | User profile, badges, trip history; History tab added 2026-03-31 (BadgeShowcase + TripHistory) |
+| `/search` | `app/search/page.tsx` | Client | Required | AI semantic search UI wired to /api/ai/search ✅ 2026-03-31 |
+| `/settings` | `app/settings/page.tsx` | Client | Required | 4-tab settings page (Profile, Notifications, Privacy, Security) ✅ 2026-03-31 |
+| `/privacy` | `app/privacy/page.tsx` | Client | Public | Privacy Policy page ✅ 2026-03-31 |
+| `/terms` | `app/terms/page.tsx` | Client | Public | Terms of Service page ✅ 2026-03-31 |
+| `/onboarding` | `app/onboarding/page.tsx` | Client | Required | 3-step onboarding flow (WelcomeScreen → InterestSelector → TravelStyleQuiz) ✅ 2026-03-31 |
 
 **Utility pages:** `error.tsx` (route error boundary), `global-error.tsx` (root error boundary + Sentry), `not-found.tsx` (404), `loading.tsx` (skeleton)
 
@@ -622,7 +627,7 @@ db:seed        → npx tsx prisma/seed/index.ts
 | Component | Lines | Props | Purpose |
 |-----------|-------|-------|---------|
 | `ActivityCard` | — | activity, trip?, onSave?, onShare? | Activity recommendation card |
-| `TravelBadges` | 391 | badges, userId?, interactive? | Achievement/travel badges |
+| ~~`TravelBadges`~~ | — | — | Removed 2026-03-31 (confirmed unused dead code — BadgeShowcase in profile/ serves this purpose) |
 
 ### Surveys (`components/surveys/`)
 
@@ -807,7 +812,7 @@ db:seed        → npx tsx prisma/seed/index.ts
 
 ## Tests
 
-**Total: 1156 tests across 56 Vitest unit/integration test files** (0 TSC errors in production code, 0 in test files as of 2026-03-26)
+**Total: ~1299 tests across ~60 Vitest unit/integration test files** (0 TSC errors in production code, 0 in test files as of 2026-03-31)
 
 | File | Lines | Tests | Coverage |
 |------|-------|-------|----------|
@@ -844,7 +849,8 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `src/__tests__/api/voting.test.ts` | — | 10 | Voting API (create, vote, close session) |
 | `src/__tests__/api/survey.test.ts` | — | 11 | Survey API (create, respond, analyze) |
 | `src/__tests__/api/feed.test.ts` | — | 12 | Feed API (pagination, comments, engagement) |
-| `src/__tests__/lib/email.test.ts` | — | 14 | Email service (templates, delivery) |
+| `src/__tests__/lib/email.test.ts` | — | 30 | Email service (templates, delivery, verification, reset — expanded 2026-03-31) |
+| `src/__tests__/lib/sanitize.ts` | — | 49 | XSS sanitization library: sanitizeInput, sanitizeHtml, sanitizeMarkdown, sanitizeUrl, sanitizeJson, sanitizeEmail, sanitizeSearchQuery, createBodySanitizer ✅ 2026-03-31 |
 | `src/__tests__/lib/geocoding.test.ts` | — | 26 | Geocoding (coords, city lookup, caching) |
 | `src/__tests__/lib/invitations.test.ts` | — | 16 | Invitation tokens (generate, validate, redeem) |
 | `src/__tests__/lib/rate-limit.test.ts` | — | 13 | Rate limiting (quota, window, headers) |
@@ -908,11 +914,12 @@ db:seed        → npx tsx prisma/seed/index.ts
 | Lint warnings | 0 |
 | `any` types | 0 ✅ |
 | `console.*` | 0 ✅ |
+| TODO/FIXME | 0 ✅ |
 | TSC errors (prod + test) | 0 ✅ |
-| Vitest tests | 1156 passing (56 files) |
+| Vitest tests | ~1299 passing (~60 files) — updated 2026-03-31 |
 | E2E tests | 11 Playwright smoke tests (4 suites) |
 | Error monitoring | Sentry installed (server + client + edge) — needs `SENTRY_DSN` in Vercel |
-| Files >400 lines | ~10 (0 files exceed 600 lines) |
+| Files >600 lines (prod) | 0 ✅ |
 | Production env gaps | OPENAI_API_KEY, Pusher vars, Sentry DSN, Resend domain |
 
 ### Largest Files (>400 lines)

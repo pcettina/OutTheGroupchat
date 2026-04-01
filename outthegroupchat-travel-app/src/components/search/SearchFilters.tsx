@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FilterChip } from './FilterChip';
 
+export type SearchType = 'activities' | 'destinations' | 'all';
+
 export interface SearchFilters {
   destination?: string;
   dateRange?: { start: string; end: string };
@@ -17,6 +19,10 @@ interface SearchFiltersProps {
   filters: SearchFilters;
   onFiltersChange: (filters: SearchFilters) => void;
   onClear: () => void;
+  /** Currently selected AI search type */
+  searchType?: SearchType;
+  /** Called when the user changes the search type */
+  onSearchTypeChange?: (type: SearchType) => void;
   className?: string;
 }
 
@@ -34,10 +40,18 @@ const activityOptions = [
   'Water Sports', 'Shopping', 'Nature', 'Photography', 'Spa',
 ];
 
+const searchTypeOptions: { value: SearchType; label: string; icon: string }[] = [
+  { value: 'all', label: 'All', icon: '✨' },
+  { value: 'activities', label: 'Activities', icon: '📍' },
+  { value: 'destinations', label: 'Destinations', icon: '🌍' },
+];
+
 export function SearchFilters({
   filters,
   onFiltersChange,
   onClear,
+  searchType = 'all',
+  onSearchTypeChange,
   className = '',
 }: SearchFiltersProps) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -61,6 +75,26 @@ export function SearchFilters({
 
   return (
     <div className={`bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 ${className}`}>
+      {/* Search type selector */}
+      {onSearchTypeChange && (
+        <div className="px-4 pt-4 pb-2 flex gap-2">
+          {searchTypeOptions.map((option) => (
+            <button
+              key={option.value}
+              onClick={() => onSearchTypeChange(option.value)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                searchType === option.value
+                  ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-2 border-emerald-500'
+                  : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 border-2 border-transparent hover:border-slate-300 dark:hover:border-slate-600'
+              }`}
+            >
+              <span>{option.icon}</span>
+              <span>{option.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Filter Header */}
       <div className="p-4 flex items-center justify-between">
         <button

@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { format, addDays, eachDayOfInterval } from 'date-fns';
+import { format, eachDayOfInterval } from 'date-fns';
 import type { Activity, ItineraryDay } from '@prisma/client';
 
 interface ItineraryTimelineProps {

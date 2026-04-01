@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { useSession } from 'next-auth/react';
 import { getPusherClient, channels, events } from '@/lib/pusher';
 import type { Channel } from 'pusher-js';

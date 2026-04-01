@@ -4,31 +4,55 @@ import { logger } from '@/lib/logger';
 const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY;
 const GOOGLE_PLACES_BASE_URL = 'https://maps.googleapis.com/maps/api/place';
 
+/**
+ * Represents place information returned by the Google Places API.
+ */
 export interface PlaceDetails {
+  /** Unique Google Places identifier for this location. */
   place_id: string;
+  /** Display name of the place. */
   name: string;
+  /** Full human-readable address string. */
   formatted_address: string;
+  /** Geographic coordinates of the place. */
   geometry: {
+    /** Latitude/longitude coordinate pair. */
     location: {
+      /** Latitude in decimal degrees. */
       lat: number;
+      /** Longitude in decimal degrees. */
       lng: number;
     };
   };
+  /** Google price level on a 0–4 scale (0 = free, 4 = very expensive). Optional. */
   price_level?: number;
+  /** Average user rating on a 1.0–5.0 scale. Optional. */
   rating?: number;
+  /** Array of Google Places type strings describing the place (e.g., 'restaurant', 'museum'). */
   types: string[];
+  /** Available photos for the place. Optional. */
   photos?: Array<{
+    /** Opaque reference string used to fetch the photo via the Places Photos API. */
     photo_reference: string;
   }>;
 }
 
+/**
+ * Parameters for searching places via the Google Places Text Search API.
+ */
 export interface PlaceSearchParams {
+  /** Free-text search query (e.g., 'coffee shops in Rome'). */
   query: string;
+  /** Optional geographic center point for biasing results. */
   location?: {
+    /** Latitude in decimal degrees. */
     lat: number;
+    /** Longitude in decimal degrees. */
     lng: number;
   };
+  /** Search radius in meters when a location bias is applied (default: 5000). */
   radius?: number;
+  /** Optional Google Places type filter to restrict results (e.g., 'restaurant', 'museum'). */
   type?: string;
 }
 

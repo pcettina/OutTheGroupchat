@@ -11,14 +11,14 @@
 | Category | Score | Target | Status |
 |----------|-------|--------|--------|
 | Infrastructure | 92% | 100% | 🟡 Almost Ready |
-| Core Features | 77% | 90% | 🟠 In Progress |
+| Core Features | 82% | 90% | 🟠 In Progress |
 | Security | 83% | 100% | 🟠 In Progress |
-| Testing | 72% | 80% | 🟠 In Progress |
+| Testing | 74% | 80% | 🟡 Almost Ready |
 | Monitoring | 55% | 80% | 🟠 In Progress |
 
-**Overall Readiness: 78%** → Target: 85% for Beta Launch
+**Overall Readiness: 80%** → Target: 85% for Beta Launch
 
-> Last updated: 2026-03-26
+> Last updated: 2026-03-31
 
 ---
 
@@ -86,6 +86,11 @@
 - [ ] Real-time vote updates
 - [ ] Survey results display
 
+### Onboarding & Settings
+- [x] Onboarding flow created (/onboarding — WelcomeScreen → InterestSelector → TravelStyleQuiz) ✅ 2026-03-31
+- [x] Settings page created (/settings — 4-tab layout: Profile, Notifications, Privacy, Security) ✅ 2026-03-31
+- [x] Signup consent disclaimer added to auth/signup ✅ 2026-03-31
+
 ### AI Features 🔶
 - [x] Chat UI component
 - [x] API endpoints defined
@@ -94,6 +99,7 @@
 - [x] Trip context awareness ✅ Dec 17
 - [x] suggest-activities route complete (503 guard when OPENAI_API_KEY absent) ✅ 2026-03-23
 - [x] generate-itinerary route complete (503 guard when OPENAI_API_KEY absent) ✅ 2026-03-23
+- [x] Semantic search UI (/search page wired to /api/ai/search) ✅ 2026-03-31
 
 ---
 
@@ -259,8 +265,8 @@
 ## 📝 PHASE 7: Content & Legal
 
 ### Pages Required
-- [ ] Privacy Policy
-- [ ] Terms of Service
+- [x] Privacy Policy ✅ 2026-03-31 (/app/privacy/page.tsx created)
+- [x] Terms of Service ✅ 2026-03-31 (/app/terms/page.tsx created)
 - [ ] About page (optional)
 - [ ] Help/FAQ (optional)
 
@@ -378,4 +384,4 @@ git push origin main  # Auto-deploys to Vercel
 
 *This checklist should be reviewed daily during launch preparation.*
 
-*Last Updated: 2026-03-26 - 153 new tests (1156 total, 56 files); rate limiting added as first operation on auth/signup, auth/reset-password, auth/verify-email; newsletter/subscribe now requires auth; ai/search GET+POST fully implemented; dead components removed (NotificationCenter.tsx, SharePreview.tsx); recommendation.service.test.ts, survey.service.test.ts, geocoding-images.test.ts created. Also includes 2026-03-29 changes: JSON.parse safety on 5 AI routes + notifications/[notificationId]; Zod strengthened on ai/chat; notifications/[notificationId] bugfix (read was hardcoded true); JSDoc added to geocoding.ts; 3 new test files (ai-generate-itinerary, ai-suggest-activities, discover-import)*
+*Last Updated: 2026-03-31 - Privacy Policy + Terms of Service pages created; onboarding 3-step flow created (/onboarding); settings page created (4-tab); AI semantic search UI wired to /app/search; email.ts tests expanded (14 → 30); sanitize.ts test suite created (49 tests); TravelBadges.tsx deleted; profile History tab added; JSDoc added to src/lib/api/ (flights, places, ticketmaster, unsplash); 7 unused imports removed from 7 component files; overall readiness: 78% → 80%*

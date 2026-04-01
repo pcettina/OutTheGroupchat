@@ -92,6 +92,11 @@ describe('isEmailConfigured', () => {
   it('returns true when RESEND_API_KEY was set at module load time', () => {
     expect(emailModule.isEmailConfigured()).toBe(true);
   });
+
+  it('returns a boolean (not a truthy object)', () => {
+    const result = emailModule.isEmailConfigured();
+    expect(typeof result).toBe('boolean');
+  });
 });
 
 // ===========================================================================
@@ -189,6 +194,83 @@ describe('sendInvitationEmail', () => {
       expect.objectContaining({ messageId: 'msg-xyz' })
     );
   });
+
+  it('sends both html and text body fields', async () => {
+    resendSuccess();
+
+    await emailModule.sendInvitationEmail(BASE_PARAMS);
+
+    const call = mockEmailsSend.mock.calls[0][0];
+    expect(call.html).toBeDefined();
+    expect(call.text).toBeDefined();
+    expect(typeof call.html).toBe('string');
+    expect(typeof call.text).toBe('string');
+  });
+
+  it('includes the trip title in the email html body', async () => {
+    resendSuccess();
+
+    await emailModule.sendInvitationEmail(BASE_PARAMS);
+
+    const call = mockEmailsSend.mock.calls[0][0];
+    expect(call.html).toContain('Paris Getaway');
+  });
+
+  it('includes the inviter name in the email text body', async () => {
+    resendSuccess();
+
+    await emailModule.sendInvitationEmail(BASE_PARAMS);
+
+    const call = mockEmailsSend.mock.calls[0][0];
+    expect(call.text).toContain('Alice');
+  });
+
+  it('includes a signup URL containing the tripId in the email text body', async () => {
+    resendSuccess();
+
+    await emailModule.sendInvitationEmail(BASE_PARAMS);
+
+    const call = mockEmailsSend.mock.calls[0][0];
+    expect(call.text).toContain('trip-123');
+  });
+
+  it('omits expiry text when expiresAt is not provided', async () => {
+    resendSuccess();
+
+    await emailModule.sendInvitationEmail(BASE_PARAMS);
+
+    const call = mockEmailsSend.mock.calls[0][0];
+    // expiryText is empty string; it should not appear as a meaningful sentence
+    expect(call.text).not.toMatch(/expires on/i);
+  });
+
+  it('returns { success: false } when Resend returns null data and no error', async () => {
+    mockEmailsSend.mockResolvedValueOnce({ data: null, error: null });
+
+    const result = await emailModule.sendInvitationEmail(BASE_PARAMS);
+
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects emails with missing @ symbol', async () => {
+    const result = await emailModule.sendInvitationEmail({
+      ...BASE_PARAMS,
+      to: 'invalidemail.com',
+    });
+
+    expect(result.success).toBe(false);
+    expect(mockEmailsSend).not.toHaveBeenCalled();
+  });
+
+  it('rejects emails with only whitespace', async () => {
+    const result = await emailModule.sendInvitationEmail({
+      ...BASE_PARAMS,
+      to: '   ',
+    });
+
+    expect(result.success).toBe(false);
+    expect(mockEmailsSend).not.toHaveBeenCalled();
+  });
 });
 
 // ===========================================================================
@@ -252,5 +334,69 @@ describe('sendNotificationEmail', () => {
 
     expect(result.success).toBe(false);
     expect(result.error).toBe('Timeout');
+  });
+
+  it('sends both html and text body fields', async () => {
+    resendSuccess();
+
+    await emailModule.sendNotificationEmail(BASE_PARAMS);
+
+    const call = mockEmailsSend.mock.calls[0][0];
+    expect(call.html).toBeDefined();
+    expect(call.text).toBeDefined();
+  });
+
+  it('includes the notification title and message in the html body', async () => {
+    resendSuccess();
+
+    await emailModule.sendNotificationEmail(BASE_PARAMS);
+
+    const call = mockEmailsSend.mock.calls[0][0];
+    expect(call.html).toContain('Trip Update');
+    expect(call.html).toContain('Your itinerary has changed.');
+  });
+
+  it('includes the notification message in the text body', async () => {
+    resendSuccess();
+
+    await emailModule.sendNotificationEmail(BASE_PARAMS);
+
+    const call = mockEmailsSend.mock.calls[0][0];
+    expect(call.text).toContain('Your itinerary has changed.');
+  });
+
+  it('omits action link from text body when actionUrl is not provided', async () => {
+    resendSuccess();
+
+    await emailModule.sendNotificationEmail(BASE_PARAMS);
+
+    const call = mockEmailsSend.mock.calls[0][0];
+    // When no actionUrl is provided the template renders an empty string
+    expect(call.text).not.toContain('http');
+  });
+
+  it('calls logError when Resend returns an API error', async () => {
+    resendApiError('Forbidden');
+
+    await emailModule.sendNotificationEmail(BASE_PARAMS);
+
+    expect(mockLogError).toHaveBeenCalled();
+  });
+
+  it('calls logError when Resend throws a network error', async () => {
+    resendThrows('Socket hang up');
+
+    await emailModule.sendNotificationEmail(BASE_PARAMS);
+
+    expect(mockLogError).toHaveBeenCalled();
+  });
+
+  it('returns messageId as undefined when Resend returns data without id', async () => {
+    mockEmailsSend.mockResolvedValueOnce({ data: {}, error: null });
+
+    const result = await emailModule.sendNotificationEmail(BASE_PARAMS);
+
+    expect(result.success).toBe(true);
+    expect(result.messageId).toBeUndefined();
   });
 });

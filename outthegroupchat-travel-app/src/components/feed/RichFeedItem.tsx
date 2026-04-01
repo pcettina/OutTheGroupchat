@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
 import Image from 'next/image';
 import Link from 'next/link';

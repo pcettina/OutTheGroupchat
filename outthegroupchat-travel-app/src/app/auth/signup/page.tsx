@@ -231,6 +231,18 @@ function SignUpForm() {
             {isLoading ? 'Creating account...' : 'Create account'}
           </button>
         </div>
+
+        <p className="text-center text-xs text-gray-500">
+          By creating an account, you agree to our{' '}
+          <Link href="/terms" className="text-indigo-600 hover:text-indigo-500 underline">
+            Terms of Service
+          </Link>{' '}
+          and{' '}
+          <Link href="/privacy" className="text-indigo-600 hover:text-indigo-500 underline">
+            Privacy Policy
+          </Link>
+          .
+        </p>
       </form>
     </div>
   );

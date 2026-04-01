@@ -1,6 +1,6 @@
 # 📡 API & Integration Status
 
-> **Last updated: 2026-03-26**
+> **Last updated: 2026-03-31**
 >
 > **Last Audit:** March 2026
 > **Overall Status:** 86% Complete
@@ -275,6 +275,20 @@ BLOCKED - Need Environment Variables:
 
 ---
 
+## 🖥️ Frontend Pages
+
+> These are application pages (not API routes) implemented 2026-03-31.
+
+| Page | Status | Notes |
+|------|--------|-------|
+| `/app/search` | ✅ | Semantic AI search UI wired to /api/ai/search; SearchResults + SearchFilters components updated |
+| `/app/settings` | ✅ | Settings page created with 4-tab layout (Profile, Notifications, Privacy, Security); all settings components wired |
+| `/app/privacy` | ✅ | Privacy Policy page created with professional legal content |
+| `/app/terms` | ✅ | Terms of Service page created with professional legal content |
+| `/app/onboarding` | ✅ | 3-step onboarding flow created (WelcomeScreen → InterestSelector → TravelStyleQuiz); /app/auth/signup updated with consent disclaimer |
+
+---
+
 ## 🔧 Priority Fix Order
 
 ### Critical (Block Launch)
@@ -372,4 +386,4 @@ EMAIL_FROM=             # Email sender (onboarding@resend.dev) ✅
 
 *Review and update after each API change.*
 
-*Last Updated: 2026-03-26 - /api/ai/search GET+POST fully implemented (semantic search, destinations branch); /api/newsletter/subscribe now requires auth; /api/auth/signup, /api/auth/reset-password, /api/auth/verify-email: rate limiting now first operation; 153 new tests tonight (1156 total, 56 test files); dead components (NotificationCenter.tsx, SharePreview.tsx) removed; JSDoc added to costs.ts; README updated. Also includes 2026-03-29 changes: /api/ai/chat Zod strengthened + JSON.parse safety; /api/ai/recommend Zod GET params + JSON.parse safety; /api/ai/suggest-activities + generate-itinerary JSON.parse safety; /api/notifications/[notificationId] Zod params (cuid) + bugfix (read was hardcoded true); JSDoc added to src/lib/geocoding.ts; N8N docs deprecated*
+*Last Updated: 2026-03-31 - Frontend pages added: /search (AI search UI wired to /api/ai/search), /settings (4-tab layout), /privacy + /terms (legal pages), /onboarding (3-step flow); email.ts test suite expanded (14 → 30 tests); sanitize.ts test suite created (49 tests); JSDoc added to src/lib/api/ (flights, places, ticketmaster, unsplash); 7 unused imports removed; TravelBadges.tsx deleted; profile History tab added (BadgeShowcase + TripHistory).*

@@ -224,6 +224,32 @@
 *Updated: 2026-03-20*
 ---
 
+## 🟢 Completed 2026-03-31 (Nightly Build)
+
+### Wave 1 — Test Coverage
+- [L2] Email.ts test suite expanded: 14 → 30 tests (+16)
+- [M1] sanitize.ts test suite created: 49 tests covering 8 exported functions
+
+### Wave 2 — Features & Refactors
+- [L3] AI search wired to frontend: search/page.tsx created, SearchResults + SearchFilters rewired
+- [L4] Settings page created: /settings with 4-tab layout (Profile, Notifications, Privacy, Security)
+- [L5] Legal pages created: /privacy and /terms with professional content; signup consent disclaimer added
+- [L6] Onboarding flow created: /onboarding with 3-step flow (Welcome → Interests → TravelStyle)
+- [M3] JSDoc added to 8 interfaces in src/lib/api/ (flights, places, ticketmaster, unsplash)
+- [M4] 7 unused imports removed from 7 component files
+- [M5] README.md and docs/README.md updated (docs/README.md was 485 days stale)
+- [M6] TravelBadges.tsx dead component removed; profile History tab added (BadgeShowcase + TripHistory)
+
+### Metrics
+- Tests: 1234 (baseline) + 65 new = 1299 new total
+- API routes: 48 (unchanged)
+- New pages: 5 (search, settings, privacy, terms, onboarding)
+- TSC errors: 0
+- Lint: 0 warnings
+
+*Updated: 2026-03-31*
+---
+
 ## 🟢 Completed 2026-03-29 (Nightly Build)
 
 ### Wave 1 — Test Writers (77 tests added)
