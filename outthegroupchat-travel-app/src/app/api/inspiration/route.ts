@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
+import { apiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 
 const searchSchema = z.object({
   query: z.string().optional(),
@@ -146,6 +147,14 @@ const popularDestinations = [
 
 export async function GET(req: Request) {
   try {
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, req.headers.get('x-forwarded-for') ?? 'anonymous');
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
+      );
+    }
+
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -314,6 +323,14 @@ export async function GET(req: Request) {
 // Get a specific template
 export async function POST(req: Request) {
   try {
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, req.headers.get('x-forwarded-for') ?? 'anonymous');
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
+      );
+    }
+
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

@@ -1,6 +1,6 @@
 # OutTheGroupchat — Full Codemap
 
-> Auto-generated 2026-03-10. Last updated 2026-03-26. Comprehensive reference for agents and developers.
+> Auto-generated 2026-03-10. Last updated 2026-04-01. Comprehensive reference for agents and developers.
 
 ## Table of Contents
 
@@ -29,7 +29,7 @@ Full-stack Next.js 14 collaborative travel planning app. Groups plan trips toget
 
 **App root:** `outthegroupchat-travel-app/`
 **Source:** `outthegroupchat-travel-app/src/`
-**Stats:** ~263 TS/TSX files | ~33,500 LOC | 48 API routes | 92 components | 20 pages
+**Stats:** ~270 TS/TSX files | ~34,000 LOC | 48 API routes | 96 components | 22 pages
 
 ---
 
@@ -512,14 +512,16 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `/auth/reset-password/confirm` | `app/auth/reset-password/confirm/page.tsx` | Client | Public | Password reset confirmation — reads token+email from query params, submits PATCH /api/auth/reset-password |
 | `/trips` | `app/trips/page.tsx` | Client | Required | Trip list with stats, filters, creation |
 | `/trips/new` | `app/trips/new/page.tsx` | Client | Required | Multi-step trip wizard |
-| `/trips/[tripId]` | `app/trips/[tripId]/page.tsx` | Client | Required | Trip detail: itinerary, members, activities |
-| `/trips/[tripId]/survey` | `app/trips/[tripId]/survey/page.tsx` | Client | Required | Survey form for preferences |
-| `/trips/[tripId]/vote` | `app/trips/[tripId]/vote/page.tsx` | Client | Required | Voting interface |
+| `/trips/[tripId]` | `app/trips/[tripId]/page.tsx` | Client | Required | Trip detail: itinerary, members, activities; EditTripModal + DeleteTripModal added 2026-04-01 |
+| `/trips/[tripId]/members` | `app/trips/[tripId]/members/page.tsx` | Client | Required | Dedicated members management page ✅ 2026-04-01 |
+| `/trips/[tripId]/survey` | `app/trips/[tripId]/survey/page.tsx` | Client | Required | Survey form for preferences; silent catch blocks fixed 2026-04-01 |
+| `/trips/[tripId]/vote` | `app/trips/[tripId]/vote/page.tsx` | Client | Required | Voting interface; silent catch blocks fixed 2026-04-01 |
 | `/discover` | `app/discover/page.tsx` | Client | Public | Destination discovery & inspiration |
 | `/inspiration` | `app/inspiration/page.tsx` | Client | Public | Trending trips, events |
 | `/feed` | `app/feed/page.tsx` | Client | Required | Social activity feed |
 | `/notifications` | `app/notifications/page.tsx` | Client | Required | Notification inbox |
 | `/profile` | `app/profile/page.tsx` | Client | Required | User profile, badges, trip history |
+| `/profile/[userId]` | `app/profile/[userId]/page.tsx` | Client | Required | Public user profile with FollowButton ✅ 2026-04-01 |
 
 **Utility pages:** `error.tsx` (route error boundary), `global-error.tsx` (root error boundary + Sentry), `not-found.tsx` (404), `loading.tsx` (skeleton)
 
@@ -623,6 +625,7 @@ db:seed        → npx tsx prisma/seed/index.ts
 |-----------|-------|-------|---------|
 | `ActivityCard` | — | activity, trip?, onSave?, onShare? | Activity recommendation card |
 | `TravelBadges` | 391 | badges, userId?, interactive? | Achievement/travel badges |
+| `FollowButton` | — | userId, isFollowing?, onToggle? | Follow/unfollow button for user profiles ✅ 2026-04-01 |
 
 ### Surveys (`components/surveys/`)
 
@@ -650,6 +653,8 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `ItineraryTimeline` | — | days, onAddDay?, onEditDay?, editable? | Day-by-day schedule |
 | `InviteModal` | — | tripId, open, onOpenChange, onInvite? | Email invite form |
 | `InviteMemberModal` | — | tripId, open, onOpenChange, onInvited? | Invite member UI with member search and email invite ✅ 2026-03-19 |
+| `EditTripModal` | — | trip, open, onOpenChange, onSave? | Edit trip details inline ✅ 2026-04-01 |
+| `DeleteTripModal` | — | tripId, open, onOpenChange, onDelete? | Confirm and delete trip ✅ 2026-04-01 |
 | `AddActivityModal` | 492 | tripId, date?, open, onOpenChange, onAdd? | Add activity to itinerary |
 
 **Trip wizard steps** (`components/trips/steps/`):
@@ -807,7 +812,7 @@ db:seed        → npx tsx prisma/seed/index.ts
 
 ## Tests
 
-**Total: 1156 tests across 56 Vitest unit/integration test files** (0 TSC errors in production code, 0 in test files as of 2026-03-26)
+**Total: ~1344 tests across 63 Vitest unit/integration test files** (0 TSC errors in production code, 0 in test files as of 2026-04-01)
 
 | File | Lines | Tests | Coverage |
 |------|-------|-------|----------|
@@ -841,6 +846,10 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `src/__tests__/api/ai-generate-itinerary.test.ts` | — | 31 | POST /api/ai/generate-itinerary — auth, 503 guard, rate-limit, validation, 404/403, multi-day, AI/DB failures ✅ 2026-03-29 |
 | `src/__tests__/api/ai-suggest-activities.test.ts` | — | 25 | POST /api/ai/suggest-activities — pure AI generation, no Prisma ✅ 2026-03-29 |
 | `src/__tests__/api/discover-import.test.ts` | — | 21 | POST /api/discover/import — rate limiting, auth guard, externalActivity.upsert, OpenTripMap fetch ✅ 2026-03-29 |
+| `src/__tests__/api/trip-lifecycle-integration.test.ts` | — | 48 | Full trip lifecycle integration: create → invite → survey → vote → complete; rate-limit mock inline ✅ 2026-04-01 |
+| `src/__tests__/api/survey-voting-flow.test.ts` | — | 21 | Cross-route survey+voting edge cases: hasResponded, auto-close, non-member access control, multi-member notifications ✅ 2026-04-01 |
+| `src/__tests__/api/discover-search-edge.test.ts` | — | 21 | /api/discover/search edge cases: auth guard, rate limiting, Zod params, category filter ✅ 2026-04-01 |
+| `src/__tests__/api/ai-recommend-edge.test.ts` | — | 20 | /api/ai/recommend edge cases: GET tripId param, limit clamping (1-20), group preference aggregation ✅ 2026-04-01 |
 | `src/__tests__/api/voting.test.ts` | — | 10 | Voting API (create, vote, close session) |
 | `src/__tests__/api/survey.test.ts` | — | 11 | Survey API (create, respond, analyze) |
 | `src/__tests__/api/feed.test.ts` | — | 12 | Feed API (pagination, comments, engagement) |
@@ -909,7 +918,7 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `any` types | 0 ✅ |
 | `console.*` | 0 ✅ |
 | TSC errors (prod + test) | 0 ✅ |
-| Vitest tests | 1156 passing (56 files) |
+| Vitest tests | ~1344 passing (63 files) |
 | E2E tests | 11 Playwright smoke tests (4 suites) |
 | Error monitoring | Sentry installed (server + client + edge) — needs `SENTRY_DSN` in Vercel |
 | Files >400 lines | ~10 (0 files exceed 600 lines) |

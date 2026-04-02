@@ -32,6 +32,46 @@ const statusLabels: Record<string, string> = {
   CANCELLED: 'Cancelled',
 };
 
+export function TripCardSkeleton() {
+  return (
+    <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 animate-pulse">
+      {/* Image/header placeholder */}
+      <div className="h-32 bg-gray-200" />
+
+      {/* Content */}
+      <div className="p-5">
+        {/* Title */}
+        <div className="h-6 bg-gray-200 rounded w-3/4 mb-2" />
+        {/* Location */}
+        <div className="h-4 bg-gray-200 rounded w-1/2 mb-3" />
+        {/* Description lines */}
+        <div className="h-4 bg-gray-200 rounded w-full mb-2" />
+        <div className="h-4 bg-gray-200 rounded w-2/3 mb-4" />
+        {/* Date */}
+        <div className="h-4 bg-gray-200 rounded w-1/2 mb-4" />
+
+        {/* Footer */}
+        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+          {/* Member avatars */}
+          <div className="flex items-center gap-2">
+            <div className="flex -space-x-2">
+              {[0, 1, 2].map((i) => (
+                <div
+                  key={i}
+                  className="w-8 h-8 rounded-full bg-gray-200 border-2 border-white"
+                />
+              ))}
+            </div>
+            <div className="h-4 bg-gray-200 rounded w-16 ml-1" />
+          </div>
+          {/* Arrow placeholder */}
+          <div className="w-8 h-8 rounded-full bg-gray-200" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function TripCard({ trip, variant = 'default' }: TripCardProps) {
   const destination = trip.destination as unknown as Destination;
   const memberCount = trip._count?.members || trip.members?.length || 0;

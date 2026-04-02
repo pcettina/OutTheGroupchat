@@ -6,9 +6,51 @@ import { Analytics } from '@vercel/analytics/react';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'OutTheGroupchat - Plan Group Trips Together',
+  title: {
+    default: 'OutTheGroupchat - Plan Group Trips Together',
+    template: '%s | OutTheGroupchat',
+  },
   description: 'The easiest way to plan trips with friends. Coordinate preferences, vote on activities, and create perfect group travel experiences.',
-  keywords: ['travel', 'group travel', 'trip planning', 'vacation', 'friends'],
+  keywords: ['travel', 'group travel', 'trip planning', 'vacation', 'friends', 'travel planning app', 'group vacation'],
+  metadataBase: new URL('https://outthegroupchat.com'),
+  openGraph: {
+    type: 'website',
+    siteName: 'OutTheGroupchat',
+    title: 'OutTheGroupchat - Plan Group Trips Together',
+    description: 'The easiest way to plan trips with friends. Coordinate preferences, vote on activities, and create perfect group travel experiences.',
+    url: 'https://outthegroupchat.com',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'OutTheGroupchat - Group Travel Planning Made Easy',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'OutTheGroupchat - Plan Group Trips Together',
+    description: 'The easiest way to plan trips with friends. Coordinate preferences, vote on activities, and create perfect group travel experiences.',
+    images: ['/og-image.png'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  icons: {
+    icon: '/favicon.ico',
+  },
+  other: {
+    'theme-color': '#10b981',
+  },
 };
 
 const outfit = Outfit({
@@ -31,10 +73,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${outfit.variable} ${poppins.variable}`}>
-      <head>
-        <link rel="icon" href="/favicon.ico" />
-        <meta name="theme-color" content="#10b981" />
-      </head>
+      <head />
       <body className="font-sans antialiased">
         <Providers>
           {/* Skip Links for Accessibility */}

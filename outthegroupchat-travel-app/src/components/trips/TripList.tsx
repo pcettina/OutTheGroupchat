@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import TripCard from './TripCard';
+import TripCard, { TripCardSkeleton } from './TripCard';
 import type { TripWithRelations } from '@/types';
 
 interface TripListProps {
@@ -49,16 +49,8 @@ export default function TripList({ trips, isLoading, onCreateTrip }: TripListPro
   if (isLoading) {
     return (
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="bg-white rounded-2xl overflow-hidden shadow-sm animate-pulse">
-            <div className="h-32 bg-gray-200" />
-            <div className="p-5 space-y-3">
-              <div className="h-6 bg-gray-200 rounded w-3/4" />
-              <div className="h-4 bg-gray-200 rounded w-1/2" />
-              <div className="h-4 bg-gray-200 rounded w-full" />
-              <div className="h-4 bg-gray-200 rounded w-2/3" />
-            </div>
-          </div>
+        {[0, 1, 2, 3, 4, 5].map((i) => (
+          <TripCardSkeleton key={i} />
         ))}
       </div>
     );

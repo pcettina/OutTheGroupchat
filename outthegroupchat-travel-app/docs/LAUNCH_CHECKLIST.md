@@ -18,7 +18,7 @@
 
 **Overall Readiness: 78%** → Target: 85% for Beta Launch
 
-> Last updated: 2026-03-26
+> Last updated: 2026-04-01
 
 ---
 
@@ -64,8 +64,8 @@
 - [x] Trip listing
 - [x] Trip detail page
 - [ ] Trip wizard (multi-step creation)
-- [ ] Trip editing
-- [ ] Trip deletion/archiving
+- [x] Trip editing ✅ 2026-04-01 (EditTripModal.tsx created + wired into trips/[tripId]/page.tsx)
+- [x] Trip deletion/archiving ✅ 2026-04-01 (DeleteTripModal.tsx created + wired into trips/[tripId]/page.tsx)
 - [x] Member invitation via email ✅ Dec 17
 - [x] Activity management ✅ Dec 17
 - [x] Itinerary route complete (GET/POST/PUT with $transaction atomicity) ✅ 2026-03-23
@@ -76,7 +76,7 @@
 - [x] Comments API (Trip support added) ✅ Dec 17
 - [x] Reactions/Likes API (Trip support added) ✅ Dec 17
 - [x] Share functionality ✅ 2026-03-16 (POST /api/feed/share implemented with Zod + notification)
-- [ ] Follow system integration
+- [x] Follow system integration ✅ 2026-04-01 (FollowButton.tsx + /profile/[userId]/page.tsx added)
 
 ### Group Coordination 🔶
 - [x] Survey API structure
@@ -110,6 +110,7 @@
 - [x] SQL injection prevention (Prisma)
 - [x] Rate limiting infrastructure (Upstash)
 - [x] Rate limiting on all authentication endpoints ✅ 2026-03-26 (signup, reset-password, verify-email — rate limiting now first operation)
+- [x] Rate limiting on inspiration, search, notifications, feed routes ✅ 2026-04-01 (partial — 4 more routes covered)
 - [ ] Rate limiting on ALL remaining endpoints
 - [x] Input validation on major API routes (Zod) ✅ 2026-03-24 — notifications, feed/comments, feed/engagement, pusher/auth, users/[userId], discover/*, images/search, inspiration, cron, auth/demo added; ai/chat Zod strengthened + JSON.parse safety on 5 AI routes + notifications/[notificationId] ✅ 2026-03-29
 - [x] /api/discover/search requires authentication ✅ 2026-03-24 (security improvement — was unauthenticated)
@@ -174,6 +175,7 @@
 - [x] API route tests (invitations-post 18, ai-get-methods 16, beta-extended 21, users-follow 24) ✅ 2026-03-25 — total: 1003 tests across 53 files
 - [x] Service tests + API tests (recommendation.service 45, survey.service 36, geocoding-images 32, inspiration +39) ✅ 2026-03-26 — total: 1156 tests across 56 files
 - [x] API route tests (ai-generate-itinerary 31, ai-suggest-activities 25, discover-import 21) ✅ 2026-03-29
+- [x] Integration tests: trip-lifecycle-integration (48), survey-voting-flow (21), discover-search-edge (21), ai-recommend-edge (20) ✅ 2026-04-01 — total: ~1344 tests across 63 files
 
 ### Integration Tests
 - [ ] Auth flow tests
@@ -235,7 +237,7 @@
 ### Empty States
 - [x] No trips empty state ✅ Dec 17
 - [x] No notifications empty state ✅ Dec 17
-- [ ] No search results state
+- [x] No search results state ✅ 2026-04-01 (SearchResults.tsx updated with empty/loading/error states)
 
 ### Error States
 - [x] Global error boundary ✅ 2026-03-13 (global-error.tsx)
@@ -265,9 +267,9 @@
 - [ ] Help/FAQ (optional)
 
 ### SEO
-- [ ] Meta titles on all pages
-- [ ] Meta descriptions
-- [ ] Open Graph tags
+- [x] Meta titles on all pages ✅ 2026-04-01 (metadata.ts updated, OG tags added to layout.tsx)
+- [x] Meta descriptions ✅ 2026-04-01 (metadata.ts updated)
+- [x] Open Graph tags ✅ 2026-04-01 (OG tags added to layout.tsx + metadata.ts)
 - [ ] Favicon configured
 
 ---
@@ -378,4 +380,4 @@ git push origin main  # Auto-deploys to Vercel
 
 *This checklist should be reviewed daily during launch preparation.*
 
-*Last Updated: 2026-03-26 - 153 new tests (1156 total, 56 files); rate limiting added as first operation on auth/signup, auth/reset-password, auth/verify-email; newsletter/subscribe now requires auth; ai/search GET+POST fully implemented; dead components removed (NotificationCenter.tsx, SharePreview.tsx); recommendation.service.test.ts, survey.service.test.ts, geocoding-images.test.ts created. Also includes 2026-03-29 changes: JSON.parse safety on 5 AI routes + notifications/[notificationId]; Zod strengthened on ai/chat; notifications/[notificationId] bugfix (read was hardcoded true); JSDoc added to geocoding.ts; 3 new test files (ai-generate-itinerary, ai-suggest-activities, discover-import)*
+*Last Updated: 2026-04-01 - ~110 new tests (~1344 total, 63 files); EditTripModal + DeleteTripModal added (trip editing/deletion UI complete); FollowButton + /profile/[userId] page added (follow system complete); members management page added (/trips/[tripId]/members); rate limiting on inspiration, search, notifications, feed routes; OG tags + metadata.ts updated; SearchResults empty/loading/error states; TripCard+TripList skeleton states; survey+vote silent catch blocks fixed; 4 new integration test files (trip-lifecycle, survey-voting-flow, discover-search-edge, ai-recommend-edge)*

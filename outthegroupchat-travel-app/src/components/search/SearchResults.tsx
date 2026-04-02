@@ -3,8 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Skeleton, SkeletonCard } from '@/components/ui/Skeleton';
-import { EmptyState } from '@/components/ui/EmptyState';
+import { Skeleton } from '@/components/ui/Skeleton';
 
 interface SearchResult {
   id: string;
@@ -20,6 +19,8 @@ interface SearchResultsProps {
   isLoading: boolean;
   query: string;
   onResultClick?: (result: SearchResult) => void;
+  error?: string;
+  onRetry?: () => void;
 }
 
 export function SearchResults({
@@ -27,10 +28,12 @@ export function SearchResults({
   isLoading,
   query,
   onResultClick,
+  error,
+  onRetry,
 }: SearchResultsProps) {
   if (isLoading) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-4" aria-busy="true" aria-label="Loading search results">
         {[1, 2, 3].map((i) => (
           <div key={i} className="bg-white dark:bg-slate-800 rounded-xl p-4 animate-pulse">
             <div className="flex items-center gap-4">
@@ -38,6 +41,10 @@ export function SearchResults({
               <div className="flex-1 space-y-2">
                 <Skeleton variant="text" width="60%" />
                 <Skeleton variant="text" width="40%" />
+                <Skeleton variant="text" width="25%" />
+              </div>
+              <div className="flex flex-col items-end gap-2">
+                <Skeleton variant="rounded" width={56} height={22} />
               </div>
             </div>
           </div>
@@ -46,17 +53,71 @@ export function SearchResults({
     );
   }
 
+  if (error) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-center py-12 px-6"
+      >
+        <div className="w-16 h-16 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center mx-auto mb-4 text-red-400">
+          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+          Something went wrong
+        </h3>
+        <p className="text-slate-600 dark:text-slate-400 max-w-sm mx-auto mb-6">
+          {error}
+        </p>
+        {onRetry && (
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={onRetry}
+            className="px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all"
+          >
+            Try again
+          </motion.button>
+        )}
+      </motion.div>
+    );
+  }
+
   if (results.length === 0 && query) {
     return (
-      <EmptyState
-        icon={
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-center py-12 px-6"
+      >
+        <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-4 text-slate-400">
           <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
-        }
-        title="No results found"
-        description={`We couldn't find anything matching "${query}". Try different keywords or filters.`}
-      />
+        </div>
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+          No results found for &ldquo;{query}&rdquo;
+        </h3>
+        <p className="text-slate-600 dark:text-slate-400 max-w-sm mx-auto mb-6">
+          We couldn&apos;t find anything matching your search. Try one of these:
+        </p>
+        <ul className="space-y-2 text-sm text-slate-500 dark:text-slate-400 mb-6">
+          <li className="flex items-center justify-center gap-2">
+            <svg className="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+            Try different keywords
+          </li>
+          <li className="flex items-center justify-center gap-2">
+            <svg className="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+            Explore trending destinations
+          </li>
+        </ul>
+      </motion.div>
     );
   }
 

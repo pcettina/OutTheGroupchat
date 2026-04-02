@@ -34,6 +34,12 @@ vi.mock('@/lib/prisma', async (importOriginal) => {
   };
 });
 
+vi.mock('@/lib/rate-limit', () => ({
+  apiRateLimiter: {},
+  checkRateLimit: vi.fn().mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: Date.now() + 60000 }),
+  getRateLimitHeaders: vi.fn().mockReturnValue({}),
+}));
+
 import { GET } from '@/app/api/search/route';
 
 const mockGetServerSession = vi.mocked(getServerSession);

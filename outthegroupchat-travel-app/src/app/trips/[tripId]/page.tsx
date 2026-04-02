@@ -9,7 +9,7 @@ import { format } from 'date-fns';
 import { useTrip } from '@/hooks/useTrips';
 import { TripChat } from '@/components/ai';
 import { Navigation } from '@/components/Navigation';
-import { TripHeader, TripOverview, MemberList, ItineraryTimeline, InviteModal, AddActivityModal, InviteMemberModal } from '@/components/trips';
+import { TripHeader, TripOverview, MemberList, ItineraryTimeline, InviteModal, AddActivityModal, InviteMemberModal, EditTripModal, DeleteTripModal } from '@/components/trips';
 import { ShareModal } from '@/components/feed/ShareModal';
 import { FloatingShareButton } from '@/components/ui';
 import type { Destination, TripBudget } from '@/types';
@@ -19,7 +19,7 @@ export default function TripDetailPage() {
   const router = useRouter();
   const { data: session } = useSession();
   const tripId = params.tripId as string;
-  const { data: trip, isLoading, error } = useTrip(tripId);
+  const { data: trip, isLoading, error, refetch } = useTrip(tripId);
   
   // Modal states
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
@@ -27,6 +27,8 @@ export default function TripDetailPage() {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isAddActivityModalOpen, setIsAddActivityModalOpen] = useState(false);
   const [activityPreselectedDate, setActivityPreselectedDate] = useState<Date | undefined>(undefined);
+  const [isEditTripModalOpen, setIsEditTripModalOpen] = useState(false);
+  const [isDeleteTripModalOpen, setIsDeleteTripModalOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -141,6 +143,18 @@ export default function TripDetailPage() {
     // If needed, you can call mutate() from the hook here
   };
 
+  const handleEditTrip = () => {
+    setIsEditTripModalOpen(true);
+  };
+
+  const handleDeleteTrip = () => {
+    setIsDeleteTripModalOpen(true);
+  };
+
+  const handleTripUpdated = () => {
+    void refetch();
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       <Navigation />
@@ -148,6 +162,37 @@ export default function TripDetailPage() {
       <div className="pt-16">
         {/* Trip Header */}
         <TripHeader trip={trip} onInvite={handleInvite} />
+
+        {/* Owner / Admin Actions */}
+        {isOwnerOrAdmin && (
+          <div className="max-w-7xl mx-auto px-4 pt-4 flex items-center justify-end gap-2">
+            <motion.button
+              onClick={handleEditTrip}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium hover:border-emerald-400 dark:hover:border-emerald-600 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors shadow-sm"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              Edit Trip
+            </motion.button>
+
+            {session?.user?.id === trip.ownerId && (
+              <motion.button
+                onClick={handleDeleteTrip}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium hover:border-red-400 dark:hover:border-red-600 hover:text-red-600 dark:hover:text-red-400 transition-colors shadow-sm"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Delete Trip
+              </motion.button>
+            )}
+          </div>
+        )}
 
         {/* Quick Actions */}
         <div className="max-w-7xl mx-auto px-4 -mt-6 relative z-10">
@@ -371,6 +416,26 @@ export default function TripDetailPage() {
         onActivityAdded={handleActivityAdded}
         preselectedDate={activityPreselectedDate}
       />
+
+      {/* Edit Trip Modal (owner/admin only) */}
+      {isOwnerOrAdmin && (
+        <EditTripModal
+          isOpen={isEditTripModalOpen}
+          onClose={() => setIsEditTripModalOpen(false)}
+          trip={trip}
+          onSuccess={handleTripUpdated}
+        />
+      )}
+
+      {/* Delete Trip Modal (owner only) */}
+      {session?.user?.id === trip.ownerId && (
+        <DeleteTripModal
+          isOpen={isDeleteTripModalOpen}
+          onClose={() => setIsDeleteTripModalOpen(false)}
+          tripId={tripId}
+          tripTitle={trip.title}
+        />
+      )}
     </div>
   );
 }

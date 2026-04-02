@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { QuestionRenderer } from '@/components/surveys';
 import { SurveyBuilder } from '@/components/surveys/SurveyBuilder';
+import { logger } from '@/lib/logger';
 import type { SurveyQuestion, SurveyAnswers } from '@/types';
 
 interface TripInfo {
@@ -41,46 +42,49 @@ export default function SurveyPage() {
       )
     : false;
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        // Fetch survey and trip info in parallel
-        const [surveyRes, tripRes] = await Promise.all([
-          fetch(`/api/trips/${tripId}/survey`),
-          fetch(`/api/trips/${tripId}`),
-        ]);
+  const fetchData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      // Fetch survey and trip info in parallel
+      const [surveyRes, tripRes] = await Promise.all([
+        fetch(`/api/trips/${tripId}/survey`),
+        fetch(`/api/trips/${tripId}`),
+      ]);
 
-        if (tripRes.ok) {
-          const tripData = await tripRes.json();
-          if (tripData.data) {
-            setTripInfo({
-              ownerId: tripData.data.ownerId,
-              members: tripData.data.members?.map((m: { userId: string; role: string }) => ({
-                userId: m.userId,
-                role: m.role,
-              })),
-            });
-          }
+      if (tripRes.ok) {
+        const tripData = await tripRes.json();
+        if (tripData.data) {
+          setTripInfo({
+            ownerId: tripData.data.ownerId,
+            members: tripData.data.members?.map((m: { userId: string; role: string }) => ({
+              userId: m.userId,
+              role: m.role,
+            })),
+          });
         }
-
-        if (surveyRes.ok) {
-          const data = await surveyRes.json();
-          if (data.data) {
-            setSurvey({
-              id: data.data.id,
-              title: data.data.title,
-              questions: data.data.questions as SurveyQuestion[],
-            });
-          }
-        }
-      } catch {
-        setError('Failed to load survey');
-      } finally {
-        setIsLoading(false);
       }
+
+      if (surveyRes.ok) {
+        const data = await surveyRes.json();
+        if (data.data) {
+          setSurvey({
+            id: data.data.id,
+            title: data.data.title,
+            questions: data.data.questions as SurveyQuestion[],
+          });
+        }
+      }
+    } catch (err) {
+      logger.error({ err, tripId }, 'Failed to load survey');
+      setError('Failed to load survey');
+    } finally {
+      setIsLoading(false);
     }
-    fetchData();
   }, [tripId]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const currentQ = survey?.questions[currentQuestion];
   const progress = survey ? ((currentQuestion + 1) / survey.questions.length) * 100 : 0;
@@ -120,7 +124,8 @@ export default function SurveyPage() {
       if (!res.ok) throw new Error('Failed to submit survey');
 
       router.push(`/trips/${tripId}?survey=completed`);
-    } catch {
+    } catch (err) {
+      logger.error({ err, tripId, surveyId: survey.id }, 'Failed to submit survey');
       setError('Failed to submit survey. Please try again.');
     } finally {
       setIsSubmitting(false);
@@ -148,6 +153,7 @@ export default function SurveyPage() {
       });
       setShowBuilder(false);
     } catch (err) {
+      logger.error({ err, tripId }, 'Failed to create survey');
       setError(err instanceof Error ? err.message : 'Failed to create survey');
     }
   };
@@ -186,6 +192,7 @@ export default function SurveyPage() {
         questions: data.data.questions as SurveyQuestion[],
       });
     } catch (err) {
+      logger.error({ err, tripId }, 'Failed to create survey from template');
       setError(err instanceof Error ? err.message : 'Failed to create survey from template');
     } finally {
       setIsLoadingTemplate(false);
@@ -208,14 +215,22 @@ export default function SurveyPage() {
     return (
       <div className="container mx-auto px-4 py-8 max-w-2xl">
         <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
-          <h2 className="text-xl font-semibold text-red-700 mb-2">Error</h2>
-          <p className="text-red-600">{error}</p>
+          <h2 className="text-xl font-semibold text-red-700 mb-2">Something went wrong</h2>
+          <p className="text-red-600 mb-4">{error}</p>
           <button
-            onClick={() => { setError(null); router.back(); }}
-            className="mt-4 text-primary font-medium hover:underline"
+            onClick={() => { setError(null); void fetchData(); }}
+            className="px-6 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors"
           >
-            Go back
+            Retry
           </button>
+          <div className="mt-3">
+            <button
+              onClick={() => { setError(null); router.back(); }}
+              className="text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+            >
+              Go back
+            </button>
+          </div>
         </div>
       </div>
     );

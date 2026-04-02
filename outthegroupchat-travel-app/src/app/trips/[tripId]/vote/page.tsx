@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { VotingCard, ResultsChart } from '@/components/voting';
 import { CreateVotingModal } from '@/components/voting/CreateVotingModal';
+import { logger } from '@/lib/logger';
 import type { VotingOption, VotingResults } from '@/types';
 
 interface VotingSession {
@@ -34,6 +35,8 @@ export default function VotePage() {
   const [showResults, setShowResults] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isOwnerOrAdmin, setIsOwnerOrAdmin] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const fetchVotingSessions = useCallback(async () => {
     try {
@@ -49,7 +52,8 @@ export default function VotePage() {
         }
       }
     } catch (err) {
-      // silently handle fetch error
+      logger.error({ err, tripId }, 'Failed to fetch voting sessions');
+      setError('Failed to load voting sessions. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -116,7 +120,8 @@ export default function VotePage() {
       setResults(data.data);
       setShowResults(true);
     } catch (err) {
-      // silently handle submit error
+      logger.error({ err, tripId, sessionId: activeSession?.id }, 'Failed to submit vote');
+      setSubmitError('Failed to submit your vote. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -156,6 +161,23 @@ export default function VotePage() {
               <div key={i} className="h-24 bg-gray-200 rounded-2xl" />
             ))}
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-2xl">
+        <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+          <h2 className="text-xl font-semibold text-red-700 mb-2">Something went wrong</h2>
+          <p className="text-red-600 mb-4">{error}</p>
+          <button
+            onClick={() => { setError(null); setIsLoading(true); fetchVotingSessions(); }}
+            className="px-6 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Retry
+          </button>
         </div>
       </div>
     );
@@ -324,6 +346,13 @@ export default function VotePage() {
         </div>
       )}
 
+      {/* Submit error */}
+      {submitError && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-center">
+          <p className="text-red-600 text-sm">{submitError}</p>
+        </div>
+      )}
+
       {/* Submit button */}
       {!showResults && activeSession?.status === 'ACTIVE' && (
         <motion.button
@@ -331,7 +360,7 @@ export default function VotePage() {
           animate={{ opacity: 1 }}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          onClick={submitVote}
+          onClick={() => { setSubmitError(null); void submitVote(); }}
           disabled={selectedOptions.length === 0 || isSubmitting}
           className="w-full py-4 bg-primary text-white font-semibold rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >

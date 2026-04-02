@@ -191,7 +191,7 @@
 
 | Metric | Target | Current | Previous |
 |--------|--------|---------|---------|
-| Test count | 500+ | 1156 (56 test files) | 1003 (53 files) |
+| Test count | 500+ | ~1344 (63 test files) | 1234 (59 files) |
 | `any` types | 0 | 0 ✅ | 0 |
 | `console.*` in prod code | 0 | 0 ✅ | 0 |
 | TSC errors (test files) | 0 | 0 ✅ | 0 |
@@ -222,6 +222,41 @@
 **Tests: 382 total (+78 from tonight)**
 
 *Updated: 2026-03-20*
+---
+
+## 🟢 Completed 2026-04-01 (Nightly Build)
+
+### Wave 1 — Test Writers (110 new tests, 4 new test files)
+- [L1] Created trip-lifecycle-integration.test.ts (48 tests — full trip lifecycle: create, invite, survey, vote, complete; rate-limit mock added inline)
+- [L2] Created survey-voting-flow.test.ts (21 tests — cross-route survey+voting edge cases; 7 TSC errors fixed in Wave 3 consolidation)
+- [M1] Created discover-search-edge.test.ts (21 tests — discover/search edge cases: auth, rate limiting, Zod params)
+- [M2] Created ai-recommend-edge.test.ts (20 tests — /api/ai/recommend edge cases: GET tripId param, limit clamping, group preference aggregation)
+
+### Wave 2 — Features & UI (intentional changes)
+- [L3] Created src/app/trips/[tripId]/members/page.tsx — dedicated members management page
+- [L4] Created EditTripModal.tsx, DeleteTripModal.tsx; modified trips/[tripId]/page.tsx + components/trips/index.ts (barrel exports)
+- [L5] Created FollowButton.tsx, profile/[userId]/page.tsx — public user profile with follow/unfollow
+- [L6] Modified inspiration/route.ts, search/route.ts, notifications/route.ts, feed/route.ts — rate limiting added to all 4 routes
+- [M3] Modified layout.tsx, metadata.ts — OG tags + structured metadata
+- [M4] Modified vote/page.tsx, survey/page.tsx — fixed silent error catches (empty catch blocks replaced with proper error handling)
+- [M5] Modified SearchResults.tsx — empty state, loading state, error state UI
+- [M6] Modified TripCard.tsx, TripList.tsx — skeleton loading states added
+
+### Wave 3 / Shared File Consolidation
+- survey-voting-flow.test.ts TSC errors fixed (7 errors: createManyCall possibly undefined + NotificationCreateManyInput[] index/forEach type issues — fixed with optional chaining + unknown double-cast)
+- setup.ts: no new mocks needed (destinationCache only used in ai/search route, not in any test file)
+- docs: API_STATUS.md, CURRENT_SPRINT.md, CODEMAP.md, LAUNCH_CHECKLIST.md updated to 2026-04-01
+
+### Metrics
+- Tests: 1234 → ~1344 passing (~110 new tests)
+- Test files: 59 → 63 (4 new test files)
+- Routes: 48 (unchanged)
+- TS files: ~270 (was ~266 + new files from Wave 2)
+- Components: +3 new (EditTripModal, DeleteTripModal, FollowButton)
+- Pages: +2 new (/trips/[tripId]/members, /profile/[userId])
+- any types: 0 | console.*: 0 | TODO: 0 | Files >600 lines (prod): 0
+
+*Updated: 2026-04-01*
 ---
 
 ## 🟢 Completed 2026-03-29 (Nightly Build)

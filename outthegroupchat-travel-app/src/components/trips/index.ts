@@ -8,5 +8,7 @@ export { default as ItineraryTimeline } from './ItineraryTimeline';
 export { default as InviteModal } from './InviteModal';
 export { default as AddActivityModal } from './AddActivityModal';
 export { default as InviteMemberModal } from './InviteMemberModal';
+export { default as EditTripModal } from './EditTripModal';
+export { default as DeleteTripModal } from './DeleteTripModal';
 export * from './steps';
 

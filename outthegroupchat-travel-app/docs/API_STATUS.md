@@ -1,6 +1,6 @@
 # 📡 API & Integration Status
 
-> **Last updated: 2026-03-26**
+> **Last updated: 2026-04-01**
 >
 > **Last Audit:** March 2026
 > **Overall Status:** 86% Complete
@@ -53,8 +53,8 @@
 
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
-| `/api/trips/[tripId]/members` | GET | ✅ | 🔶 | List members |
-| `/api/trips/[tripId]/members` | POST | ✅ | ⏳ | Add member — POST handler implemented 2026-03-20 |
+| `/api/trips/[tripId]/members` | GET | ✅ | ✅ | List members — members management page added 2026-04-01 (/trips/[tripId]/members) |
+| `/api/trips/[tripId]/members` | POST | ✅ | ✅ | Add member — POST handler implemented 2026-03-20; members page wired 2026-04-01 |
 | `/api/trips/[tripId]/invitations` | GET | ✅ | 🔶 | List invitations |
 | `/api/trips/[tripId]/invitations` | POST | ✅ | ✅ | **Email service configured** ✅ Dec 17 |
 
@@ -99,7 +99,7 @@
 
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
-| `/api/feed` | GET | ✅ | ✅ | Main feed; Zod validation added 2026-03-21 |
+| `/api/feed` | GET | ✅ | ✅ | Main feed; Zod validation added 2026-03-21; rate limiting added 2026-04-01 |
 | `/api/feed/comments` | GET | ✅ | ✅ | **Trip support added** ✅ Dec 17 |
 | `/api/feed/comments` | POST | ✅ | ✅ | **Trip support added** ✅ Dec 17 |
 | `/api/feed/engagement` | POST | ✅ | ✅ | **Trip support added** ✅ Dec 17 |
@@ -121,7 +121,7 @@ COMPLETED ✅ Dec 17:
 
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
-| `/api/notifications` | GET | ✅ | ✅ | **Data structure verified** ✅ Dec 17; Zod pagination params improved 2026-03-22 |
+| `/api/notifications` | GET | ✅ | ✅ | **Data structure verified** ✅ Dec 17; Zod pagination params improved 2026-03-22; rate limiting added 2026-04-01 |
 | `/api/notifications` | PATCH | ✅ | ✅ | Mark as read |
 | `/api/notifications/[id]` | PATCH | ✅ | ✅ | Mark individual notification read; Zod validation added 2026-03-13; Zod params (cuid), JSON.parse safety, bugfix (read field was hardcoded true) 2026-03-29 |
 
@@ -143,9 +143,9 @@ No fix needed - code was already correct
 | `/api/discover/search` | GET | ✅ | 🔶 | Auth guard added 2026-03-24 (was unauthenticated — security improvement); rate limiting, Zod validation ✅ |
 | `/api/discover/recommendations` | GET | ✅ | 🔶 | Auth guard added 2026-03-24; category filter, rate limiting, pino logging ✅ |
 | `/api/discover/import` | POST | ✅ | ⏳ | Rate limiting + auth guard ✅ 2026-03-24; pino logging, typed helpers, fixed empty catch blocks |
-| `/api/search` | GET | ✅ | 🔶 | Email removed from select projection (privacy fix) ✅ 2026-03-20 |
+| `/api/search` | GET | ✅ | 🔶 | Email removed from select projection (privacy fix) ✅ 2026-03-20; rate limiting added 2026-04-01 |
 | `/api/geocoding` | GET | ✅ | 🔶 | Geocoding for destination search via Nominatim; Zod validation added 2026-03-21 |
-| `/api/inspiration` | GET | ✅ | 🔶 | Auth guard added 2026-03-08; Zod coerce.number on query params + POST body schema added 2026-03-22 |
+| `/api/inspiration` | GET | ✅ | 🔶 | Auth guard added 2026-03-08; Zod coerce.number on query params + POST body schema added 2026-03-22; rate limiting added 2026-04-01 |
 | `/api/images/search` | GET | ✅ | 🔶 | Image search via Unsplash API; requires UNSPLASH_ACCESS_KEY |
 
 ### Search Issues to Fix
@@ -372,4 +372,4 @@ EMAIL_FROM=             # Email sender (onboarding@resend.dev) ✅
 
 *Review and update after each API change.*
 
-*Last Updated: 2026-03-26 - /api/ai/search GET+POST fully implemented (semantic search, destinations branch); /api/newsletter/subscribe now requires auth; /api/auth/signup, /api/auth/reset-password, /api/auth/verify-email: rate limiting now first operation; 153 new tests tonight (1156 total, 56 test files); dead components (NotificationCenter.tsx, SharePreview.tsx) removed; JSDoc added to costs.ts; README updated. Also includes 2026-03-29 changes: /api/ai/chat Zod strengthened + JSON.parse safety; /api/ai/recommend Zod GET params + JSON.parse safety; /api/ai/suggest-activities + generate-itinerary JSON.parse safety; /api/notifications/[notificationId] Zod params (cuid) + bugfix (read was hardcoded true); JSDoc added to src/lib/geocoding.ts; N8N docs deprecated*
+*Last Updated: 2026-04-01 - Rate limiting added to /api/inspiration, /api/search, /api/notifications, /api/feed routes (L6); /trips/[tripId]/members page added (L3); /profile/[userId] page added (L5); EditTripModal + DeleteTripModal added to trip detail (L4); OG tags + metadata.ts updated (M3); SearchResults empty/loading/error states (M5); TripCard+TripList skeleton states (M6). Also includes prior changes: /api/ai/search GET+POST fully implemented; /api/newsletter/subscribe now requires auth; rate limiting on auth routes; 2026-03-29: /api/ai/chat Zod strengthened + JSON.parse safety; /api/ai/recommend Zod GET params; /api/notifications/[notificationId] cuid params + bugfix*
