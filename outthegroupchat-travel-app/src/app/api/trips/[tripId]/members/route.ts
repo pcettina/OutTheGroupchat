@@ -1,9 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
 import type { Prisma } from '@prisma/client';
+import { apiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 
 const addMemberSchema = z.object({
   userId: z.string().optional(),
@@ -31,10 +32,19 @@ const updateMemberSchema = z.object({
 });
 
 export async function POST(
-  req: Request,
+  req: NextRequest,
   { params }: { params: { tripId: string } }
 ) {
   try {
+    const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown';
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, `trips:members:${ip}`);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
+      );
+    }
+
     const session = await getServerSession(authOptions);
     const { tripId } = params;
 
@@ -118,15 +128,36 @@ export async function POST(
 }
 
 export async function GET(
-  req: Request,
+  req: NextRequest,
   { params }: { params: { tripId: string } }
 ) {
   try {
+    const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown';
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, `trips:members:${ip}`);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
+      );
+    }
+
     const session = await getServerSession(authOptions);
     const { tripId } = params;
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Verify the requesting user is a member of this trip
+    const requestingMember = await prisma.tripMember.findFirst({
+      where: { tripId, userId: session.user.id },
+    });
+
+    if (!requestingMember) {
+      return NextResponse.json(
+        { success: false, error: 'Not a member of this trip' },
+        { status: 403 }
+      );
     }
 
     const members = await prisma.tripMember.findMany({
@@ -156,10 +187,19 @@ export async function GET(
 }
 
 export async function PATCH(
-  req: Request,
+  req: NextRequest,
   { params }: { params: { tripId: string } }
 ) {
   try {
+    const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown';
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, `trips:members:${ip}`);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
+      );
+    }
+
     const session = await getServerSession(authOptions);
     const { tripId } = params;
 
@@ -251,10 +291,19 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  req: Request,
+  req: NextRequest,
   { params }: { params: { tripId: string } }
 ) {
   try {
+    const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown';
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, `trips:members:${ip}`);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
+      );
+    }
+
     const session = await getServerSession(authOptions);
     const { tripId } = params;
 
@@ -325,4 +374,3 @@ export async function DELETE(
     );
   }
 }
-

@@ -10,12 +10,19 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 
 // ---------------------------------------------------------------------------
 // Mock: @/lib/prisma — extend global setup
 // ---------------------------------------------------------------------------
+vi.mock('@/lib/rate-limit', () => ({
+  apiRateLimiter: null,
+  checkRateLimit: vi.fn().mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: 0 }),
+  getRateLimitHeaders: vi.fn().mockReturnValue({}),
+}));
+
 vi.mock('@/lib/prisma', async (importOriginal) => {
   const original = await importOriginal<typeof import('@/lib/prisma')>();
   return {
@@ -44,8 +51,8 @@ vi.mock('@/lib/prisma', async (importOriginal) => {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-function makeRequest(body: unknown): Request {
-  return new Request('http://localhost/api/feed/share', {
+function makeRequest(body: unknown): NextRequest {
+  return new NextRequest('http://localhost/api/feed/share', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -69,24 +76,22 @@ const mockActivity = {
 // ---------------------------------------------------------------------------
 // POST /api/feed/share
 // ---------------------------------------------------------------------------
-describe('POST /api/feed/share', () => {
-  let POST: (req: Request) => Promise<Response>;
+import { POST as sharePOST } from '@/app/api/feed/share/route';
 
-  beforeEach(async () => {
+describe('POST /api/feed/share', () => {
+  beforeEach(() => {
     vi.clearAllMocks();
-    const mod = await import('@/app/api/feed/share/route');
-    POST = mod.POST;
   });
 
   it('returns 401 when unauthenticated', async () => {
     vi.mocked(getServerSession).mockResolvedValue(null);
-    const res = await POST(makeRequest({ itemId: 'trip-1', itemType: 'trip' }));
+    const res = await sharePOST(makeRequest({ itemId: 'trip-1', itemType: 'trip' }));
     expect(res.status).toBe(401);
   });
 
   it('returns 400 when itemId is missing', async () => {
     vi.mocked(getServerSession).mockResolvedValue(mockSession);
-    const res = await POST(makeRequest({ itemType: 'trip' }));
+    const res = await sharePOST(makeRequest({ itemType: 'trip' }));
     expect(res.status).toBe(400);
     const json = await res.json();
     expect(json.error).toBe('Invalid request');
@@ -94,13 +99,13 @@ describe('POST /api/feed/share', () => {
 
   it('returns 400 when itemType is missing', async () => {
     vi.mocked(getServerSession).mockResolvedValue(mockSession);
-    const res = await POST(makeRequest({ itemId: 'trip-1' }));
+    const res = await sharePOST(makeRequest({ itemId: 'trip-1' }));
     expect(res.status).toBe(400);
   });
 
   it('returns 400 when itemType is invalid', async () => {
     vi.mocked(getServerSession).mockResolvedValue(mockSession);
-    const res = await POST(makeRequest({ itemId: 'trip-1', itemType: 'post' }));
+    const res = await sharePOST(makeRequest({ itemId: 'trip-1', itemType: 'post' }));
     expect(res.status).toBe(400);
     const json = await res.json();
     expect(json.issues).toBeDefined();
@@ -108,7 +113,7 @@ describe('POST /api/feed/share', () => {
 
   it('returns 400 when message exceeds 500 characters', async () => {
     vi.mocked(getServerSession).mockResolvedValue(mockSession);
-    const res = await POST(makeRequest({ itemId: 'trip-1', itemType: 'trip', message: 'x'.repeat(501) }));
+    const res = await sharePOST(makeRequest({ itemId: 'trip-1', itemType: 'trip', message: 'x'.repeat(501) }));
     expect(res.status).toBe(400);
   });
 
@@ -116,7 +121,7 @@ describe('POST /api/feed/share', () => {
     vi.mocked(getServerSession).mockResolvedValue(mockSession);
     vi.mocked(prisma.trip.findFirst).mockResolvedValue(null);
 
-    const res = await POST(makeRequest({ itemId: 'nonexistent', itemType: 'trip' }));
+    const res = await sharePOST(makeRequest({ itemId: 'nonexistent', itemType: 'trip' }));
     expect(res.status).toBe(404);
     const json = await res.json();
     expect(json.error).toMatch(/not found/i);
@@ -128,7 +133,7 @@ describe('POST /api/feed/share', () => {
     vi.mocked(prisma.trip.findUnique).mockResolvedValue(mockPublicTrip as Awaited<ReturnType<typeof prisma.trip.findUnique>>);
     vi.mocked(prisma.notification.create).mockResolvedValue({} as Awaited<ReturnType<typeof prisma.notification.create>>);
 
-    const res = await POST(makeRequest({ itemId: 'trip-1', itemType: 'trip' }));
+    const res = await sharePOST(makeRequest({ itemId: 'trip-1', itemType: 'trip' }));
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.success).toBe(true);
@@ -142,7 +147,7 @@ describe('POST /api/feed/share', () => {
     vi.mocked(prisma.trip.findUnique).mockResolvedValue(mockPublicTrip as Awaited<ReturnType<typeof prisma.trip.findUnique>>);
     vi.mocked(prisma.notification.create).mockResolvedValue({} as Awaited<ReturnType<typeof prisma.notification.create>>);
 
-    await POST(makeRequest({ itemId: 'trip-1', itemType: 'trip', message: 'Check this out!' }));
+    await sharePOST(makeRequest({ itemId: 'trip-1', itemType: 'trip', message: 'Check this out!' }));
 
     expect(prisma.notification.create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -160,7 +165,7 @@ describe('POST /api/feed/share', () => {
     vi.mocked(prisma.trip.findFirst).mockResolvedValue(ownTrip as Awaited<ReturnType<typeof prisma.trip.findFirst>>);
     vi.mocked(prisma.trip.findUnique).mockResolvedValue(ownTrip as Awaited<ReturnType<typeof prisma.trip.findUnique>>);
 
-    await POST(makeRequest({ itemId: 'trip-1', itemType: 'trip' }));
+    await sharePOST(makeRequest({ itemId: 'trip-1', itemType: 'trip' }));
 
     expect(prisma.notification.create).not.toHaveBeenCalled();
   });
@@ -169,7 +174,7 @@ describe('POST /api/feed/share', () => {
     vi.mocked(getServerSession).mockResolvedValue(mockSession);
     vi.mocked(prisma.activity.findFirst).mockResolvedValue(null);
 
-    const res = await POST(makeRequest({ itemId: 'nonexistent', itemType: 'activity' }));
+    const res = await sharePOST(makeRequest({ itemId: 'nonexistent', itemType: 'activity' }));
     expect(res.status).toBe(404);
   });
 
@@ -177,7 +182,7 @@ describe('POST /api/feed/share', () => {
     vi.mocked(getServerSession).mockResolvedValue(mockSession);
     vi.mocked(prisma.activity.findFirst).mockResolvedValue(mockActivity as Awaited<ReturnType<typeof prisma.activity.findFirst>>);
 
-    const res = await POST(makeRequest({ itemId: 'activity-1', itemType: 'activity' }));
+    const res = await sharePOST(makeRequest({ itemId: 'activity-1', itemType: 'activity' }));
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.success).toBe(true);
@@ -188,7 +193,7 @@ describe('POST /api/feed/share', () => {
     vi.mocked(getServerSession).mockResolvedValue(mockSession);
     vi.mocked(prisma.trip.findFirst).mockRejectedValue(new Error('DB failure'));
 
-    const res = await POST(makeRequest({ itemId: 'trip-1', itemType: 'trip' }));
+    const res = await sharePOST(makeRequest({ itemId: 'trip-1', itemType: 'trip' }));
     expect(res.status).toBe(500);
   });
 
@@ -198,7 +203,7 @@ describe('POST /api/feed/share', () => {
     vi.mocked(prisma.trip.findUnique).mockResolvedValue(mockPublicTrip as Awaited<ReturnType<typeof prisma.trip.findUnique>>);
     vi.mocked(prisma.notification.create).mockResolvedValue({} as Awaited<ReturnType<typeof prisma.notification.create>>);
 
-    const res = await POST(makeRequest({ itemId: 'trip-1', itemType: 'trip', message: 'Amazing destination!' }));
+    const res = await sharePOST(makeRequest({ itemId: 'trip-1', itemType: 'trip', message: 'Amazing destination!' }));
     expect(res.status).toBe(200);
   });
 });

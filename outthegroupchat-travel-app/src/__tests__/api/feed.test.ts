@@ -14,6 +14,7 @@
  * - GET is public — no session is required.  POST requires a session.
  */
 
+import { NextRequest } from 'next/server';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
@@ -21,6 +22,12 @@ import { TripStatus, ActivityStatus, ActivityCategory, BookingStatus } from '@pr
 
 // Extend the global prisma mock (defined in setup.ts) with the additional
 // models and methods that the feed route handler calls.
+vi.mock('@/lib/rate-limit', () => ({
+  apiRateLimiter: null,
+  checkRateLimit: vi.fn().mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: 0 }),
+  getRateLimitHeaders: vi.fn().mockReturnValue({}),
+}));
+
 vi.mock('@/lib/prisma', async (importOriginal) => {
   const original = await importOriginal<typeof import('@/lib/prisma')>();
   return {
@@ -144,7 +151,7 @@ const MOCK_ACTIVITY_ROW = {
 function makeRequest(
   path: string,
   options: { method?: string; body?: unknown } = {}
-): Request {
+): NextRequest {
   const url = `http://localhost:3000${path}`;
   const init: RequestInit = { method: options.method ?? 'GET' };
 
@@ -153,7 +160,7 @@ function makeRequest(
     init.headers = { 'Content-Type': 'application/json' };
   }
 
-  return new Request(url, init);
+  return new NextRequest(url, init as ConstructorParameters<typeof NextRequest>[1]);
 }
 
 /** Parse the JSON body from a Response. */

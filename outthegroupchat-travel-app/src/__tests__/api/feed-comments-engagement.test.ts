@@ -16,6 +16,7 @@
  * - Each test sets up its own mocks via mockResolvedValueOnce().
  */
 
+import { NextRequest } from 'next/server';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
@@ -26,6 +27,12 @@ import { prisma } from '@/lib/prisma';
 // redefine every model used by comments/engagement to ensure each method is
 // a fresh vi.fn() that supports mockResolvedValueOnce().
 // ---------------------------------------------------------------------------
+vi.mock('@/lib/rate-limit', () => ({
+  apiRateLimiter: null,
+  checkRateLimit: vi.fn().mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: 0 }),
+  getRateLimitHeaders: vi.fn().mockReturnValue({}),
+}));
+
 vi.mock('@/lib/prisma', async (importOriginal) => {
   const original = await importOriginal<typeof import('@/lib/prisma')>();
   return {
@@ -170,7 +177,7 @@ const MOCK_TRIP_COMMENT_ROW = {
 function makeRequest(
   path: string,
   options: { method?: string; body?: unknown } = {}
-): Request {
+): NextRequest {
   const url = `http://localhost:3000${path}`;
   const init: RequestInit = { method: options.method ?? 'GET' };
 
@@ -179,7 +186,7 @@ function makeRequest(
     init.headers = { 'Content-Type': 'application/json' };
   }
 
-  return new Request(url, init);
+  return new NextRequest(url, init as ConstructorParameters<typeof NextRequest>[1]);
 }
 
 /** Parse the JSON body from a Response. */

@@ -1,20 +1,20 @@
 # OutTheGroupchat - Production Deployment & Feature Roadmap
 
 > **Target:** Q2 2026 Beta Launch
-> **Version:** 3.0 | **Last Updated:** 2026-03-25
+> **Version:** 3.1 | **Last Updated:** 2026-04-03
 
 ---
 
-## Current System Status (as of 2026-03-25)
+## Current System Status (as of 2026-04-03)
 
-### Overall Launch Readiness: 78% (Target: 85% for Beta)
+### Overall Launch Readiness: 81% (Target: 85% for Beta)
 
 | Category | Score | Target | Status |
 |----------|-------|--------|--------|
 | Infrastructure | 92% | 100% | Almost Ready |
-| Core Features | 77% | 90% | In Progress |
-| Security | 83% | 100% | In Progress |
-| Testing | 72% | 80% | In Progress |
+| Core Features | 82% | 90% | In Progress |
+| Security | 85% | 100% | In Progress |
+| Testing | 78% | 80% | In Progress |
 | Monitoring | 55% | 80% | In Progress |
 
 ### Implemented & Working
@@ -33,6 +33,10 @@
 | Discover Page | Working | Auth-guarded (2026-03-24); category filters, search |
 | Inspiration Page | Working | Zod coerce.number on query params |
 | Trip Creation | Working | Basic creation working; wizard flow pending |
+| Trip Editing | Working | EditTripModal with owner/admin permission checks (2026-04-01) |
+| Trip Deletion | Working | DeleteTripModal with permission checks (2026-04-01) |
+| Members Management Page | Working | /trips/[tripId]/members page (2026-04-01) |
+| Public Profile Page | Working | /profile/[userId] page + FollowButton component (2026-04-01) |
 | Trip Itinerary | Working | GET/PUT with $transaction atomicity (2026-03-23) |
 | AI Chat Assistant | Working | OpenAI connected, streaming; 503 guard when key absent |
 | AI Activity Suggestions | Working | 503 guard when OPENAI_API_KEY absent (2026-03-23) |
@@ -76,13 +80,13 @@
 - TripComment + TripLike models added to schema
 - Invitation acceptance flow with auto-accept on signup
 
-### March 2026 Sprint (In Progress)
+### March–April 2026 Sprint (In Progress)
 
 - `img` → `next/image` migration complete (0 remaining)
 - `console.*` cleanup complete (0 in production code)
 - `any` type elimination complete (0 remaining)
 - Zod validation on all major API routes
-- Test suite from 0 to 925+ tests (49 test files)
+- Test suite from 0 to 1349+ tests (64 test files)
 - Vitest + Testing Library configured
 - Playwright E2E framework configured (browsers need `npx playwright install chromium`)
 - Password reset API + UI complete
@@ -98,6 +102,14 @@
 - /api/feed/share implemented
 - discover/* routes require authentication (2026-03-24)
 - auth/demo Zod input validation (2026-03-24)
+- EditTripModal + DeleteTripModal with permission checks (2026-04-01)
+- Members management page + Public profile page (2026-04-01)
+- FollowButton component — social follow UI (2026-04-01)
+- OG/Twitter Card meta tags on all pages (2026-04-01)
+- Rate limiting expanded: members, activities, itinerary, recommendations, suggestions routes (2026-04-03)
+- Email exposure fix in /api/trips/[tripId]/members (2026-04-03)
+- Flights auth bug fixed — /api/trips/[tripId]/flights now requires auth (2026-04-03)
+- Search empty states + loading skeleton (2026-04-01)
 
 ---
 
@@ -113,10 +125,10 @@
 [ ] NEXTAUTH_SECRET rotation (32+ chars)
 [ ] Session timeout configuration
 [ ] Failed login attempt limiting
-[ ] Rate limiting on remaining unguarded endpoints
+[ ] Rate limiting on remaining unguarded endpoints (invitations, survey, voting, users/me, profile, pusher/auth)
 [ ] XSS prevention (DOMPurify) verification
-[ ] Trip editing flow
-[ ] Trip deletion/archiving
+[x] Trip editing flow (EditTripModal — 2026-04-01)
+[x] Trip deletion/archiving (DeleteTripModal — 2026-04-01)
 [ ] Trip wizard (multi-step creation)
 ```
 
@@ -127,8 +139,8 @@
 [ ] Voting frontend integration
 [ ] Real-time vote updates via Pusher
 [ ] Survey results display
-[ ] Follow system integration
-[ ] No search results empty state
+[ ] Follow system integration (FollowButton added; full wiring pending)
+[x] No search results empty state (SearchResults.tsx — 2026-04-01)
 [ ] Form validation errors inline
 ```
 
@@ -151,7 +163,7 @@
 [ ] Privacy Policy page
 [ ] Terms of Service page
 [ ] Meta titles/descriptions on all pages
-[ ] Open Graph tags
+[x] Open Graph + Twitter Card tags (layout.tsx — 2026-04-01)
 [ ] Favicon configured
 ```
 
@@ -232,6 +244,9 @@
 - [x] /api/auth/demo guarded by DEMO_MODE env var (2026-03-22)
 - [x] /api/discover/search requires auth (2026-03-24)
 - [x] /api/discover/recommendations requires auth (2026-03-24)
+- [x] /api/trips/[tripId]/flights requires auth (2026-04-03)
+- [x] Email exposure fixed in /api/trips/[tripId]/members (2026-04-03)
+- [x] Rate limiting expanded to members, activities, itinerary, recommendations, suggestions (2026-04-03)
 
 ### Post-Beta (Nice to Have)
 
@@ -282,7 +297,7 @@
 
 ---
 
-*Document Version: 3.0*
+*Document Version: 3.1*
 *Target Launch: Q2 2026 (Beta)*
-*Last Updated: 2026-03-25*
+*Last Updated: 2026-04-03*
 *Owner: Development Team*

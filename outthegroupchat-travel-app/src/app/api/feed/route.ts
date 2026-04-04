@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { apiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 import { getServerSession } from 'next-auth';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
@@ -51,8 +52,17 @@ interface FeedItem {
 }
 
 // Get activity feed (public activities from followed users and popular activities)
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   try {
+        const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown';
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, `feed:${ip}`);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
+      );
+    }
+
     const session = await getServerSession(authOptions);
     const userId = session?.user?.id;
 
@@ -286,8 +296,17 @@ export async function GET(req: Request) {
 }
 
 // Save/unsave an activity
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
+        const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown';
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, `feed:${ip}`);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
+      );
+    }
+
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {

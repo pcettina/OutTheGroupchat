@@ -191,17 +191,47 @@
 
 | Metric | Target | Current | Previous |
 |--------|--------|---------|---------|
-| Test count | 500+ | 1156 (56 test files) | 1003 (53 files) |
+| Test count | 500+ | 1430 (66 test files) | 1349 (63 files) |
 | `any` types | 0 | 0 ✅ | 0 |
 | `console.*` in prod code | 0 | 0 ✅ | 0 |
 | TSC errors (test files) | 0 | 0 ✅ | 0 |
 | Sentry configured | Yes | Infrastructure ready | Infrastructure ready |
 | `<img>` warnings on build | 0 | 0 ✅ | 0 |
-| Launch readiness | 85% | 78% | 75% |
+| Launch readiness | 85% | 80% | 78% |
 
 ---
 
-*Updated: 2026-03-21*
+*Updated: 2026-04-03*
+---
+
+## 🟢 Completed 2026-04-03 (Nightly Build)
+
+### Wave 1 — Test Writers (81 new tests, 3 new test files)
+- [L1] Created trips-members-security.test.ts (45 tests — members route auth, email exposure, rate limiting, role checks, security hardening)
+- [L2] flights test coverage review — existing file already covered; no duplicate tests needed (0 new)
+- [M1] Created trips-itinerary-recommendations.test.ts (29 tests — itinerary rate limiting, recommendations auth, forward-looking rate limit tests)
+- [M2] Created health.test.ts (7 tests — GET /api/health, 200 ok, 503 degraded, response shape, timestamp format, no-auth requirement)
+
+### Wave 2 — Features & Security Hardening
+- [L3] Security: Fixed email exposure in /api/trips/[tripId]/members (member emails stripped from response); auth bug fixed in flights route (TripMember.userId vs .id); rate limiting added to members, flights, itinerary, recommendations, suggestions routes
+- [L4] Rate limiting added to /api/discover, /api/inspiration, /api/search, /api/users/[userId]; corresponding test mocks updated
+- [L5] Members navigation link added to trips/[tripId]/page.tsx trip navigation grid
+- [L6] JSDoc added to lib/api/flights.ts, lib/api/places.ts, lib/api/ticketmaster.ts
+
+### Documentation & Cleanup
+- [M3] Updated timestamps on SECURITY_AUDIT.md, TEST_CASES.md, FUTURE_IMPLEMENTATION.md, IMPLEMENTATION_STACK.md, PRODUCTION_ROADMAP.md
+- [M4] Updated timestamps on 4 agent guides, 2 N8N docs; docs/README.md full overhaul (was 488 days stale)
+- [M5] FollowButton integrated into /discover page; social/index.ts export added
+- [M6] Verified trips/index.ts clean; FollowButton confirmed in social/index.ts
+
+### Metrics
+- Tests: 1349 → 1430 passing (81 new tests)
+- Test files: 63 → 66 (trips-members-security.test.ts, trips-itinerary-recommendations.test.ts, health.test.ts)
+- Routes: 48 (unchanged)
+- TS files: ~273
+- any types: 0 | console.*: 0 | TODO: 0 | Files >600 lines (prod): 0
+
+*Updated: 2026-04-03*
 ---
 
 ## 🟢 Completed 2026-03-20 (Nightly Build)

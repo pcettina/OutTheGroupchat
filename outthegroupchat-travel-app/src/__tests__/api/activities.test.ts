@@ -9,13 +9,20 @@
  * Strategy
  * --------
  * - All external dependencies (Prisma, NextAuth, logger) are mocked in setup.ts.
- * - Handlers are called directly with minimal Request objects.
+ * - Handlers are called directly with minimal NextRequest objects.
  * - Params object is passed as the second argument matching Next.js route shape.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
+
+vi.mock('@/lib/rate-limit', () => ({
+  apiRateLimiter: null,
+  checkRateLimit: vi.fn().mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: 0 }),
+  getRateLimitHeaders: vi.fn().mockReturnValue({}),
+}));
 
 import {
   GET as activityGET,
@@ -69,8 +76,8 @@ const PRIVATE_ACTIVITY = {
   trip: { ...PUBLIC_ACTIVITY.trip, isPublic: false },
 };
 
-function makeRequest(body?: unknown, method = 'GET'): Request {
-  return new Request('http://localhost:3000/api/activities/activity-123', {
+function makeRequest(body?: unknown, method = 'GET'): NextRequest {
+  return new NextRequest('http://localhost:3000/api/activities/activity-123', {
     method,
     headers: body ? { 'Content-Type': 'application/json' } : {},
     body: body ? JSON.stringify(body) : undefined,

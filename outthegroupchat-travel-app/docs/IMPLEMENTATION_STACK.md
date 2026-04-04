@@ -4,7 +4,7 @@
 
 OutTheGroupchat is a full-stack group travel planning application built with modern web technologies, AI integration, and real-time collaboration features.
 
-*Last Updated: 2026-03-25*
+*Last Updated: 2026-04-03*
 
 ---
 
@@ -114,7 +114,7 @@ OutTheGroupchat is a full-stack group travel planning application built with mod
 
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| **Next.js API Routes** | 14.1.3 | REST API (48 endpoints as of 2026-03-24) |
+| **Next.js API Routes** | 14.1.3 | REST API (48 endpoints as of 2026-04-03) |
 | **Prisma** | 5.22.0 | Database ORM |
 | **PostgreSQL** | 15+ | Relational database via Supabase |
 | **NextAuth.js** | 4.24.7 | Authentication (credentials provider) |
@@ -148,7 +148,7 @@ OutTheGroupchat is a full-stack group travel planning application built with mod
 | **Pusher** | 5.2.0 | Server-side WebSocket |
 | **Pusher-js** | 8.4.0 | Client-side WebSocket |
 
-> Note: Pusher is configured but environment variables are missing in Vercel production as of 2026-03-25.
+> Note: Pusher is configured but environment variables are missing in Vercel production as of 2026-04-03.
 
 ### Monitoring & Observability
 
@@ -164,7 +164,7 @@ OutTheGroupchat is a full-stack group travel planning application built with mod
 | **Vitest** | 4.0.18 | Unit/integration test runner |
 | **@playwright/test** | 1.48.0 | E2E testing (browsers need install) |
 
-> As of 2026-03-25: 925+ Vitest tests across 49 test files, 0 failures. Playwright spec exists; browsers need `npx playwright install chromium`.
+> As of 2026-04-03: 1349+ Vitest tests across 64 test files, 0 failures. Playwright spec exists; browsers need `npx playwright install chromium`.
 
 ### External APIs
 
@@ -179,7 +179,7 @@ OutTheGroupchat is a full-stack group travel planning application built with mod
 
 ## Database Schema
 
-### Core Models (Actual, as of 2026-03-25)
+### Core Models (Actual, as of 2026-04-03)
 
 ```prisma
 model User {
@@ -268,7 +268,7 @@ enum PriceRange {
 
 ---
 
-## API Endpoints (48 total as of 2026-03-24)
+## API Endpoints (48 total as of 2026-04-03)
 
 ### Trips
 
@@ -347,7 +347,7 @@ enum PriceRange {
 
 ---
 
-## File Structure (Actual, 2026-03-25)
+## File Structure (Actual, 2026-04-03)
 
 ```
 src/
@@ -428,7 +428,7 @@ src/
 |
 +-- __tests__/
 |   +-- setup.ts                  # Prisma mocks for all models
-    (49 test files, 925+ tests as of 2026-03-24)
+    (64 test files, 1349+ tests as of 2026-04-03)
 
 e2e/
 +-- auth-flow.spec.ts             # Playwright E2E (browsers need install)
@@ -515,7 +515,7 @@ npm run build        # prisma generate + next build
 npm run db:push      # Push schema to database
 npm run db:migrate   # Create migrations
 npm run db:generate  # Regenerate Prisma client
-npm run test         # Run Vitest test suite (925+ tests)
+npm run test         # Run Vitest test suite (1349+ tests)
 npm run test:e2e     # Run Playwright E2E (requires browser install)
 ```
 
@@ -536,7 +536,7 @@ npm run test:e2e     # Run Playwright E2E (requires browser install)
 
 ---
 
-## Code Quality Metrics (2026-03-25)
+## Code Quality Metrics (2026-04-03)
 
 | Metric | Target | Current |
 |--------|--------|---------|
@@ -544,10 +544,10 @@ npm run test:e2e     # Run Playwright E2E (requires browser install)
 | `console.*` in prod | 0 | 0 |
 | Files > 600 lines (prod) | 0 | 0 |
 | TSC errors | 0 | 0 |
-| Test count | 500+ | 925+ |
-| Test files | - | 49 |
+| Test count | 500+ | 1349+ |
+| Test files | - | 64 |
 | API routes | - | 48 |
-| TypeScript files | - | 253 |
+| TypeScript files | - | ~270 |
 | Lint warnings/errors | 0 | 0 |
 
 ---
@@ -564,4 +564,4 @@ npm run test:e2e     # Run Playwright E2E (requires browser install)
 
 ---
 
-*Last Updated: 2026-03-25*
+*Last Updated: 2026-04-03*

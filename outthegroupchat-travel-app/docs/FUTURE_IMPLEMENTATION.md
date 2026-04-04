@@ -2,13 +2,13 @@
 
 ## Overview
 
-This document outlines future features, improvements, and technical debt to address for the OutTheGroupchat platform. Items already completed as of 2026-03-25 are marked accordingly.
+This document outlines future features, improvements, and technical debt to address for the OutTheGroupchat platform. Items already completed as of 2026-04-03 are marked accordingly.
 
-*Last Updated: 2026-03-25*
+*Last Updated: 2026-04-03*
 
 ---
 
-## Current State Summary (2026-03-25)
+## Current State Summary (2026-04-03)
 
 The following items from earlier versions of this roadmap have been **completed**:
 
@@ -18,16 +18,22 @@ The following items from earlier versions of this roadmap have been **completed*
 - [x] **Activity Management** — Full CRUD via /api/trips/[tripId]/activities
 - [x] **Account Settings (partial)** — Profile PATCH with preferences
 - [x] **Shared Expenses (partial)** — Budget field on Trip model
+- [x] **Trip editing flow** — EditTripModal wired with owner/admin permission checks (2026-04-01)
+- [x] **Trip deletion/archiving** — DeleteTripModal wired with permission checks (2026-04-01)
+- [x] **Members management page** — /trips/[tripId]/members page added (2026-04-01)
+- [x] **Public profile page** — /profile/[userId] page added (2026-04-01)
+- [x] **Follow system (partial)** — FollowButton component added; API wired (2026-04-01)
 
 ### Completed from Former "Technical Debt"
 - [x] **TypeScript strict mode** — Enabled, 0 `any` types
 - [x] **Error Handling** — Global error boundary, standardized API error responses, pino logging
-- [x] **Testing** — 925+ unit/integration tests across 49 Vitest test files; Playwright E2E framework configured
-- [x] **Rate Limiting** — Upstash Redis on all high-risk routes
+- [x] **Testing** — 1349+ unit/integration tests across 64 Vitest test files; Playwright E2E framework configured
+- [x] **Rate Limiting** — Upstash Redis on all high-risk routes (expanded 2026-04-03)
 - [x] **Input Sanitization** — Zod on all major API endpoints
 - [x] **Security Headers** — HSTS, X-Frame-Options, CSP (2026-03-10)
 - [x] **CORS** — Configured in next.config.js (2026-03-23)
 - [x] **Itinerary API** — GET/POST/PUT with $transaction atomicity (2026-03-23)
+- [x] **OG/Twitter meta tags** — Full OpenGraph + Twitter Card meta tags on all pages (2026-04-01)
 
 ### Completed from Former "Phase 3: Monitoring"
 - [x] **Sentry installed and configured** — Needs real DSN in Vercel production
@@ -56,13 +62,13 @@ These items are blockers or near-blockers for the Q2 2026 beta launch. See LAUNC
 | Feature | Priority | Complexity | Description |
 |---------|----------|------------|-------------|
 | Trip wizard (multi-step) | High | Medium | Replace single-page form with step-by-step wizard |
-| Trip editing flow | High | Low | PATCH /api/trips/[tripId] UI |
-| Trip deletion/archiving | High | Low | DELETE + soft-delete UI |
+| Trip editing flow | ~~High~~ | ~~Low~~ | ✅ DONE — EditTripModal (2026-04-01) |
+| Trip deletion/archiving | ~~High~~ | ~~Low~~ | ✅ DONE — DeleteTripModal (2026-04-01) |
 | Survey frontend integration | High | Medium | Connect survey API to frontend |
 | Voting frontend integration | High | Medium | Connect voting API to frontend |
 | Real-time vote updates | High | Medium | Pusher event on vote cast |
 | Survey results display | Medium | Medium | Results visualization |
-| Follow system integration | Medium | Medium | Follow API exists; frontend wiring needed |
+| Follow system integration | Medium | Medium | FollowButton component added; full feed wiring pending |
 
 ### 1.3 Security Completions
 
@@ -356,8 +362,8 @@ Q1 2027 — Social & Mobile
 - Error rate < 1% (Sentry)
 - AI latency (per provider)
 - Uptime > 99.9%
-- Test coverage (currently 925+ tests, targeting > 80% line coverage)
+- Test coverage (currently 1349+ tests, targeting > 80% line coverage)
 
 ---
 
-*Last Updated: 2026-03-25*
+*Last Updated: 2026-04-03*

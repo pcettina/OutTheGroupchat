@@ -1,9 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 import { z } from 'zod';
+import { apiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 
 const paramsSchema = z.object({
   notificationId: z.string().cuid(),
@@ -15,9 +16,18 @@ const patchNotificationSchema = z.object({
 
 // Mark a single notification as read
 export async function PATCH(
-  req: Request,
+  req: NextRequest,
   { params }: { params: { notificationId: string } }
 ) {
+  const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown';
+  const rateLimitResult = await checkRateLimit(apiRateLimiter, `notifications:detail:${ip}`);
+  if (!rateLimitResult.success) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please try again later.' },
+      { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
+    );
+  }
+
   const parsedParams = paramsSchema.safeParse(params);
   if (!parsedParams.success) {
     return NextResponse.json({ error: 'Invalid notification ID' }, { status: 400 });
@@ -84,9 +94,18 @@ export async function PATCH(
 
 // Delete a notification
 export async function DELETE(
-  req: Request,
+  req: NextRequest,
   { params }: { params: { notificationId: string } }
 ) {
+  const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown';
+  const rateLimitResult = await checkRateLimit(apiRateLimiter, `notifications:detail:${ip}`);
+  if (!rateLimitResult.success) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please try again later.' },
+      { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
+    );
+  }
+
   const parsedParams = paramsSchema.safeParse(params);
   if (!parsedParams.success) {
     return NextResponse.json({ error: 'Invalid notification ID' }, { status: 400 });
@@ -131,4 +150,3 @@ export async function DELETE(
     );
   }
 }
-

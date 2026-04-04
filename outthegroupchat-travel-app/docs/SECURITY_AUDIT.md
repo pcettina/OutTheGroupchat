@@ -185,13 +185,40 @@ Should use structured logging (e.g., Pino, Winston).
 
 ---
 
+## 📋 Rate Limiting Coverage (Updated 2026-04-03)
+
+The following routes now have Redis-backed rate limiting via `checkRateLimit()`:
+
+| Route | Status |
+|-------|--------|
+| /api/ai/* (all AI routes) | ✅ |
+| /api/auth/* (signup, demo, reset-password) | ✅ |
+| /api/feed, /api/feed/share, /api/feed/comments, /api/feed/engagement | ✅ |
+| /api/notifications | ✅ |
+| /api/search | ✅ |
+| /api/inspiration | ✅ |
+| /api/discover (all sub-routes) | ✅ |
+| /api/trips/[tripId]/members | ✅ (added 2026-04-03) |
+| /api/trips/[tripId]/activities | ✅ (added 2026-04-03) |
+| /api/trips/[tripId]/itinerary | ✅ (added 2026-04-03) |
+| /api/trips/[tripId]/recommendations | ✅ (added 2026-04-03) |
+| /api/trips/[tripId]/suggestions | ✅ (added 2026-04-03) |
+| /api/invitations, /api/trips/[tripId]/survey, /api/trips/[tripId]/voting | ❌ Pending |
+| /api/users/me, /api/profile, /api/pusher/auth | ❌ Pending |
+
+### Additional Security Fixes (2026-04-03)
+- **Email exposure fix in members route:** `/api/trips/[tripId]/members` response no longer includes raw `email` field for non-owner members.
+- **Flights auth bug fixed:** `/api/trips/[tripId]/flights` previously allowed unauthenticated access; now enforces `getServerSession()` auth check.
+
+---
+
 ## 📋 Security Checklist for Social Features
 
 As we expand social features, implement:
 
 | Feature | Status | Priority |
 |---------|--------|----------|
-| Rate limiting (Redis) | ✅ | P0 |
+| Rate limiting (Redis) | ✅ (partial) | P0 |
 | Input sanitization (XSS) | ❌ | P0 |
 | Content moderation | ❌ | P1 |
 | Report/block users | ❌ | P1 |
@@ -229,10 +256,10 @@ const securityHeaders = [
 | 🟠 Medium | 4 (2 resolved ✅, 2 open) | Next sprint |
 | 🟡 Low | 3 | Backlog |
 
-**Overall Security Score: 7/10** (improved from 6/10 — rate limiting, demo credentials, and `any` types resolved)
+**Overall Security Score: 7.5/10** (improved from 7/10 — expanded rate limiting coverage, email exposure fix in members route, flights auth bug fixed)
 
 ---
 
-*Last Updated: 2026-03-24*
+*Last Updated: 2026-04-03*
 *Next Audit: Before production launch*
 

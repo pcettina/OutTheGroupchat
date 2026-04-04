@@ -1,19 +1,29 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { searchFlights, getAirportCode } from '@/lib/api/flights';
 import { logger } from '@/lib/logger';
+import { apiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 
 interface TripMember {
-  id: string;
+  userId: string;
 }
 
 export async function GET(
-  req: Request,
+  req: NextRequest,
   { params }: { params: { tripId: string } }
 ) {
   try {
+    const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown';
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, `trips:flights:${ip}`);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
+      );
+    }
+
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
@@ -36,7 +46,7 @@ export async function GET(
     // Check if user is authorized to view this trip
     if (
       trip.ownerId !== session.user.id &&
-      !trip.members.some((member: TripMember) => member.id === session.user.id)
+      !trip.members.some((member: TripMember) => member.userId === session.user.id)
     ) {
       return new NextResponse('Unauthorized', { status: 401 });
     }

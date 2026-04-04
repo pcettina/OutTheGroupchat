@@ -21,6 +21,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 
@@ -29,6 +30,12 @@ import { prisma } from '@/lib/prisma';
 // ---------------------------------------------------------------------------
 const mockAuthorizeChannel = vi.fn();
 const mockPusherInstance = { authorizeChannel: mockAuthorizeChannel };
+
+vi.mock('@/lib/rate-limit', () => ({
+  apiRateLimiter: null,
+  checkRateLimit: vi.fn().mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: 0 }),
+  getRateLimitHeaders: vi.fn().mockReturnValue({}),
+}));
 
 vi.mock('@/lib/pusher', () => ({
   getPusherServer: vi.fn(),
@@ -150,23 +157,23 @@ const MOCK_CREATED_AT = new Date('2026-03-20T12:00:00Z');
 
 const MOCK_AUTH_RESPONSE = { auth: 'app-key:mock-signature' };
 
-/** Build a FormData POST Request (used by pusher/auth). */
+/** Build a FormData POST NextRequest (used by pusher/auth). */
 function makeFormDataRequest(
   socketId: string | null,
   channelName: string | null
-): Request {
+): NextRequest {
   const formData = new FormData();
   if (socketId !== null) formData.set('socket_id', socketId);
   if (channelName !== null) formData.set('channel_name', channelName);
-  return new Request('http://localhost:3000/api/pusher/auth', {
+  return new NextRequest('http://localhost:3000/api/pusher/auth', {
     method: 'POST',
     body: formData,
   });
 }
 
-/** Build a JSON POST Request (used by comments, engagement, share). */
-function makeJsonRequest(path: string, body: unknown): Request {
-  return new Request(`http://localhost:3000${path}`, {
+/** Build a JSON POST NextRequest (used by comments, engagement, share). */
+function makeJsonRequest(path: string, body: unknown): NextRequest {
+  return new NextRequest(`http://localhost:3000${path}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),

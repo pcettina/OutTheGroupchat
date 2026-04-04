@@ -71,8 +71,8 @@ const MOCK_SESSION = {
   user: { id: 'user-1', name: 'Test User', email: 'test@example.com' },
 };
 
-function makeRequest(url: string, body?: unknown, method = 'GET'): Request {
-  return new Request(url, {
+function makeRequest(url: string, body?: unknown, method = 'GET'): NextRequest {
+  return new NextRequest(url, {
     method,
     headers: body ? { 'Content-Type': 'application/json' } : {},
     body: body ? JSON.stringify(body) : undefined,
@@ -94,6 +94,7 @@ function makeNextRequest(url: string, body?: unknown, method = 'GET'): NextReque
 describe('GET /api/discover', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockCheckRateLimit.mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: 0 });
   });
 
   it('returns 401 when unauthenticated', async () => {
@@ -166,6 +167,7 @@ describe('GET /api/discover', () => {
 describe('POST /api/discover', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockCheckRateLimit.mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: 0 });
   });
 
   it('returns 401 when unauthenticated', async () => {

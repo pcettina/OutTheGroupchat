@@ -13,9 +13,16 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { processInvitations } from '@/lib/invitations';
+
+vi.mock('@/lib/rate-limit', () => ({
+  apiRateLimiter: null,
+  checkRateLimit: vi.fn().mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: 0 }),
+  getRateLimitHeaders: vi.fn().mockReturnValue({}),
+}));
 
 import { GET, POST } from '@/app/api/trips/[tripId]/invitations/route';
 
@@ -122,14 +129,17 @@ const MOCK_INVITATION_NO_USER = {
 function makeRequest(
   path: string,
   options: { method?: string; body?: unknown } = {}
-): Request {
+): NextRequest {
   const url = `http://localhost:3000${path}`;
-  const init: RequestInit = { method: options.method ?? 'GET' };
+  const headers: Record<string, string> = {};
   if (options.body !== undefined) {
-    init.body = JSON.stringify(options.body);
-    init.headers = { 'Content-Type': 'application/json' };
+    headers['Content-Type'] = 'application/json';
   }
-  return new Request(url, init);
+  return new NextRequest(url, {
+    method: options.method ?? 'GET',
+    body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+    headers,
+  });
 }
 
 async function parseJson(res: Response) {

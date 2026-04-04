@@ -8,14 +8,14 @@
  * - All external dependencies (Prisma, NextAuth, logger) are mocked in
  *   src/__tests__/setup.ts.  This file extends those mocks with the
  *   additional prisma.user.update method the PUT handler requires.
- * - The GET handler takes no request argument; the PUT handler receives a
- *   Request with a JSON body.
+ * - The GET and PUT handlers receive a NextRequest argument.
  * - The route returns plain-text responses (not JSON) for error conditions
  *   (401, 404, 500), so those are read with res.text() rather than res.json().
  * - Successful responses return JSON via NextResponse.json().
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 
@@ -35,6 +35,12 @@ vi.mock('@/lib/prisma', async (importOriginal) => {
     },
   };
 });
+
+vi.mock('@/lib/rate-limit', () => ({
+  apiRateLimiter: null,
+  checkRateLimit: vi.fn().mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: 0 }),
+  getRateLimitHeaders: vi.fn().mockReturnValue({}),
+}));
 
 // Import handlers after the mock declaration.
 import { GET, PUT } from '@/app/api/profile/route';
@@ -74,20 +80,23 @@ const MOCK_USER_PROFILE = {
   preferences: { currency: 'USD' },
 };
 
-/** Build a minimal Request accepted by the App Router handlers. */
+/** Build a minimal NextRequest accepted by the App Router handlers. */
 function makeRequest(
   path: string,
   options: { method?: string; body?: unknown } = {}
-): Request {
+): NextRequest {
   const url = `http://localhost:3000${path}`;
-  const init: RequestInit = { method: options.method ?? 'GET' };
+  const method = options.method ?? 'GET';
 
   if (options.body !== undefined) {
-    init.body = JSON.stringify(options.body);
-    init.headers = { 'Content-Type': 'application/json' };
+    return new NextRequest(url, {
+      method,
+      body: JSON.stringify(options.body),
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
-  return new Request(url, init);
+  return new NextRequest(url, { method });
 }
 
 // ---------------------------------------------------------------------------
@@ -104,7 +113,8 @@ describe('GET /api/profile', () => {
   it('returns 401 when there is no session', async () => {
     mockGetServerSession.mockResolvedValueOnce(null);
 
-    const res = await GET();
+    const req = makeRequest('/api/profile');
+    const res = await GET(req);
     // The GET handler returns plain text for 401, not JSON
     expect(res.status).toBe(401);
     expect(mockPrismaUser.findUnique).not.toHaveBeenCalled();
@@ -114,7 +124,8 @@ describe('GET /api/profile', () => {
     mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
     mockPrismaUser.findUnique.mockResolvedValueOnce(MOCK_USER_PROFILE);
 
-    const res = await GET();
+    const req = makeRequest('/api/profile');
+    const res = await GET(req);
     const body = await res.json();
 
     expect(res.status).toBe(200);
@@ -128,7 +139,8 @@ describe('GET /api/profile', () => {
     mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
     mockPrismaUser.findUnique.mockResolvedValueOnce(MOCK_USER_PROFILE);
 
-    await GET();
+    const req = makeRequest('/api/profile');
+    await GET(req);
 
     const callArgs = mockPrismaUser.findUnique.mock.calls[0][0];
     expect(callArgs.where.id).toBe(MOCK_USER_ID);
@@ -138,7 +150,8 @@ describe('GET /api/profile', () => {
     mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
     mockPrismaUser.findUnique.mockResolvedValueOnce(null);
 
-    const res = await GET();
+    const req = makeRequest('/api/profile');
+    const res = await GET(req);
     expect(res.status).toBe(404);
   });
 
@@ -146,7 +159,8 @@ describe('GET /api/profile', () => {
     mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
     mockPrismaUser.findUnique.mockRejectedValueOnce(new Error('DB error'));
 
-    const res = await GET();
+    const req = makeRequest('/api/profile');
+    const res = await GET(req);
     expect(res.status).toBe(500);
   });
 });

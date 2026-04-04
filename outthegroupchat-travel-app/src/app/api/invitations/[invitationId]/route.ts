@@ -1,10 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
 import type { Prisma } from '@prisma/client';
 import { logger } from '@/lib/logger';
+import { apiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 
 const respondSchema = z.object({
   action: z.enum(['accept', 'decline']),
@@ -18,10 +19,19 @@ const respondSchema = z.object({
 
 // Respond to an invitation
 export async function POST(
-  req: Request,
+  req: NextRequest,
   { params }: { params: { invitationId: string } }
 ) {
   try {
+    const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown';
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, `invitations:respond:${ip}`);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
+      );
+    }
+
     const session = await getServerSession(authOptions);
     const { invitationId } = params;
 
@@ -135,10 +145,19 @@ export async function POST(
 
 // Get invitation details
 export async function GET(
-  req: Request,
+  req: NextRequest,
   { params }: { params: { invitationId: string } }
 ) {
   try {
+    const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown';
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, `invitations:${ip}`);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
+      );
+    }
+
     const session = await getServerSession(authOptions);
     const { invitationId } = params;
 
@@ -203,4 +222,3 @@ export async function GET(
     );
   }
 }
-

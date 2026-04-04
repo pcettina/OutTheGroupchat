@@ -11,6 +11,16 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NextRequest } from 'next/server';
+
+// ---------------------------------------------------------------------------
+// Rate-limit mock — prevents real Redis calls for routes using checkRateLimit
+// ---------------------------------------------------------------------------
+vi.mock('@/lib/rate-limit', () => ({
+  apiRateLimiter: {},
+  checkRateLimit: vi.fn().mockResolvedValue({ success: true }),
+  getRateLimitHeaders: vi.fn().mockReturnValue({}),
+}));
 
 // ---------------------------------------------------------------------------
 // Override the global @/lib/prisma mock with a complete factory that includes
@@ -143,6 +153,7 @@ vi.mock('@/lib/invitations', () => ({
 // ---------------------------------------------------------------------------
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
+import { checkRateLimit } from '@/lib/rate-limit';
 import {
   GET as activitiesGET,
   POST as activitiesPOST,
@@ -256,14 +267,17 @@ const VALID_PUT_ITINERARY_BODY = {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-function makeRequest(path: string, options: { method?: string; body?: unknown } = {}): Request {
+function makeRequest(path: string, options: { method?: string; body?: unknown } = {}): NextRequest {
   const url = `http://localhost:3000${path}`;
-  const init: RequestInit = { method: options.method ?? 'GET' };
+  const method = options.method ?? 'GET';
   if (options.body !== undefined) {
-    init.body = JSON.stringify(options.body);
-    init.headers = { 'Content-Type': 'application/json' };
+    return new NextRequest(url, {
+      method,
+      body: JSON.stringify(options.body),
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
-  return new Request(url, init);
+  return new NextRequest(url, { method });
 }
 
 async function parseJson(res: Response) {
@@ -274,6 +288,8 @@ beforeEach(() => {
   // resetAllMocks clears call history AND the mockResolvedValueOnce queue,
   // preventing state from leaking between tests in this file.
   vi.resetAllMocks();
+  // Re-establish rate-limit mock after resetAllMocks clears implementations.
+  vi.mocked(checkRateLimit).mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: 0 });
 });
 
 // ===========================================================================

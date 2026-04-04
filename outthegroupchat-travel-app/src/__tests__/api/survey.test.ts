@@ -16,8 +16,15 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
+
+vi.mock('@/lib/rate-limit', () => ({
+  apiRateLimiter: {},
+  checkRateLimit: vi.fn().mockResolvedValue({ success: true }),
+  getRateLimitHeaders: vi.fn().mockReturnValue({}),
+}));
 
 // Extend the global prisma mock (defined in setup.ts) with the additional
 // models and methods required by the survey route handler.
@@ -160,20 +167,21 @@ const MOCK_SURVEY_RESPONSE = {
   user: { id: MOCK_USER_ID, name: 'Test User', image: null },
 };
 
-/** Build a minimal Request accepted by the App Router handlers. */
+/** Build a minimal NextRequest accepted by the App Router handlers. */
 function makeRequest(
   path: string,
   options: { method?: string; body?: unknown } = {}
-): Request {
+): NextRequest {
   const url = `http://localhost:3000${path}`;
-  const init: RequestInit = { method: options.method ?? 'GET' };
-
+  const method = options.method ?? 'GET';
   if (options.body !== undefined) {
-    init.body = JSON.stringify(options.body);
-    init.headers = { 'Content-Type': 'application/json' };
+    return new NextRequest(url, {
+      method,
+      body: JSON.stringify(options.body),
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
-
-  return new Request(url, init);
+  return new NextRequest(url, { method });
 }
 
 /** Parse JSON from a NextResponse-compatible Response. */

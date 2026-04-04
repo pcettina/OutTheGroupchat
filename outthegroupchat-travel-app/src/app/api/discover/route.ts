@@ -1,9 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { EventsService } from '@/services/events.service';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
+import { apiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 
 const discoverPostSchema = z.object({
   origin: z.string().min(1),
@@ -21,7 +22,16 @@ const searchSchema = z.object({
   categories: z.array(z.string()).optional(),
 });
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
+  const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown';
+  const rateLimitResult = await checkRateLimit(apiRateLimiter, `discover:${ip}`);
+  if (!rateLimitResult.success) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please try again later.' },
+      { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
+    );
+  }
+
   try {
     const session = await getServerSession(authOptions);
 
@@ -84,7 +94,16 @@ export async function GET(req: Request) {
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown';
+  const rateLimitResult = await checkRateLimit(apiRateLimiter, `discover:${ip}`);
+  if (!rateLimitResult.success) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please try again later.' },
+      { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
+    );
+  }
+
   try {
     const session = await getServerSession(authOptions);
 

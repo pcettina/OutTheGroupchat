@@ -1,14 +1,25 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useSession } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Navigation } from '@/components/Navigation';
-import { ActivityCard } from '@/components/social';
+import { ActivityCard, FollowButton } from '@/components/social';
 import type { Activity } from '@prisma/client';
 
 type ActivityWithRelations = Activity & {
   trip?: { title: string; destination: unknown };
   _count?: { savedBy: number; comments: number; ratings: number };
+};
+
+type FeedUser = {
+  id: string;
+  name: string | null;
+  image: string | null;
+};
+
+type FeedItem = ActivityWithRelations & {
+  user?: FeedUser;
 };
 
 const categories = [
@@ -22,7 +33,9 @@ const categories = [
 ];
 
 export default function DiscoverPage() {
-  const [activities, setActivities] = useState<ActivityWithRelations[]>([]);
+  const { data: session } = useSession();
+  const currentUserId = session?.user?.id ?? null;
+  const [activities, setActivities] = useState<FeedItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -199,6 +212,14 @@ export default function DiscoverPage() {
                 transition={{ delay: index * 0.05 }}
                 className="break-inside-avoid"
               >
+                {currentUserId && activity.user && activity.user.id !== currentUserId && (
+                  <div className="flex items-center justify-between px-1 mb-1">
+                    <span className="text-xs text-gray-500 truncate">
+                      {activity.user.name ?? 'Traveler'}
+                    </span>
+                    <FollowButton userId={activity.user.id} />
+                  </div>
+                )}
                 <ActivityCard
                   activity={activity}
                   onSave={handleSave}

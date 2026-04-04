@@ -80,14 +80,14 @@ const MOCK_TRIP = {
   budget: null,
   createdAt: new Date('2026-01-01'),
   updatedAt: new Date('2026-01-01'),
-  members: [{ id: MOCK_USER_ID, name: 'Test User', email: 'test@example.com' }],
+  members: [{ userId: MOCK_USER_ID, name: 'Test User', email: 'test@example.com' }],
 };
 
 /** A trip owned by someone else with no matching members. */
 const MOCK_FOREIGN_TRIP = {
   ...MOCK_TRIP,
   ownerId: MOCK_OTHER_USER_ID,
-  members: [{ id: MOCK_OTHER_USER_ID, name: 'Other User', email: 'other@example.com' }],
+  members: [{ userId: MOCK_OTHER_USER_ID, name: 'Other User', email: 'other@example.com' }],
 };
 
 /** Sample Ticketmaster events. */
@@ -259,8 +259,8 @@ describe('GET /api/trips/[tripId]/suggestions', () => {
     const memberTrip = {
       ...MOCK_FOREIGN_TRIP,
       members: [
-        { id: MOCK_OTHER_USER_ID, name: 'Other User', email: 'other@example.com' },
-        { id: MOCK_USER_ID, name: 'Test User', email: 'test@example.com' },
+        { userId: MOCK_OTHER_USER_ID, name: 'Other User', email: 'other@example.com' },
+        { userId: MOCK_USER_ID, name: 'Test User', email: 'test@example.com' },
       ],
     };
 

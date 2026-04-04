@@ -1,10 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { logError } from '@/lib/logger';
 import { z } from 'zod';
 import type { JsonValue } from '@prisma/client/runtime/library';
+import { apiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -16,7 +17,16 @@ const searchQuerySchema = z.object({
 });
 
 // Global search across trips, activities, and users
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
+  const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown';
+  const rateLimitResult = await checkRateLimit(apiRateLimiter, `search:${ip}`);
+  if (!rateLimitResult.success) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please try again later.' },
+      { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
+    );
+  }
+
   try {
     const session = await getServerSession(authOptions);
 

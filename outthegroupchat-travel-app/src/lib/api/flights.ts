@@ -11,43 +11,73 @@ interface AmadeusToken {
 
 let amadeusToken: AmadeusToken | null = null;
 
+/**
+ * Represents a normalized flight offer returned from the Amadeus Flight Offers API.
+ * Contains origin/destination summaries, full itinerary segments, pricing, and seat availability.
+ */
 export interface FlightOffer {
+  /** Unique offer identifier assigned by Amadeus. */
   id: string;
+  /** Origin airport summary derived from the first departure segment. */
   source: {
+    /** IATA airport or city code for the departure location (e.g., "JFK"). */
     iataCode: string;
+    /** Human-readable city name for the departure location. */
     cityName: string;
   };
+  /** Destination airport summary derived from the first arrival segment. */
   destination: {
+    /** IATA airport or city code for the arrival location (e.g., "CDG"). */
     iataCode: string;
+    /** Human-readable city name for the arrival location. */
     cityName: string;
   };
+  /** One or more itineraries (outbound + return for round trips). */
   itineraries: Array<{
+    /** Total duration of this itinerary in ISO 8601 duration format (e.g., "PT8H30M"). */
     duration: string;
+    /** Ordered list of flight segments making up this itinerary. */
     segments: Array<{
       departure: {
+        /** IATA code of the departure airport. */
         iataCode: string;
+        /** Terminal identifier, if provided by the carrier. */
         terminal?: string;
+        /** Scheduled departure datetime in ISO 8601 format. */
         at: string;
       };
       arrival: {
+        /** IATA code of the arrival airport. */
         iataCode: string;
+        /** Terminal identifier, if provided by the carrier. */
         terminal?: string;
+        /** Scheduled arrival datetime in ISO 8601 format. */
         at: string;
       };
+      /** IATA carrier code identifying the operating airline. */
       carrierCode: string;
+      /** Flight number (without carrier prefix). */
       number: string;
       aircraft: {
+        /** IATA aircraft type code (e.g., "32A" for Airbus A320). */
         code: string;
       };
+      /** Segment duration in ISO 8601 duration format. */
       duration: string;
+      /** Segment identifier within the offer. */
       id: string;
     }>;
   }>;
+  /** Pricing breakdown for the entire offer. */
   price: {
+    /** ISO 4217 currency code (e.g., "USD"). */
     currency: string;
+    /** Total price including taxes and fees as a decimal string. */
     total: string;
+    /** Base fare before taxes and fees as a decimal string. */
     base: string;
   };
+  /** Number of seats still available to book at this price. */
   numberOfBookableSeats: number;
 }
 
@@ -104,14 +134,25 @@ interface AmadeusOfferRaw {
   numberOfBookableSeats: number;
 }
 
+/**
+ * Parameters accepted by {@link searchFlights} when querying the Amadeus Flight Offers API.
+ */
 export interface FlightSearchParams {
+  /** IATA code of the departure airport or city (e.g., "NYC"). */
   originLocationCode: string;
+  /** IATA code of the destination airport or city (e.g., "LAX"). */
   destinationLocationCode: string;
+  /** Outbound departure date in YYYY-MM-DD format. */
   departureDate: string;
+  /** Return date in YYYY-MM-DD format; omit for one-way searches. */
   returnDate?: string;
+  /** Number of adult passengers (default: 1). */
   adults?: number;
+  /** When true, limits results to non-stop flights only (default: false). */
   nonStop?: boolean;
+  /** ISO 4217 currency code for pricing (default: "USD"). */
   currencyCode?: string;
+  /** Maximum number of flight offers to return (default: 10). */
   max?: number;
 }
 

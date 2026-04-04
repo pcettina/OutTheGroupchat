@@ -14,6 +14,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 
 // ---------------------------------------------------------------------------
@@ -24,6 +25,12 @@ const mockPusherInstance = { authorizeChannel: mockAuthorizeChannel };
 
 vi.mock('@/lib/pusher', () => ({
   getPusherServer: vi.fn(),
+}));
+
+vi.mock('@/lib/rate-limit', () => ({
+  apiRateLimiter: null,
+  checkRateLimit: vi.fn().mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: 0 }),
+  getRateLimitHeaders: vi.fn().mockReturnValue({}),
 }));
 
 import { getPusherServer } from '@/lib/pusher';
@@ -59,18 +66,18 @@ const MOCK_AUTH_RESPONSE = {
 };
 
 /**
- * Build a POST Request with FormData body containing socket_id and channel_name.
+ * Build a POST NextRequest with FormData body containing socket_id and channel_name.
  * Pass null for a field to omit it (simulating missing fields).
  */
 function makeFormDataRequest(
   socketId: string | null,
   channelName: string | null
-): Request {
+): NextRequest {
   const formData = new FormData();
   if (socketId !== null) formData.set('socket_id', socketId);
   if (channelName !== null) formData.set('channel_name', channelName);
 
-  return new Request('http://localhost:3000/api/pusher/auth', {
+  return new NextRequest('http://localhost:3000/api/pusher/auth', {
     method: 'POST',
     body: formData,
   });

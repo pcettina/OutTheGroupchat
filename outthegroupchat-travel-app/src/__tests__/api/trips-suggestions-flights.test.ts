@@ -91,7 +91,7 @@ const MOCK_TRIP = {
   budget: null,
   createdAt: new Date('2026-01-01'),
   updatedAt: new Date('2026-01-01'),
-  members: [{ id: MOCK_USER_ID, name: 'Test User', email: 'test@example.com' }],
+  members: [{ userId: MOCK_USER_ID, name: 'Test User', email: 'test@example.com' }],
 };
 
 /** Trip owned by a different user with no overlapping members. */
@@ -199,7 +199,7 @@ describe('GET /api/trips/[tripId]/suggestions', () => {
   it('returns 200 when the user is a trip member (not owner)', async () => {
     const tripAsMember = {
       ...MOCK_TRIP_OTHER_OWNER,
-      members: [{ id: MOCK_USER_ID, name: 'Test User', email: 'test@example.com' }],
+      members: [{ userId: MOCK_USER_ID, name: 'Test User', email: 'test@example.com' }],
     };
     mockPrismaTrip.findUnique.mockResolvedValueOnce(tripAsMember as unknown as Awaited<ReturnType<typeof prisma.trip.findUnique>>);
     mockSearchEvents.mockResolvedValueOnce([]);
@@ -387,7 +387,7 @@ describe('GET /api/trips/[tripId]/flights', () => {
   it('returns 200 as a trip member (not owner)', async () => {
     const tripAsMember = {
       ...MOCK_TRIP_OTHER_OWNER,
-      members: [{ id: MOCK_USER_ID, name: 'Test User', email: 'test@example.com' }],
+      members: [{ userId: MOCK_USER_ID, name: 'Test User', email: 'test@example.com' }],
     };
     mockPrismaTrip.findUnique.mockResolvedValueOnce(tripAsMember as unknown as Awaited<ReturnType<typeof prisma.trip.findUnique>>);
     mockPrismaUser.findUnique.mockResolvedValueOnce({ city: 'Los Angeles' } as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>);

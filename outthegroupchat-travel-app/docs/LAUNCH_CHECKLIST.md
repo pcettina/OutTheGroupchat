@@ -18,7 +18,7 @@
 
 **Overall Readiness: 78%** → Target: 85% for Beta Launch
 
-> Last updated: 2026-03-26
+> Last updated: 2026-04-03
 
 ---
 
@@ -76,7 +76,7 @@
 - [x] Comments API (Trip support added) ✅ Dec 17
 - [x] Reactions/Likes API (Trip support added) ✅ Dec 17
 - [x] Share functionality ✅ 2026-03-16 (POST /api/feed/share implemented with Zod + notification)
-- [ ] Follow system integration
+- [x] Follow system integration ✅ 2026-04-03 (FollowButton component created + integrated into discover page; social/index.ts export added)
 
 ### Group Coordination 🔶
 - [x] Survey API structure
@@ -110,7 +110,7 @@
 - [x] SQL injection prevention (Prisma)
 - [x] Rate limiting infrastructure (Upstash)
 - [x] Rate limiting on all authentication endpoints ✅ 2026-03-26 (signup, reset-password, verify-email — rate limiting now first operation)
-- [ ] Rate limiting on ALL remaining endpoints
+- [x] Rate limiting on ALL remaining endpoints ✅ 2026-04-03 (members, flights, itinerary, recommendations, suggestions, discover, inspiration, search, users/[userId] all rate limited — auth endpoints already done 2026-03-26)
 - [x] Input validation on major API routes (Zod) ✅ 2026-03-24 — notifications, feed/comments, feed/engagement, pusher/auth, users/[userId], discover/*, images/search, inspiration, cron, auth/demo added; ai/chat Zod strengthened + JSON.parse safety on 5 AI routes + notifications/[notificationId] ✅ 2026-03-29
 - [x] /api/discover/search requires authentication ✅ 2026-03-24 (security improvement — was unauthenticated)
 - [x] /api/discover/recommendations requires authentication ✅ 2026-03-24
@@ -148,6 +148,12 @@
 
 9. [x] Remove NODE_ENV/version from /api/health (data minimization) ✅ 2026-03-25
    File: src/app/api/health/route.ts (response shape narrowed to {status, timestamp, database})
+
+10. [x] Strip member emails from /api/trips/[tripId]/members response (data minimization) ✅ 2026-04-03
+    File: src/app/api/trips/[tripId]/members/route.ts (email removed from member select projection)
+
+11. [x] Fix flights auth bug — TripMember lookup used .id instead of .userId ✅ 2026-04-03
+    File: src/app/api/trips/[tripId]/flights/route.ts (TripMember.userId now correctly used)
 ```
 
 ### Security Headers
@@ -174,6 +180,7 @@
 - [x] API route tests (invitations-post 18, ai-get-methods 16, beta-extended 21, users-follow 24) ✅ 2026-03-25 — total: 1003 tests across 53 files
 - [x] Service tests + API tests (recommendation.service 45, survey.service 36, geocoding-images 32, inspiration +39) ✅ 2026-03-26 — total: 1156 tests across 56 files
 - [x] API route tests (ai-generate-itinerary 31, ai-suggest-activities 25, discover-import 21) ✅ 2026-03-29
+- [x] API route tests (health 7, trips-members-security 45, trips-itinerary-recommendations 29) ✅ 2026-04-03 — total: 1430 tests across 66 files
 
 ### Integration Tests
 - [ ] Auth flow tests
@@ -378,4 +385,4 @@ git push origin main  # Auto-deploys to Vercel
 
 *This checklist should be reviewed daily during launch preparation.*
 
-*Last Updated: 2026-03-26 - 153 new tests (1156 total, 56 files); rate limiting added as first operation on auth/signup, auth/reset-password, auth/verify-email; newsletter/subscribe now requires auth; ai/search GET+POST fully implemented; dead components removed (NotificationCenter.tsx, SharePreview.tsx); recommendation.service.test.ts, survey.service.test.ts, geocoding-images.test.ts created. Also includes 2026-03-29 changes: JSON.parse safety on 5 AI routes + notifications/[notificationId]; Zod strengthened on ai/chat; notifications/[notificationId] bugfix (read was hardcoded true); JSDoc added to geocoding.ts; 3 new test files (ai-generate-itinerary, ai-suggest-activities, discover-import)*
+*Last Updated: 2026-04-03 - 81 new tests (1430 total, 66 files); rate limiting added to 9 routes (members, flights, itinerary, recommendations, suggestions, discover, inspiration, search, users/[userId]); email exposure fix in members route; flights auth bug fixed (TripMember.userId); Members navigation link added; FollowButton integrated into discover page; JSDoc added to lib/api/flights.ts, places.ts, ticketmaster.ts; 12 stale docs refreshed. Also includes prior changes through 2026-03-29.*

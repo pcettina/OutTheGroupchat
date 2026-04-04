@@ -1,9 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 import { z } from 'zod';
+import { apiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 
 const getNotificationsQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
@@ -12,7 +13,16 @@ const getNotificationsQuerySchema = z.object({
 });
 
 // Get all notifications for current user
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
+  const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown';
+  const rateLimitResult = await checkRateLimit(apiRateLimiter, `notifications:${ip}`);
+  if (!rateLimitResult.success) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please try again later.' },
+      { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
+    );
+  }
+
   try {
     const session = await getServerSession(authOptions);
 
@@ -64,7 +74,16 @@ export async function GET(req: Request) {
 }
 
 // Mark all notifications as read
-export async function PATCH(req: Request) {
+export async function PATCH(req: NextRequest) {
+  const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown';
+  const rateLimitResult = await checkRateLimit(apiRateLimiter, `notifications:${ip}`);
+  if (!rateLimitResult.success) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please try again later.' },
+      { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
+    );
+  }
+
   try {
     const session = await getServerSession(authOptions);
 
@@ -92,4 +111,3 @@ export async function PATCH(req: Request) {
     );
   }
 }
-

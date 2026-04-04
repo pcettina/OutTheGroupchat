@@ -1,9 +1,9 @@
 # 📡 API & Integration Status
 
-> **Last updated: 2026-03-26**
+> **Last updated: 2026-04-03**
 >
-> **Last Audit:** March 2026
-> **Overall Status:** 86% Complete
+> **Last Audit:** April 2026
+> **Overall Status:** 88% Complete
 > **Target:** 100% for Beta Launch
 
 ---
@@ -53,8 +53,8 @@
 
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
-| `/api/trips/[tripId]/members` | GET | ✅ | 🔶 | List members |
-| `/api/trips/[tripId]/members` | POST | ✅ | ⏳ | Add member — POST handler implemented 2026-03-20 |
+| `/api/trips/[tripId]/members` | GET | ✅ | 🔶 | List members; rate limited ✅ 2026-04-03; email exposure fixed (member emails stripped from response) ✅ 2026-04-03 |
+| `/api/trips/[tripId]/members` | POST | ✅ | ⏳ | Add member — POST handler implemented 2026-03-20; rate limited ✅ 2026-04-03 |
 | `/api/trips/[tripId]/invitations` | GET | ✅ | 🔶 | List invitations |
 | `/api/trips/[tripId]/invitations` | POST | ✅ | ✅ | **Email service configured** ✅ Dec 17 |
 
@@ -64,9 +64,9 @@
 |----------|--------|--------|-------------------|-------|
 | `/api/trips/[tripId]/activities` | GET | ✅ | 🔶 | List activities |
 | `/api/trips/[tripId]/activities` | POST | ✅ | 🔶 | Add activity |
-| `/api/trips/[tripId]/itinerary` | GET | ✅ | 🔶 | Get itinerary — complete ✅ 2026-03-23 |
-| `/api/trips/[tripId]/itinerary` | POST | ✅ | ⏳ | Create itinerary day — complete ✅ 2026-03-23 |
-| `/api/trips/[tripId]/itinerary` | PUT | ✅ | ⏳ | Update itinerary (atomic $transaction) — complete ✅ 2026-03-23 |
+| `/api/trips/[tripId]/itinerary` | GET | ✅ | 🔶 | Get itinerary — complete ✅ 2026-03-23; rate limited ✅ 2026-04-03 |
+| `/api/trips/[tripId]/itinerary` | POST | ✅ | ⏳ | Create itinerary day — complete ✅ 2026-03-23; rate limited ✅ 2026-04-03 |
+| `/api/trips/[tripId]/itinerary` | PUT | ✅ | ⏳ | Update itinerary (atomic $transaction) — complete ✅ 2026-03-23; rate limited ✅ 2026-04-03 |
 | `/api/activities/[activityId]` | GET | ✅ | ⏳ | Get activity detail with comments, ratings, avg score; public activities accessible without auth |
 | `/api/activities/[activityId]` | POST | ✅ | ⏳ | Save/unsave activity (toggle); auth required |
 | `/api/activities/[activityId]` | PUT | ✅ | ⏳ | Add comment (`action: 'comment'`) or rating (`action: 'rate'`) to activity; auth required |
@@ -79,9 +79,9 @@
 | `/api/trips/[tripId]/survey` | POST | ✅ | 🔶 | Create/respond to survey |
 | `/api/trips/[tripId]/voting` | GET | ✅ | 🔶 | Get voting session |
 | `/api/trips/[tripId]/voting` | POST | ✅ | 🔶 | Create/cast vote |
-| `/api/trips/[tripId]/recommendations` | GET | ✅ | ⏳ | AI recommendations |
-| `/api/trips/[tripId]/flights` | GET | ✅ | ⏳ | Search flights for trip dates using user's profile city as origin; uses Amadeus API |
-| `/api/trips/[tripId]/suggestions` | GET | ✅ | ⏳ | Fetch events (Ticketmaster), attractions, and restaurants for trip destination; includes daily cost estimate |
+| `/api/trips/[tripId]/recommendations` | GET | ✅ | ⏳ | AI recommendations; rate limited ✅ 2026-04-03 |
+| `/api/trips/[tripId]/flights` | GET | ✅ | ⏳ | Search flights for trip dates using user's profile city as origin; uses Amadeus API; rate limited ✅ 2026-04-03; auth bug fixed (TripMember.userId vs .id) ✅ 2026-04-03 |
+| `/api/trips/[tripId]/suggestions` | GET | ✅ | ⏳ | Fetch events (Ticketmaster), attractions, and restaurants for trip destination; includes daily cost estimate; rate limited ✅ 2026-04-03 |
 
 ### Invitation Management APIs
 
@@ -138,14 +138,14 @@ No fix needed - code was already correct
 
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
-| `/api/discover` | GET | ✅ | ⏳ | Search events/places/restaurants/attractions/nightlife by city + date range; type param filters results |
-| `/api/discover` | POST | ✅ | ⏳ | Search flights via EventsService (origin, destination, departureDate, returnDate, adults); Zod validation added 2026-03-21 |
+| `/api/discover` | GET | ✅ | ⏳ | Search events/places/restaurants/attractions/nightlife by city + date range; type param filters results; rate limited ✅ 2026-04-03 |
+| `/api/discover` | POST | ✅ | ⏳ | Search flights via EventsService (origin, destination, departureDate, returnDate, adults); Zod validation added 2026-03-21; rate limited ✅ 2026-04-03 |
 | `/api/discover/search` | GET | ✅ | 🔶 | Auth guard added 2026-03-24 (was unauthenticated — security improvement); rate limiting, Zod validation ✅ |
 | `/api/discover/recommendations` | GET | ✅ | 🔶 | Auth guard added 2026-03-24; category filter, rate limiting, pino logging ✅ |
 | `/api/discover/import` | POST | ✅ | ⏳ | Rate limiting + auth guard ✅ 2026-03-24; pino logging, typed helpers, fixed empty catch blocks |
-| `/api/search` | GET | ✅ | 🔶 | Email removed from select projection (privacy fix) ✅ 2026-03-20 |
+| `/api/search` | GET | ✅ | 🔶 | Email removed from select projection (privacy fix) ✅ 2026-03-20; rate limited ✅ 2026-04-03 |
 | `/api/geocoding` | GET | ✅ | 🔶 | Geocoding for destination search via Nominatim; Zod validation added 2026-03-21 |
-| `/api/inspiration` | GET | ✅ | 🔶 | Auth guard added 2026-03-08; Zod coerce.number on query params + POST body schema added 2026-03-22 |
+| `/api/inspiration` | GET | ✅ | 🔶 | Auth guard added 2026-03-08; Zod coerce.number on query params + POST body schema added 2026-03-22; rate limited ✅ 2026-04-03 |
 | `/api/images/search` | GET | ✅ | 🔶 | Image search via Unsplash API; requires UNSPLASH_ACCESS_KEY |
 
 ### Search Issues to Fix
@@ -184,7 +184,7 @@ COMPLETED ✅ Dec 17:
 |----------|--------|--------|-------------------|-------|
 | `/api/profile` | GET | ✅ | 🔶 | Get current user |
 | `/api/profile` | PUT | ✅ | 🔶 | Update profile; Zod validation added 2026-03-13 |
-| `/api/users/[userId]` | GET | ✅ | ⏳ | Get user profile |
+| `/api/users/[userId]` | GET | ✅ | ⏳ | Get user profile; rate limited ✅ 2026-04-03 |
 | `/api/users/[userId]/follow` | POST | ✅ | ⏳ | Follow/unfollow implemented in /api/users/[userId] POST ✅ |
 
 ---
@@ -372,4 +372,4 @@ EMAIL_FROM=             # Email sender (onboarding@resend.dev) ✅
 
 *Review and update after each API change.*
 
-*Last Updated: 2026-03-26 - /api/ai/search GET+POST fully implemented (semantic search, destinations branch); /api/newsletter/subscribe now requires auth; /api/auth/signup, /api/auth/reset-password, /api/auth/verify-email: rate limiting now first operation; 153 new tests tonight (1156 total, 56 test files); dead components (NotificationCenter.tsx, SharePreview.tsx) removed; JSDoc added to costs.ts; README updated. Also includes 2026-03-29 changes: /api/ai/chat Zod strengthened + JSON.parse safety; /api/ai/recommend Zod GET params + JSON.parse safety; /api/ai/suggest-activities + generate-itinerary JSON.parse safety; /api/notifications/[notificationId] Zod params (cuid) + bugfix (read was hardcoded true); JSDoc added to src/lib/geocoding.ts; N8N docs deprecated*
+*Last Updated: 2026-04-03 - Rate limiting added to 9 routes: trips/[tripId]/members, flights, itinerary, recommendations, suggestions, discover, inspiration, search, users/[userId]; email exposure security fix in members route (member emails stripped); flights auth bug fixed (TripMember.userId vs .id); Members navigation link added to trip detail page; FollowButton integrated into discover page; JSDoc added to lib/api/flights.ts, places.ts, ticketmaster.ts; 12 stale documentation files refreshed; 81 new tests added (health 7, trips-members-security 45, trips-itinerary-recommendations 29); total tests: 1430 across 66 files. Also includes prior changes: /api/ai/search GET+POST fully implemented; /api/newsletter/subscribe now requires auth; auth endpoints rate limiting first-operation; 2026-03-29 JSON.parse safety on 5 AI routes + notifications/[notificationId] bugfix*

@@ -4,31 +4,55 @@ import { logger } from '@/lib/logger';
 const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY;
 const GOOGLE_PLACES_BASE_URL = 'https://maps.googleapis.com/maps/api/place';
 
+/**
+ * Represents a place returned by the Google Places API, including location,
+ * category tags, pricing tier, and optional photo references.
+ */
 export interface PlaceDetails {
+  /** Stable Google Places identifier used for detail lookups. */
   place_id: string;
+  /** Display name of the place. */
   name: string;
+  /** Full human-readable address as formatted by Google. */
   formatted_address: string;
+  /** Geographic coordinates of the place. */
   geometry: {
     location: {
+      /** Latitude in decimal degrees. */
       lat: number;
+      /** Longitude in decimal degrees. */
       lng: number;
     };
   };
+  /** Google price level on a 0 (free) to 4 (very expensive) scale. */
   price_level?: number;
+  /** Aggregate user rating from 1.0 to 5.0. */
   rating?: number;
+  /** Google Places category tags (e.g., ["restaurant", "food"]). */
   types: string[];
+  /** Photo references that can be resolved via the Places Photo API. */
   photos?: Array<{
+    /** Opaque token passed to the Places Photo API to retrieve the image. */
     photo_reference: string;
   }>;
 }
 
+/**
+ * Parameters accepted by {@link searchPlaces} when querying the Google Places Text Search API.
+ */
 export interface PlaceSearchParams {
+  /** Free-text search query (e.g., "coffee shops in Tokyo"). */
   query: string;
+  /** Optional geographic center point used to bias search results. */
   location?: {
+    /** Latitude in decimal degrees. */
     lat: number;
+    /** Longitude in decimal degrees. */
     lng: number;
   };
+  /** Search radius in meters around `location` (default: 5000). Only used when `location` is provided. */
   radius?: number;
+  /** Google Places type filter to narrow results (e.g., "restaurant", "museum"). */
   type?: string;
 }
 

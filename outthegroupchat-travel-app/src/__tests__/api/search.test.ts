@@ -12,6 +12,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 
@@ -33,6 +34,12 @@ vi.mock('@/lib/prisma', async (importOriginal) => {
     },
   };
 });
+
+vi.mock('@/lib/rate-limit', () => ({
+  apiRateLimiter: {},
+  checkRateLimit: vi.fn().mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: 0 }),
+  getRateLimitHeaders: vi.fn().mockReturnValue({}),
+}));
 
 import { GET } from '@/app/api/search/route';
 
@@ -84,8 +91,8 @@ const MOCK_USER = {
   _count: { followers: 50, ownedTrips: 5 },
 };
 
-function makeRequest(path: string): Request {
-  return new Request(`http://localhost:3000${path}`, { method: 'GET' });
+function makeRequest(path: string): NextRequest {
+  return new NextRequest(`http://localhost:3000${path}`, { method: 'GET' });
 }
 
 async function parseJson(res: Response) {

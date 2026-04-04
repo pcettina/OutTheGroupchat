@@ -1,9 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { logError } from '@/lib/logger';
 import { z } from 'zod';
+import { apiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 
 const postCommentSchema = z.object({
   itemId: z.string().min(1, 'itemId is required'),
@@ -23,8 +24,17 @@ const getCommentsSchema = z.object({
 });
 
 // Get comments for an item (activity or trip)
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   try {
+        const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown';
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, `feed:comments:${ip}`);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
+      );
+    }
+
     const { searchParams } = new URL(req.url);
     const getResult = getCommentsSchema.safeParse({
       itemId: searchParams.get('itemId'),
@@ -93,8 +103,17 @@ export async function GET(req: Request) {
 }
 
 // Post a new comment
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
+        const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown';
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, `feed:comments:${ip}`);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
+      );
+    }
+
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
@@ -246,8 +265,17 @@ export async function POST(req: Request) {
 }
 
 // Delete a comment
-export async function DELETE(req: Request) {
+export async function DELETE(req: NextRequest) {
   try {
+        const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown';
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, `feed:comments:${ip}`);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
+      );
+    }
+
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
