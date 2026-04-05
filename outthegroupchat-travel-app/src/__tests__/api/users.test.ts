@@ -13,10 +13,16 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import * as healthRoute from '@/app/api/health/route';
 import * as usersRoute from '@/app/api/users/[userId]/route';
+
+vi.mock('@/lib/rate-limit', () => ({
+  checkRateLimit: vi.fn().mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: 0 }),
+  apiRateLimiter: null,
+}));
 
 // ---------------------------------------------------------------------------
 // Mock: @/lib/prisma — extend global setup
@@ -53,12 +59,12 @@ vi.mock('@/lib/prisma', async (importOriginal) => {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-function makeGetRequest(userId: string): Request {
-  return new Request(`http://localhost/api/users/${userId}`, { method: 'GET' });
+function makeGetRequest(userId: string): NextRequest {
+  return new NextRequest(`http://localhost/api/users/${userId}`, { method: 'GET' });
 }
 
-function makePostRequest(userId: string): Request {
-  return new Request(`http://localhost/api/users/${userId}`, {
+function makePostRequest(userId: string): NextRequest {
+  return new NextRequest(`http://localhost/api/users/${userId}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({}),

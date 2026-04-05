@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { RecommendationService } from '@/services/recommendation.service';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
+import { checkRateLimit, apiRateLimiter } from '@/lib/rate-limit';
 
 const applyRecommendationSchema = z.object({
   recommendationId: z.string(),
@@ -12,10 +14,16 @@ const applyRecommendationSchema = z.object({
 
 // Generate trip recommendations based on survey
 export async function GET(
-  req: Request,
+  req: NextRequest,
   { params }: { params: { tripId: string } }
 ) {
   try {
+    const ip = req.headers.get('x-forwarded-for') || 'anonymous';
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, ip);
+    if (!rateLimitResult.success) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    }
+
     const session = await getServerSession(authOptions);
     const { tripId } = params;
 
@@ -76,10 +84,16 @@ export async function GET(
 
 // Apply a selected recommendation to the trip
 export async function POST(
-  req: Request,
+  req: NextRequest,
   { params }: { params: { tripId: string } }
 ) {
   try {
+    const ip = req.headers.get('x-forwarded-for') || 'anonymous';
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, ip);
+    if (!rateLimitResult.success) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    }
+
     const session = await getServerSession(authOptions);
     const { tripId } = params;
 

@@ -1,6 +1,6 @@
 # OutTheGroupchat — Full Codemap
 
-> Auto-generated 2026-03-10. Last updated 2026-03-26. Comprehensive reference for agents and developers.
+> Auto-generated 2026-03-10. Last updated 2026-04-04. Comprehensive reference for agents and developers.
 
 ## Table of Contents
 
@@ -29,7 +29,7 @@ Full-stack Next.js 14 collaborative travel planning app. Groups plan trips toget
 
 **App root:** `outthegroupchat-travel-app/`
 **Source:** `outthegroupchat-travel-app/src/`
-**Stats:** ~263 TS/TSX files | ~33,500 LOC | 48 API routes | 92 components | 20 pages
+**Stats:** ~275 TS/TSX files | ~35,000 LOC | 48 API routes | 92 components | 21 pages
 
 ---
 
@@ -69,6 +69,7 @@ outthegroupchat-travel-app/
 │   │   │   ├── new/page.tsx       # Trip creation wizard
 │   │   │   └── [tripId]/
 │   │   │       ├── page.tsx       # Trip detail
+│   │   │       ├── members/page.tsx  # Trip members management page ✅ 2026-04-04
 │   │   │       ├── survey/page.tsx
 │   │   │       └── vote/page.tsx
 │   │   ├── discover/page.tsx
@@ -78,7 +79,7 @@ outthegroupchat-travel-app/
 │   │   ├── inspiration/page.tsx
 │   │   ├── notifications/page.tsx
 │   │   ├── profile/page.tsx
-│   │   └── api/                   # 49 API route files (see API Routes section)
+│   │   └── api/                   # 48 API route files (see API Routes section)
 │   ├── components/                # 92 files across 16 feature directories
 │   │   ├── accessibility/         # FocusTrap, SkipLinks, VisuallyHidden, LiveRegion
 │   │   ├── ai/                    # TripChat (360L), ChatMessage, ChatLoadingIndicator, ChatQuickPrompts, chat-types.ts
@@ -513,6 +514,7 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `/trips` | `app/trips/page.tsx` | Client | Required | Trip list with stats, filters, creation |
 | `/trips/new` | `app/trips/new/page.tsx` | Client | Required | Multi-step trip wizard |
 | `/trips/[tripId]` | `app/trips/[tripId]/page.tsx` | Client | Required | Trip detail: itinerary, members, activities |
+| `/trips/[tripId]/members` | `app/trips/[tripId]/members/page.tsx` | Client | Required | Trip members management ✅ 2026-04-04 |
 | `/trips/[tripId]/survey` | `app/trips/[tripId]/survey/page.tsx` | Client | Required | Survey form for preferences |
 | `/trips/[tripId]/vote` | `app/trips/[tripId]/vote/page.tsx` | Client | Required | Voting interface |
 | `/discover` | `app/discover/page.tsx` | Client | Public | Destination discovery & inspiration |
@@ -807,7 +809,7 @@ db:seed        → npx tsx prisma/seed/index.ts
 
 ## Tests
 
-**Total: 1156 tests across 56 Vitest unit/integration test files** (0 TSC errors in production code, 0 in test files as of 2026-03-26)
+**Total: 1370 tests across 64 Vitest unit/integration test files** (0 TSC errors in production code, 0 in test files as of 2026-04-04)
 
 | File | Lines | Tests | Coverage |
 |------|-------|-------|----------|
@@ -841,6 +843,11 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `src/__tests__/api/ai-generate-itinerary.test.ts` | — | 31 | POST /api/ai/generate-itinerary — auth, 503 guard, rate-limit, validation, 404/403, multi-day, AI/DB failures ✅ 2026-03-29 |
 | `src/__tests__/api/ai-suggest-activities.test.ts` | — | 25 | POST /api/ai/suggest-activities — pure AI generation, no Prisma ✅ 2026-03-29 |
 | `src/__tests__/api/discover-import.test.ts` | — | 21 | POST /api/discover/import — rate limiting, auth guard, externalActivity.upsert, OpenTripMap fetch ✅ 2026-03-29 |
+| `src/__tests__/api/invitation-lifecycle-integration.test.ts` | — | 26 | Invitation lifecycle integration tests — accept/decline flows, expiry, member creation ✅ 2026-04-04 |
+| `src/__tests__/api/feed-routes-edge-cases.test.ts` | — | 29 | Feed routes edge case tests — rate limiting, auth guard, validation ✅ 2026-04-04 |
+| `src/__tests__/api/trips-activities-voting-security.test.ts` | — | 28 | Trips activities/voting security tests — rate limiting, auth guards, CUID params ✅ 2026-04-04 |
+| `src/__tests__/api/profile-users-edge-cases.test.ts` | — | 24 | Profile and users/me edge case tests — rate limiting, auth, validation ✅ 2026-04-04 |
+| `src/__tests__/api/trips-itinerary-recommendations.test.ts` | — | 29 | GET/PUT /api/trips/[tripId]/itinerary + GET/POST /api/trips/[tripId]/recommendations — rate limiting, auth, validation ✅ 2026-04-04 |
 | `src/__tests__/api/voting.test.ts` | — | 10 | Voting API (create, vote, close session) |
 | `src/__tests__/api/survey.test.ts` | — | 11 | Survey API (create, respond, analyze) |
 | `src/__tests__/api/feed.test.ts` | — | 12 | Feed API (pagination, comments, engagement) |
@@ -909,11 +916,12 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `any` types | 0 ✅ |
 | `console.*` | 0 ✅ |
 | TSC errors (prod + test) | 0 ✅ |
-| Vitest tests | 1156 passing (56 files) |
+| Vitest tests | 1370 passing (64 files) |
 | E2E tests | 11 Playwright smoke tests (4 suites) |
 | Error monitoring | Sentry installed (server + client + edge) — needs `SENTRY_DSN` in Vercel |
 | Files >400 lines | ~10 (0 files exceed 600 lines) |
 | Production env gaps | OPENAI_API_KEY, Pusher vars, Sentry DSN, Resend domain |
+| Rate limiting | All 48 API routes now rate limited or intentionally public ✅ 2026-04-04 |
 
 ### Largest Files (>400 lines)
 

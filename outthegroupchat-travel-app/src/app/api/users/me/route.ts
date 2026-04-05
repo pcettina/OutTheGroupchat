@@ -1,9 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
+import { checkRateLimit, apiRateLimiter } from '@/lib/rate-limit';
 
 const updateProfileSchema = z.object({
   name: z.string().min(1).optional(),
@@ -25,8 +26,14 @@ const updateProfileSchema = z.object({
 });
 
 // Get current user profile
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const ip = req.headers.get('x-forwarded-for') || 'anonymous';
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, ip);
+    if (!rateLimitResult.success) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    }
+
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
@@ -121,8 +128,14 @@ export async function GET() {
 }
 
 // Update current user profile
-export async function PATCH(req: Request) {
+export async function PATCH(req: NextRequest) {
   try {
+    const ip = req.headers.get('x-forwarded-for') || 'anonymous';
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, ip);
+    if (!rateLimitResult.success) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    }
+
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {

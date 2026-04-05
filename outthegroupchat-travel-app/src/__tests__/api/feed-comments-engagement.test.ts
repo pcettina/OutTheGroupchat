@@ -17,8 +17,14 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
+
+vi.mock('@/lib/rate-limit', () => ({
+  checkRateLimit: vi.fn().mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: 0 }),
+  apiRateLimiter: null,
+}));
 
 // ---------------------------------------------------------------------------
 // Extend the global prisma mock with all models/methods needed by these routes.
@@ -170,16 +176,19 @@ const MOCK_TRIP_COMMENT_ROW = {
 function makeRequest(
   path: string,
   options: { method?: string; body?: unknown } = {}
-): Request {
+): NextRequest {
   const url = `http://localhost:3000${path}`;
-  const init: RequestInit = { method: options.method ?? 'GET' };
+  const method = options.method ?? 'GET';
 
   if (options.body !== undefined) {
-    init.body = JSON.stringify(options.body);
-    init.headers = { 'Content-Type': 'application/json' };
+    return new NextRequest(url, {
+      method,
+      body: JSON.stringify(options.body),
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
-  return new Request(url, init);
+  return new NextRequest(url, { method });
 }
 
 /** Parse the JSON body from a Response. */

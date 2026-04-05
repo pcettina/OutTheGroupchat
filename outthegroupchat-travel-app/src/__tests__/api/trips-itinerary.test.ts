@@ -9,6 +9,13 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NextRequest } from 'next/server';
+
+vi.mock('@/lib/rate-limit', () => ({
+  apiRateLimiter: {},
+  checkRateLimit: vi.fn().mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: 0 }),
+  getRateLimitHeaders: vi.fn().mockReturnValue({}),
+}));
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
@@ -192,14 +199,14 @@ const VALID_PUT_BODY_EMPTY_DAYS = { days: [] };
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-function makeRequest(path: string, options: { method?: string; body?: unknown } = {}): Request {
+function makeRequest(path: string, options: { method?: string; body?: unknown } = {}): NextRequest {
   const url = `http://localhost:3000${path}`;
-  const init: RequestInit = { method: options.method ?? 'GET' };
+  const init: { method: string; body?: string; headers?: Record<string, string> } = { method: options.method ?? 'GET' };
   if (options.body !== undefined) {
     init.body = JSON.stringify(options.body);
     init.headers = { 'Content-Type': 'application/json' };
   }
-  return new Request(url, init);
+  return new NextRequest(url, init);
 }
 
 async function parseJson(res: Response) {

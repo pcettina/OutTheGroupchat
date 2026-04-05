@@ -18,16 +18,19 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
+
+vi.mock('@/lib/rate-limit', () => ({
+  checkRateLimit: vi.fn().mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: 0 }),
+  apiRateLimiter: null,
+}));
 
 // ---------------------------------------------------------------------------
 // Import route handlers under test
 // ---------------------------------------------------------------------------
-import { GET as invitationsGETBase } from '@/app/api/invitations/route';
-// The route signature declares no params (force-dynamic), but tests pass a
-// Request for readability. Cast to accept it so TSC does not error.
-const invitationsGET = invitationsGETBase as unknown as (req: Request) => Promise<Response>;
+import { GET as invitationsGET } from '@/app/api/invitations/route';
 import {
   GET as invitationByIdGET,
   POST as invitationByIdPOST,
@@ -136,20 +139,23 @@ const MOCK_INVITATION_DETAIL = {
   },
 };
 
-/** Build a minimal Request accepted by the App Router handlers. */
+/** Build a minimal NextRequest accepted by the App Router handlers. */
 function makeRequest(
   path: string,
   options: { method?: string; body?: unknown } = {}
-): Request {
+): NextRequest {
   const url = `http://localhost:3000${path}`;
-  const init: RequestInit = { method: options.method ?? 'GET' };
+  const method = options.method ?? 'GET';
 
   if (options.body !== undefined) {
-    init.body = JSON.stringify(options.body);
-    init.headers = { 'Content-Type': 'application/json' };
+    return new NextRequest(url, {
+      method,
+      body: JSON.stringify(options.body),
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
-  return new Request(url, init);
+  return new NextRequest(url, { method });
 }
 
 /** Parse JSON body from a NextResponse-like Response. */

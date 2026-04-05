@@ -10,8 +10,14 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
+
+vi.mock('@/lib/rate-limit', () => ({
+  checkRateLimit: vi.fn().mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: 0 }),
+  apiRateLimiter: null,
+}));
 
 // ---------------------------------------------------------------------------
 // Mock: @/lib/prisma — extend global setup
@@ -44,8 +50,8 @@ vi.mock('@/lib/prisma', async (importOriginal) => {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-function makeRequest(body: unknown): Request {
-  return new Request('http://localhost/api/feed/share', {
+function makeRequest(body: unknown): NextRequest {
+  return new NextRequest('http://localhost/api/feed/share', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -66,16 +72,14 @@ const mockActivity = {
   name: 'Eiffel Tower Visit',
 };
 
+import { POST } from '@/app/api/feed/share/route';
+
 // ---------------------------------------------------------------------------
 // POST /api/feed/share
 // ---------------------------------------------------------------------------
 describe('POST /api/feed/share', () => {
-  let POST: (req: Request) => Promise<Response>;
-
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks();
-    const mod = await import('@/app/api/feed/share/route');
-    POST = mod.POST;
   });
 
   it('returns 401 when unauthenticated', async () => {

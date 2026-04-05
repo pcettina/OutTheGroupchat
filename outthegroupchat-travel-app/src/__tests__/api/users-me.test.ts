@@ -14,19 +14,27 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { GET, PATCH } from '@/app/api/users/me/route';
 
+vi.mock('@/lib/rate-limit', () => ({
+  checkRateLimit: vi.fn().mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: 0 }),
+  apiRateLimiter: null,
+}));
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-function makeGetRequest(): Request {
-  return new Request('http://localhost/api/users/me', { method: 'GET' });
+const ME_URL = 'http://localhost/api/users/me';
+
+function makeGetRequest(): NextRequest {
+  return new NextRequest(ME_URL, { method: 'GET' });
 }
 
-function makePatchRequest(body: Record<string, unknown>): Request {
-  return new Request('http://localhost/api/users/me', {
+function makePatchRequest(body: Record<string, unknown>): NextRequest {
+  return new NextRequest(ME_URL, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -107,7 +115,7 @@ describe('GET /api/users/me', () => {
   it('returns 401 when not authenticated', async () => {
     vi.mocked(getServerSession).mockResolvedValueOnce(null);
 
-    const res = await GET();
+    const res = await GET(makeGetRequest());
     expect(res.status).toBe(401);
     const json = await res.json();
     expect(json.error).toBe('Unauthorized');
@@ -117,7 +125,7 @@ describe('GET /api/users/me', () => {
     vi.mocked(getServerSession).mockResolvedValueOnce(mockSession);
     vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(null);
 
-    const res = await GET();
+    const res = await GET(makeGetRequest());
     expect(res.status).toBe(404);
     const json = await res.json();
     expect(json.success).toBe(false);
@@ -136,7 +144,7 @@ describe('GET /api/users/me', () => {
       mockSavedActivities as unknown as Awaited<ReturnType<typeof prisma.savedActivity.findMany>>
     );
 
-    const res = await GET();
+    const res = await GET(makeGetRequest());
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.success).toBe(true);
@@ -153,7 +161,7 @@ describe('GET /api/users/me', () => {
     vi.mocked(prisma.trip.findMany).mockResolvedValueOnce([]);
     vi.mocked(prisma.savedActivity.findMany).mockResolvedValueOnce([]);
 
-    const res = await GET();
+    const res = await GET(makeGetRequest());
     const json = await res.json();
     expect(json.data._count).toMatchObject({
       followers: 2,
@@ -172,7 +180,7 @@ describe('GET /api/users/me', () => {
     );
     vi.mocked(prisma.savedActivity.findMany).mockResolvedValueOnce([]);
 
-    const res = await GET();
+    const res = await GET(makeGetRequest());
     const json = await res.json();
     expect(json.data.recentTrips).toHaveLength(1);
     expect(json.data.recentTrips[0].title).toBe('Tokyo Trip');
@@ -188,7 +196,7 @@ describe('GET /api/users/me', () => {
       mockSavedActivities as unknown as Awaited<ReturnType<typeof prisma.savedActivity.findMany>>
     );
 
-    const res = await GET();
+    const res = await GET(makeGetRequest());
     const json = await res.json();
     expect(json.data.savedActivities).toHaveLength(1);
     expect(json.data.savedActivities[0].name).toBe('Ramen Tour');
@@ -198,7 +206,7 @@ describe('GET /api/users/me', () => {
     vi.mocked(getServerSession).mockResolvedValueOnce(mockSession);
     vi.mocked(prisma.user.findUnique).mockRejectedValueOnce(new Error('DB connection lost'));
 
-    const res = await GET();
+    const res = await GET(makeGetRequest());
     expect(res.status).toBe(500);
     const json = await res.json();
     expect(json.success).toBe(false);
@@ -212,7 +220,7 @@ describe('GET /api/users/me', () => {
     );
     vi.mocked(prisma.trip.findMany).mockRejectedValueOnce(new Error('Trip query failed'));
 
-    const res = await GET();
+    const res = await GET(makeGetRequest());
     expect(res.status).toBe(500);
     const json = await res.json();
     expect(json.success).toBe(false);

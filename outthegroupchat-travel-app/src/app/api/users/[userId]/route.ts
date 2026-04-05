@@ -1,9 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { logger } from '@/lib/logger';
+import { checkRateLimit, apiRateLimiter } from '@/lib/rate-limit';
 
 const patchUserSchema = z.object({
   name: z.string().min(1).max(100).optional(),
@@ -14,10 +15,16 @@ const patchUserSchema = z.object({
 
 // Get user profile
 export async function GET(
-  req: Request,
+  req: NextRequest,
   { params }: { params: { userId: string } }
 ) {
   try {
+    const ip = req.headers.get('x-forwarded-for') || 'anonymous';
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, ip);
+    if (!rateLimitResult.success) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    }
+
     const session = await getServerSession(authOptions);
     const { userId } = params;
 
@@ -104,10 +111,16 @@ export async function GET(
 
 // Follow/unfollow user
 export async function POST(
-  req: Request,
+  req: NextRequest,
   { params }: { params: { userId: string } }
 ) {
   try {
+    const ip = req.headers.get('x-forwarded-for') || 'anonymous';
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, ip);
+    if (!rateLimitResult.success) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    }
+
     const session = await getServerSession(authOptions);
     const { userId } = params;
 
@@ -190,10 +203,16 @@ export async function POST(
 
 // Update user profile (owner only)
 export async function PATCH(
-  req: Request,
+  req: NextRequest,
   { params }: { params: { userId: string } }
 ) {
   try {
+    const ip = req.headers.get('x-forwarded-for') || 'anonymous';
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, ip);
+    if (!rateLimitResult.success) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    }
+
     const session = await getServerSession(authOptions);
     const { userId } = params;
 

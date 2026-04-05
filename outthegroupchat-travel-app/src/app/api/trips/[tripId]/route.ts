@@ -38,16 +38,6 @@ const updateTripSchema = z.object({
   isPublic: z.boolean().optional(),
 });
 
-async function isTripMember(tripId: string, userId: string): Promise<boolean> {
-  const membership = await prisma.tripMember.findFirst({
-    where: {
-      tripId,
-      userId,
-    },
-  });
-  return !!membership;
-}
-
 async function isTripOwner(tripId: string, userId: string): Promise<boolean> {
   const trip = await prisma.trip.findFirst({
     where: {
@@ -76,8 +66,6 @@ export async function GET(
       }
     }
 
-    const isAuthenticated = !!session?.user?.id;
-
     const trip = await prisma.trip.findUnique({
       where: { id: tripId },
       include: {
@@ -85,7 +73,7 @@ export async function GET(
           select: {
             id: true,
             name: true,
-            ...(isAuthenticated && { email: true }),
+            email: true,
             image: true,
           },
         },
@@ -95,7 +83,7 @@ export async function GET(
               select: {
                 id: true,
                 name: true,
-                ...(isAuthenticated && { email: true }),
+                email: true,
                 image: true,
                 city: true,
               },
@@ -140,7 +128,7 @@ export async function GET(
               select: {
                 id: true,
                 name: true,
-                ...(isAuthenticated && { email: true }),
+                email: true,
                 image: true,
               },
             },
@@ -185,7 +173,43 @@ export async function GET(
       });
     }
 
-    return NextResponse.json({ success: true, data: trip });
+    const currentUserId = session?.user?.id;
+    const isOwner = currentUserId === trip.ownerId;
+
+    // Strip email from owner data unless the viewer is the trip owner themselves
+    const ownerData = {
+      ...trip.owner,
+      email: isOwner ? trip.owner.email : undefined,
+    };
+
+    // Strip email from each member unless it is the current user's own record
+    const membersData = trip.members.map((m) => ({
+      ...m,
+      user: {
+        ...m.user,
+        email: m.user.id === currentUserId ? m.user.email : undefined,
+      },
+    }));
+
+    // Strip email from invitation user data for non-self users
+    const invitationsData = trip.invitations.map((inv) => ({
+      ...inv,
+      user: inv.user
+        ? {
+            ...inv.user,
+            email: inv.user.id === currentUserId ? inv.user.email : undefined,
+          }
+        : inv.user,
+    }));
+
+    const responseTrip = {
+      ...trip,
+      owner: ownerData,
+      members: membersData,
+      invitations: invitationsData,
+    };
+
+    return NextResponse.json({ success: true, data: responseTrip });
   } catch {
     return NextResponse.json(
       { success: false, error: 'Failed to fetch trip' },

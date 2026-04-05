@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { logger } from '@/lib/logger';
+import { checkRateLimit, authRateLimiter } from '@/lib/rate-limit';
 
 // Identifier namespace kept distinct from password-reset tokens.
 const TOKEN_IDENTIFIER = (email: string) => `beta-init:${email}`;
@@ -48,6 +49,16 @@ function validateApiKey(req: Request): boolean {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function GET(req: Request) {
+  // Rate limit by IP to prevent enumeration even before API key validation.
+  const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown';
+  const rateLimitResult = await checkRateLimit(authRateLimiter, `beta-init-get:${ip}`);
+  if (!rateLimitResult.success) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please try again later.' },
+      { status: 429 }
+    );
+  }
+
   // Only authorised backend callers may issue tokens.
   if (!validateApiKey(req)) {
     return NextResponse.json(

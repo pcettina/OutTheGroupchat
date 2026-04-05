@@ -1,9 +1,9 @@
 # 📡 API & Integration Status
 
-> **Last updated: 2026-03-26**
+> **Last updated: 2026-04-04**
 >
-> **Last Audit:** March 2026
-> **Overall Status:** 86% Complete
+> **Last Audit:** April 2026
+> **Overall Status:** 94% Complete
 > **Target:** 100% for Beta Launch
 
 ---
@@ -45,7 +45,7 @@
 |----------|--------|--------|-------------------|-------|
 | `/api/trips` | GET | ✅ | 🔶 | Lists user's trips |
 | `/api/trips` | POST | ✅ | 🔶 | Creates new trip |
-| `/api/trips/[tripId]` | GET | ✅ | 🔶 | Get trip details; email stripped from unauthenticated public responses (security hardened 2026-03-25) |
+| `/api/trips/[tripId]` | GET | ✅ | 🔶 | Get trip details; email stripped from unauthenticated public responses (security hardened 2026-03-25); email exposure fix applied 2026-04-04 |
 | `/api/trips/[tripId]` | PATCH | ✅ | ⏳ | Update trip |
 | `/api/trips/[tripId]` | DELETE | ✅ | ⏳ | Delete trip |
 
@@ -53,33 +53,33 @@
 
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
-| `/api/trips/[tripId]/members` | GET | ✅ | 🔶 | List members |
+| `/api/trips/[tripId]/members` | GET | ✅ | 🔶 | List members; rate limiting added + email exposure fix 2026-04-04 |
 | `/api/trips/[tripId]/members` | POST | ✅ | ⏳ | Add member — POST handler implemented 2026-03-20 |
-| `/api/trips/[tripId]/invitations` | GET | ✅ | 🔶 | List invitations |
-| `/api/trips/[tripId]/invitations` | POST | ✅ | ✅ | **Email service configured** ✅ Dec 17 |
+| `/api/trips/[tripId]/invitations` | GET | ✅ | 🔶 | List invitations; rate limiting added + email fix 2026-04-04 |
+| `/api/trips/[tripId]/invitations` | POST | ✅ | ✅ | **Email service configured** ✅ Dec 17; rate limiting added 2026-04-04 |
 
 ### Trip Activity APIs
 
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
-| `/api/trips/[tripId]/activities` | GET | ✅ | 🔶 | List activities |
-| `/api/trips/[tripId]/activities` | POST | ✅ | 🔶 | Add activity |
-| `/api/trips/[tripId]/itinerary` | GET | ✅ | 🔶 | Get itinerary — complete ✅ 2026-03-23 |
+| `/api/trips/[tripId]/activities` | GET | ✅ | 🔶 | List activities; rate limiting added 2026-04-04 |
+| `/api/trips/[tripId]/activities` | POST | ✅ | 🔶 | Add activity; rate limiting added 2026-04-04 |
+| `/api/trips/[tripId]/itinerary` | GET | ✅ | 🔶 | Get itinerary — complete ✅ 2026-03-23; rate limiting added 2026-04-04 |
 | `/api/trips/[tripId]/itinerary` | POST | ✅ | ⏳ | Create itinerary day — complete ✅ 2026-03-23 |
-| `/api/trips/[tripId]/itinerary` | PUT | ✅ | ⏳ | Update itinerary (atomic $transaction) — complete ✅ 2026-03-23 |
-| `/api/activities/[activityId]` | GET | ✅ | ⏳ | Get activity detail with comments, ratings, avg score; public activities accessible without auth |
-| `/api/activities/[activityId]` | POST | ✅ | ⏳ | Save/unsave activity (toggle); auth required |
-| `/api/activities/[activityId]` | PUT | ✅ | ⏳ | Add comment (`action: 'comment'`) or rating (`action: 'rate'`) to activity; auth required |
+| `/api/trips/[tripId]/itinerary` | PUT | ✅ | ⏳ | Update itinerary (atomic $transaction) — complete ✅ 2026-03-23; rate limiting added 2026-04-04 |
+| `/api/activities/[activityId]` | GET | ✅ | ⏳ | Get activity detail with comments, ratings, avg score; public activities accessible without auth; rate limiting added 2026-04-04 |
+| `/api/activities/[activityId]` | POST | ✅ | ⏳ | Save/unsave activity (toggle); auth required; rate limiting added 2026-04-04 |
+| `/api/activities/[activityId]` | PUT | ✅ | ⏳ | Add comment (`action: 'comment'`) or rating (`action: 'rate'`) to activity; auth required; rate limiting added 2026-04-04 |
 
 ### Trip Planning APIs
 
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
-| `/api/trips/[tripId]/survey` | GET | ✅ | 🔶 | Get survey |
-| `/api/trips/[tripId]/survey` | POST | ✅ | 🔶 | Create/respond to survey |
-| `/api/trips/[tripId]/voting` | GET | ✅ | 🔶 | Get voting session |
-| `/api/trips/[tripId]/voting` | POST | ✅ | 🔶 | Create/cast vote |
-| `/api/trips/[tripId]/recommendations` | GET | ✅ | ⏳ | AI recommendations |
+| `/api/trips/[tripId]/survey` | GET | ✅ | 🔶 | Get survey; rate limiting added 2026-04-04 |
+| `/api/trips/[tripId]/survey` | POST | ✅ | 🔶 | Create/respond to survey; rate limiting added 2026-04-04 |
+| `/api/trips/[tripId]/voting` | GET | ✅ | 🔶 | Get voting session; rate limiting added 2026-04-04 |
+| `/api/trips/[tripId]/voting` | POST | ✅ | 🔶 | Create/cast vote; rate limiting added 2026-04-04 |
+| `/api/trips/[tripId]/recommendations` | GET | ✅ | ⏳ | AI recommendations; rate limiting added 2026-04-04 |
 | `/api/trips/[tripId]/flights` | GET | ✅ | ⏳ | Search flights for trip dates using user's profile city as origin; uses Amadeus API |
 | `/api/trips/[tripId]/suggestions` | GET | ✅ | ⏳ | Fetch events (Ticketmaster), attractions, and restaurants for trip destination; includes daily cost estimate |
 
@@ -87,9 +87,9 @@
 
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
-| `/api/invitations` | GET | ✅ | ⏳ | List all invitations for current user; auto-marks expired PENDING invitations |
-| `/api/invitations/[invitationId]` | GET | ✅ | ⏳ | Get invitation details including trip + members; auth + ownership check |
-| `/api/invitations/[invitationId]` | POST | ✅ | ⏳ | Accept or decline invitation (`action: 'accept'|'decline'`); on accept adds user as TripMember and notifies owner |
+| `/api/invitations` | GET | ✅ | ⏳ | List all invitations for current user; auto-marks expired PENDING invitations; rate limiting added 2026-04-04 |
+| `/api/invitations/[invitationId]` | GET | ✅ | ⏳ | Get invitation details including trip + members; auth + ownership check; rate limiting added 2026-04-04 |
+| `/api/invitations/[invitationId]` | POST | ✅ | ⏳ | Accept or decline invitation (`action: 'accept'|'decline'`); on accept adds user as TripMember and notifies owner; rate limiting added 2026-04-04 |
 | `/api/trips/[tripId]/suggestions` | GET | 🔶 | ⏳ | Activity suggestions via Ticketmaster + Places APIs; requires ext API keys |
 | `/api/trips/[tripId]/flights` | GET | 🔶 | ⏳ | Flight search via Amadeus-style integration; requires AMADEUS_API_KEY |
 
@@ -100,10 +100,10 @@
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
 | `/api/feed` | GET | ✅ | ✅ | Main feed; Zod validation added 2026-03-21 |
-| `/api/feed/comments` | GET | ✅ | ✅ | **Trip support added** ✅ Dec 17 |
-| `/api/feed/comments` | POST | ✅ | ✅ | **Trip support added** ✅ Dec 17 |
-| `/api/feed/engagement` | POST | ✅ | ✅ | **Trip support added** ✅ Dec 17 |
-| `/api/feed/share` | POST | ✅ | ⏳ | Implemented with Zod validation + notification ✅ 2026-03-16 |
+| `/api/feed/comments` | GET | ✅ | ✅ | **Trip support added** ✅ Dec 17; rate limiting added 2026-04-04 |
+| `/api/feed/comments` | POST | ✅ | ✅ | **Trip support added** ✅ Dec 17; rate limiting added 2026-04-04 |
+| `/api/feed/engagement` | POST | ✅ | ✅ | **Trip support added** ✅ Dec 17; rate limiting added 2026-04-04 |
+| `/api/feed/share` | POST | ✅ | ⏳ | Implemented with Zod validation + notification ✅ 2026-03-16; rate limiting added 2026-04-04 |
 
 ### Feed Issues to Fix
 ```
@@ -123,7 +123,7 @@ COMPLETED ✅ Dec 17:
 |----------|--------|--------|-------------------|-------|
 | `/api/notifications` | GET | ✅ | ✅ | **Data structure verified** ✅ Dec 17; Zod pagination params improved 2026-03-22 |
 | `/api/notifications` | PATCH | ✅ | ✅ | Mark as read |
-| `/api/notifications/[id]` | PATCH | ✅ | ✅ | Mark individual notification read; Zod validation added 2026-03-13; Zod params (cuid), JSON.parse safety, bugfix (read field was hardcoded true) 2026-03-29 |
+| `/api/notifications/[id]` | PATCH | ✅ | ✅ | Mark individual notification read; Zod validation added 2026-03-13; Zod params (cuid), JSON.parse safety, bugfix (read field was hardcoded true) 2026-03-29; rate limiting added 2026-04-04 |
 
 ### Notification Issues to Fix
 ```
@@ -182,10 +182,10 @@ COMPLETED ✅ Dec 17:
 
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
-| `/api/profile` | GET | ✅ | 🔶 | Get current user |
-| `/api/profile` | PUT | ✅ | 🔶 | Update profile; Zod validation added 2026-03-13 |
-| `/api/users/[userId]` | GET | ✅ | ⏳ | Get user profile |
-| `/api/users/[userId]/follow` | POST | ✅ | ⏳ | Follow/unfollow implemented in /api/users/[userId] POST ✅ |
+| `/api/profile` | GET | ✅ | 🔶 | Get current user; rate limiting added 2026-04-04 |
+| `/api/profile` | PUT | ✅ | 🔶 | Update profile; Zod validation added 2026-03-13; rate limiting added 2026-04-04 |
+| `/api/users/[userId]` | GET | ✅ | ⏳ | Get user profile; rate limiting added 2026-04-04 |
+| `/api/users/[userId]/follow` | POST | ✅ | ⏳ | Follow/unfollow implemented in /api/users/[userId] POST ✅; rate limiting added 2026-04-04 |
 
 ---
 
@@ -193,7 +193,7 @@ COMPLETED ✅ Dec 17:
 
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
-| `/api/pusher/auth` | POST | 🔒 | 🔒 | **Needs env vars** |
+| `/api/pusher/auth` | POST | 🔒 | 🔒 | **Needs env vars**; rate limiting added 2026-04-04 |
 
 ### Pusher Issues to Fix
 ```
@@ -215,8 +215,8 @@ BLOCKED - Need Environment Variables:
 | `/api/cron` | GET | ✅ | N/A | Background jobs; CRON_SECRET validation hardened 2026-03-22 |
 | Sentry lib | N/A | ✅ | N/A | `src/lib/sentry.ts` created 2026-03-25 — centralized Sentry helpers (captureException, addBreadcrumb, setUser) |
 | `/api/health` | GET | ✅ | N/A | DB connectivity check, 503 on degraded ✅ 2026-03-10; response hardened 2026-03-25 (NODE_ENV + version removed for data minimization — returns {status, timestamp, database}) |
-| `/api/users/me` | GET | ✅ | 🔶 | Get current authenticated user |
-| `/api/users/me` | PATCH | ✅ | 🔶 | Update current user profile + preferences |
+| `/api/users/me` | GET | ✅ | 🔶 | Get current authenticated user; rate limiting added 2026-04-04 |
+| `/api/users/me` | PATCH | ✅ | 🔶 | Update current user profile + preferences; rate limiting added 2026-04-04 |
 
 ---
 
@@ -224,12 +224,12 @@ BLOCKED - Need Environment Variables:
 
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
-| `/api/activities/[activityId]` | GET | ✅ | 🔶 | Get activity detail, ratings, comments |
-| `/api/activities/[activityId]` | POST | ✅ | 🔶 | Save/unsave activity (toggle) |
-| `/api/activities/[activityId]` | PUT | ✅ | 🔶 | Add comment or rating to activity |
-| `/api/invitations` | GET | ✅ | 🔶 | List user's pending trip invitations |
-| `/api/invitations/[invitationId]` | GET | ✅ | 🔶 | Get invitation detail |
-| `/api/invitations/[invitationId]` | POST | ✅ | 🔶 | Respond to invitation (accept/decline) |
+| `/api/activities/[activityId]` | GET | ✅ | 🔶 | Get activity detail, ratings, comments; rate limiting added 2026-04-04 |
+| `/api/activities/[activityId]` | POST | ✅ | 🔶 | Save/unsave activity (toggle); rate limiting added 2026-04-04 |
+| `/api/activities/[activityId]` | PUT | ✅ | 🔶 | Add comment or rating to activity; rate limiting added 2026-04-04 |
+| `/api/invitations` | GET | ✅ | 🔶 | List user's pending trip invitations; rate limiting added 2026-04-04 |
+| `/api/invitations/[invitationId]` | GET | ✅ | 🔶 | Get invitation detail; rate limiting added 2026-04-04 |
+| `/api/invitations/[invitationId]` | POST | ✅ | 🔶 | Respond to invitation (accept/decline); rate limiting added 2026-04-04 |
 
 ---
 
@@ -239,7 +239,7 @@ BLOCKED - Need Environment Variables:
 |----------|--------|--------|-------------------|-------|
 | `/api/beta/signup` | POST | ✅ | ✅ | Beta waitlist signup |
 | `/api/beta/status` | GET | ✅ | ✅ | Check beta access status; IP rate limiting added 2026-03-21; response narrowed to {exists, passwordInitialized} only (data minimization) ✅ 2026-03-22 |
-| `/api/beta/initialize-password` | POST | ✅ | ✅ | Beta user password init — now protected with N8N_API_KEY auth ✅ 2026-03-19 (was unauthenticated — account takeover vulnerability fixed) |
+| `/api/beta/initialize-password` | POST | ✅ | ✅ | Beta user password init — now protected with N8N_API_KEY auth ✅ 2026-03-19 (was unauthenticated — account takeover vulnerability fixed); GET rate limiting added 2026-04-04 |
 | `/api/newsletter/subscribe` | POST | ✅ | ✅ | Newsletter subscription; auth now required 2026-03-26 |
 
 ---
@@ -372,4 +372,4 @@ EMAIL_FROM=             # Email sender (onboarding@resend.dev) ✅
 
 *Review and update after each API change.*
 
-*Last Updated: 2026-03-26 - /api/ai/search GET+POST fully implemented (semantic search, destinations branch); /api/newsletter/subscribe now requires auth; /api/auth/signup, /api/auth/reset-password, /api/auth/verify-email: rate limiting now first operation; 153 new tests tonight (1156 total, 56 test files); dead components (NotificationCenter.tsx, SharePreview.tsx) removed; JSDoc added to costs.ts; README updated. Also includes 2026-03-29 changes: /api/ai/chat Zod strengthened + JSON.parse safety; /api/ai/recommend Zod GET params + JSON.parse safety; /api/ai/suggest-activities + generate-itinerary JSON.parse safety; /api/notifications/[notificationId] Zod params (cuid) + bugfix (read was hardcoded true); JSDoc added to src/lib/geocoding.ts; N8N docs deprecated*
+*Last Updated: 2026-04-04 - Rate limiting added to 20 previously unprotected endpoints: invitations (GET), invitations/[invitationId] (GET/POST), profile (GET/PUT), users/me (GET/PATCH), users/[userId] (GET/POST), pusher/auth (POST), notifications/[notificationId] (PATCH), feed/comments (GET/POST), feed/engagement (POST), feed/share (POST), activities/[activityId] (GET/POST/PUT), trips/[tripId]/activities (GET/POST), trips/[tripId]/survey (GET/POST), trips/[tripId]/voting (GET/POST), trips/[tripId]/invitations (GET/POST), trips/[tripId]/members (GET), trips/[tripId]/itinerary (GET/PUT), trips/[tripId]/recommendations (GET/POST), beta/initialize-password (GET). Email exposure fix applied to trips/[tripId]/members, trips/[tripId]/invitations, and trips/[tripId]. /trips/[tripId]/members page created (fixes dead nav link). 107 new tests from Wave 1; trips-itinerary-recommendations.test.ts recreated with rate limiting coverage.*

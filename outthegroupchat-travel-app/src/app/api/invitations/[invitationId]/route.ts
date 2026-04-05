@@ -1,10 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
 import type { Prisma } from '@prisma/client';
 import { logger } from '@/lib/logger';
+import { checkRateLimit, apiRateLimiter } from '@/lib/rate-limit';
 
 const respondSchema = z.object({
   action: z.enum(['accept', 'decline']),
@@ -18,10 +19,16 @@ const respondSchema = z.object({
 
 // Respond to an invitation
 export async function POST(
-  req: Request,
+  req: NextRequest,
   { params }: { params: { invitationId: string } }
 ) {
   try {
+    const ip = req.headers.get('x-forwarded-for') || 'anonymous';
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, ip);
+    if (!rateLimitResult.success) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    }
+
     const session = await getServerSession(authOptions);
     const { invitationId } = params;
 
@@ -135,10 +142,16 @@ export async function POST(
 
 // Get invitation details
 export async function GET(
-  req: Request,
+  req: NextRequest,
   { params }: { params: { invitationId: string } }
 ) {
   try {
+    const ip = req.headers.get('x-forwarded-for') || 'anonymous';
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, ip);
+    if (!rateLimitResult.success) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    }
+
     const session = await getServerSession(authOptions);
     const { invitationId } = params;
 

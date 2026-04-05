@@ -1,9 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
 import type { Prisma } from '@prisma/client';
+import { checkRateLimit, apiRateLimiter } from '@/lib/rate-limit';
 
 interface VotingOption {
   id: string;
@@ -33,10 +34,16 @@ const submitVoteSchema = z.object({
 });
 
 export async function GET(
-  req: Request,
+  req: NextRequest,
   { params }: { params: { tripId: string } }
 ) {
   try {
+    const ip = req.headers.get('x-forwarded-for') || 'anonymous';
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, ip);
+    if (!rateLimitResult.success) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    }
+
     const session = await getServerSession(authOptions);
     const { tripId } = params;
 
@@ -109,10 +116,16 @@ export async function GET(
 }
 
 export async function POST(
-  req: Request,
+  req: NextRequest,
   { params }: { params: { tripId: string } }
 ) {
   try {
+    const ip = req.headers.get('x-forwarded-for') || 'anonymous';
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, ip);
+    if (!rateLimitResult.success) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    }
+
     const session = await getServerSession(authOptions);
     const { tripId } = params;
 
@@ -191,10 +204,16 @@ export async function POST(
 }
 
 export async function PUT(
-  req: Request,
+  req: NextRequest,
   { params }: { params: { tripId: string } }
 ) {
   try {
+    const ip = req.headers.get('x-forwarded-for') || 'anonymous';
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, ip);
+    if (!rateLimitResult.success) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    }
+
     const session = await getServerSession(authOptions);
     const { tripId } = params;
 

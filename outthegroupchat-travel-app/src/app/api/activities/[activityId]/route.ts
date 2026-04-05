@@ -1,9 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
+import { checkRateLimit, apiRateLimiter } from '@/lib/rate-limit';
 
 const commentSchema = z.object({
   text: z.string().min(1).max(500),
@@ -16,10 +17,16 @@ const ratingSchema = z.object({
 
 // Get activity details
 export async function GET(
-  req: Request,
+  req: NextRequest,
   { params }: { params: { activityId: string } }
 ) {
   try {
+    const ip = req.headers.get('x-forwarded-for') || 'anonymous';
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, ip);
+    if (!rateLimitResult.success) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    }
+
     const session = await getServerSession(authOptions);
     const { activityId } = params;
 
@@ -141,10 +148,16 @@ export async function GET(
 
 // Save/unsave activity
 export async function POST(
-  req: Request,
+  req: NextRequest,
   { params }: { params: { activityId: string } }
 ) {
   try {
+    const ip = req.headers.get('x-forwarded-for') || 'anonymous';
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, ip);
+    if (!rateLimitResult.success) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    }
+
     const session = await getServerSession(authOptions);
     const { activityId } = params;
 
@@ -220,10 +233,16 @@ export async function POST(
 
 // Add comment or rating
 export async function PUT(
-  req: Request,
+  req: NextRequest,
   { params }: { params: { activityId: string } }
 ) {
   try {
+    const ip = req.headers.get('x-forwarded-for') || 'anonymous';
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, ip);
+    if (!rateLimitResult.success) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    }
+
     const session = await getServerSession(authOptions);
     const { activityId } = params;
 

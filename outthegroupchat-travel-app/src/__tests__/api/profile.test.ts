@@ -16,8 +16,14 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
+
+vi.mock('@/lib/rate-limit', () => ({
+  checkRateLimit: vi.fn().mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: 0 }),
+  apiRateLimiter: null,
+}));
 
 // Extend the global prisma mock with prisma.user.update, which the PUT
 // handler calls but the setup.ts stub does not include.
@@ -74,20 +80,25 @@ const MOCK_USER_PROFILE = {
   preferences: { currency: 'USD' },
 };
 
-/** Build a minimal Request accepted by the App Router handlers. */
+const PROFILE_URL = 'http://localhost:3000/api/profile';
+
+/** Build a minimal NextRequest accepted by the App Router handlers. */
 function makeRequest(
   path: string,
   options: { method?: string; body?: unknown } = {}
-): Request {
+): NextRequest {
   const url = `http://localhost:3000${path}`;
-  const init: RequestInit = { method: options.method ?? 'GET' };
+  const method = options.method ?? 'GET';
 
   if (options.body !== undefined) {
-    init.body = JSON.stringify(options.body);
-    init.headers = { 'Content-Type': 'application/json' };
+    return new NextRequest(url, {
+      method,
+      body: JSON.stringify(options.body),
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
-  return new Request(url, init);
+  return new NextRequest(url, { method });
 }
 
 // ---------------------------------------------------------------------------
@@ -104,7 +115,7 @@ describe('GET /api/profile', () => {
   it('returns 401 when there is no session', async () => {
     mockGetServerSession.mockResolvedValueOnce(null);
 
-    const res = await GET();
+    const res = await GET(new NextRequest(PROFILE_URL));
     // The GET handler returns plain text for 401, not JSON
     expect(res.status).toBe(401);
     expect(mockPrismaUser.findUnique).not.toHaveBeenCalled();
@@ -114,7 +125,7 @@ describe('GET /api/profile', () => {
     mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
     mockPrismaUser.findUnique.mockResolvedValueOnce(MOCK_USER_PROFILE);
 
-    const res = await GET();
+    const res = await GET(new NextRequest(PROFILE_URL));
     const body = await res.json();
 
     expect(res.status).toBe(200);
@@ -128,7 +139,7 @@ describe('GET /api/profile', () => {
     mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
     mockPrismaUser.findUnique.mockResolvedValueOnce(MOCK_USER_PROFILE);
 
-    await GET();
+    await GET(new NextRequest(PROFILE_URL));
 
     const callArgs = mockPrismaUser.findUnique.mock.calls[0][0];
     expect(callArgs.where.id).toBe(MOCK_USER_ID);
@@ -138,7 +149,7 @@ describe('GET /api/profile', () => {
     mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
     mockPrismaUser.findUnique.mockResolvedValueOnce(null);
 
-    const res = await GET();
+    const res = await GET(new NextRequest(PROFILE_URL));
     expect(res.status).toBe(404);
   });
 
@@ -146,7 +157,7 @@ describe('GET /api/profile', () => {
     mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
     mockPrismaUser.findUnique.mockRejectedValueOnce(new Error('DB error'));
 
-    const res = await GET();
+    const res = await GET(new NextRequest(PROFILE_URL));
     expect(res.status).toBe(500);
   });
 });

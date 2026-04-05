@@ -177,23 +177,44 @@ export const TRIP_PLANNING_SURVEY: SurveyQuestion[] = [
   },
 ];
 
+/**
+ * Service class for survey lifecycle management and response analysis.
+ * All methods are static; no instance is required.
+ *
+ * Responsibilities:
+ * - Provide default survey templates (user preferences, trip planning).
+ * - Persist and close `TripSurvey` records via Prisma.
+ * - Aggregate and score survey responses to produce a {@link SurveyAnalysis}.
+ */
 export class SurveyService {
   /**
-   * Get the default user preferences survey
+   * Returns the default user-preferences survey template.
+   *
+   * @returns A copy of {@link INITIAL_USER_SURVEY} — the standard question set
+   *   covering travel style, budget, interests, accommodation, and activity level.
    */
   static getUserPreferencesSurvey(): SurveyQuestion[] {
     return INITIAL_USER_SURVEY;
   }
 
   /**
-   * Get the default trip planning survey
+   * Returns the default trip-planning survey template.
+   *
+   * @returns A copy of {@link TRIP_PLANNING_SURVEY} — the standard question set
+   *   covering availability, duration, destinations, activities, budget,
+   *   accommodation, room-sharing, dining, and departure city.
    */
   static getTripPlanningSurvey(): SurveyQuestion[] {
     return TRIP_PLANNING_SURVEY;
   }
 
   /**
-   * Analyze survey responses for a trip
+   * Loads all responses for a survey and produces a full {@link SurveyAnalysis}.
+   *
+   * @param surveyId - The Prisma `TripSurvey` record ID to analyse.
+   * @returns Aggregated analysis including budget, date, location, and activity
+   *   preferences derived from all collected responses.
+   * @throws {Error} When no `TripSurvey` record is found for `surveyId`.
    */
   static async analyzeSurveyResponses(surveyId: string): Promise<SurveyAnalysis> {
     const survey = await prisma.tripSurvey.findUnique({
@@ -390,7 +411,10 @@ export class SurveyService {
   }
 
   /**
-   * Close a survey and trigger analysis
+   * Marks a survey as closed by setting its status to `'CLOSED'`.
+   *
+   * @param surveyId - The Prisma `TripSurvey` record ID to close.
+   * @returns Resolves when the database update completes.
    */
   static async closeSurvey(surveyId: string): Promise<void> {
     await prisma.tripSurvey.update({
@@ -400,7 +424,12 @@ export class SurveyService {
   }
 
   /**
-   * Create a default trip planning survey for a trip
+   * Creates a new trip-planning survey record in the database using the default
+   * {@link TRIP_PLANNING_SURVEY} question set.
+   *
+   * @param tripId - The ID of the trip this survey belongs to.
+   * @param expirationHours - Number of hours until the survey expires (default: 48).
+   * @returns The newly created `TripSurvey` Prisma record.
    */
   static async createTripSurvey(tripId: string, expirationHours: number = 48): Promise<TripSurvey> {
     const expiresAt = new Date(Date.now() + expirationHours * 60 * 60 * 1000);

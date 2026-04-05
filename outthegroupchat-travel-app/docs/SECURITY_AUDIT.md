@@ -185,6 +185,41 @@ Should use structured logging (e.g., Pino, Winston).
 
 ---
 
+## 🟢 RESOLVED SINCE LAST AUDIT (2026-04-04)
+
+### Rate Limiting — Expanded Coverage
+**Date:** 2026-04-04
+**Risk Level:** ✅ RESOLVED
+
+14 additional routes now have Redis-backed rate limiting via `checkRateLimit()`:
+- `/api/trips/[tripId]/invitations`
+- `/api/users/me` (profile endpoint)
+- `/api/users/[userId]` (public user endpoint)
+- `/api/pusher/auth`
+- `/api/notifications` and `/api/notifications/[id]`
+- `/api/feed/comments`
+- `/api/feed/engagement`
+- `/api/feed/share`
+- `/api/trips/[tripId]/activities/[activityId]`
+- `/api/trips/[tripId]/activities`
+- `/api/trips/[tripId]/survey`
+- `/api/trips/[tripId]/voting`
+- `/api/trips/[tripId]/members`
+- `/api/beta/initialize-password` (GET method)
+
+Rate limiting is now applied to the vast majority of API surface area.
+
+### Email Exposure Fix — Members, Invitations, Trips
+**Date:** 2026-04-04
+**Risk Level:** ✅ RESOLVED
+
+Email addresses are no longer exposed in the following endpoints:
+- `GET /api/trips/[tripId]/members` — member user objects no longer include `email`
+- `GET /api/trips/[tripId]/invitations` — invitation objects no longer include raw email
+- `GET /api/trips` — trip member listings no longer include `email`
+
+---
+
 ## 📋 Security Checklist for Social Features
 
 As we expand social features, implement:
@@ -229,10 +264,13 @@ const securityHeaders = [
 | 🟠 Medium | 4 (2 resolved ✅, 2 open) | Next sprint |
 | 🟡 Low | 3 | Backlog |
 
-**Overall Security Score: 7/10** (improved from 6/10 — rate limiting, demo credentials, and `any` types resolved)
+**Overall Security Score: 7.5/10** (improved from 7/10 — rate limiting expanded to 14 more routes, email exposure fixed in members/invitations/trips endpoints)
+
+### Routes With Rate Limiting (as of 2026-04-04)
+All AI routes, all auth routes, all discover routes, all feed routes, notifications, search, inspiration, beta, pusher/auth, users/me, users/[userId], trips CRUD, trips/invitations, trips/activities, trips/activities/[activityId], trips/survey, trips/voting, trips/members — near-complete API coverage.
 
 ---
 
-*Last Updated: 2026-03-24*
+*Last Updated: 2026-04-04*
 *Next Audit: Before production launch*
 

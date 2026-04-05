@@ -8,7 +8,7 @@ This document outlines the test cases needed to validate the OutTheGroupchat pla
 
 ## Testing Stack
 
-> **Status (2026-03-24):** Vitest and Playwright are already installed and configured. 865+ tests passing across 45 test files.
+> **Status (2026-04-04):** Vitest and Playwright are already installed and configured. 1341+ tests passing across 63 test files, 0 failures.
 
 ```bash
 # Install testing dependencies (already in package.json — run npm install)
@@ -803,6 +803,21 @@ export const mockSurvey = {
 
 ---
 
+## Recent Test Files Added (2026-04-04)
+
+The following test files were added in the nightly build of 2026-04-04, contributing 107 new tests:
+
+| Test File | Tests | Coverage Area |
+|-----------|-------|---------------|
+| `invitation-lifecycle-integration.test.ts` | 26 | Invitation create, accept, decline, expiry, auth guards |
+| `feed-routes-edge-cases.test.ts` | 29 | Feed comments, engagement reactions, share edge cases |
+| `trips-activities-voting-security.test.ts` | 28 | Activity CRUD security, voting session auth, rate limit checks |
+| `profile-users-edge-cases.test.ts` | 24 | User profile GET/PATCH, public profile access, privacy edge cases |
+
+These tests verify the security fixes applied tonight: rate limiting on newly protected routes, email exposure prevention in members/invitations, and membership check ordering on the GET members endpoint.
+
+---
+
 ## Running Tests
 
 ### NPM Scripts
@@ -904,7 +919,7 @@ jobs:
 
 | Category | Target | Current |
 |----------|--------|---------|
-| Unit Tests | 80% | 865+ passing (45 test files) |
+| Unit Tests | 80% | 1341+ passing (63 test files) |
 | Integration Tests | 70% | Included in Vitest suite |
 | E2E Tests | Critical paths | e2e/auth-flow.spec.ts (requires `npx playwright install chromium`) |
 
@@ -932,5 +947,5 @@ jobs:
 
 ---
 
-*Last Updated: 2026-03-24*
+*Last Updated: 2026-04-04*
 

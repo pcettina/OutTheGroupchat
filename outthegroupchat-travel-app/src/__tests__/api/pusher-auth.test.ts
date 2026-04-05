@@ -14,7 +14,13 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
+
+vi.mock('@/lib/rate-limit', () => ({
+  checkRateLimit: vi.fn().mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: 0 }),
+  apiRateLimiter: null,
+}));
 
 // ---------------------------------------------------------------------------
 // Mock @/lib/pusher so getPusherServer() is fully controlled per-test.
@@ -65,12 +71,12 @@ const MOCK_AUTH_RESPONSE = {
 function makeFormDataRequest(
   socketId: string | null,
   channelName: string | null
-): Request {
+): NextRequest {
   const formData = new FormData();
   if (socketId !== null) formData.set('socket_id', socketId);
   if (channelName !== null) formData.set('channel_name', channelName);
 
-  return new Request('http://localhost:3000/api/pusher/auth', {
+  return new NextRequest('http://localhost:3000/api/pusher/auth', {
     method: 'POST',
     body: formData,
   });

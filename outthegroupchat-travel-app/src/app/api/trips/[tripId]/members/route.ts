@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
 import type { Prisma } from '@prisma/client';
+import { apiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 
 const addMemberSchema = z.object({
   userId: z.string().optional(),
@@ -40,6 +41,14 @@ export async function POST(
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, session.user.id);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
+      );
     }
 
     const body = await req.json();
@@ -101,7 +110,6 @@ export async function POST(
           select: {
             id: true,
             name: true,
-            email: true,
             image: true,
           },
         },
@@ -129,6 +137,26 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, session.user.id);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
+      );
+    }
+
+    // Verify the requesting user is a member of this trip
+    const membership = await prisma.tripMember.findFirst({
+      where: { tripId, userId: session.user.id },
+    });
+
+    if (!membership) {
+      return NextResponse.json(
+        { success: false, error: 'Not a member of this trip' },
+        { status: 403 }
+      );
+    }
+
     const members = await prisma.tripMember.findMany({
       where: { tripId },
       include: {
@@ -136,7 +164,6 @@ export async function GET(
           select: {
             id: true,
             name: true,
-            email: true,
             image: true,
             city: true,
             preferences: true,
@@ -165,6 +192,14 @@ export async function PATCH(
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, session.user.id);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
+      );
     }
 
     const body = await req.json();
@@ -234,7 +269,6 @@ export async function PATCH(
           select: {
             id: true,
             name: true,
-            email: true,
             image: true,
           },
         },
@@ -260,6 +294,14 @@ export async function DELETE(
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, session.user.id);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
+      );
     }
 
     const { searchParams } = new URL(req.url);
@@ -325,4 +367,3 @@ export async function DELETE(
     );
   }
 }
-

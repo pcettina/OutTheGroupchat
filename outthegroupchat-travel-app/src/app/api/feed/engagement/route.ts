@@ -1,9 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { logError } from '@/lib/logger';
 import { z } from 'zod';
+import { checkRateLimit, apiRateLimiter } from '@/lib/rate-limit';
 
 const engagementSchema = z.object({
   itemId: z.string().min(1, 'itemId is required'),
@@ -17,8 +18,14 @@ const getEngagementSchema = z.object({
 });
 
 // Handle likes/unlikes for feed items
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
+    const ip = req.headers.get('x-forwarded-for') || 'anonymous';
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, ip);
+    if (!rateLimitResult.success) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    }
+
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
@@ -149,8 +156,14 @@ export async function POST(req: Request) {
 }
 
 // Get engagement stats for items
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   try {
+    const ip = req.headers.get('x-forwarded-for') || 'anonymous';
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, ip);
+    if (!rateLimitResult.success) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    }
+
     const session = await getServerSession(authOptions);
     const { searchParams } = new URL(req.url);
     const getResult = getEngagementSchema.safeParse({

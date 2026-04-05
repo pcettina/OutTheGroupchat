@@ -12,6 +12,11 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+vi.mock('@/lib/rate-limit', () => ({
+  checkRateLimit: vi.fn().mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: 0 }),
+  apiRateLimiter: null,
+}));
+
 // ---------------------------------------------------------------------------
 // Override the global @/lib/prisma mock with a complete factory that includes
 // all models used by these two route files. This MUST come before any imports
@@ -141,8 +146,10 @@ vi.mock('@/lib/invitations', () => ({
 // ---------------------------------------------------------------------------
 // Import modules under test AFTER vi.mock declarations
 // ---------------------------------------------------------------------------
+import { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
+import { checkRateLimit } from '@/lib/rate-limit';
 import {
   GET as activitiesGET,
   POST as activitiesPOST,
@@ -256,14 +263,17 @@ const VALID_PUT_ITINERARY_BODY = {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-function makeRequest(path: string, options: { method?: string; body?: unknown } = {}): Request {
+function makeRequest(path: string, options: { method?: string; body?: unknown } = {}): NextRequest {
   const url = `http://localhost:3000${path}`;
-  const init: RequestInit = { method: options.method ?? 'GET' };
+  const method = options.method ?? 'GET';
   if (options.body !== undefined) {
-    init.body = JSON.stringify(options.body);
-    init.headers = { 'Content-Type': 'application/json' };
+    return new NextRequest(url, {
+      method,
+      body: JSON.stringify(options.body),
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
-  return new Request(url, init);
+  return new NextRequest(url, { method });
 }
 
 async function parseJson(res: Response) {
@@ -274,6 +284,8 @@ beforeEach(() => {
   // resetAllMocks clears call history AND the mockResolvedValueOnce queue,
   // preventing state from leaking between tests in this file.
   vi.resetAllMocks();
+  // Re-establish rate limit mock after resetAllMocks clears it.
+  vi.mocked(checkRateLimit).mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: 0 });
 });
 
 // ===========================================================================

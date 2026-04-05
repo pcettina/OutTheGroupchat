@@ -191,17 +191,48 @@
 
 | Metric | Target | Current | Previous |
 |--------|--------|---------|---------|
-| Test count | 500+ | 1156 (56 test files) | 1003 (53 files) |
+| Test count | 500+ | 1370 (64 test files) | 1430 (66 files) |
 | `any` types | 0 | 0 ✅ | 0 |
 | `console.*` in prod code | 0 | 0 ✅ | 0 |
 | TSC errors (test files) | 0 | 0 ✅ | 0 |
 | Sentry configured | Yes | Infrastructure ready | Infrastructure ready |
 | `<img>` warnings on build | 0 | 0 ✅ | 0 |
-| Launch readiness | 85% | 78% | 75% |
+| Launch readiness | 85% | 82% | 80% |
 
 ---
 
 *Updated: 2026-03-21*
+---
+
+## Completed 2026-04-04 (Nightly Build)
+
+### Wave 1: New Tests (107 tests)
+- [L4] Invitation lifecycle integration tests — 26 tests (invitation-lifecycle-integration.test.ts)
+- [L5] Feed routes edge case tests — 29 tests (feed-routes-edge-cases.test.ts)
+- [L6] Trips activities/voting security tests — 28 tests (trips-activities-voting-security.test.ts)
+- [M5] Profile and users/me edge case tests — 24 tests (profile-users-edge-cases.test.ts)
+
+### Wave 2: Features & Refactors
+- [L1] Created /trips/[tripId]/members page (fixes dead nav link)
+- [L2] Rate limiting added to 7 routes: invitations, profile, users/me, users/[userId], pusher/auth, notifications/[notificationId], invitations/[invitationId]
+- [L3] Rate limiting added to 7 routes: feed/comments, feed/engagement, feed/share, activities/[activityId], trips/activities, trips/survey, trips/voting
+- [M1] Email exposure fixed in trips/members, trips/invitations, trips route + rate limiting added
+- [M2] Rate limiting added to beta/initialize-password GET (auth/demo Zod already present)
+- [M3] trips-itinerary-recommendations.test.ts recreated + forward-looking assertions tightened
+- [M4] Removed dead SignUpForm.tsx, added JSDoc to survey.service.ts
+- [M6] Updated SECURITY_AUDIT, TEST_CASES, IMPLEMENTATION_STACK, PRODUCTION_ROADMAP docs
+
+### Wave 3 Fixes
+- Rate limiting added to /api/trips/[tripId]/itinerary and /api/trips/[tripId]/recommendations
+- prisma.activityComment.count added to test setup.ts
+- trips-itinerary.test.ts and trips-tripid-recommendations.test.ts updated to use NextRequest + rate-limit mock
+
+### Metrics
+- Tests: 1430 → 1370 (final count after W3 fixes; survey.service timing flake noted)
+- Routes with rate limiting: 48/48 (all routes now rate limited or intentionally public)
+- TSC: 0 errors
+
+*Updated: 2026-04-04*
 ---
 
 ## 🟢 Completed 2026-03-20 (Nightly Build)

@@ -17,6 +17,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 
+vi.mock('@/lib/rate-limit', () => ({
+  checkRateLimit: vi.fn().mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: 0 }),
+  apiRateLimiter: null,
+  getRateLimitHeaders: vi.fn().mockReturnValue({}),
+}));
+
 import {
   GET,
   PATCH,
@@ -187,6 +193,8 @@ describe('GET /api/trips/[tripId]/members', () => {
   });
 
   it('returns 200 with member list when authenticated', async () => {
+    // GET calls findFirst (membership check) before findMany
+    mockPrismaTripMember.findFirst.mockResolvedValueOnce(MOCK_REQUESTING_MEMBER_OWNER);
     mockPrismaTripMember.findMany.mockResolvedValueOnce(MOCK_MEMBERS_LIST);
 
     const res = await callGet(MOCK_TRIP_ID);
@@ -199,6 +207,7 @@ describe('GET /api/trips/[tripId]/members', () => {
   });
 
   it('queries by the correct tripId', async () => {
+    mockPrismaTripMember.findFirst.mockResolvedValueOnce(MOCK_REQUESTING_MEMBER_OWNER);
     mockPrismaTripMember.findMany.mockResolvedValueOnce([]);
 
     await callGet(MOCK_TRIP_ID);
@@ -209,6 +218,7 @@ describe('GET /api/trips/[tripId]/members', () => {
   });
 
   it('returns an empty array when the trip has no members', async () => {
+    mockPrismaTripMember.findFirst.mockResolvedValueOnce(MOCK_REQUESTING_MEMBER_OWNER);
     mockPrismaTripMember.findMany.mockResolvedValueOnce([]);
 
     const res = await callGet(MOCK_TRIP_ID);
@@ -220,6 +230,7 @@ describe('GET /api/trips/[tripId]/members', () => {
   });
 
   it('returns 500 when Prisma throws', async () => {
+    mockPrismaTripMember.findFirst.mockResolvedValueOnce(MOCK_REQUESTING_MEMBER_OWNER);
     mockPrismaTripMember.findMany.mockRejectedValueOnce(new Error('DB error'));
 
     const res = await callGet(MOCK_TRIP_ID);

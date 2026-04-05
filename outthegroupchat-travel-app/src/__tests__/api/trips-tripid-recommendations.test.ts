@@ -12,8 +12,15 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
+
+vi.mock('@/lib/rate-limit', () => ({
+  apiRateLimiter: {},
+  checkRateLimit: vi.fn().mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: 0 }),
+  getRateLimitHeaders: vi.fn().mockReturnValue({}),
+}));
 
 // Mock RecommendationService before importing the route so the module is
 // replaced before any top-level imports in the route execute.
@@ -103,14 +110,14 @@ const MOCK_UPDATED_TRIP = {
 // ---------------------------------------------------------------------------
 // Request helpers
 // ---------------------------------------------------------------------------
-function makeGetRequest(tripId: string): Request {
-  return new Request(`http://localhost:3000/api/trips/${tripId}/recommendations`, {
+function makeGetRequest(tripId: string): NextRequest {
+  return new NextRequest(`http://localhost:3000/api/trips/${tripId}/recommendations`, {
     method: 'GET',
   });
 }
 
-function makePostRequest(tripId: string, body: unknown): Request {
-  return new Request(`http://localhost:3000/api/trips/${tripId}/recommendations`, {
+function makePostRequest(tripId: string, body: unknown): NextRequest {
+  return new NextRequest(`http://localhost:3000/api/trips/${tripId}/recommendations`, {
     method: 'POST',
     body: JSON.stringify(body),
     headers: { 'Content-Type': 'application/json' },
