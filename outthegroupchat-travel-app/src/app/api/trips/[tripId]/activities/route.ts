@@ -1,8 +1,9 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { logError } from '@/lib/logger';
+import { apiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 import { z } from 'zod';
 import type { Prisma, ActivityCategory, ActivityStatus } from '@prisma/client';
 
@@ -69,10 +70,19 @@ const createActivitySchema = z.object({
 });
 
 export async function GET(
-  req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ tripId: string }> }
 ) {
   try {
+    const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown';
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, `trips:activities:${ip}`);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
+      );
+    }
+
     const session = await getServerSession(authOptions);
     const { tripId } = await params;
     const { searchParams } = new URL(req.url);
@@ -153,10 +163,19 @@ export async function GET(
 }
 
 export async function POST(
-  req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ tripId: string }> }
 ) {
   try {
+    const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown';
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, `trips:activities:${ip}`);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
+      );
+    }
+
     const session = await getServerSession(authOptions);
     const { tripId } = await params;
 

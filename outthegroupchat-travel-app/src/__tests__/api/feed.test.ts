@@ -19,6 +19,12 @@ import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { TripStatus, ActivityStatus, ActivityCategory, BookingStatus } from '@prisma/client';
 
+vi.mock('@/lib/rate-limit', () => ({
+  checkRateLimit: vi.fn().mockResolvedValue({ success: true }),
+  apiRateLimiter: null,
+  getRateLimitHeaders: vi.fn().mockReturnValue({}),
+}));
+
 // Extend the global prisma mock (defined in setup.ts) with the additional
 // models and methods that the feed route handler calls.
 vi.mock('@/lib/prisma', async (importOriginal) => {

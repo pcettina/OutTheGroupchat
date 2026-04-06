@@ -85,7 +85,6 @@ export async function GET(
           select: {
             id: true,
             name: true,
-            ...(isAuthenticated && { email: true }),
             image: true,
           },
         },
@@ -95,7 +94,6 @@ export async function GET(
               select: {
                 id: true,
                 name: true,
-                ...(isAuthenticated && { email: true }),
                 image: true,
                 city: true,
               },
@@ -140,7 +138,6 @@ export async function GET(
               select: {
                 id: true,
                 name: true,
-                ...(isAuthenticated && { email: true }),
                 image: true,
               },
             },

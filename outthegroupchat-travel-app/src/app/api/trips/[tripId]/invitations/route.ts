@@ -1,10 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
 import { processInvitations } from '@/lib/invitations';
+import { apiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -15,10 +16,19 @@ const inviteSchema = z.object({
 });
 
 export async function GET(
-  req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ tripId: string }> }
 ) {
   try {
+    const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown';
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, `trips:invitations:${ip}`);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
+      );
+    }
+
     const session = await getServerSession(authOptions);
     const { tripId } = await params;
 
@@ -45,7 +55,6 @@ export async function GET(
           select: {
             id: true,
             name: true,
-            email: true,
             image: true,
           },
         },
@@ -64,10 +73,19 @@ export async function GET(
 }
 
 export async function POST(
-  req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ tripId: string }> }
 ) {
   try {
+    const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown';
+    const rateLimitResult = await checkRateLimit(apiRateLimiter, `trips:invitations:${ip}`);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
+      );
+    }
+
     const session = await getServerSession(authOptions);
     const { tripId } = await params;
 

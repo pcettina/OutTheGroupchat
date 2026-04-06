@@ -1,3 +1,9 @@
+/**
+ * @module flights
+ * @description Client wrapper for the Amadeus Flight Offers and Locations APIs.
+ * Handles OAuth2 token acquisition and caching, flight search, and IATA code lookup.
+ * Requires `AMADEUS_API_KEY` and `AMADEUS_API_SECRET` environment variables.
+ */
 import axios from 'axios';
 
 const AMADEUS_API_KEY = process.env.AMADEUS_API_KEY;
@@ -11,43 +17,78 @@ interface AmadeusToken {
 
 let amadeusToken: AmadeusToken | null = null;
 
+/**
+ * Normalized representation of a flight offer returned by the Amadeus API.
+ */
 export interface FlightOffer {
+  /** Unique identifier assigned by Amadeus for this offer. */
   id: string;
+  /** Departure airport details derived from the first segment of the first itinerary. */
   source: {
+    /** IATA code of the departure airport or city (e.g. "JFK"). */
     iataCode: string;
+    /** Human-readable city name for the departure location. */
     cityName: string;
   };
+  /** Arrival airport details derived from the first segment of the first itinerary. */
   destination: {
+    /** IATA code of the arrival airport or city (e.g. "CDG"). */
     iataCode: string;
+    /** Human-readable city name for the arrival location. */
     cityName: string;
   };
+  /**
+   * Ordered list of itineraries (outbound + optional return).
+   * Each itinerary contains one or more flight segments.
+   */
   itineraries: Array<{
+    /** Total flight duration in ISO 8601 duration format (e.g. "PT10H30M"). */
     duration: string;
+    /** Individual flight segments that make up this itinerary (legs). */
     segments: Array<{
+      /** Departure information for this segment. */
       departure: {
+        /** IATA code of the departure airport. */
         iataCode: string;
+        /** Terminal identifier at the departure airport, if available. */
         terminal?: string;
+        /** Scheduled departure date-time in ISO 8601 format. */
         at: string;
       };
+      /** Arrival information for this segment. */
       arrival: {
+        /** IATA code of the arrival airport. */
         iataCode: string;
+        /** Terminal identifier at the arrival airport, if available. */
         terminal?: string;
+        /** Scheduled arrival date-time in ISO 8601 format. */
         at: string;
       };
+      /** IATA carrier code of the operating airline (e.g. "AA"). */
       carrierCode: string;
+      /** Flight number (excluding carrier prefix, e.g. "123"). */
       number: string;
+      /** Aircraft type information. */
       aircraft: {
+        /** ICAO or IATA aircraft type code (e.g. "738"). */
         code: string;
       };
+      /** Segment flight duration in ISO 8601 duration format. */
       duration: string;
+      /** Unique segment identifier within the offer. */
       id: string;
     }>;
   }>;
+  /** Pricing information for this offer. */
   price: {
+    /** ISO 4217 currency code (e.g. "USD"). */
     currency: string;
+    /** Total price including taxes and fees, as a decimal string. */
     total: string;
+    /** Base fare before taxes and fees, as a decimal string. */
     base: string;
   };
+  /** Number of seats still available for booking at this price. */
   numberOfBookableSeats: number;
 }
 
@@ -104,14 +145,25 @@ interface AmadeusOfferRaw {
   numberOfBookableSeats: number;
 }
 
+/**
+ * Parameters accepted by {@link searchFlights} to query the Amadeus Flight Offers API.
+ */
 export interface FlightSearchParams {
+  /** IATA code of the origin airport or city (e.g. "JFK"). */
   originLocationCode: string;
+  /** IATA code of the destination airport or city (e.g. "CDG"). */
   destinationLocationCode: string;
+  /** Outbound departure date in YYYY-MM-DD format. */
   departureDate: string;
+  /** Return date in YYYY-MM-DD format. Omit for one-way searches. */
   returnDate?: string;
+  /** Number of adult passengers (default: 1). */
   adults?: number;
+  /** When true, only non-stop flights are returned (default: false). */
   nonStop?: boolean;
+  /** ISO 4217 currency code for pricing (default: "USD"). */
   currencyCode?: string;
+  /** Maximum number of flight offers to return (default: 10). */
   max?: number;
 }
 

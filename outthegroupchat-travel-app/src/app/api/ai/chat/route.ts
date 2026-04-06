@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { authOptions } from '@/lib/auth';
 import { getModel, isOpenAIConfigured } from '@/lib/ai/client';
 import { aiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
-import { logError } from '@/lib/logger';
+import { logError, aiLogger } from '@/lib/logger';
 
 // Route segment config for AI streaming
 export const maxDuration = 60; // seconds - AI responses can take longer
@@ -93,8 +93,9 @@ export async function POST(req: Request) {
     const validationResult = chatSchema.safeParse(body);
 
     if (!validationResult.success) {
+      aiLogger.warn({ issues: validationResult.error.issues }, 'AI chat validation failed');
       return NextResponse.json(
-        { success: false, error: 'Validation failed', details: validationResult.error.flatten() },
+        { error: 'Validation failed', details: validationResult.error.issues },
         { status: 400 }
       );
     }

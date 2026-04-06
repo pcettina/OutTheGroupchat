@@ -4,7 +4,7 @@
 
 OutTheGroupchat is a full-stack group travel planning application built with modern web technologies, AI integration, and real-time collaboration features.
 
-*Last Updated: 2026-03-25*
+*Last Updated: 2026-04-05*
 
 ---
 
@@ -114,7 +114,7 @@ OutTheGroupchat is a full-stack group travel planning application built with mod
 
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| **Next.js API Routes** | 14.1.3 | REST API (48 endpoints as of 2026-03-24) |
+| **Next.js API Routes** | 14.1.3 | REST API (48 endpoints, all rate-limited as of 2026-04-05) |
 | **Prisma** | 5.22.0 | Database ORM |
 | **PostgreSQL** | 15+ | Relational database via Supabase |
 | **NextAuth.js** | 4.24.7 | Authentication (credentials provider) |
@@ -148,7 +148,7 @@ OutTheGroupchat is a full-stack group travel planning application built with mod
 | **Pusher** | 5.2.0 | Server-side WebSocket |
 | **Pusher-js** | 8.4.0 | Client-side WebSocket |
 
-> Note: Pusher is configured but environment variables are missing in Vercel production as of 2026-03-25.
+> Note: Pusher is configured but environment variables are missing in Vercel production as of 2026-04-05.
 
 ### Monitoring & Observability
 
@@ -164,7 +164,7 @@ OutTheGroupchat is a full-stack group travel planning application built with mod
 | **Vitest** | 4.0.18 | Unit/integration test runner |
 | **@playwright/test** | 1.48.0 | E2E testing (browsers need install) |
 
-> As of 2026-03-25: 925+ Vitest tests across 49 test files, 0 failures. Playwright spec exists; browsers need `npx playwright install chromium`.
+> As of 2026-04-05: 1370+ Vitest tests across 64 test files, 0 failures. Playwright spec exists; browsers need `npx playwright install chromium`.
 
 ### External APIs
 
@@ -268,7 +268,7 @@ enum PriceRange {
 
 ---
 
-## API Endpoints (48 total as of 2026-03-24)
+## API Endpoints (48 total as of 2026-04-05, all rate-limited)
 
 ### Trips
 
@@ -347,7 +347,7 @@ enum PriceRange {
 
 ---
 
-## File Structure (Actual, 2026-03-25)
+## File Structure (Actual, 2026-04-05)
 
 ```
 src/
@@ -379,6 +379,13 @@ src/
 |   |       +-- page.tsx
 |   |       +-- survey/page.tsx
 |   |       +-- vote/page.tsx
+|   |       +-- members/page.tsx  # Trip members management page (added 2026-04-04)
+|   +-- profile/
+|   |   +-- [userId]/page.tsx     # Public user profile page (added 2026-04-01)
+|   +-- settings/page.tsx         # User settings (added 2026-03-31)
+|   +-- onboarding/page.tsx       # Onboarding flow (added 2026-03-31)
+|   +-- privacy/page.tsx          # Privacy Policy (added 2026-04-05)
+|   +-- terms/page.tsx            # Terms of Service (added 2026-04-05)
 |   +-- layout.tsx
 |   +-- page.tsx
 |   +-- not-found.tsx             # Custom 404 page
@@ -387,10 +394,10 @@ src/
 |
 +-- components/
 |   +-- ui/                       # Base components (Button, Card, Input)
-|   +-- trips/                    # TripCard, TripList, InviteMemberModal
+|   +-- trips/                    # TripCard (+TripCardSkeleton), TripList, InviteMemberModal, EditTripModal, DeleteTripModal
 |   +-- surveys/                  # QuestionRenderer
 |   +-- voting/                   # VotingCard, ResultsChart
-|   +-- social/                   # ActivityCard
+|   +-- social/                   # ActivityCard, FollowButton
 |   +-- profile/                  # ProfileStatsTab
 |   +-- Navigation.tsx
 |
@@ -428,7 +435,7 @@ src/
 |
 +-- __tests__/
 |   +-- setup.ts                  # Prisma mocks for all models
-    (49 test files, 925+ tests as of 2026-03-24)
+    (64 test files, 1370+ tests as of 2026-04-05)
 
 e2e/
 +-- auth-flow.spec.ts             # Playwright E2E (browsers need install)
@@ -515,7 +522,7 @@ npm run build        # prisma generate + next build
 npm run db:push      # Push schema to database
 npm run db:migrate   # Create migrations
 npm run db:generate  # Regenerate Prisma client
-npm run test         # Run Vitest test suite (925+ tests)
+npm run test         # Run Vitest test suite (1370+ tests)
 npm run test:e2e     # Run Playwright E2E (requires browser install)
 ```
 
@@ -526,7 +533,7 @@ npm run test:e2e     # Run Playwright E2E (requires browser install)
 1. **Authentication**: NextAuth.js with session-based auth, bcrypt password hashing
 2. **Authorization**: Role-based access control (OWNER, ADMIN, MEMBER) + auth guards on all protected routes
 3. **Input Validation**: Zod schemas on all major API endpoints
-4. **Rate Limiting**: Upstash Redis-based rate limiting on all high-risk routes
+4. **Rate Limiting**: Upstash Redis-based rate limiting on ALL 48 routes (100% coverage as of 2026-04-05)
 5. **CORS**: Configured in vercel.json and next.config.js (2026-03-23)
 6. **Security Headers**: HSTS, X-Frame-Options, Content-Security-Policy (2026-03-10)
 7. **Logging**: pino structured logging (0 `console.*` in production code)
@@ -536,7 +543,7 @@ npm run test:e2e     # Run Playwright E2E (requires browser install)
 
 ---
 
-## Code Quality Metrics (2026-03-25)
+## Code Quality Metrics (2026-04-05)
 
 | Metric | Target | Current |
 |--------|--------|---------|
@@ -544,10 +551,11 @@ npm run test:e2e     # Run Playwright E2E (requires browser install)
 | `console.*` in prod | 0 | 0 |
 | Files > 600 lines (prod) | 0 | 0 |
 | TSC errors | 0 | 0 |
-| Test count | 500+ | 925+ |
-| Test files | - | 49 |
-| API routes | - | 48 |
-| TypeScript files | - | 253 |
+| Test count | 500+ | 1370+ |
+| Test files | - | 64 |
+| API routes | - | 48 (100% rate-limited) |
+| TypeScript files | - | ~266 |
+| Pages | - | ~16 |
 | Lint warnings/errors | 0 | 0 |
 
 ---
@@ -564,4 +572,4 @@ npm run test:e2e     # Run Playwright E2E (requires browser install)
 
 ---
 
-*Last Updated: 2026-03-25*
+*Last Updated: 2026-04-05*

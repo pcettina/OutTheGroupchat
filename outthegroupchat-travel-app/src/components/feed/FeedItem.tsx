@@ -4,8 +4,10 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { formatDistanceToNow } from 'date-fns';
+import { useSession } from 'next-auth/react';
 import { EngagementBar } from './EngagementBar';
 import { MediaGallery } from './MediaGallery';
+import { FollowButton } from '@/components/social';
 
 type FeedItemType = 
   | 'trip_created'
@@ -95,6 +97,7 @@ export function FeedItem({
   onShare,
 }: FeedItemProps) {
   const [saved, setSaved] = useState(isSaved);
+  const { data: session } = useSession();
 
   const typeConfig = typeIcons[type];
   const timeAgo = formatDistanceToNow(new Date(timestamp), { addSuffix: true });
@@ -178,6 +181,9 @@ export function FeedItem({
                 {typeConfig.label}
               </span>
               <span className="text-lg">{typeConfig.icon}</span>
+              {session?.user?.id && session.user.id !== user.id && (
+                <FollowButton userId={user.id} />
+              )}
             </div>
             <p className="text-sm text-slate-500 dark:text-slate-400">{timeAgo}</p>
           </div>

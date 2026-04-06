@@ -151,11 +151,12 @@ export default function TripDetailPage() {
 
         {/* Quick Actions */}
         <div className="max-w-7xl mx-auto px-4 -mt-6 relative z-10">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
             {[
               { label: 'Survey', icon: '📋', href: `/trips/${tripId}/survey`, description: 'Collect preferences' },
               { label: 'Vote', icon: '🗳️', href: `/trips/${tripId}/vote`, description: 'Decide together' },
               { label: 'Flights', icon: '✈️', href: `/trips/${tripId}/flights`, description: 'Search flights' },
+              { label: 'Members', icon: '👤', href: `/trips/${tripId}/members`, description: 'View all members' },
               { label: 'Invite', icon: '👥', onClick: handleInvite, description: 'Add members' },
               { label: 'Share', icon: '📤', onClick: handleShare, description: 'Share trip' },
             ].map((action) => (

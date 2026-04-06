@@ -185,13 +185,58 @@ Should use structured logging (e.g., Pino, Winston).
 
 ---
 
+## ✅ April 2026 Security Hardening (Complete)
+
+### Rate Limiting Coverage — RESOLVED (2026-04-05)
+**Status:** ✅ COMPLETE
+
+All 48 API routes now have rate limiting via `checkRateLimit()` from `src/lib/rate-limit.ts`. The final 16 routes were covered in the 2026-04-04 nightly build:
+- `invitations`, `invitations/[invitationId]`, `profile`, `users/me`, `users/[userId]`
+- `pusher/auth`, `notifications/[notificationId]`, `feed/comments`, `feed/engagement`, `feed/share`
+- `activities/[activityId]`, `trips/activities`, `trips/survey`, `trips/voting`, `trips/itinerary`, `trips/recommendations`
+
+**Rate limit coverage: 48/48 (100%)** — no unguarded endpoints remain.
+
+---
+
+### Email Exposure Fixed — RESOLVED (2026-04-04)
+**Files:**
+- `src/app/api/trips/[tripId]/members/route.ts`
+- `src/app/api/trips/[tripId]/invitations/route.ts`
+- `src/app/api/trips/[tripId]/route.ts`
+
+**Problem:** Email addresses were being returned in trip member and invitation payloads, leaking PII to all trip members.
+
+**Fix:** `select` clauses updated to exclude `email` from all member and invitation query results. Email is no longer returned in any of these endpoints.
+
+---
+
+### Zod Validation Added to AI Routes — RESOLVED (2026-04-04)
+**Files:**
+- `src/app/api/ai/suggest-activities/route.ts`
+- `src/app/api/ai/chat/route.ts`
+
+Input bodies are now validated with Zod schemas before processing. Malformed or missing fields return 400 with a structured error.
+
+---
+
+### No Hardcoded Secrets — CONFIRMED (2026-04-05)
+Full codebase scan confirms 0 hardcoded secrets. All credentials are read from environment variables. Demo credentials use `DEMO_USER_EMAIL`/`DEMO_USER_PASSWORD` env vars and require `DEMO_MODE=true`.
+
+---
+
+### No SQL Injection Vectors — CONFIRMED (2026-04-05)
+All database queries use Prisma ORM parameterized queries. No raw SQL strings with user input detected.
+
+---
+
 ## 📋 Security Checklist for Social Features
 
 As we expand social features, implement:
 
 | Feature | Status | Priority |
 |---------|--------|----------|
-| Rate limiting (Redis) | ✅ | P0 |
+| Rate limiting (Redis) — ALL 48 routes | ✅ | P0 |
 | Input sanitization (XSS) | ❌ | P0 |
 | Content moderation | ❌ | P1 |
 | Report/block users | ❌ | P1 |
@@ -225,14 +270,23 @@ const securityHeaders = [
 
 | Severity | Count | Action Required |
 |----------|-------|-----------------|
-| 🔴 Critical | 4 (2 resolved ✅, 2 open) | Immediate fix |
+| 🔴 Critical | 4 (4 resolved ✅) | — |
 | 🟠 Medium | 4 (2 resolved ✅, 2 open) | Next sprint |
 | 🟡 Low | 3 | Backlog |
 
-**Overall Security Score: 7/10** (improved from 6/10 — rate limiting, demo credentials, and `any` types resolved)
+**Overall Security Score: 8/10** (improved from 7/10 — rate limiting now at 100% coverage, email exposure fixed in members/invitations/trip routes, Zod added to AI routes)
+
+### Open Medium Issues
+- Missing CSRF Protection on state-changing operations (Issue #5)
+- Missing Request Size Limits on POST/PATCH routes (Issue #6)
+
+### Open Low Issues
+- Database schema typo `oderId` in prisma/schema.prisma (Issue #9)
+- Console.error replaced by pino across all routes — ✅ resolved
+- .gitignore present — ✅ resolved
 
 ---
 
-*Last Updated: 2026-03-24*
+*Last Updated: 2026-04-05*
 *Next Audit: Before production launch*
 

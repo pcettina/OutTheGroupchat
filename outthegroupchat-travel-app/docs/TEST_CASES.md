@@ -8,7 +8,7 @@ This document outlines the test cases needed to validate the OutTheGroupchat pla
 
 ## Testing Stack
 
-> **Status (2026-03-24):** Vitest and Playwright are already installed and configured. 865+ tests passing across 45 test files.
+> **Status (2026-04-05):** Vitest and Playwright are installed and configured. 1370+ tests passing across 64 test files, 0 failures.
 
 ```bash
 # Install testing dependencies (already in package.json — run npm install)
@@ -900,11 +900,28 @@ jobs:
 
 ---
 
+## Recent Test Files Added (2026-04-05)
+
+The following test files were added in recent nightly builds:
+
+| File | Tests | Notes |
+|------|-------|-------|
+| `geocoding-images-edge-cases.test.ts` | 20 | Edge cases for geocoding and image search routes |
+| `trip-complete-lifecycle.test.ts` | 56 | Full integration: creation → survey → voting → itinerary |
+| `invitation-lifecycle-integration.test.ts` | 26 | Invitation send, accept, reject flows |
+| `feed-routes-edge-cases.test.ts` | 29 | Edge cases for feed, comments, engagement, share |
+| `trips-activities-voting-security.test.ts` | 28 | Security and auth edge cases for activities and voting |
+| `profile-users-edge-cases.test.ts` | 24 | Profile and user route edge cases |
+| `trips-itinerary-recommendations.test.ts` | 29 | Itinerary and recommendations routes |
+| `users-follow.test.ts` | — | Rate-limit mock added (vi.mock('@/lib/rate-limit')) — fixes ~104s test runtime from real Upstash Redis calls |
+
+---
+
 ## Test Coverage Goals
 
 | Category | Target | Current |
 |----------|--------|---------|
-| Unit Tests | 80% | 865+ passing (45 test files) |
+| Unit Tests | 80% | 1370+ passing (64 test files) |
 | Integration Tests | 70% | Included in Vitest suite |
 | E2E Tests | Critical paths | e2e/auth-flow.spec.ts (requires `npx playwright install chromium`) |
 
@@ -932,5 +949,5 @@ jobs:
 
 ---
 
-*Last Updated: 2026-03-24*
+*Last Updated: 2026-04-05*
 

@@ -23,6 +23,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 
+vi.mock('@/lib/rate-limit', () => ({
+  checkRateLimit: vi.fn().mockResolvedValue({ success: true }),
+  apiRateLimiter: null,
+  getRateLimitHeaders: vi.fn().mockReturnValue({}),
+}));
+
 // Extend the global prisma mock with the notification methods required by
 // these route handlers.
 vi.mock('@/lib/prisma', async (importOriginal) => {

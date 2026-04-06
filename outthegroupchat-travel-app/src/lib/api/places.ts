@@ -1,34 +1,73 @@
+/**
+ * @module places
+ * @description Client wrapper for the Google Places API (Text Search and Details endpoints).
+ * Exposes helpers to search for places, retrieve detailed place information, and convert
+ * the numeric `price_level` field to a human-readable string.
+ * Requires the `GOOGLE_PLACES_API_KEY` environment variable.
+ */
 import axios from 'axios';
 import { logger } from '@/lib/logger';
 
 const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY;
 const GOOGLE_PLACES_BASE_URL = 'https://maps.googleapis.com/maps/api/place';
 
+/**
+ * Subset of the Google Places Details response returned by {@link getPlaceDetails}
+ * and individual results from {@link searchPlaces}.
+ */
 export interface PlaceDetails {
+  /** Unique Google Places identifier for this location. */
   place_id: string;
+  /** Display name of the place (e.g. "Eiffel Tower"). */
   name: string;
+  /** Human-readable full address string. */
   formatted_address: string;
+  /** Geographic coordinate data for this place. */
   geometry: {
+    /** Latitude/longitude coordinate pair. */
     location: {
+      /** Decimal latitude of the place. */
       lat: number;
+      /** Decimal longitude of the place. */
       lng: number;
     };
   };
+  /**
+   * Google Places price level on a 0–4 scale.
+   * 0 = Free, 1 = Inexpensive, 2 = Moderate, 3 = Expensive, 4 = Very Expensive.
+   * Absent when price information is unavailable.
+   */
   price_level?: number;
+  /** Average user rating on a scale of 1.0–5.0. Absent when no ratings exist. */
   rating?: number;
+  /** List of Google Places type tags describing the place (e.g. ["restaurant", "food"]). */
   types: string[];
+  /** Array of photo references that can be resolved via the Places Photo API. */
   photos?: Array<{
+    /** Opaque token used to fetch the photo image from the Places Photo API. */
     photo_reference: string;
   }>;
 }
 
+/**
+ * Parameters accepted by {@link searchPlaces} to query the Google Places Text Search API.
+ */
 export interface PlaceSearchParams {
+  /** Free-text search query (e.g. "coffee shops in Tokyo"). */
   query: string;
+  /**
+   * Optional geographic center point used to bias search results.
+   * Must be paired with a `radius` value to take effect.
+   */
   location?: {
+    /** Decimal latitude of the bias center. */
     lat: number;
+    /** Decimal longitude of the bias center. */
     lng: number;
   };
+  /** Search radius in meters when `location` is provided (default: 5000). */
   radius?: number;
+  /** Optional Google Places type filter to restrict results (e.g. "museum", "restaurant"). */
   type?: string;
 }
 

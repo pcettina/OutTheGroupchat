@@ -101,7 +101,6 @@ export async function POST(
           select: {
             id: true,
             name: true,
-            email: true,
             image: true,
           },
         },
@@ -136,7 +135,6 @@ export async function GET(
           select: {
             id: true,
             name: true,
-            email: true,
             image: true,
             city: true,
             preferences: true,
@@ -234,7 +232,6 @@ export async function PATCH(
           select: {
             id: true,
             name: true,
-            email: true,
             image: true,
           },
         },

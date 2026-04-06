@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { differenceInSeconds, differenceInMinutes, differenceInHours, differenceInDays, format } from 'date-fns';
+import { differenceInSeconds, differenceInMinutes, differenceInHours, differenceInDays } from 'date-fns';
 
 interface VotingDeadlineProps {
   expiresAt: string;
@@ -134,39 +134,6 @@ function TimeUnit({
     >
       {String(value).padStart(2, '0')}{label}
     </motion.span>
-  );
-}
-
-// Compact version for cards
-export function VotingDeadlineCompact({ expiresAt }: { expiresAt: string }) {
-  const deadline = new Date(expiresAt);
-  const now = new Date();
-  const isExpired = deadline < now;
-
-  if (isExpired) {
-    return (
-      <span className="text-xs text-red-500 dark:text-red-400">
-        Ended
-      </span>
-    );
-  }
-
-  const days = differenceInDays(deadline, now);
-  const hours = differenceInHours(deadline, now) % 24;
-
-  if (days > 0) {
-    return (
-      <span className="text-xs text-slate-500 dark:text-slate-400">
-        {days}d {hours}h left
-      </span>
-    );
-  }
-
-  const minutes = differenceInMinutes(deadline, now) % 60;
-  return (
-    <span className={`text-xs ${hours < 1 ? 'text-red-500' : 'text-amber-500'}`}>
-      {hours}h {minutes}m left
-    </span>
   );
 }
 

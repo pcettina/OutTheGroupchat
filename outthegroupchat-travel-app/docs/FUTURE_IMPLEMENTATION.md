@@ -2,13 +2,13 @@
 
 ## Overview
 
-This document outlines future features, improvements, and technical debt to address for the OutTheGroupchat platform. Items already completed as of 2026-03-25 are marked accordingly.
+This document outlines future features, improvements, and technical debt to address for the OutTheGroupchat platform. Items already completed as of 2026-04-05 are marked accordingly.
 
-*Last Updated: 2026-03-25*
+*Last Updated: 2026-04-05*
 
 ---
 
-## Current State Summary (2026-03-25)
+## Current State Summary (2026-04-05)
 
 The following items from earlier versions of this roadmap have been **completed**:
 
@@ -22,8 +22,8 @@ The following items from earlier versions of this roadmap have been **completed*
 ### Completed from Former "Technical Debt"
 - [x] **TypeScript strict mode** — Enabled, 0 `any` types
 - [x] **Error Handling** — Global error boundary, standardized API error responses, pino logging
-- [x] **Testing** — 925+ unit/integration tests across 49 Vitest test files; Playwright E2E framework configured
-- [x] **Rate Limiting** — Upstash Redis on all high-risk routes
+- [x] **Testing** — 1370+ unit/integration tests across 64 Vitest test files; Playwright E2E framework configured
+- [x] **Rate Limiting** — Upstash Redis on ALL 48 routes (100% coverage as of 2026-04-05)
 - [x] **Input Sanitization** — Zod on all major API endpoints
 - [x] **Security Headers** — HSTS, X-Frame-Options, CSP (2026-03-10)
 - [x] **CORS** — Configured in next.config.js (2026-03-23)
@@ -68,7 +68,7 @@ These items are blockers or near-blockers for the Q2 2026 beta launch. See LAUNC
 
 | Item | Priority | Description |
 |------|----------|-------------|
-| Rate limiting on remaining endpoints | High | Ensure 100% coverage |
+| ~~Rate limiting on remaining endpoints~~ | ✅ Done | 48/48 routes covered (2026-04-05) |
 | Session timeout configuration | High | NextAuth session maxAge |
 | Failed login attempt limiting | High | Track failures per IP/email |
 | Form validation errors inline | Medium | Client-side Zod feedback |
@@ -224,8 +224,8 @@ These items are blockers or near-blockers for the Q2 2026 beta launch. See LAUNC
 
 | Feature | Priority | Complexity | Status |
 |---------|----------|------------|--------|
-| **User Profiles** | High | Medium | Basic profile exists; public trip history pending |
-| **Follow System** | High | Medium | API exists; frontend wiring pending |
+| **User Profiles** | High | Medium | Public profile page at /profile/[userId] (added 2026-04-01) |
+| **Follow System** | High | Medium | API exists; FollowButton component added (2026-04-01); full frontend wiring pending |
 | **Trip Reviews** | High | Medium | Rate and review completed trips |
 | **Activity Sharing** | Medium | Low | Share activities to feed |
 | **Group Matching** | Low | High | Find travel buddies |
@@ -272,9 +272,10 @@ These items are blockers or near-blockers for the Q2 2026 beta launch. See LAUNC
 
 | Item | Priority | Complexity | Description |
 |------|----------|------------|-------------|
-| Privacy Policy page | High | Low | Required before public launch |
-| Terms of Service page | High | Low | Required before public launch |
-| SEO meta tags | Medium | Low | All pages need titles, descriptions, OG tags |
+| ~~Privacy Policy page~~ | ✅ Done | — | Created 2026-04-05 at /privacy |
+| ~~Terms of Service page~~ | ✅ Done | — | Created 2026-04-05 at /terms |
+| ~~Open Graph / Twitter Card meta tags~~ | ✅ Done | — | Added to layout.tsx (2026-04-01) |
+| SEO meta titles/descriptions on all pages | Medium | Low | All pages need complete titles and descriptions |
 | GDPR account deletion | Medium | Medium | Permanent data removal flow |
 
 ---
@@ -356,8 +357,8 @@ Q1 2027 — Social & Mobile
 - Error rate < 1% (Sentry)
 - AI latency (per provider)
 - Uptime > 99.9%
-- Test coverage (currently 925+ tests, targeting > 80% line coverage)
+- Test coverage (currently 1370+ tests across 64 files, targeting > 80% line coverage)
 
 ---
 
-*Last Updated: 2026-03-25*
+*Last Updated: 2026-04-05*

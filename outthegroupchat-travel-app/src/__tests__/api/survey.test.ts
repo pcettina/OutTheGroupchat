@@ -19,6 +19,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 
+vi.mock('@/lib/rate-limit', () => ({
+  checkRateLimit: vi.fn().mockResolvedValue({ success: true }),
+  apiRateLimiter: null,
+  getRateLimitHeaders: vi.fn().mockReturnValue({}),
+}));
+
 // Extend the global prisma mock (defined in setup.ts) with the additional
 // models and methods required by the survey route handler.
 vi.mock('@/lib/prisma', async (importOriginal) => {

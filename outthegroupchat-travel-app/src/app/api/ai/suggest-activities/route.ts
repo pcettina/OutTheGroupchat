@@ -6,7 +6,7 @@ import { authOptions } from '@/lib/auth';
 import { getModel, isOpenAIConfigured } from '@/lib/ai/client';
 import { aiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 import { activityRecommendationSystemPrompt, buildActivityPrompt } from '@/lib/ai/prompts';
-import { logError } from '@/lib/logger';
+import { logError, aiLogger } from '@/lib/logger';
 import type { AIActivityRecommendation } from '@/types';
 
 // Route segment config for AI suggestions
@@ -44,7 +44,8 @@ const activitySuggestionsOutputSchema = z.object({
 });
 
 const suggestActivitiesSchema = z.object({
-  destination: z.string(),
+  destination: z.string().min(1, 'destination is required'),
+  tripId: z.string().optional(),
   categories: z.array(z.string()).optional().default(['food', 'entertainment', 'culture']),
   preferences: z.array(z.string()).optional().default([]),
   budget: z.enum(['budget', 'moderate', 'luxury']).optional().default('moderate'),
@@ -92,8 +93,9 @@ export async function POST(req: Request) {
     const validationResult = suggestActivitiesSchema.safeParse(body);
 
     if (!validationResult.success) {
+      aiLogger.warn({ issues: validationResult.error.issues }, 'AI suggest-activities validation failed');
       return NextResponse.json(
-        { success: false, error: 'Validation failed', details: validationResult.error.flatten() },
+        { error: 'Validation failed', details: validationResult.error.issues },
         { status: 400 }
       );
     }

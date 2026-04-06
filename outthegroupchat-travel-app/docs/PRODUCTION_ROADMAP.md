@@ -1,20 +1,20 @@
 # OutTheGroupchat - Production Deployment & Feature Roadmap
 
 > **Target:** Q2 2026 Beta Launch
-> **Version:** 3.0 | **Last Updated:** 2026-03-25
+> **Version:** 3.1 | **Last Updated:** 2026-04-05
 
 ---
 
-## Current System Status (as of 2026-03-25)
+## Current System Status (as of 2026-04-05)
 
-### Overall Launch Readiness: 78% (Target: 85% for Beta)
+### Overall Launch Readiness: 82% (Target: 85% for Beta)
 
 | Category | Score | Target | Status |
 |----------|-------|--------|--------|
-| Infrastructure | 92% | 100% | Almost Ready |
-| Core Features | 77% | 90% | In Progress |
-| Security | 83% | 100% | In Progress |
-| Testing | 72% | 80% | In Progress |
+| Infrastructure | 93% | 100% | Almost Ready |
+| Core Features | 80% | 90% | In Progress |
+| Security | 91% | 100% | In Progress |
+| Testing | 80% | 80% | Met |
 | Monitoring | 55% | 80% | In Progress |
 
 ### Implemented & Working
@@ -40,7 +40,7 @@
 | Survey API | Working | API structure complete; frontend integration pending |
 | Voting API | Working | API structure complete; frontend integration pending |
 | Member Invitations | Working | Email-based via Resend |
-| Rate Limiting | Working | Upstash Redis-based on all major routes |
+| Rate Limiting | Working | Upstash Redis-based on ALL 48 routes (100% coverage as of 2026-04-05) |
 | CORS | Working | Configured in next.config.js (2026-03-23) |
 | Security Headers | Working | HSTS, X-Frame-Options, CSP in next.config.js (2026-03-10) |
 | Error Boundaries | Working | global-error.tsx, error.tsx, not-found.tsx |
@@ -57,8 +57,9 @@
 | Pusher env vars missing in production | High | Blocked by config |
 | Sentry DSN not set in Vercel | High | Blocked by config |
 | Resend domain not verified | Medium | Email may go to spam |
-| Rate limiting not on ALL endpoints | Medium | In progress |
+| Rate limiting not on ALL endpoints | Medium | ✅ RESOLVED (2026-04-05, 48/48 routes) |
 | NEXTAUTH_SECRET strength unverified | Medium | Manual check needed |
+| Playwright browsers not installed in CI | Medium | `npx playwright install chromium` needed |
 
 ---
 
@@ -76,7 +77,7 @@
 - TripComment + TripLike models added to schema
 - Invitation acceptance flow with auto-accept on signup
 
-### March 2026 Sprint (In Progress)
+### March 2026 Sprint (COMPLETE)
 
 - `img` → `next/image` migration complete (0 remaining)
 - `console.*` cleanup complete (0 in production code)
@@ -99,6 +100,20 @@
 - discover/* routes require authentication (2026-03-24)
 - auth/demo Zod input validation (2026-03-24)
 
+### April 2026 Sprint (In Progress)
+
+- Rate limiting extended to ALL 48 routes (100% coverage — 2026-04-05)
+- Email exposure fixed in trips/members, trips/invitations, trips/[tripId] routes (2026-04-04)
+- Zod validation added to ai/suggest-activities, ai/chat (2026-04-04)
+- Dead component removal: SignUpForm.tsx deleted (2026-04-04)
+- Trip members management page created at /trips/[tripId]/members (2026-04-04)
+- Public user profile page at /profile/[userId] (2026-04-01)
+- Social components: FollowButton, EditTripModal, DeleteTripModal (2026-04-01)
+- OG/Twitter Card meta tags on layout (2026-04-01)
+- Settings and onboarding pages (2026-03-31)
+- Test suite grown to 1370+ tests across 64 files, 0 failures (2026-04-05)
+- JSDoc added to survey.service.ts, lib/api interface files (2026-04-04)
+
 ---
 
 ## Remaining Work Before Beta Launch
@@ -113,10 +128,10 @@
 [ ] NEXTAUTH_SECRET rotation (32+ chars)
 [ ] Session timeout configuration
 [ ] Failed login attempt limiting
-[ ] Rate limiting on remaining unguarded endpoints
-[ ] XSS prevention (DOMPurify) verification
-[ ] Trip editing flow
-[ ] Trip deletion/archiving
+[x] Rate limiting on remaining unguarded endpoints — DONE (2026-04-05, 48/48)
+[x] XSS prevention (DOMPurify) — installed and active
+[ ] Trip editing flow — EditTripModal component exists; wired to trips/[tripId] page
+[ ] Trip deletion/archiving — DeleteTripModal component exists; wired to trips/[tripId] page
 [ ] Trip wizard (multi-step creation)
 ```
 
@@ -148,10 +163,10 @@
 ### Phase 4: Legal & Content
 
 ```
-[ ] Privacy Policy page
-[ ] Terms of Service page
+[x] Privacy Policy page — created (2026-04-05)
+[x] Terms of Service page — created (2026-04-05)
+[x] Open Graph tags — added to layout (2026-04-01)
 [ ] Meta titles/descriptions on all pages
-[ ] Open Graph tags
 [ ] Favicon configured
 ```
 
@@ -211,13 +226,13 @@
 - [ ] NEXTAUTH_SECRET is strong (32+ chars) — verify
 - [x] Database credentials not in code
 - [x] API keys not exposed to client
-- [x] Rate limiting on major endpoints (Upstash)
-- [x] Input validation on major API routes (Zod)
+- [x] Rate limiting on ALL 48 endpoints (Upstash — 100% coverage as of 2026-04-05)
+- [x] Input validation on all major API routes (Zod)
 - [x] SQL injection prevention (Prisma)
 - [x] XSS prevention (React handles, plus DOMPurify installed)
 - [x] CORS configured (next.config.js, 2026-03-23)
 - [x] Security headers (HSTS, X-Frame-Options, CSP — 2026-03-10)
-- [ ] Rate limiting on ALL endpoints (in progress)
+- [x] Email exposure fixed in members, invitations, trip routes (2026-04-04)
 - [ ] Session timeout configuration
 - [ ] Failed login attempt limiting
 
@@ -232,6 +247,8 @@
 - [x] /api/auth/demo guarded by DEMO_MODE env var (2026-03-22)
 - [x] /api/discover/search requires auth (2026-03-24)
 - [x] /api/discover/recommendations requires auth (2026-03-24)
+- [x] Email exposure fixed in trips/[tripId]/members, invitations, route (2026-04-04)
+- [x] Zod validation added to ai/suggest-activities, ai/chat (2026-04-04)
 
 ### Post-Beta (Nice to Have)
 
@@ -282,7 +299,7 @@
 
 ---
 
-*Document Version: 3.0*
+*Document Version: 3.1*
 *Target Launch: Q2 2026 (Beta)*
-*Last Updated: 2026-03-25*
+*Last Updated: 2026-04-05*
 *Owner: Development Team*

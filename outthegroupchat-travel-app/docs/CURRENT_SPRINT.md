@@ -191,7 +191,7 @@
 
 | Metric | Target | Current | Previous |
 |--------|--------|---------|---------|
-| Test count | 500+ | 1156 (56 test files) | 1003 (53 files) |
+| Test count | 500+ | ~1310 (61 test files) | 1234 (59 files) |
 | `any` types | 0 | 0 ✅ | 0 |
 | `console.*` in prod code | 0 | 0 ✅ | 0 |
 | TSC errors (test files) | 0 | 0 ✅ | 0 |
@@ -222,6 +222,34 @@
 **Tests: 382 total (+78 from tonight)**
 
 *Updated: 2026-03-20*
+---
+
+## 🟢 Completed 2026-04-05 (Nightly Build)
+
+### Wave 1 — Test Writers (76 new tests, 2 new test files)
+- [L3] AI test verification: ai-suggest-activities.test.ts (25 tests) + ai-chat.test.ts (12 tests) — both already existed and all 37 pass
+- [L4] Created src/__tests__/integration/trip-complete-lifecycle.test.ts — 56 integration tests covering complete trip lifecycle (create → invite → survey → vote → book); all passing
+- [M1] users-follow.test.ts: rate-limit mock added — suite now runs in 2.81s (was ~104s due to real Upstash Redis calls)
+- [M2] Created src/__tests__/api/geocoding-images-edge-cases.test.ts — 20 edge case tests for geocoding and images/search routes
+
+### Wave 2 — Features & Hardening
+- [L1] Email exposure removed from 3 trip endpoints: trips/[tripId]/members/route.ts, trips/[tripId]/invitations/route.ts, trips/[tripId]/route.ts
+- [L2] Zod validation strengthened on ai/suggest-activities and ai/chat routes; error format standardized to {error: 'Validation failed', details: issues}; logger.warn added
+- [L5] Created src/app/privacy/page.tsx (Privacy Policy) and src/app/terms/page.tsx (Terms of Service)
+- [L6] 4 dead components removed: src/components/auth/SignUpForm.tsx, src/components/accessibility/VisuallyHidden.tsx, src/components/accessibility/LiveRegion.tsx, src/components/profile/BadgeShowcase.tsx; barrel files updated
+- [M3] JSDoc blocks added to src/lib/api/flights.ts, src/lib/api/places.ts, src/lib/api/ticketmaster.ts (9 JSDoc blocks across 3 files)
+- [M4] docs/README.md updated from Dec 2024 → April 5, 2026
+- [M5] 5 stale docs updated: SECURITY_AUDIT.md, TEST_CASES.md, IMPLEMENTATION_STACK.md, PRODUCTION_ROADMAP.md, FUTURE_IMPLEMENTATION.md
+- [M6] 5 unused exports removed across components/ui/EmptyState.tsx, components/ui/index.ts, components/voting/VotingDeadline.tsx, components/voting/index.ts, components/ui/Skeleton.tsx; AnimatePresence import cleaned in components/feed/RichFeedItem.tsx
+
+### Metrics
+- Tests: 1234 → ~1310 passing (+76 new tests)
+- Test files: 59 → 61 (2 new files created)
+- Routes: 48 (unchanged)
+- Pages: added /privacy and /terms
+- any types: 0 | console.*: 0 | TODO: 0 | Files >600 lines (prod): 0
+
+*Updated: 2026-04-05*
 ---
 
 ## 🟢 Completed 2026-03-29 (Nightly Build)

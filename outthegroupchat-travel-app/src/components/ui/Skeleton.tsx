@@ -43,21 +43,7 @@ export function Skeleton({
 }
 
 // Preset skeleton components for common use cases
-export function SkeletonText({ lines = 3, className = '' }: { lines?: number; className?: string }) {
-  return (
-    <div className={`space-y-2 ${className}`}>
-      {Array.from({ length: lines }).map((_, i) => (
-        <Skeleton
-          key={i}
-          variant="text"
-          width={i === lines - 1 ? '60%' : '100%'}
-        />
-      ))}
-    </div>
-  );
-}
-
-export function SkeletonAvatar({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
+function SkeletonAvatar({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
   const sizes = {
     sm: 'w-8 h-8',
     md: 'w-10 h-10',

@@ -252,7 +252,6 @@ describe('POST /api/ai/suggest-activities', () => {
     const body = await parseJson(res);
 
     expect(res.status).toBe(400);
-    expect(body.success).toBe(false);
     expect(body.error).toMatch(/validation/i);
     expect(mockGenerateText).not.toHaveBeenCalled();
   });
@@ -271,7 +270,6 @@ describe('POST /api/ai/suggest-activities', () => {
     const body = await parseJson(res);
 
     expect(res.status).toBe(400);
-    expect(body.success).toBe(false);
     expect(body.error).toMatch(/validation/i);
     expect(mockGenerateText).not.toHaveBeenCalled();
   });

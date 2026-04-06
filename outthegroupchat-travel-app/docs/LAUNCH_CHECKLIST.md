@@ -2,7 +2,7 @@
 
 > **Target Launch:** Q2 2026 (Beta)
 > **Current Status:** Active Development
-> **Last Updated:** March 2026
+> **Last Updated:** April 2026
 
 ---
 
@@ -18,7 +18,7 @@
 
 **Overall Readiness: 78%** → Target: 85% for Beta Launch
 
-> Last updated: 2026-03-26
+> Last updated: 2026-04-05
 
 ---
 
@@ -148,6 +148,9 @@
 
 9. [x] Remove NODE_ENV/version from /api/health (data minimization) ✅ 2026-03-25
    File: src/app/api/health/route.ts (response shape narrowed to {status, timestamp, database})
+
+10. [x] Remove email from all trip member/invitation selects (email exposure) ✅ 2026-04-05
+    Files: src/app/api/trips/[tripId]/members/route.ts, src/app/api/trips/[tripId]/invitations/route.ts, src/app/api/trips/[tripId]/route.ts
 ```
 
 ### Security Headers
@@ -174,6 +177,7 @@
 - [x] API route tests (invitations-post 18, ai-get-methods 16, beta-extended 21, users-follow 24) ✅ 2026-03-25 — total: 1003 tests across 53 files
 - [x] Service tests + API tests (recommendation.service 45, survey.service 36, geocoding-images 32, inspiration +39) ✅ 2026-03-26 — total: 1156 tests across 56 files
 - [x] API route tests (ai-generate-itinerary 31, ai-suggest-activities 25, discover-import 21) ✅ 2026-03-29
+- [x] Integration tests (trip-complete-lifecycle 56) + edge case tests (geocoding-images-edge-cases 20) ✅ 2026-04-05 — total: ~1310 tests across 61 files
 
 ### Integration Tests
 - [ ] Auth flow tests
@@ -259,8 +263,8 @@
 ## 📝 PHASE 7: Content & Legal
 
 ### Pages Required
-- [ ] Privacy Policy
-- [ ] Terms of Service
+- [x] Privacy Policy ✅ 2026-04-05 (`src/app/privacy/page.tsx` created)
+- [x] Terms of Service ✅ 2026-04-05 (`src/app/terms/page.tsx` created)
 - [ ] About page (optional)
 - [ ] Help/FAQ (optional)
 
@@ -378,4 +382,4 @@ git push origin main  # Auto-deploys to Vercel
 
 *This checklist should be reviewed daily during launch preparation.*
 
-*Last Updated: 2026-03-26 - 153 new tests (1156 total, 56 files); rate limiting added as first operation on auth/signup, auth/reset-password, auth/verify-email; newsletter/subscribe now requires auth; ai/search GET+POST fully implemented; dead components removed (NotificationCenter.tsx, SharePreview.tsx); recommendation.service.test.ts, survey.service.test.ts, geocoding-images.test.ts created. Also includes 2026-03-29 changes: JSON.parse safety on 5 AI routes + notifications/[notificationId]; Zod strengthened on ai/chat; notifications/[notificationId] bugfix (read was hardcoded true); JSDoc added to geocoding.ts; 3 new test files (ai-generate-itinerary, ai-suggest-activities, discover-import)*
+*Last Updated: 2026-04-05 - Privacy Policy + Terms of Service pages created; email exposure removed from trips/[tripId]/members, trips/[tripId]/invitations, trips/[tripId] endpoints; Zod validation strengthened on ai/suggest-activities + ai/chat; 4 dead components removed (SignUpForm, VisuallyHidden, LiveRegion, BadgeShowcase); 76 new tests (~1310 total, 61 test files). Previous: 2026-03-29 changes: JSON.parse safety on 5 AI routes + notifications/[notificationId]; Zod strengthened on ai/chat; notifications/[notificationId] bugfix (read was hardcoded true); JSDoc added to geocoding.ts; 3 new test files (ai-generate-itinerary, ai-suggest-activities, discover-import)*

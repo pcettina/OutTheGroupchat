@@ -1,6 +1,6 @@
 # OutTheGroupchat — Full Codemap
 
-> Auto-generated 2026-03-10. Last updated 2026-03-26. Comprehensive reference for agents and developers.
+> Auto-generated 2026-03-10. Last updated 2026-04-05. Comprehensive reference for agents and developers.
 
 ## Table of Contents
 
@@ -29,7 +29,7 @@ Full-stack Next.js 14 collaborative travel planning app. Groups plan trips toget
 
 **App root:** `outthegroupchat-travel-app/`
 **Source:** `outthegroupchat-travel-app/src/`
-**Stats:** ~263 TS/TSX files | ~33,500 LOC | 48 API routes | 92 components | 20 pages
+**Stats:** ~266 TS/TSX files | ~34,000 LOC | 48 API routes | 88 components | 22 pages
 
 ---
 
@@ -77,17 +77,19 @@ outthegroupchat-travel-app/
 │   │   │   └── loading.tsx
 │   │   ├── inspiration/page.tsx
 │   │   ├── notifications/page.tsx
+│   │   ├── privacy/page.tsx       # Privacy Policy ✅ 2026-04-05
+│   │   ├── terms/page.tsx         # Terms of Service ✅ 2026-04-05
 │   │   ├── profile/page.tsx
-│   │   └── api/                   # 49 API route files (see API Routes section)
+│   │   └── api/                   # 48 API route files (see API Routes section)
 │   ├── components/                # 92 files across 16 feature directories
-│   │   ├── accessibility/         # FocusTrap, SkipLinks, VisuallyHidden, LiveRegion
+│   │   ├── accessibility/         # FocusTrap, SkipLinks (VisuallyHidden + LiveRegion removed 2026-04-05)
 │   │   ├── ai/                    # TripChat (360L), ChatMessage, ChatLoadingIndicator, ChatQuickPrompts, chat-types.ts
-│   │   ├── auth/                  # SignUpForm
+│   │   ├── auth/                  # (SignUpForm removed 2026-04-05)
 │   │   ├── discover/              # CategoryFilter, DestinationCard, TrendingSection
 │   │   ├── feed/                  # FeedItem, RichFeedItem, CommentThread, ShareModal, etc.
 │   │   ├── notifications/         # NotificationBell, NotificationCenter, NotificationList
 │   │   ├── onboarding/            # WelcomeScreen, InterestSelector, TravelStyleQuiz
-│   │   ├── profile/               # ProfileHeader, TripHistory, BadgeShowcase, PreferencesCard
+│   │   ├── profile/               # ProfileHeader, TripHistory, PreferencesCard (BadgeShowcase removed 2026-04-05)
 │   │   ├── search/                # SearchFilters, FilterChip, SearchResults
 │   │   ├── settings/              # NotificationSettings, PrivacySettings, ProfileSettings, SecuritySettings
 │   │   ├── social/                # ActivityCard, TravelBadges
@@ -520,6 +522,8 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `/feed` | `app/feed/page.tsx` | Client | Required | Social activity feed |
 | `/notifications` | `app/notifications/page.tsx` | Client | Required | Notification inbox |
 | `/profile` | `app/profile/page.tsx` | Client | Required | User profile, badges, trip history |
+| `/privacy` | `app/privacy/page.tsx` | Client | Public | Privacy Policy page ✅ 2026-04-05 |
+| `/terms` | `app/terms/page.tsx` | Client | Public | Terms of Service page ✅ 2026-04-05 |
 
 **Utility pages:** `error.tsx` (route error boundary), `global-error.tsx` (root error boundary + Sentry), `not-found.tsx` (404), `loading.tsx` (skeleton)
 
@@ -533,8 +537,8 @@ db:seed        → npx tsx prisma/seed/index.ts
 |-----------|-------|---------|
 | `FocusTrap` | children, active?, onEscape?, initialFocus?, returnFocus? | Trap keyboard focus in modals |
 | `SkipLinks` | links: {id, label}[] | Skip-to-content for keyboard nav |
-| `VisuallyHidden` | children, as? | Screen reader only content |
-| `LiveRegion` | children, role? (polite\|assertive) | Announce dynamic updates |
+| ~~`VisuallyHidden`~~ | — | Removed 2026-04-05 (confirmed unused dead code) |
+| ~~`LiveRegion`~~ | — | Removed 2026-04-05 (confirmed unused dead code) |
 
 ### AI (`components/ai/`)
 
@@ -550,7 +554,7 @@ db:seed        → npx tsx prisma/seed/index.ts
 
 | Component | Props | Purpose |
 |-----------|-------|---------|
-| `SignUpForm` | — | Email/password registration with validation, auto sign-in |
+| ~~`SignUpForm`~~ | — | Removed 2026-04-05 (confirmed unused dead code) |
 
 ### Discover (`components/discover/`)
 
@@ -597,7 +601,7 @@ db:seed        → npx tsx prisma/seed/index.ts
 |-----------|-------|---------|
 | `ProfileHeader` | user, stats?, isOwn?, onEdit? | Cover + avatar + bio |
 | `TripHistory` | trips, userId?, variant? | Past trips timeline |
-| `BadgeShowcase` | badges, showCount? | Achievement badge grid |
+| ~~`BadgeShowcase`~~ | — | Removed 2026-04-05 (confirmed unused dead code) |
 | `PreferencesCard` | preferences, onUpdate?, editable? | Travel preference display/edit |
 
 ### Search (`components/search/`)
@@ -807,7 +811,7 @@ db:seed        → npx tsx prisma/seed/index.ts
 
 ## Tests
 
-**Total: 1156 tests across 56 Vitest unit/integration test files** (0 TSC errors in production code, 0 in test files as of 2026-03-26)
+**Total: ~1310 tests across 61 Vitest unit/integration test files** (0 TSC errors in production code, 0 in test files as of 2026-04-05)
 
 | File | Lines | Tests | Coverage |
 |------|-------|-------|----------|
@@ -841,6 +845,8 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `src/__tests__/api/ai-generate-itinerary.test.ts` | — | 31 | POST /api/ai/generate-itinerary — auth, 503 guard, rate-limit, validation, 404/403, multi-day, AI/DB failures ✅ 2026-03-29 |
 | `src/__tests__/api/ai-suggest-activities.test.ts` | — | 25 | POST /api/ai/suggest-activities — pure AI generation, no Prisma ✅ 2026-03-29 |
 | `src/__tests__/api/discover-import.test.ts` | — | 21 | POST /api/discover/import — rate limiting, auth guard, externalActivity.upsert, OpenTripMap fetch ✅ 2026-03-29 |
+| `src/__tests__/integration/trip-complete-lifecycle.test.ts` | — | 56 | Complete trip lifecycle integration test (create → invite → survey → vote → book) ✅ 2026-04-05 |
+| `src/__tests__/api/geocoding-images-edge-cases.test.ts` | — | 20 | Edge case tests for /api/geocoding + /api/images/search ✅ 2026-04-05 |
 | `src/__tests__/api/voting.test.ts` | — | 10 | Voting API (create, vote, close session) |
 | `src/__tests__/api/survey.test.ts` | — | 11 | Survey API (create, respond, analyze) |
 | `src/__tests__/api/feed.test.ts` | — | 12 | Feed API (pagination, comments, engagement) |
@@ -909,7 +915,7 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `any` types | 0 ✅ |
 | `console.*` | 0 ✅ |
 | TSC errors (prod + test) | 0 ✅ |
-| Vitest tests | 1156 passing (56 files) |
+| Vitest tests | ~1310 passing (61 files) |
 | E2E tests | 11 Playwright smoke tests (4 suites) |
 | Error monitoring | Sentry installed (server + client + edge) — needs `SENTRY_DSN` in Vercel |
 | Files >400 lines | ~10 (0 files exceed 600 lines) |

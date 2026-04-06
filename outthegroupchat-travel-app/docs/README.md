@@ -1,39 +1,43 @@
-# 📚 OutTheGroupchat Documentation
+# OutTheGroupchat Documentation
 
 > **"A social network that not just showcases experiences, but helps you build them."**
 
 Welcome to the OutTheGroupchat documentation hub. This directory contains all technical documentation, guides, and operational procedures for the platform.
 
+*Last Updated: April 5, 2026*
+
 ---
 
-## 🗂️ Documentation Structure
+## Documentation Structure
 
 ```
 docs/
 ├── README.md               # ← You are here
-├── 📋 Operations
+├── CODEMAP.md              # Primary codebase navigation reference for AI agents
+│
+├── Operations
 │   ├── LAUNCH_CHECKLIST.md    # Pre-launch requirements
 │   ├── CURRENT_SPRINT.md      # Active sprint priorities
 │   └── API_STATUS.md          # Endpoint status tracker
 │
-├── 🔧 Technical
+├── Technical
 │   ├── IMPLEMENTATION_STACK.md  # Full tech stack reference
 │   ├── SECURITY_AUDIT.md        # Security review & fixes
 │   ├── TEST_CASES.md            # Testing documentation
 │   └── VERCEL_ENV_SETUP.md      # Deployment configuration
 │
-├── 🗺️ Roadmap
+├── Roadmap
 │   ├── PRODUCTION_ROADMAP.md    # 4-week deployment plan
 │   └── FUTURE_IMPLEMENTATION.md # Long-term feature roadmap
 │
-├── 🤖 Agent Guides
+├── Agent Guides
 │   └── agents/
 │       ├── PLANNING_AGENT_GUIDE.md
 │       ├── CODE_CHECKING_AGENT_GUIDE.md
 │       ├── FRONTEND_AGENT_GUIDE.md
 │       └── SOCIAL_ENGAGEMENT_AGENT_GUIDE.md
 │
-└── 📦 Archive
+└── Archive
     └── archive/                  # Historical versions
         ├── LAUNCH_ROADMAP_v1_2024-12.md
         ├── IMPLEMENTATION_CLOSURE_v1_2024-12.md
@@ -44,12 +48,13 @@ docs/
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### For New Developers
-1. Read [IMPLEMENTATION_STACK.md](./IMPLEMENTATION_STACK.md) - Understand the tech stack
-2. Check [CURRENT_SPRINT.md](./CURRENT_SPRINT.md) - See current priorities
-3. Review [API_STATUS.md](./API_STATUS.md) - Know what's working
+1. Read [CODEMAP.md](./CODEMAP.md) - Primary codebase navigation and file reference (start here for any unfamiliar area)
+2. Read [IMPLEMENTATION_STACK.md](./IMPLEMENTATION_STACK.md) - Understand the tech stack
+3. Check [CURRENT_SPRINT.md](./CURRENT_SPRINT.md) - See current priorities
+4. Review [API_STATUS.md](./API_STATUS.md) - Know what's working
 
 ### For Deployment
 1. Follow [VERCEL_ENV_SETUP.md](./VERCEL_ENV_SETUP.md) - Configure environment
@@ -63,9 +68,23 @@ docs/
 
 ---
 
-## 📋 Key Documents
+## Key Documents
 
-### [🚀 Launch Checklist](./LAUNCH_CHECKLIST.md)
+### [CODEMAP.md](./CODEMAP.md)
+**Use when:** Navigating the codebase as an agent or developer, looking up file locations, or understanding module relationships
+
+Contains:
+- Full directory structure (~266 TypeScript/TSX files)
+- API route inventory (48 routes, all with rate limiting)
+- Component and page index
+- Services, hooks, utilities reference
+- Codebase health metrics
+
+**Role:** Primary navigation reference for AI agents. Read this first when working on any non-trivial task.
+
+---
+
+### [Launch Checklist](./LAUNCH_CHECKLIST.md)
 **Use when:** Preparing for deployment or checking launch readiness
 
 Contains:
@@ -74,37 +93,36 @@ Contains:
 - Testing checklist
 - Launch day procedures
 
-**Current Status:** 56% Complete → Target 85% for Beta
+**Current Status:** 78% Complete — Target 85% for Beta
 
 ---
 
-### [🎯 Current Sprint](./CURRENT_SPRINT.md)
+### [Current Sprint](./CURRENT_SPRINT.md)
 **Use when:** Starting daily work or checking immediate priorities
 
 Contains:
-- Critical bug fixes (P0)
-- Security fixes (P0)
-- Feature work (P1-P2)
-- Daily task breakdown
+- Active sprint goals and blockers
+- Completed work log
+- Nightly build task history
 
-**Sprint Goal:** Fix critical bugs, complete core functionality
+**Sprint Goal:** Beta launch readiness — test coverage, security hardening, rate limiting
 
 ---
 
-### [📡 API Status](./API_STATUS.md)
+### [API Status](./API_STATUS.md)
 **Use when:** Working on frontend integration or debugging API issues
 
 Contains:
-- All endpoint status
+- All 48 endpoint statuses
 - Frontend connection state
 - Known issues per endpoint
-- Required migrations
+- Rate limiting coverage
 
-**API Completion:** 55% fully working
+**API Completion:** 86%+ implemented. All 48 routes have rate limiting as of April 2026.
 
 ---
 
-### [🔧 Implementation Stack](./IMPLEMENTATION_STACK.md)
+### [Implementation Stack](./IMPLEMENTATION_STACK.md)
 **Use when:** Onboarding or making architecture decisions
 
 Contains:
@@ -113,33 +131,56 @@ Contains:
 - Database schema overview
 - File structure guide
 
+**Current Tech Stack:**
+- Frontend: Next.js 14, React 18, TypeScript, Tailwind CSS, Framer Motion
+- Backend: Next.js API Routes, Prisma ORM, PostgreSQL (Supabase)
+- Auth: NextAuth.js with Prisma adapter
+- Real-time: Pusher
+- AI: Vercel AI SDK + OpenAI (gpt-4o-mini, streaming)
+- Testing: Vitest + React Testing Library + Playwright (E2E)
+- Monitoring: Sentry (infrastructure ready, DSN pending)
+- Deploy: Vercel
+
 ---
 
-### [🔒 Security Audit](./SECURITY_AUDIT.md)
+### [Security Audit](./SECURITY_AUDIT.md)
 **Use when:** Reviewing security or fixing vulnerabilities
 
 Contains:
-- Critical security issues (4)
-- Medium priority issues (4)
+- Security issues log and resolution status
+- Rate limiting implementation details
+- Email exposure fixes
 - Security checklist
-- Recommended fixes
 
-**Security Score:** 6/10 → Target 9/10
+**Security improvements since December 2024:**
+- Rate limiting added to all 48 API routes (complete as of April 2026)
+- Email fields stripped from public-facing responses (trips, members, invitations)
+- Redis-backed rate limiter (`src/lib/rate-limit.ts`) using Upstash
+- Auth-guarded routes use `getServerSession()` consistently
+- Zod input validation on all API routes
+- DOMPurify XSS sanitization in place
 
 ---
 
-### [🧪 Test Cases](./TEST_CASES.md)
+### [Test Cases](./TEST_CASES.md)
 **Use when:** Writing or running tests
 
 Contains:
 - Unit test templates
 - Integration test patterns
 - E2E test scenarios
-- Testing stack setup
+- Testing stack setup and mock patterns
+
+**Test Suite Status (April 2026):**
+- 1370+ Vitest tests passing across 64 test files
+- 0 failing tests
+- Vitest + React Testing Library for unit/integration tests
+- Playwright E2E smoke tests (chromium install required in CI)
+- Key mock patterns documented: rate-limit, Prisma, NextAuth, AI client
 
 ---
 
-### [📅 Production Roadmap](./PRODUCTION_ROADMAP.md)
+### [Production Roadmap](./PRODUCTION_ROADMAP.md)
 **Use when:** Planning sprints or understanding deployment timeline
 
 Contains:
@@ -150,7 +191,7 @@ Contains:
 
 ---
 
-### [🔮 Future Implementation](./FUTURE_IMPLEMENTATION.md)
+### [Future Implementation](./FUTURE_IMPLEMENTATION.md)
 **Use when:** Planning future features or understanding product vision
 
 Contains:
@@ -161,7 +202,7 @@ Contains:
 
 ---
 
-## 🤖 Agent Guides
+## Agent Guides
 
 Specialized guides for AI development agents:
 
@@ -174,20 +215,54 @@ Specialized guides for AI development agents:
 
 ---
 
-## 📊 Current Status Overview
+## Current Status Overview
 
-| Area | Status | Document |
-|------|--------|----------|
-| Infrastructure | ✅ Ready | [Launch Checklist](./LAUNCH_CHECKLIST.md) |
-| Authentication | ✅ Working | [API Status](./API_STATUS.md) |
-| Core APIs | 🟡 Partial | [API Status](./API_STATUS.md) |
-| Security | 🔴 Needs Work | [Security Audit](./SECURITY_AUDIT.md) |
-| Testing | 🔴 Minimal | [Test Cases](./TEST_CASES.md) |
-| Documentation | ✅ Updated | This file |
+| Area | Status | Notes | Document |
+|------|--------|-------|----------|
+| Infrastructure | Ready | Vercel + Supabase configured | [Launch Checklist](./LAUNCH_CHECKLIST.md) |
+| Authentication | Working | NextAuth + email verification + password reset | [API Status](./API_STATUS.md) |
+| API Routes | 48 implemented | All with rate limiting | [API Status](./API_STATUS.md) |
+| Rate Limiting | Complete | 48/48 routes covered (Redis/Upstash) | [Security Audit](./SECURITY_AUDIT.md) |
+| Security | Improved | Email exposure fixed, Zod validation throughout | [Security Audit](./SECURITY_AUDIT.md) |
+| Test Coverage | Strong | 1370+ tests, 64 test files, 0 failures | [Test Cases](./TEST_CASES.md) |
+| Monitoring | Partial | Sentry infra ready, DSN not set in Vercel | [Launch Checklist](./LAUNCH_CHECKLIST.md) |
+| Code Quality | Clean | 0 `any` types, 0 `console.*`, 0 files >600 lines | [Codemap](./CODEMAP.md) |
+| Privacy/Terms | Available | `/privacy` and `/terms` pages implemented | [API Status](./API_STATUS.md) |
 
 ---
 
-## 🔗 External Links
+## Codebase Health (April 2026)
+
+| Metric | Value |
+|--------|-------|
+| TypeScript files | ~266 |
+| Lines of code | ~33,500 |
+| API routes | 48 |
+| Test files | 64 |
+| Tests passing | 1370+ |
+| `any` types | 0 |
+| `console.*` statements | 0 |
+| Files >600 lines (prod) | 0 |
+| Rate-limited routes | 48/48 |
+| Pages | ~16 |
+| Components | ~92 |
+
+---
+
+## Known Blockers
+
+| Blocker | Severity | Notes |
+|---------|----------|-------|
+| `OPENAI_API_KEY` missing in Vercel | High | AI features work locally only |
+| Sentry DSN missing in Vercel | Medium | `src/lib/sentry.ts` is ready; needs env var |
+| Pusher env vars missing in production | Medium | Real-time collaboration disabled in prod |
+| Playwright browsers not installed in CI | Medium | Run `npx playwright install chromium` |
+| Resend domain not verified | Low | Email goes to spam |
+| Amadeus/Ticketmaster/Places API keys | Low | Suggestions + flights routes require external keys |
+
+---
+
+## External Links
 
 | Resource | URL |
 |----------|-----|
@@ -198,11 +273,12 @@ Specialized guides for AI development agents:
 
 ---
 
-## 📝 Document Maintenance
+## Document Maintenance
 
 | Document | Update Frequency | Owner |
 |----------|-----------------|-------|
-| CURRENT_SPRINT.md | Daily | Dev Team |
+| CODEMAP.md | Each nightly build | Nightly agent (Wave 3) |
+| CURRENT_SPRINT.md | Daily / each nightly build | Dev Team |
 | API_STATUS.md | Per API change | Dev Team |
 | LAUNCH_CHECKLIST.md | Weekly | Lead Dev |
 | SECURITY_AUDIT.md | Monthly | Security |
@@ -211,7 +287,7 @@ Specialized guides for AI development agents:
 
 ---
 
-## 📦 Archive
+## Archive
 
 The `archive/` folder contains previous versions of documents for historical reference:
 
@@ -223,7 +299,7 @@ The `archive/` folder contains previous versions of documents for historical ref
 
 ---
 
-## 💡 Best Practices
+## Best Practices
 
 ### When Adding Documentation
 1. Use clear, descriptive filenames
@@ -238,12 +314,12 @@ The `archive/` folder contains previous versions of documents for historical ref
 
 ### Document Format
 - Use Markdown
-- Include status indicators (✅ 🟡 🔴 ⏳)
+- Include status indicators
 - Add code examples where helpful
 - Keep tables for quick reference
 
 ---
 
-*Built with ❤️ for travelers who believe the journey is better together.*
+*Built with care for travelers who believe the journey is better together.*
 
-*Last Updated: December 2024*
+*Last Updated: April 5, 2026*

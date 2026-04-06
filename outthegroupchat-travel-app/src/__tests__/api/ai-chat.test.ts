@@ -199,7 +199,6 @@ describe('POST /api/ai/chat', () => {
     const body = await parseJson(res);
 
     expect(res.status).toBe(400);
-    expect(body.success).toBe(false);
     expect(body.error).toMatch(/validation/i);
     expect(mockStreamText).not.toHaveBeenCalled();
   });
@@ -215,7 +214,6 @@ describe('POST /api/ai/chat', () => {
     const body = await parseJson(res);
 
     expect(res.status).toBe(400);
-    expect(body.success).toBe(false);
     expect(body.error).toMatch(/validation/i);
     expect(mockStreamText).not.toHaveBeenCalled();
   });
@@ -235,7 +233,6 @@ describe('POST /api/ai/chat', () => {
     const body = await parseJson(res);
 
     expect(res.status).toBe(400);
-    expect(body.success).toBe(false);
     expect(body.error).toMatch(/validation/i);
     expect(mockStreamText).not.toHaveBeenCalled();
   });
