@@ -9,7 +9,10 @@ import { searchPlaces, getPlaceDetails, getPriceEstimate, type PlaceDetails } fr
 import { searchFlights, getAirportCode } from '@/lib/api/flights';
 import type { EventSearchResult, FlightOffer } from '@/types';
 
-// City to coordinates mapping for better search
+/**
+ * Hardcoded latitude/longitude lookup for supported destination cities.
+ * Used to supply a `location` bias when querying the Google Places API.
+ */
 const CITY_COORDINATES: Record<string, { lat: number; lng: number }> = {
   'Nashville': { lat: 36.1627, lng: -86.7816 },
   'NYC': { lat: 40.7128, lng: -74.0060 },
@@ -58,7 +61,11 @@ export interface SearchFlightsParams {
  */
 export class EventsService {
   /**
-   * Search for events in a city during a date range
+   * Search for events in a city during a date range.
+   * Queries Ticketmaster and optionally filters results by category keyword.
+   *
+   * @param params - Search parameters including city, date range, and optional category filter
+   * @returns Array of normalized event search results; returns an empty array if the upstream API fails
    */
   static async searchEvents(params: SearchEventsParams): Promise<EventSearchResult[]> {
     const { city, startDate, endDate, categories } = params;
@@ -117,7 +124,13 @@ export class EventsService {
   }
 
   /**
-   * Search for places (restaurants, bars, attractions) in a city
+   * Search for places (restaurants, bars, attractions, hotels) in a city.
+   * Executes one or more Google Places queries depending on the requested `type`,
+   * de-duplicates results by `place_id`, and trims to the requested `limit`.
+   *
+   * @param params - Search parameters including city, optional place type, and result limit
+   * @returns Array of unique `PlaceDetails` objects up to the specified limit;
+   *   individual query failures are silently skipped
    */
   static async searchPlaces(params: SearchPlacesParams): Promise<PlaceDetails[]> {
     const { city, type = 'all', limit = 20 } = params;
@@ -175,14 +188,23 @@ export class EventsService {
   }
 
   /**
-   * Get place details with enhanced information
+   * Retrieve full details for a single Google Place by its place ID.
+   *
+   * @param placeId - The Google Places `place_id` string for the venue
+   * @returns A `PlaceDetails` object with enriched venue data, or `null` if not found
    */
   static async getPlaceDetails(placeId: string): Promise<PlaceDetails | null> {
     return getPlaceDetails(placeId);
   }
 
   /**
-   * Search for flights
+   * Search for available flights between two locations via the Amadeus API.
+   * Resolves city names to IATA airport codes before querying.
+   *
+   * @param params - Search parameters including origin/destination cities, departure date,
+   *   optional return date, and number of adult passengers
+   * @returns Array of `FlightOffer` objects with price and itinerary data;
+   *   returns an empty array if airport codes cannot be resolved or the API call fails
    */
   static async searchFlights(params: SearchFlightsParams): Promise<FlightOffer[]> {
     const { origin, destination, departureDate, returnDate, adults } = params;
@@ -219,7 +241,10 @@ export class EventsService {
   }
 
   /**
-   * Get price estimate text from price level
+   * Convert a Google Places price level integer to a human-readable estimate string.
+   *
+   * @param priceLevel - Google Places price level (0–4), or `undefined` if not available
+   * @returns A string such as "Free", "$", "$$", "$$$", "$$$$", or "Price Unknown"
    */
   static getPriceEstimate(priceLevel: number | undefined): string {
     return getPriceEstimate(priceLevel);

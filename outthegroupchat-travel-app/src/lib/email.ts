@@ -13,14 +13,35 @@ const DEFAULT_FROM = process.env.EMAIL_FROM || 'OutTheGroupchat <noreply@outtheg
 const APP_URL = process.env.NEXTAUTH_URL || 'https://outthegroupchat.com';
 
 /**
- * Check if email service is configured
+ * Check if the email service (Resend) is configured and ready to send mail.
+ *
+ * @returns `true` when a Resend API key is present and the client has been
+ *   initialised; `false` otherwise. Callers should gate email-sending code
+ *   behind this check to avoid runtime errors when the key is absent.
  */
 export function isEmailConfigured(): boolean {
   return !!resend;
 }
 
 /**
- * Send a trip invitation email to a non-registered user
+ * Send a trip invitation email to a user who has not yet registered.
+ *
+ * Generates a sign-up URL that deep-links the recipient into the specified
+ * trip after account creation. Both an HTML and a plain-text version of the
+ * email are sent to maximise deliverability.
+ *
+ * @param params - Invitation parameters.
+ * @param params.to - Recipient email address. Must be a valid RFC-5322 address.
+ * @param params.tripTitle - Human-readable title of the trip being shared.
+ * @param params.inviterName - Display name of the user sending the invitation.
+ * @param params.tripId - Database ID of the trip; used to build the redirect URL.
+ * @param params.expiresAt - Optional expiry date shown in the email body.
+ *
+ * @returns A result object:
+ *   - `success: true` with a `messageId` string on successful delivery.
+ *   - `success: false` with an `error` description on failure.
+ *
+ * @throws Does not throw; all errors are caught and returned as `{ success: false }`.
  */
 export async function sendInvitationEmail(params: {
   to: string;
@@ -57,13 +78,12 @@ export async function sendInvitationEmail(params: {
       return { success: false, error: 'Invalid email address format' };
     }
 
-    // Log email attempt with configuration details
-    logSuccess('EMAIL_SEND', 'Attempting to send invitation email', { 
-      to, 
+    // Log email attempt without exposing any API key material
+    logSuccess('EMAIL_SEND', 'Attempting to send invitation email', {
+      to,
       tripId,
       from: DEFAULT_FROM,
-      hasApiKey: !!process.env.RESEND_API_KEY,
-      apiKeyPrefix: process.env.RESEND_API_KEY?.substring(0, 7) + '...'
+      configured: true,
     });
 
     const { data, error } = await resend.emails.send({
@@ -131,7 +151,27 @@ export async function sendInvitationEmail(params: {
 }
 
 /**
- * Send a notification email (generic)
+ * Send a generic notification email to an existing user.
+ *
+ * Renders a branded HTML email (with a plain-text fallback) containing a
+ * title, body message, and an optional call-to-action button. Suitable for
+ * any transactional notification that does not require a dedicated template.
+ *
+ * @param params - Notification parameters.
+ * @param params.to - Recipient email address.
+ * @param params.subject - Email subject line shown in the inbox.
+ * @param params.title - Heading displayed at the top of the email body.
+ * @param params.message - Main body text of the notification.
+ * @param params.actionUrl - Optional URL for the call-to-action button.
+ *   When omitted, no button is rendered.
+ * @param params.actionText - Label text for the call-to-action button.
+ *   Ignored when `actionUrl` is absent.
+ *
+ * @returns A result object:
+ *   - `success: true` with a `messageId` string on successful delivery.
+ *   - `success: false` with an `error` description on failure.
+ *
+ * @throws Does not throw; all errors are caught and returned as `{ success: false }`.
  */
 export async function sendNotificationEmail(params: {
   to: string;

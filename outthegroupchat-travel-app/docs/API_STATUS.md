@@ -1,9 +1,9 @@
 # 📡 API & Integration Status
 
-> **Last updated: 2026-03-26**
+> **Last updated: 2026-04-06**
 >
-> **Last Audit:** March 2026
-> **Overall Status:** 86% Complete
+> **Last Audit:** April 2026
+> **Overall Status:** 90% Complete
 > **Target:** 100% for Beta Launch
 
 ---
@@ -46,8 +46,8 @@
 | `/api/trips` | GET | ✅ | 🔶 | Lists user's trips |
 | `/api/trips` | POST | ✅ | 🔶 | Creates new trip |
 | `/api/trips/[tripId]` | GET | ✅ | 🔶 | Get trip details; email stripped from unauthenticated public responses (security hardened 2026-03-25) |
-| `/api/trips/[tripId]` | PATCH | ✅ | ⏳ | Update trip |
-| `/api/trips/[tripId]` | DELETE | ✅ | ⏳ | Delete trip |
+| `/api/trips/[tripId]` | PATCH | ✅ | ✅ | Update trip — EditTripModal wired to PATCH endpoint ✅ 2026-04-06 |
+| `/api/trips/[tripId]` | DELETE | ✅ | ✅ | Delete trip — DeleteTripModal wired ✅ 2026-04-06 |
 
 ### Trip Member APIs
 
@@ -122,7 +122,7 @@ COMPLETED ✅ Dec 17:
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
 | `/api/notifications` | GET | ✅ | ✅ | **Data structure verified** ✅ Dec 17; Zod pagination params improved 2026-03-22 |
-| `/api/notifications` | PATCH | ✅ | ✅ | Mark as read |
+| `/api/notifications` | PATCH | ✅ | ✅ | Mark as read — optimistic updates added to notifications page ✅ 2026-04-06 |
 | `/api/notifications/[id]` | PATCH | ✅ | ✅ | Mark individual notification read; Zod validation added 2026-03-13; Zod params (cuid), JSON.parse safety, bugfix (read field was hardcoded true) 2026-03-29 |
 
 ### Notification Issues to Fix
@@ -140,7 +140,7 @@ No fix needed - code was already correct
 |----------|--------|--------|-------------------|-------|
 | `/api/discover` | GET | ✅ | ⏳ | Search events/places/restaurants/attractions/nightlife by city + date range; type param filters results |
 | `/api/discover` | POST | ✅ | ⏳ | Search flights via EventsService (origin, destination, departureDate, returnDate, adults); Zod validation added 2026-03-21 |
-| `/api/discover/search` | GET | ✅ | 🔶 | Auth guard added 2026-03-24 (was unauthenticated — security improvement); rate limiting, Zod validation ✅ |
+| `/api/discover/search` | GET | ✅ | ✅ | Auth guard added 2026-03-24 (was unauthenticated — security improvement); rate limiting, Zod validation ✅; frontend wired via SearchResults.tsx ✅ 2026-04-06 |
 | `/api/discover/recommendations` | GET | ✅ | 🔶 | Auth guard added 2026-03-24; category filter, rate limiting, pino logging ✅ |
 | `/api/discover/import` | POST | ✅ | ⏳ | Rate limiting + auth guard ✅ 2026-03-24; pino logging, typed helpers, fixed empty catch blocks |
 | `/api/search` | GET | ✅ | 🔶 | Email removed from select projection (privacy fix) ✅ 2026-03-20 |
@@ -160,7 +160,7 @@ Email removed from select projection in /api/search/route.ts
 
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
-| `/api/ai/chat` | POST | ✅ | ✅ | **OpenAI connected** ✅ Dec 17; Zod strengthened (role enum, content limits, max 50 messages, tripContext limits) + JSON.parse safety added 2026-03-29 |
+| `/api/ai/chat` | POST | ✅ | ✅ | **OpenAI connected** ✅ Dec 17; Zod strengthened (role enum, content limits, max 50 messages, tripContext limits) + JSON.parse safety added 2026-03-29; API key logging exposure fixed ✅ 2026-04-06 |
 | `/api/ai/recommend` | POST | ✅ | ⏳ | Personalized activity recommendations using user saved/rated history; AI + DB hybrid results; JSON.parse safety added 2026-03-29 |
 | `/api/ai/recommend` | GET | ✅ | ⏳ | Trip-scoped recommendations by `?tripId=`; Zod getQuerySchema (tripId required, limit clamped 1-20) added 2026-03-29; aggregates group member preferences to suggest activities |
 | `/api/ai/generate-itinerary` | POST | ✅ | ⏳ | Complete — isOpenAIConfigured() guard returns 503 when key absent ✅ 2026-03-23; JSON.parse safety added 2026-03-29 |
@@ -372,4 +372,4 @@ EMAIL_FROM=             # Email sender (onboarding@resend.dev) ✅
 
 *Review and update after each API change.*
 
-*Last Updated: 2026-03-26 - /api/ai/search GET+POST fully implemented (semantic search, destinations branch); /api/newsletter/subscribe now requires auth; /api/auth/signup, /api/auth/reset-password, /api/auth/verify-email: rate limiting now first operation; 153 new tests tonight (1156 total, 56 test files); dead components (NotificationCenter.tsx, SharePreview.tsx) removed; JSDoc added to costs.ts; README updated. Also includes 2026-03-29 changes: /api/ai/chat Zod strengthened + JSON.parse safety; /api/ai/recommend Zod GET params + JSON.parse safety; /api/ai/suggest-activities + generate-itinerary JSON.parse safety; /api/notifications/[notificationId] Zod params (cuid) + bugfix (read was hardcoded true); JSDoc added to src/lib/geocoding.ts; N8N docs deprecated*
+*Last Updated: 2026-04-06 — EditTripModal wired to PATCH /api/trips/[tripId] ✅; DeleteTripModal wired to DELETE /api/trips/[tripId] ✅; discover/search frontend connected via SearchResults.tsx ✅; notifications mark-as-read improved with optimistic updates ✅; API key logging exposure fixed in /api/ai/chat ✅; JSDoc added to 12 lib/service files; 104 new tests (36 users/[userId], 36 activities/[activityId], 6 users-follow, 26 feed/engagement); users-follow.test.ts Redis leak fixed (104s → <5s). Also includes earlier changes: /api/ai/search GET+POST fully implemented; /api/newsletter/subscribe now requires auth; /api/auth/* rate limiting hardened; 2026-03-29 JSON.parse safety on AI routes + notifications bugfix.*

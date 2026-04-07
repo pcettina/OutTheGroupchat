@@ -1,7 +1,22 @@
 /**
  * @module auth
- * @description NextAuth.js configuration for the application, including Google OAuth and
- * credentials-based authentication providers, JWT session strategy, and Prisma adapter.
+ * @description NextAuth.js configuration for the OutTheGroupchat application.
+ *
+ * Provides:
+ * - **Prisma adapter** — persists users, sessions, and accounts to PostgreSQL
+ *   via the shared {@link prisma} client.
+ * - **JWT session strategy** — stateless tokens are used so that sessions work
+ *   correctly in Vercel's serverless/edge environment without sticky sessions.
+ * - **Google OAuth provider** — users can sign in with their Google account.
+ * - **Credentials provider** — email + bcrypt-hashed password sign-in for
+ *   users who registered without OAuth.
+ * - **Session / JWT callbacks** — propagate the database user ID into every
+ *   JWT token and session object so downstream code can call
+ *   `session.user.id` without an extra DB round-trip.
+ *
+ * The module also augments the `next-auth` and `next-auth/jwt` type
+ * declarations so TypeScript is aware of the additional `id` field on
+ * `Session.user` and `JWT`.
  */
 import { NextAuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
@@ -31,9 +46,36 @@ declare module 'next-auth/jwt' {
 }
 
 /**
- * @description NextAuth.js options object configuring the Prisma adapter, JWT session strategy,
- * custom sign-in/error pages, Google and credentials providers, and session/JWT callbacks
- * that populate the session with the user's database ID.
+ * NextAuth.js configuration object used by the `[...nextauth]` API route and
+ * by `getServerSession(authOptions)` in server components and API handlers.
+ *
+ * Configuration highlights:
+ * - Adapter: `@auth/prisma-adapter` — all auth records are stored in the
+ *   application's Prisma-managed PostgreSQL database.
+ * - Session strategy: `'jwt'` — avoids database session lookups on every
+ *   authenticated request.
+ * - Custom pages: sign-in at `/auth/signin`, error at `/auth/error`.
+ * - Providers:
+ *   1. **GoogleProvider** — reads `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`
+ *      from the environment.
+ *   2. **CredentialsProvider** — accepts `email` + `password`, verifies the
+ *      bcrypt hash stored on the `User` record, and throws on mismatch.
+ * - `session` callback — copies `token.id` and `token.name` onto the
+ *   `session.user` object returned to the client.
+ * - `jwt` callback — queries the database for the user record on `signIn`
+ *   and `update` triggers, then caches `id`, `name`, and `email` in the
+ *   token to avoid per-request DB calls.
+ *
+ * @example
+ * ```ts
+ * import { getServerSession } from 'next-auth';
+ * import { authOptions } from '@/lib/auth';
+ *
+ * const session = await getServerSession(authOptions);
+ * if (!session?.user?.id) {
+ *   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+ * }
+ * ```
  */
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),

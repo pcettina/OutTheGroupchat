@@ -9,7 +9,7 @@ import { format } from 'date-fns';
 import { useTrip } from '@/hooks/useTrips';
 import { TripChat } from '@/components/ai';
 import { Navigation } from '@/components/Navigation';
-import { TripHeader, TripOverview, MemberList, ItineraryTimeline, InviteModal, AddActivityModal, InviteMemberModal } from '@/components/trips';
+import { TripHeader, TripOverview, MemberList, ItineraryTimeline, InviteModal, AddActivityModal, InviteMemberModal, EditTripModal } from '@/components/trips';
 import { ShareModal } from '@/components/feed/ShareModal';
 import { FloatingShareButton } from '@/components/ui';
 import type { Destination, TripBudget } from '@/types';
@@ -26,6 +26,7 @@ export default function TripDetailPage() {
   const [isInviteMemberModalOpen, setIsInviteMemberModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isAddActivityModalOpen, setIsAddActivityModalOpen] = useState(false);
+  const [isEditTripModalOpen, setIsEditTripModalOpen] = useState(false);
   const [activityPreselectedDate, setActivityPreselectedDate] = useState<Date | undefined>(undefined);
 
   if (isLoading) {
@@ -292,6 +293,32 @@ export default function TripDetailPage() {
                 isOwner={session?.user?.id === trip.ownerId}
               />
 
+              {/* Edit Trip (owner/admin only) */}
+              {isOwnerOrAdmin && (
+                <motion.button
+                  onClick={() => setIsEditTripModalOpen(true)}
+                  whileHover={{ scale: 1.01, y: -1 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full py-3 px-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-300 dark:border-slate-600 hover:border-emerald-400 dark:hover:border-emerald-600 text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 font-medium text-sm flex items-center justify-center gap-2 transition-colors shadow-sm"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
+                  </svg>
+                  Edit Trip Details
+                </motion.button>
+              )}
+
               {/* Add Member (direct add by email — owner/admin only) */}
               {isOwnerOrAdmin && (
                 <motion.button
@@ -371,6 +398,16 @@ export default function TripDetailPage() {
         onActivityAdded={handleActivityAdded}
         preselectedDate={activityPreselectedDate}
       />
+
+      {/* Edit Trip Modal (owner/admin only) */}
+      {isOwnerOrAdmin && (
+        <EditTripModal
+          isOpen={isEditTripModalOpen}
+          onClose={() => setIsEditTripModalOpen(false)}
+          trip={trip}
+          onSuccess={() => router.refresh()}
+        />
+      )}
     </div>
   );
 }

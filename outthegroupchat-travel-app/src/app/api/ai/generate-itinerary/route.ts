@@ -1,3 +1,30 @@
+/**
+ * @module api/ai/generate-itinerary
+ *
+ * AI-powered itinerary generation endpoint.
+ *
+ * Exposes a single operation:
+ *   POST /api/ai/generate-itinerary
+ *
+ * Given an existing trip ID the route:
+ *   1. Validates the authenticated user is a trip member.
+ *   2. Collects member preferences and approved activities from the database.
+ *   3. Constructs a structured prompt via `buildItineraryPrompt` and sends it
+ *      to the configured OpenAI model (via Vercel AI SDK `generateText`).
+ *   4. Parses and schema-validates the JSON returned by the model.
+ *   5. Persists the generated itinerary days and items to the database inside a
+ *      Prisma transaction (replacing any previously generated itinerary).
+ *   6. Returns the full itinerary together with packing tips, local tips, and a
+ *      budget breakdown.
+ *
+ * Route segment config:
+ *   - `maxDuration`: 60 seconds — AI generation is slower than typical API calls.
+ *   - `dynamic`: 'force-dynamic' — prevents static caching of responses.
+ *
+ * Authentication: Required (NextAuth session).
+ * Rate limiting:  Redis-based via `aiRateLimiter` (Upstash).
+ */
+
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { generateText } from 'ai';
@@ -67,6 +94,61 @@ const aiGeneratedItinerarySchema = z.object({
   localTips: z.array(z.string()),
 });
 
+/**
+ * POST /api/ai/generate-itinerary
+ *
+ * Generates a full day-by-day itinerary for a trip using the configured AI model,
+ * then persists it to the database.
+ *
+ * Authentication: Required (NextAuth session). Returns 401 if unauthenticated.
+ * Rate limiting:  Redis-based `aiRateLimiter`. Returns 429 with Retry-After headers
+ *                 when the limit is exceeded.
+ * AI availability: Returns 503 when `OPENAI_API_KEY` is not configured.
+ *
+ * Request body (JSON):
+ * ```json
+ * {
+ *   "tripId":             "<cuid>",            // required — the trip to generate for
+ *   "customInstructions": "Focus on museums"   // optional — appended to the base prompt
+ * }
+ * ```
+ *
+ * Response 200:
+ * ```json
+ * {
+ *   "success": true,
+ *   "data": {
+ *     "itinerary": {
+ *       "overview":        "...",
+ *       "days":            [ /* ItineraryDay objects *\/ ],
+ *       "budgetBreakdown": { "accommodation": 0, "food": 0, "activities": 0, "transport": 0, "total": 0 },
+ *       "packingTips":     ["..."],
+ *       "localTips":       ["..."]
+ *     },
+ *     "savedDays": 3,
+ *     "tips": {
+ *       "packing": ["..."],
+ *       "local":   ["..."]
+ *     },
+ *     "budget": { "accommodation": 0, "food": 0, "activities": 0, "transport": 0, "total": 0 }
+ *   }
+ * }
+ * ```
+ *
+ * Error responses:
+ * - 400 Invalid JSON body or Zod validation failure (`{ success: false, error, details? }`)
+ * - 401 Unauthenticated
+ * - 403 Authenticated user is not a member of the requested trip
+ * - 404 Trip not found
+ * - 429 Rate limit exceeded (includes `Retry-After` and `X-RateLimit-*` headers)
+ * - 500 AI response parse failure or unexpected server error
+ * - 502 AI returned a response that did not conform to the expected itinerary schema
+ * - 503 OpenAI API key not configured
+ *
+ * @param req - Incoming HTTP request containing the JSON body described above.
+ * @returns NextResponse with the generated itinerary data or an error payload.
+ * @throws Does not throw — all errors are caught and returned as JSON responses.
+ */
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);

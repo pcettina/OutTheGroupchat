@@ -53,28 +53,11 @@ async jwt({ token, user, trigger }) {
 
 ---
 
-### 3. User Search Exposes Email Addresses
+### 3. ~~User Search Exposes Email Addresses~~ — RESOLVED
 **File:** `src/app/api/search/route.ts`
-**Lines:** 105-127
-**Risk Level:** 🔴 HIGH
+**Risk Level:** ✅ RESOLVED (2026-04-06)
 
-```typescript
-const users = await prisma.user.findMany({
-  where: {
-    OR: [
-      { name: { contains: query, mode: 'insensitive' } },
-      { email: { contains: query, mode: 'insensitive' } },  // ⚠️ Privacy violation
-```
-
-**Problem:** Allows enumeration of user emails
-
-**Fix:** Remove email from searchable fields for privacy:
-```typescript
-OR: [
-  { name: { contains: query, mode: 'insensitive' } },
-  { city: { contains: query, mode: 'insensitive' } },
-],
-```
+Email field has been removed from user search queries. Search is now limited to name and city fields only, preventing email enumeration. The trips/members, invitations, and related endpoints were also audited and patched to strip email from responses.
 
 ---
 
@@ -191,7 +174,7 @@ As we expand social features, implement:
 
 | Feature | Status | Priority |
 |---------|--------|----------|
-| Rate limiting (Redis) | ✅ | P0 |
+| Rate limiting (Redis, all 48 routes) | ✅ | P0 |
 | Input sanitization (XSS) | ❌ | P0 |
 | Content moderation | ❌ | P1 |
 | Report/block users | ❌ | P1 |
@@ -225,14 +208,14 @@ const securityHeaders = [
 
 | Severity | Count | Action Required |
 |----------|-------|-----------------|
-| 🔴 Critical | 4 (2 resolved ✅, 2 open) | Immediate fix |
+| 🔴 Critical | 4 (3 resolved ✅, 1 open) | Immediate fix |
 | 🟠 Medium | 4 (2 resolved ✅, 2 open) | Next sprint |
 | 🟡 Low | 3 | Backlog |
 
-**Overall Security Score: 7/10** (improved from 6/10 — rate limiting, demo credentials, and `any` types resolved)
+**Overall Security Score: 8/10** (improved from 7/10 — email exposure patched across search, members, invitations; all 48 API routes now have rate limiting)
 
 ---
 
-*Last Updated: 2026-03-24*
+*Last Updated: 2026-04-06*
 *Next Audit: Before production launch*
 

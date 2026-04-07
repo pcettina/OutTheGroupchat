@@ -28,12 +28,14 @@ interface NotificationListProps {
   notifications: Notification[];
   onMarkRead?: (id: string) => void;
   onDelete?: (id: string) => void;
+  onError?: (message: string) => void;
 }
 
 export function NotificationList({
   notifications,
   onMarkRead,
   onDelete,
+  onError,
 }: NotificationListProps) {
   // Group notifications by date
   const groupedNotifications = notifications.reduce((groups, notification) => {
@@ -87,6 +89,7 @@ export function NotificationList({
                       notification={notification}
                       onMarkRead={onMarkRead}
                       onDelete={onDelete}
+                      onError={onError}
                     />
                   </motion.div>
                 ))}

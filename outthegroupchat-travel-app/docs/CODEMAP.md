@@ -1,6 +1,6 @@
 # OutTheGroupchat — Full Codemap
 
-> Auto-generated 2026-03-10. Last updated 2026-03-26. Comprehensive reference for agents and developers.
+> Auto-generated 2026-03-10. Last updated 2026-04-06. Comprehensive reference for agents and developers.
 
 ## Table of Contents
 
@@ -29,7 +29,7 @@ Full-stack Next.js 14 collaborative travel planning app. Groups plan trips toget
 
 **App root:** `outthegroupchat-travel-app/`
 **Source:** `outthegroupchat-travel-app/src/`
-**Stats:** ~263 TS/TSX files | ~33,500 LOC | 48 API routes | 92 components | 20 pages
+**Stats:** ~266 TS/TSX files | ~34,000 LOC | 48 API routes | 92 components | 20 pages
 
 ---
 
@@ -807,7 +807,7 @@ db:seed        → npx tsx prisma/seed/index.ts
 
 ## Tests
 
-**Total: 1156 tests across 56 Vitest unit/integration test files** (0 TSC errors in production code, 0 in test files as of 2026-03-26)
+**Total: ~1414 tests across 63 Vitest unit/integration test files** (0 TSC errors in production code, 0 in test files as of 2026-04-06)
 
 | File | Lines | Tests | Coverage |
 |------|-------|-------|----------|
@@ -841,6 +841,9 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `src/__tests__/api/ai-generate-itinerary.test.ts` | — | 31 | POST /api/ai/generate-itinerary — auth, 503 guard, rate-limit, validation, 404/403, multi-day, AI/DB failures ✅ 2026-03-29 |
 | `src/__tests__/api/ai-suggest-activities.test.ts` | — | 25 | POST /api/ai/suggest-activities — pure AI generation, no Prisma ✅ 2026-03-29 |
 | `src/__tests__/api/discover-import.test.ts` | — | 21 | POST /api/discover/import — rate limiting, auth guard, externalActivity.upsert, OpenTripMap fetch ✅ 2026-03-29 |
+| `src/__tests__/users-userid.test.ts` | — | 36 | GET/POST/PATCH /api/users/[userId] — public profile, follow/unfollow toggle, PATCH owner-only ✅ 2026-04-06 |
+| `src/__tests__/activities-activityid.test.ts` | — | 36 | GET/POST/PUT /api/activities/[activityId] — activity detail, save/unsave, comment/rate ✅ 2026-04-06 |
+| `src/__tests__/feed-engagement.test.ts` | — | 26 | GET/POST /api/feed/engagement — activity + trip stats, like/unlike, unauthenticated fallback ✅ 2026-04-06 |
 | `src/__tests__/api/voting.test.ts` | — | 10 | Voting API (create, vote, close session) |
 | `src/__tests__/api/survey.test.ts` | — | 11 | Survey API (create, respond, analyze) |
 | `src/__tests__/api/feed.test.ts` | — | 12 | Feed API (pagination, comments, engagement) |
@@ -909,7 +912,7 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `any` types | 0 ✅ |
 | `console.*` | 0 ✅ |
 | TSC errors (prod + test) | 0 ✅ |
-| Vitest tests | 1156 passing (56 files) |
+| Vitest tests | ~1414 passing (63 files) |
 | E2E tests | 11 Playwright smoke tests (4 suites) |
 | Error monitoring | Sentry installed (server + client + edge) — needs `SENTRY_DSN` in Vercel |
 | Files >400 lines | ~10 (0 files exceed 600 lines) |

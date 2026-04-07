@@ -19,6 +19,10 @@ Add these in your Vercel Dashboard: **Settings** > **Environment Variables**
 |----------|-------------|--------|
 | `OPENAI_API_KEY` | For AI chat features | ⚠️ **NOT SET** - See troubleshooting below |
 | `ANTHROPIC_API_KEY` | Alternative AI provider | Optional |
+| `SENTRY_DSN` | Error monitoring via Sentry (infrastructure ready in `src/lib/sentry.ts`) | ⚠️ **NOT SET** - Add DSN from Sentry dashboard to enable error tracking |
+| `DEMO_MODE` | Enable demo auth endpoint (`true`/`false`). When `false`, `/api/auth/demo` returns 403. Demo credentials read from `DEMO_USER_EMAIL` + `DEMO_USER_PASSWORD`. | Not set (defaults to disabled) |
+| `DEMO_USER_EMAIL` | Demo login email — required when `DEMO_MODE=true` | Not set |
+| `DEMO_USER_PASSWORD` | Demo login password — required when `DEMO_MODE=true` | Not set |
 | `RESEND_API_KEY` | Email service (Resend) | ✅ SET Dec 17 |
 | `EMAIL_FROM` | Email sender address | ✅ SET Dec 17 (onboarding@resend.dev) |
 | `N8N_API_KEY` | n8n workflow authentication for beta/newsletter endpoints | ⚠️ **REQUIRED FOR N8N** - See N8N_DEPLOYMENT_CHECKLIST.md |
@@ -155,3 +159,7 @@ After redeploying, check logs again. Should see:
 - ❌ Forgetting to redeploy after adding variable
 - ❌ Using wrong variable name (must be exactly `OPENAI_API_KEY`)
 - ❌ Copying key with extra spaces or newlines
+
+---
+
+*Last Updated: 2026-04-06*

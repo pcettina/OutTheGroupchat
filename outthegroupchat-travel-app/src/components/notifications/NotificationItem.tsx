@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
 import Link from 'next/link';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { logger } from '@/lib/logger';
 
 export type NotificationType =
   | 'trip_invite'
@@ -43,6 +44,7 @@ interface NotificationItemProps {
   };
   onMarkRead?: (id: string) => void;
   onDelete?: (id: string) => void;
+  onError?: (message: string) => void;
 }
 
 const typeConfig: Record<NotificationType, { icon: string; color: string; bgColor: string }> = {
@@ -63,6 +65,7 @@ export function NotificationItem({
   notification,
   onMarkRead,
   onDelete,
+  onError,
 }: NotificationItemProps) {
   const [isHovered, setIsHovered] = useState(false);
   const queryClient = useQueryClient();
@@ -75,12 +78,50 @@ export function NotificationItem({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ read: true }),
       });
-      if (!response.ok) throw new Error('Failed to mark as read');
+      if (!response.ok) throw new Error('Failed to mark notification as read');
       return response.json();
+    },
+    onMutate: async () => {
+      // Optimistic update: cancel in-flight queries and update cache immediately
+      await queryClient.cancelQueries({ queryKey: ['notifications'] });
+
+      const previousData = queryClient.getQueriesData<{
+        notifications: NotificationItemProps['notification'][];
+        unreadCount: number;
+      }>({ queryKey: ['notifications'] });
+
+      queryClient.setQueriesData<{
+        notifications: NotificationItemProps['notification'][];
+        unreadCount: number;
+      }>({ queryKey: ['notifications'] }, (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          notifications: old.notifications.map((n) =>
+            n.id === notification.id ? { ...n, read: true } : n
+          ),
+          unreadCount: Math.max(0, old.unreadCount - 1),
+        };
+      });
+
+      logger.debug({ notificationId: notification.id }, '[NotificationItem] Optimistic mark-as-read applied');
+      return { previousData };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
       onMarkRead?.(notification.id);
+      logger.debug({ notificationId: notification.id }, '[NotificationItem] Mark-as-read confirmed by server');
+    },
+    onError: (error, _variables, context) => {
+      // Revert optimistic update on failure
+      if (context?.previousData) {
+        for (const [queryKey, data] of context.previousData) {
+          queryClient.setQueryData(queryKey, data);
+        }
+      }
+      const message = 'Failed to mark notification as read. Please try again.';
+      logger.error({ error, notificationId: notification.id }, '[NotificationItem] Mark-as-read failed');
+      onError?.(message);
     },
   });
 
@@ -92,9 +133,46 @@ export function NotificationItem({
       if (!response.ok) throw new Error('Failed to delete notification');
       return response.json();
     },
+    onMutate: async () => {
+      // Optimistic update: remove notification from list immediately
+      await queryClient.cancelQueries({ queryKey: ['notifications'] });
+
+      const previousData = queryClient.getQueriesData<{
+        notifications: NotificationItemProps['notification'][];
+        unreadCount: number;
+      }>({ queryKey: ['notifications'] });
+
+      queryClient.setQueriesData<{
+        notifications: NotificationItemProps['notification'][];
+        unreadCount: number;
+      }>({ queryKey: ['notifications'] }, (old) => {
+        if (!old) return old;
+        const wasUnread = !notification.read;
+        return {
+          ...old,
+          notifications: old.notifications.filter((n) => n.id !== notification.id),
+          unreadCount: wasUnread ? Math.max(0, old.unreadCount - 1) : old.unreadCount,
+        };
+      });
+
+      logger.debug({ notificationId: notification.id }, '[NotificationItem] Optimistic delete applied');
+      return { previousData };
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
       onDelete?.(notification.id);
+      logger.debug({ notificationId: notification.id }, '[NotificationItem] Delete confirmed by server');
+    },
+    onError: (error, _variables, context) => {
+      // Revert optimistic update on failure
+      if (context?.previousData) {
+        for (const [queryKey, data] of context.previousData) {
+          queryClient.setQueryData(queryKey, data);
+        }
+      }
+      const message = 'Failed to delete notification. Please try again.';
+      logger.error({ error, notificationId: notification.id }, '[NotificationItem] Delete failed');
+      onError?.(message);
     },
   });
 
@@ -169,7 +247,8 @@ export function NotificationItem({
                 e.stopPropagation();
                 markReadMutation.mutate();
               }}
-              className="p-1.5 text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+              disabled={markReadMutation.isPending}
+              className="p-1.5 text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors disabled:opacity-50"
               title="Mark as read"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -182,7 +261,8 @@ export function NotificationItem({
               e.stopPropagation();
               deleteMutation.mutate();
             }}
-            className="p-1.5 text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+            disabled={deleteMutation.isPending}
+            className="p-1.5 text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors disabled:opacity-50"
             title="Delete"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

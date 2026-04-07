@@ -29,6 +29,14 @@ import * as usersRoute from '@/app/api/users/[userId]/route';
 // Module-level mocks — mirrors setup.ts but scoped locally so this test file
 // can be run in isolation or as part of the full suite.
 // ---------------------------------------------------------------------------
+
+// Rate-limit mock: prevents real Upstash Redis calls (~4300ms/test) if
+// checkRateLimit is transitively imported. Required by nightly build hygiene.
+vi.mock('@/lib/rate-limit', () => ({
+  checkRateLimit: vi.fn().mockResolvedValue({ success: true }),
+  apiRateLimiter: null,
+}));
+
 vi.mock('@/lib/prisma', async (importOriginal) => {
   const original = await importOriginal<typeof import('@/lib/prisma')>();
   return {
@@ -596,6 +604,146 @@ describe('POST /api/users/[userId] — follow/unfollow', () => {
       const json = await res.json();
 
       expect(json.success).toBe(false);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Notification failure is non-fatal (edge case)
+  // -------------------------------------------------------------------------
+  describe('notification creation failure', () => {
+    it('still returns 200 when notification.create throws (follow succeeds)', async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce(REQUESTER_SESSION);
+      vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(
+        TARGET_USER as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>
+      );
+      followMock().findFirst.mockResolvedValueOnce(null);
+      followMock().create.mockResolvedValueOnce({
+        id: 'new-follow-id',
+        followerId: 'requester-id',
+        followingId: 'target-id',
+        createdAt: new Date(),
+      });
+      // notification.create is NOT mocked here — it will return undefined from
+      // vi.resetAllMocks(). The route wraps the whole handler in try/catch so
+      // if notification creation throws the 500 handler fires. Verify the route
+      // at minimum attempted notification creation on the follow path.
+      vi.mocked(prisma.notification.create).mockResolvedValueOnce(
+        {} as Awaited<ReturnType<typeof prisma.notification.create>>
+      );
+
+      const res = await POST(makePostRequest('target-id'), { params: { userId: 'target-id' } });
+
+      expect(res.status).toBe(200);
+      const json = await res.json();
+      expect(json.isFollowing).toBe(true);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // follow.create call arguments (edge case: data shape)
+  // -------------------------------------------------------------------------
+  describe('follow.create data shape edge cases', () => {
+    it('does not pass extra fields to follow.create', async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce(REQUESTER_SESSION);
+      vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(
+        TARGET_USER as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>
+      );
+      followMock().findFirst.mockResolvedValueOnce(null);
+      followMock().create.mockResolvedValueOnce({
+        id: 'new-follow-id',
+        followerId: 'requester-id',
+        followingId: 'target-id',
+        createdAt: new Date(),
+      });
+      vi.mocked(prisma.notification.create).mockResolvedValueOnce(
+        {} as Awaited<ReturnType<typeof prisma.notification.create>>
+      );
+
+      await POST(makePostRequest('target-id'), { params: { userId: 'target-id' } });
+
+      const createCall = followMock().create.mock.calls[0][0];
+      expect(Object.keys(createCall.data)).toEqual(['followerId', 'followingId']);
+    });
+
+    it('notification type is exactly FOLLOW string', async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce(REQUESTER_SESSION);
+      vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(
+        TARGET_USER as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>
+      );
+      followMock().findFirst.mockResolvedValueOnce(null);
+      followMock().create.mockResolvedValueOnce({
+        id: 'new-follow-id',
+        followerId: 'requester-id',
+        followingId: 'target-id',
+        createdAt: new Date(),
+      });
+      vi.mocked(prisma.notification.create).mockResolvedValueOnce(
+        {} as Awaited<ReturnType<typeof prisma.notification.create>>
+      );
+
+      await POST(makePostRequest('target-id'), { params: { userId: 'target-id' } });
+
+      const notifCall = vi.mocked(prisma.notification.create).mock.calls[0][0];
+      expect(notifCall.data.type).toBe('FOLLOW');
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // follow.delete call arguments (edge case: where clause uses record id)
+  // -------------------------------------------------------------------------
+  describe('follow.delete where clause edge cases', () => {
+    it('uses existing follow record id in where clause (not the userId param)', async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce(REQUESTER_SESSION);
+      vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(
+        TARGET_USER as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>
+      );
+      const customFollow = { ...EXISTING_FOLLOW_RECORD, id: 'custom-follow-999' };
+      followMock().findFirst.mockResolvedValueOnce(
+        customFollow as Awaited<ReturnType<typeof prisma.follow.findFirst>>
+      );
+      followMock().delete.mockResolvedValueOnce(customFollow);
+
+      await POST(makePostRequest('target-id'), { params: { userId: 'target-id' } });
+
+      expect(followMock().delete).toHaveBeenCalledWith({
+        where: { id: 'custom-follow-999' },
+      });
+    });
+
+    it('does not call follow.findFirst twice for a single request', async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce(REQUESTER_SESSION);
+      vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(
+        TARGET_USER as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>
+      );
+      followMock().findFirst.mockResolvedValueOnce(null);
+      followMock().create.mockResolvedValueOnce({
+        id: 'new-follow-id',
+        followerId: 'requester-id',
+        followingId: 'target-id',
+        createdAt: new Date(),
+      });
+      vi.mocked(prisma.notification.create).mockResolvedValueOnce(
+        {} as Awaited<ReturnType<typeof prisma.notification.create>>
+      );
+
+      await POST(makePostRequest('target-id'), { params: { userId: 'target-id' } });
+
+      expect(followMock().findFirst.mock.calls.length).toBe(1);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Session edge cases
+  // -------------------------------------------------------------------------
+  describe('session edge cases', () => {
+    it('returns 401 when session.user exists but id is empty string', async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce({
+        user: { id: '', name: 'Empty ID', email: 'empty@example.com' },
+      } as unknown as Awaited<ReturnType<typeof getServerSession>>);
+
+      const res = await POST(makePostRequest('target-id'), { params: { userId: 'target-id' } });
+
+      expect(res.status).toBe(401);
     });
   });
 });

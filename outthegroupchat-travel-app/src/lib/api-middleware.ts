@@ -58,8 +58,12 @@ export interface ApiSuccessResponse<T> {
 // ============================================
 
 /**
- * Wrap an API route with authentication check
- * Returns 401 if user is not authenticated
+ * Wrap an API route handler with a NextAuth session authentication check.
+ * Returns a 401 JSON response if no valid session is found, otherwise forwards
+ * the resolved session user to the inner handler.
+ *
+ * @param handler - The authenticated route handler to protect
+ * @returns A standard `ApiHandler` that performs the auth check before delegating
  */
 export function withAuth<T>(
   handler: AuthenticatedHandler<T>
@@ -90,8 +94,13 @@ export function withAuth<T>(
 }
 
 /**
- * Wrap an API route with rate limiting
- * @param type - 'api' for general routes, 'auth' for authentication routes
+ * Wrap an API route handler with Upstash Redis-backed rate limiting.
+ * Returns a 429 JSON response with standard rate-limit headers when the limit is exceeded.
+ *
+ * @param handler - The route handler to protect with rate limiting
+ * @param type - Limiter profile: `'api'` (default) uses the general API limiter keyed by
+ *   Authorization header; `'auth'` uses the stricter auth limiter keyed by client IP
+ * @returns A standard `ApiHandler` that enforces rate limits before delegating
  */
 export function withRateLimit<T>(
   handler: ApiHandler<T>,
@@ -127,7 +136,13 @@ export function withRateLimit<T>(
 }
 
 /**
- * Wrap an API route with Zod validation for request body
+ * Wrap an API route handler with Zod validation for the JSON request body.
+ * Parses and validates the body against `schema`; returns a 400 response with
+ * structured field errors on failure, or a 400 response if the JSON is malformed.
+ *
+ * @param schema - Zod schema to validate the parsed request body against
+ * @param handler - Inner handler that receives the validated, typed body as a third argument
+ * @returns A standard `ApiHandler` that validates the body before delegating
  */
 export function withValidation<TBody, TResponse>(
   schema: ZodSchema<TBody>,
@@ -167,7 +182,13 @@ export function withValidation<TBody, TResponse>(
 }
 
 /**
- * Wrap an API route with query parameter validation
+ * Wrap an API route handler with Zod validation for URL query parameters.
+ * Collects all `searchParams` from the request URL (handling repeated keys as arrays),
+ * validates against `schema`, and returns a 400 response with field errors on failure.
+ *
+ * @param schema - Zod schema to validate the collected query parameter object against
+ * @param handler - Inner handler that receives the validated, typed query as a third argument
+ * @returns A standard `ApiHandler` that validates query params before delegating
  */
 export function withQueryValidation<TQuery, TResponse>(
   schema: ZodSchema<TQuery>,
@@ -212,8 +233,11 @@ export function withQueryValidation<TQuery, TResponse>(
 }
 
 /**
- * Combine multiple middleware functions
- * Apply from right to left (innermost to outermost)
+ * Compose multiple middleware wrappers into a single wrapper applied right-to-left
+ * (innermost first). The composed wrapper can then be applied to a base handler.
+ *
+ * @param middlewares - Middleware wrapper functions to compose; applied from right to left
+ * @returns A function that accepts a base `ApiHandler<T>` and returns the fully-wrapped handler
  */
 export function compose<T>(
   ...middlewares: ((handler: ApiHandler<unknown>) => ApiHandler<unknown>)[]
@@ -228,7 +252,10 @@ export function compose<T>(
 // ============================================
 
 /**
- * Format Zod validation errors into a more readable format
+ * Convert a `ZodError` into a flat array of field-level error objects.
+ *
+ * @param error - The `ZodError` produced by a failed `safeParse` call
+ * @returns Array of objects with `field` (dot-joined path) and `message` (validation message)
  */
 function formatZodError(error: ZodError): { field: string; message: string }[] {
   return error.errors.map((err) => ({
@@ -238,14 +265,23 @@ function formatZodError(error: ZodError): { field: string; message: string }[] {
 }
 
 /**
- * Create a standardized success response
+ * Create a standardized JSON success response with the `ApiSuccessResponse` envelope.
+ *
+ * @param data - The payload to include under the `data` key
+ * @param status - HTTP status code (default: 200)
+ * @returns A `NextResponse` with `{ success: true, data }` and the given status
  */
 export function apiSuccess<T>(data: T, status = 200): NextResponse<ApiSuccessResponse<T>> {
   return NextResponse.json({ success: true, data }, { status });
 }
 
 /**
- * Create a standardized error response
+ * Create a standardized JSON error response with the `ApiErrorResponse` envelope.
+ *
+ * @param error - Human-readable error message
+ * @param status - HTTP status code (default: 400)
+ * @param details - Optional additional diagnostic detail (e.g., Zod field errors)
+ * @returns A `NextResponse` with `{ success: false, error, details? }` and the given status
  */
 export function apiError(
   error: string,
@@ -259,7 +295,12 @@ export function apiError(
 }
 
 /**
- * Handle unknown errors safely
+ * Safely handle an unknown thrown value and return an appropriate `ApiErrorResponse`.
+ * Logs the error via the application logger, returns 400 for `ZodError`, and 500 for
+ * all other errors. Internal `Error` messages are only exposed in development.
+ *
+ * @param error - The caught value (may be `Error`, `ZodError`, or anything else)
+ * @returns A `NextResponse` with an appropriate status and `ApiErrorResponse` body
  */
 export function handleApiError(error: unknown): NextResponse<ApiErrorResponse> {
   logger.error({ error }, '[API_ERROR] Unexpected error');

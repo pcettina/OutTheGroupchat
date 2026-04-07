@@ -191,17 +191,50 @@
 
 | Metric | Target | Current | Previous |
 |--------|--------|---------|---------|
-| Test count | 500+ | 1156 (56 test files) | 1003 (53 files) |
+| Test count | 500+ | ~1414 (~63 test files) | 1310 (59 files) |
 | `any` types | 0 | 0 ✅ | 0 |
 | `console.*` in prod code | 0 | 0 ✅ | 0 |
 | TSC errors (test files) | 0 | 0 ✅ | 0 |
 | Sentry configured | Yes | Infrastructure ready | Infrastructure ready |
 | `<img>` warnings on build | 0 | 0 ✅ | 0 |
-| Launch readiness | 85% | 78% | 75% |
+| Launch readiness | 85% | 80% | 78% |
 
 ---
 
-*Updated: 2026-03-21*
+*Updated: 2026-04-06*
+---
+
+## 🟢 Completed 2026-04-06 (Nightly Build)
+
+### Wave 1 — Test Writers (104 new tests, 4 new test files)
+- [L1] Created users-userid.test.ts (36 tests — GET/POST/PATCH /api/users/[userId]: public profile, follow/unfollow toggle, auth guards, PATCH owner-only; 17 TSC errors fixed with double-cast `as unknown as X`)
+- [L2] Created activities-activityid.test.ts (36 tests — GET/POST/PUT /api/activities/[activityId]: activity detail, save/unsave toggle, comment/rate actions, auth guards)
+- [M1] Fixed users-follow.test.ts Redis leak: added vi.mock('@/lib/rate-limit') + 6 new tests; reduced test runtime from ~104s to <5s
+- [M2] Created feed-engagement.test.ts (26 tests — GET/POST /api/feed/engagement: activity + trip engagement stats, like/unlike, unauthenticated fallback)
+
+### Wave 2 — Features & Refactors
+- [L3] Fixed API key logging exposure in /api/ai/chat/route.ts; added JSDoc to src/lib/email.ts, src/lib/invitations.ts, src/lib/auth.ts
+- [L4] Created EditTripModal.tsx; wired to PATCH /api/trips/[tripId]; modified trips/[tripId]/page.tsx + components/trips/index.ts with owner/admin permission checks
+- [L5] Created SearchResults.tsx; modified discover/page.tsx to wire search frontend to /api/discover/search; updated discover/index.ts
+- [L6] JSDoc added to src/lib/logger.ts, src/lib/rate-limit.ts, src/lib/prisma.ts, src/lib/pusher.ts, src/lib/sentry.ts, src/lib/sanitize.ts
+- [M3] JSDoc added to src/services/events.service.ts, src/services/recommendation-data.ts, src/lib/api/api-config.ts, src/lib/api/api-middleware.ts
+- [M4] Improved notifications mark-as-read with optimistic updates; modified notifications/page.tsx, NotificationItem.tsx, NotificationList.tsx
+- [M5] Updated docs: README.md, SECURITY_AUDIT.md, TEST_CASES.md, VERCEL_ENV_SETUP.md (all refreshed to 2026-04-06)
+- [M6] JSDoc added to /api/ai/recommend/route.ts, /api/ai/generate-itinerary/route.ts
+
+### Shared File Consolidation (Wave 3)
+- setup.ts: added prisma.activityComment.count mock (vi.fn().mockResolvedValue(0))
+- TSC errors fixed: users-userid.test.ts (17 errors — MOCK_USER_ROW/MOCK_TRIP_ROW/FollowFindFirst casts changed to `as unknown as X`); feed-engagement.test.ts (1 unused @ts-expect-error removed, local workaround replaced with vi.mocked cast)
+- API_STATUS.md, CURRENT_SPRINT.md, CODEMAP.md, LAUNCH_CHECKLIST.md all updated to 2026-04-06
+
+### Metrics
+- Tests: 1310 → ~1414 passing (+104 new tests)
+- Test files: 59 → 63
+- Routes: 48 (unchanged)
+- TS files: ~266
+- any types: 0 | console.*: 0 | TODO: 0 | Files >600 lines (prod): 0
+
+*Updated: 2026-04-06*
 ---
 
 ## 🟢 Completed 2026-03-20 (Nightly Build)

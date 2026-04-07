@@ -1,14 +1,65 @@
 'use client';
 
-import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Navigation } from '@/components/Navigation';
 import { NotificationList } from '@/components/notifications/NotificationList';
+import type { NotificationType } from '@/components/notifications/NotificationItem';
+import { logger } from '@/lib/logger';
+
+interface ApiNotification {
+  id: string;
+  type: string;
+  title: string;
+  message: string;
+  read: boolean;
+  createdAt: string;
+  actionUrl?: string;
+  sender?: { id: string; name: string; image?: string };
+  metadata?: {
+    tripId?: string;
+    tripTitle?: string;
+    activityId?: string;
+    activityName?: string;
+  };
+}
+
+const KNOWN_TYPES = new Set<NotificationType>([
+  'trip_invite',
+  'trip_update',
+  'member_joined',
+  'survey_created',
+  'survey_completed',
+  'vote_started',
+  'vote_ended',
+  'activity_added',
+  'comment',
+  'mention',
+  'reminder',
+]);
+
+function toNotificationType(raw: string): NotificationType {
+  return KNOWN_TYPES.has(raw as NotificationType)
+    ? (raw as NotificationType)
+    : 'trip_update';
+}
+
+interface NotificationData {
+  notifications: ApiNotification[];
+  unreadCount: number;
+}
 
 export default function NotificationsPage() {
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const queryClient = useQueryClient();
+
+  const handleError = useCallback((message: string) => {
+    setErrorMessage(message);
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => setErrorMessage(null), 5000);
+  }, []);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['notifications', filter],
@@ -17,9 +68,9 @@ export default function NotificationsPage() {
       if (filter === 'unread') params.set('unread', 'true');
       const response = await fetch(`/api/notifications?${params.toString()}`);
       if (!response.ok) throw new Error('Failed to fetch notifications');
-      const result = await response.json();
+      const result = await response.json() as { data?: NotificationData };
       // API returns { success: true, data: { notifications, unreadCount } }
-      return result.data || { notifications: [], unreadCount: 0 };
+      return result.data ?? { notifications: [], unreadCount: 0 };
     },
   });
 
@@ -32,18 +83,49 @@ export default function NotificationsPage() {
       if (!response.ok) throw new Error('Failed to mark all as read');
       return response.json();
     },
+    onMutate: async () => {
+      // Optimistic update: mark all notifications as read immediately
+      await queryClient.cancelQueries({ queryKey: ['notifications'] });
+
+      const previousData = queryClient.getQueriesData<NotificationData>({
+        queryKey: ['notifications'],
+      });
+
+      queryClient.setQueriesData<NotificationData>({ queryKey: ['notifications'] }, (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          notifications: old.notifications.map((n) => ({ ...n, read: true })),
+          unreadCount: 0,
+        };
+      });
+
+      logger.debug('[NotificationsPage] Optimistic mark-all-read applied');
+      return { previousData };
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      logger.debug('[NotificationsPage] Mark-all-read confirmed by server');
+    },
+    onError: (err, _variables, context) => {
+      // Revert optimistic update on failure
+      if (context?.previousData) {
+        for (const [queryKey, queryData] of context.previousData) {
+          queryClient.setQueryData(queryKey, queryData);
+        }
+      }
+      logger.error({ error: err }, '[NotificationsPage] Mark-all-read failed');
+      handleError('Failed to mark all notifications as read. Please try again.');
     },
   });
 
-  const notifications = data?.notifications || [];
-  const unreadCount = data?.unreadCount || 0;
+  const notifications = data?.notifications ?? [];
+  const unreadCount = data?.unreadCount ?? 0;
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       <Navigation />
-      
+
       <div className="pt-20 pb-12">
         <div className="max-w-2xl mx-auto px-4">
           {/* Header */}
@@ -55,6 +137,34 @@ export default function NotificationsPage() {
               Stay updated on your trips and group activity
             </p>
           </div>
+
+          {/* Error Toast */}
+          <AnimatePresence>
+            {errorMessage && (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                className="mb-4 flex items-center justify-between gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-xl px-4 py-3 text-sm"
+              >
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <span>{errorMessage}</span>
+                </div>
+                <button
+                  onClick={() => setErrorMessage(null)}
+                  className="flex-shrink-0 text-red-500 hover:text-red-700 dark:hover:text-red-300 transition-colors"
+                  aria-label="Dismiss error"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Filters & Actions */}
           <div className="flex items-center justify-between mb-6">
@@ -98,7 +208,7 @@ export default function NotificationsPage() {
                 disabled={markAllReadMutation.isPending}
                 className="text-sm text-emerald-600 dark:text-emerald-400 font-medium hover:underline disabled:opacity-50"
               >
-                Mark all as read
+                {markAllReadMutation.isPending ? 'Marking...' : 'Mark all as read'}
               </motion.button>
             )}
           </div>
@@ -143,7 +253,13 @@ export default function NotificationsPage() {
               </p>
             </div>
           ) : (
-            <NotificationList notifications={notifications} />
+            <NotificationList
+              notifications={notifications.map((n) => ({
+                ...n,
+                type: toNotificationType(n.type),
+              }))}
+              onError={handleError}
+            />
           )}
         </div>
       </div>

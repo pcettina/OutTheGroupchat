@@ -1,3 +1,11 @@
+/**
+ * @module rate-limit
+ * @description Rate limiting utilities backed by Upstash Redis. Provides pre-configured
+ * sliding-window rate limiters for AI, general API, and authentication endpoints, along with
+ * helper functions for checking limits and generating standard HTTP rate-limit response headers.
+ * When Redis environment variables are absent (e.g. local development) all limiters are null
+ * and {@link checkRateLimit} returns a permissive allow-all result.
+ */
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { logger } from '@/lib/logger';
@@ -18,8 +26,9 @@ const redis = isRedisConfigured
   : null;
 
 /**
- * Rate limiter for AI endpoints
- * Limits: 20 requests per minute per user
+ * @description Rate limiter for AI endpoints using a sliding window algorithm.
+ * Allows 20 requests per minute per identifier. Analytics are enabled for monitoring.
+ * Resolves to `null` when Redis is not configured; callers should treat `null` as disabled.
  */
 export const aiRateLimiter = redis
   ? new Ratelimit({
@@ -31,8 +40,9 @@ export const aiRateLimiter = redis
   : null;
 
 /**
- * Rate limiter for general API endpoints
- * Limits: 100 requests per minute per user
+ * @description Rate limiter for general API endpoints using a sliding window algorithm.
+ * Allows 100 requests per minute per identifier.
+ * Resolves to `null` when Redis is not configured; callers should treat `null` as disabled.
  */
 export const apiRateLimiter = redis
   ? new Ratelimit({
@@ -43,8 +53,9 @@ export const apiRateLimiter = redis
   : null;
 
 /**
- * Rate limiter for authentication endpoints
- * Limits: 5 requests per minute per IP (stricter for auth)
+ * @description Rate limiter for authentication endpoints using a stricter sliding window.
+ * Allows only 5 requests per minute per IP address to mitigate brute-force attacks.
+ * Analytics are enabled for monitoring. Resolves to `null` when Redis is not configured.
  */
 export const authRateLimiter = redis
   ? new Ratelimit({
@@ -56,8 +67,18 @@ export const authRateLimiter = redis
   : null;
 
 /**
- * Check rate limit for a given identifier
- * Returns { success: boolean, limit: number, remaining: number, reset: number }
+ * @description Checks whether the given identifier has exceeded the rate limit imposed by `limiter`.
+ * When `limiter` is `null` (Redis not configured) all requests are permitted and zeros are returned
+ * for the numeric fields. On unexpected errors the function logs the failure and returns a
+ * permissive result so that rate-limit errors never silently break API responses.
+ *
+ * @param {Ratelimit | null} limiter - The Upstash Ratelimit instance to check against, or `null`
+ *   to skip rate limiting (development / unconfigured fallback).
+ * @param {string} identifier - A unique key representing the caller, typically a user ID or IP address.
+ * @returns {Promise<{ success: boolean; limit: number; remaining: number; reset: number }>}
+ *   An object indicating whether the request is allowed (`success`), the configured window limit,
+ *   the number of remaining requests in the current window, and the UNIX timestamp (ms) at which
+ *   the window resets.
  */
 export async function checkRateLimit(
   limiter: Ratelimit | null,
@@ -85,7 +106,13 @@ export async function checkRateLimit(
 }
 
 /**
- * Get rate limit headers for response
+ * @description Converts a rate-limit result into a set of standard HTTP response headers
+ * (`X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`) suitable for inclusion
+ * in any HTTP response.
+ *
+ * @param {{ limit: number; remaining: number; reset: number }} result - The rate-limit result
+ *   fields to encode as headers (typically obtained from {@link checkRateLimit}).
+ * @returns {Record<string, string>} A plain object mapping header names to their string values.
  */
 export function getRateLimitHeaders(result: {
   limit: number;

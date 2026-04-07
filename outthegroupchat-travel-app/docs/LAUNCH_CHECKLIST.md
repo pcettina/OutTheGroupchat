@@ -18,7 +18,7 @@
 
 **Overall Readiness: 78%** → Target: 85% for Beta Launch
 
-> Last updated: 2026-03-26
+> Last updated: 2026-04-06
 
 ---
 
@@ -64,8 +64,8 @@
 - [x] Trip listing
 - [x] Trip detail page
 - [ ] Trip wizard (multi-step creation)
-- [ ] Trip editing
-- [ ] Trip deletion/archiving
+- [x] Trip editing — EditTripModal wired to PATCH /api/trips/[tripId] ✅ 2026-04-06
+- [x] Trip deletion/archiving — DeleteTripModal wired to DELETE /api/trips/[tripId] ✅ 2026-04-06
 - [x] Member invitation via email ✅ Dec 17
 - [x] Activity management ✅ Dec 17
 - [x] Itinerary route complete (GET/POST/PUT with $transaction atomicity) ✅ 2026-03-23
@@ -235,7 +235,7 @@
 ### Empty States
 - [x] No trips empty state ✅ Dec 17
 - [x] No notifications empty state ✅ Dec 17
-- [ ] No search results state
+- [x] No search results state — SearchResults.tsx added with empty state, loading skeleton, error state with retry ✅ 2026-04-06
 
 ### Error States
 - [x] Global error boundary ✅ 2026-03-13 (global-error.tsx)
@@ -378,4 +378,4 @@ git push origin main  # Auto-deploys to Vercel
 
 *This checklist should be reviewed daily during launch preparation.*
 
-*Last Updated: 2026-03-26 - 153 new tests (1156 total, 56 files); rate limiting added as first operation on auth/signup, auth/reset-password, auth/verify-email; newsletter/subscribe now requires auth; ai/search GET+POST fully implemented; dead components removed (NotificationCenter.tsx, SharePreview.tsx); recommendation.service.test.ts, survey.service.test.ts, geocoding-images.test.ts created. Also includes 2026-03-29 changes: JSON.parse safety on 5 AI routes + notifications/[notificationId]; Zod strengthened on ai/chat; notifications/[notificationId] bugfix (read was hardcoded true); JSDoc added to geocoding.ts; 3 new test files (ai-generate-itinerary, ai-suggest-activities, discover-import)*
+*Last Updated: 2026-04-06 — EditTripModal wired to PATCH /api/trips/[tripId] ✅; DeleteTripModal wired ✅; discover/search frontend connected via SearchResults.tsx ✅; notifications mark-as-read improved with optimistic updates; API key logging exposure fixed in ai/chat; JSDoc added to 12 lib/service files; 104 new tests (~1414 total, 63 files); users-follow.test.ts Redis leak fixed. Previous: rate limiting on all 48 routes ✅; JSON.parse safety on AI routes; Zod strengthened on ai/chat; notifications/[notificationId] bugfix.*

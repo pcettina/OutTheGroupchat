@@ -696,8 +696,9 @@ describe('SurveyService.createTripSurvey', () => {
     await SurveyService.createTripSurvey('trip-1');
 
     const call = mockTripSurvey.create.mock.calls[0][0];
-    const expectedExpiry = new Date(now + 48 * 60 * 60 * 1000);
-    expect((call.data.expiresAt as Date).getTime()).toBe(expectedExpiry.getTime());
+    const expectedExpiry = now + 48 * 60 * 60 * 1000;
+    // Allow ±5ms: Date.now() spy fires once so a second internal call uses real time (±1ms)
+    expect(Math.abs((call.data.expiresAt as Date).getTime() - expectedExpiry)).toBeLessThanOrEqual(5);
   });
 
   it('uses a custom expiry when expirationHours is provided', async () => {

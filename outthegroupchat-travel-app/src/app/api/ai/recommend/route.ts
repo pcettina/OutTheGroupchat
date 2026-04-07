@@ -1,3 +1,20 @@
+/**
+ * @module api/ai/recommend
+ *
+ * AI-powered activity recommendation endpoint.
+ *
+ * Provides two operations:
+ *   - POST /api/ai/recommend — Generate personalized activity recommendations
+ *     for a user, optionally scoped to a destination and filtered by travel
+ *     preferences. Augments AI output with matching activities from the database.
+ *   - GET  /api/ai/recommend?tripId=<id>&limit=<n> — Generate group-aware
+ *     recommendations for an existing trip, taking into account all members'
+ *     preferences and activities already added to the itinerary.
+ *
+ * Both routes require an authenticated session (NextAuth) and apply an
+ * in-memory rate limit of 10 requests per 60 seconds per user.
+ */
+
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { generateText } from 'ai';
@@ -64,6 +81,52 @@ Consider:
 - Seasonal relevance
 - Popular activities similar travelers enjoyed`;
 
+/**
+ * POST /api/ai/recommend
+ *
+ * Generates personalized activity recommendations for the authenticated user.
+ *
+ * Authentication: Required (NextAuth session). Returns 401 if unauthenticated.
+ * Rate limiting: 10 requests per 60 seconds per user ID (in-memory).
+ *
+ * Request body (JSON):
+ * ```json
+ * {
+ *   "destination": "Paris",          // optional — filters DB activities by city
+ *   "userId":      "<userId>",        // optional — defaults to session user
+ *   "preferences": {
+ *     "interests":    ["art", "food"], // optional
+ *     "budget":       "moderate",      // optional — "budget" | "moderate" | "luxury"
+ *     "travelStyle":  "cultural",      // optional — "adventure" | "relaxation" | "cultural" | "nightlife" | "mixed"
+ *     "groupSize":    2                // optional
+ *   },
+ *   "limit": 10                        // optional — 1–20, default 10
+ * }
+ * ```
+ *
+ * Response 200:
+ * ```json
+ * {
+ *   "success": true,
+ *   "data": {
+ *     "recommendations": [ /* AI + DB activity objects *\/ ],
+ *     "context": {
+ *       "destination": "Paris",
+ *       "personalized": true
+ *     }
+ *   }
+ * }
+ * ```
+ *
+ * Error responses:
+ * - 400 Invalid JSON or Zod validation failure (`{ error, details }`)
+ * - 401 Unauthenticated
+ * - 429 Rate limit exceeded
+ * - 500 AI generation or unexpected server error
+ *
+ * @param req - Incoming HTTP request containing the JSON body described above.
+ * @returns NextResponse with recommendation data or an error payload.
+ */
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -251,7 +314,41 @@ Generate ${limit} personalized activity recommendations. Return ONLY valid JSON.
   }
 }
 
-// Get recommendations for a specific trip
+/**
+ * GET /api/ai/recommend
+ *
+ * Generates group-aware activity recommendations for an existing trip.
+ * Takes all trip members' preferences into account and avoids suggesting
+ * activity categories that are already present in the trip's itinerary.
+ *
+ * Authentication: Required (NextAuth session). Returns 401 if unauthenticated.
+ *
+ * Query parameters:
+ * - `tripId` (string, required) — The ID of the trip to generate recommendations for.
+ * - `limit`  (integer string, optional) — Number of results, 1–20. Defaults to 8.
+ *
+ * Response 200:
+ * ```json
+ * {
+ *   "success": true,
+ *   "data": {
+ *     "tripId":          "<tripId>",
+ *     "destination":     "Paris",
+ *     "recommendations": [ /* AI activity objects *\/ ],
+ *     "groupInterests":  ["art", "food"]
+ *   }
+ * }
+ * ```
+ *
+ * Error responses:
+ * - 400 Missing/invalid query params (`{ error, details }`)
+ * - 401 Unauthenticated
+ * - 404 Trip not found
+ * - 500 AI generation or unexpected server error
+ *
+ * @param req - Incoming HTTP request with `tripId` and optional `limit` query params.
+ * @returns NextResponse with trip-specific recommendation data or an error payload.
+ */
 export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
