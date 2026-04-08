@@ -8,6 +8,7 @@ import { getModel, isOpenAIConfigured } from '@/lib/ai/client';
 import { aiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 import { itinerarySystemPrompt, buildItineraryPrompt } from '@/lib/ai/prompts';
 import { logError } from '@/lib/logger';
+import { captureException } from '@/lib/sentry';
 import type { AIGeneratedItinerary, TripPreferences } from '@/types';
 
 // Route segment config for AI itinerary generation
@@ -276,6 +277,7 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     logError('AI_GENERATE_ITINERARY', error);
+    captureException(error, { route: 'POST /api/ai/generate-itinerary' });
     return NextResponse.json(
       { success: false, error: 'Failed to generate itinerary' },
       { status: 500 }

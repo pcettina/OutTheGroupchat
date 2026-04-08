@@ -131,13 +131,41 @@ export async function POST(req: NextRequest) {
 
     // Fetch places from OpenTripMap
     const placesUrl = `${OPENTRIPMAP_BASE_URL}/radius?radius=${radius}&lon=${longitude}&lat=${latitude}&limit=${limit}&apikey=${OPENTRIPMAP_API_KEY}`;
-    
-    const placesResponse = await fetch(placesUrl);
-    if (!placesResponse.ok) {
-      throw new Error('Failed to fetch from OpenTripMap');
+
+    let placesResponse: Response;
+    try {
+      placesResponse = await fetch(placesUrl);
+    } catch (fetchErr) {
+      logError('DISCOVER_IMPORT', fetchErr, { step: 'fetch_places', latitude, longitude });
+      return NextResponse.json(
+        { error: 'Failed to connect to OpenTripMap API' },
+        { status: 500 }
+      );
     }
 
-    const places: OpenTripMapPlace[] = await placesResponse.json();
+    if (!placesResponse.ok) {
+      logError('DISCOVER_IMPORT', new Error(`OpenTripMap returned status ${placesResponse.status}`), {
+        step: 'fetch_places',
+        status: placesResponse.status,
+        latitude,
+        longitude,
+      });
+      return NextResponse.json(
+        { error: 'Failed to fetch places from OpenTripMap' },
+        { status: 502 }
+      );
+    }
+
+    let places: OpenTripMapPlace[];
+    try {
+      places = await placesResponse.json() as OpenTripMapPlace[];
+    } catch (parseErr) {
+      logError('DISCOVER_IMPORT', parseErr, { step: 'parse_places_json', latitude, longitude });
+      return NextResponse.json(
+        { error: 'Invalid response from OpenTripMap API' },
+        { status: 502 }
+      );
+    }
 
     // Filter places with names and good ratings
     const validPlaces = places.filter(p => p.name && p.name.length > 2);
@@ -154,11 +182,33 @@ export async function POST(req: NextRequest) {
         const detailResponse = await fetch(detailUrl);
         
         if (!detailResponse.ok) {
+          logError('DISCOVER_IMPORT', new Error(`Detail fetch failed with status ${detailResponse.status}`), {
+            step: 'fetch_place_detail',
+            xid: place.xid,
+            name: place.name,
+            status: detailResponse.status,
+          });
           skipped++;
           continue;
         }
 
-        const detail: OpenTripMapPlaceDetail = await detailResponse.json();
+        let detail: OpenTripMapPlaceDetail;
+        try {
+          detail = await detailResponse.json() as OpenTripMapPlaceDetail;
+        } catch (parseErr) {
+          logError('DISCOVER_IMPORT', parseErr, { step: 'parse_detail_json', xid: place.xid, name: place.name });
+          skipped++;
+          continue;
+        }
+
+        if (!detail.xid || !detail.name) {
+          logError('DISCOVER_IMPORT', new Error('Missing required fields in place detail'), {
+            step: 'validate_detail',
+            xid: place.xid,
+          });
+          skipped++;
+          continue;
+        }
 
         // Upsert the external activity
         await prisma.externalActivity.upsert({

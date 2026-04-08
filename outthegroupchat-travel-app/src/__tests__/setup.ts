@@ -214,6 +214,31 @@ vi.mock('@/lib/logger', () => ({
   logSuccess: vi.fn(),
   apiLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
   authLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+  aiLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+  dbLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+  createRequestLogger: vi.fn(() => ({
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
+  })),
+}));
+
+// ---------------------------------------------------------------------------
+// Mock: @/lib/sentry
+// sentry.ts calls logger.child() at module level (line 17). Without this mock
+// the module-level code runs during test setup and throws because logger is
+// also mocked. Mock all public exports so routes that import sentry work
+// without a real DSN or a real logger.child() implementation.
+// ---------------------------------------------------------------------------
+vi.mock('@/lib/sentry', () => ({
+  init: vi.fn(),
+  captureException: vi.fn(),
+  captureMessage: vi.fn(),
+  Sentry: {
+    captureException: vi.fn(),
+    captureMessage: vi.fn(),
+  },
 }));
 
 // ---------------------------------------------------------------------------

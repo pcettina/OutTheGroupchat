@@ -9,7 +9,7 @@ import { format } from 'date-fns';
 import { useTrip } from '@/hooks/useTrips';
 import { TripChat } from '@/components/ai';
 import { Navigation } from '@/components/Navigation';
-import { TripHeader, TripOverview, MemberList, ItineraryTimeline, InviteModal, AddActivityModal, InviteMemberModal } from '@/components/trips';
+import { TripHeader, TripOverview, MemberList, ItineraryTimeline, InviteModal, AddActivityModal, InviteMemberModal, DeleteTripModal } from '@/components/trips';
 import { ShareModal } from '@/components/feed/ShareModal';
 import { FloatingShareButton } from '@/components/ui';
 import type { Destination, TripBudget } from '@/types';
@@ -26,6 +26,7 @@ export default function TripDetailPage() {
   const [isInviteMemberModalOpen, setIsInviteMemberModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isAddActivityModalOpen, setIsAddActivityModalOpen] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [activityPreselectedDate, setActivityPreselectedDate] = useState<Date | undefined>(undefined);
 
   if (isLoading) {
@@ -317,6 +318,32 @@ export default function TripDetailPage() {
                   Add Existing Member
                 </motion.button>
               )}
+
+              {/* Delete Trip — owner only */}
+              {session?.user?.id === trip.ownerId && (
+                <motion.button
+                  onClick={() => setShowDeleteModal(true)}
+                  whileHover={{ scale: 1.01, y: -1 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full py-3 px-4 bg-white dark:bg-slate-800 rounded-xl border border-dashed border-red-300 dark:border-red-800 hover:border-red-400 dark:hover:border-red-600 text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 font-medium text-sm flex items-center justify-center gap-2 transition-colors shadow-sm"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                  </svg>
+                  Delete Trip
+                </motion.button>
+              )}
             </div>
           </div>
         </div>
@@ -371,6 +398,16 @@ export default function TripDetailPage() {
         onActivityAdded={handleActivityAdded}
         preselectedDate={activityPreselectedDate}
       />
+
+      {/* Delete Trip Modal — owner only */}
+      {session?.user?.id === trip.ownerId && (
+        <DeleteTripModal
+          tripId={params.tripId as string}
+          tripName={trip.title}
+          isOpen={showDeleteModal}
+          onClose={() => setShowDeleteModal(false)}
+        />
+      )}
     </div>
   );
 }

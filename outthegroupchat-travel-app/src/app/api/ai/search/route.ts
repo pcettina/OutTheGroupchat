@@ -11,6 +11,7 @@ import {
 import { z } from 'zod';
 import { ActivityCategory, PriceRange } from '@prisma/client';
 import { logError } from '@/lib/logger';
+import { captureException } from '@/lib/sentry';
 import { aiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 
 const semanticSearchSchema = z.object({
@@ -248,6 +249,7 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     logError('AI_SEMANTIC_SEARCH', error);
+    captureException(error, { route: 'POST /api/ai/search' });
     return NextResponse.json(
       { success: false, error: 'Semantic search failed' },
       { status: 500 }
@@ -318,6 +320,7 @@ export async function GET(req: Request) {
     });
   } catch (error) {
     logError('AI_SEMANTIC_SEARCH_GET', error);
+    captureException(error, { route: 'GET /api/ai/search' });
     return NextResponse.json(
       { success: false, error: 'Semantic search failed' },
       { status: 500 }

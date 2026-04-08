@@ -34,6 +34,11 @@ npm run db:push    # Push Prisma schema to database
 npm run db:studio  # Open Prisma Studio
 ```
 
+## Status
+
+- **Tests:** 1234+ passing across 59 test files
+- **Last Updated:** April 7, 2026
+
 ## Docs
 
 See [`outthegroupchat-travel-app/docs/`](outthegroupchat-travel-app/docs/) for architecture, API status, sprint tracking, and agent guides.

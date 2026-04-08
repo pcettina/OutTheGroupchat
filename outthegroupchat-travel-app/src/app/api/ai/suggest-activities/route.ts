@@ -7,6 +7,7 @@ import { getModel, isOpenAIConfigured } from '@/lib/ai/client';
 import { aiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 import { activityRecommendationSystemPrompt, buildActivityPrompt } from '@/lib/ai/prompts';
 import { logError } from '@/lib/logger';
+import { captureException } from '@/lib/sentry';
 import type { AIActivityRecommendation } from '@/types';
 
 // Route segment config for AI suggestions
@@ -164,6 +165,7 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     logError('AI_SUGGEST_ACTIVITIES', error);
+    captureException(error, { route: 'POST /api/ai/suggest-activities' });
     return NextResponse.json(
       { success: false, error: 'Failed to generate activity suggestions' },
       { status: 500 }

@@ -404,12 +404,13 @@ describe('POST /api/discover/import — with API key configured', () => {
 
     expect(res.status).toBe(500);
     const body = await res.json();
-    expect(body.error).toMatch(/failed to import/i);
+    // Route returns a specific message when fetch() throws (network-level failure)
+    expect(body.error).toMatch(/failed to connect to OpenTripMap API/i);
 
     vi.unstubAllGlobals();
   });
 
-  it('returns 500 when places list fetch returns non-ok response', async () => {
+  it('returns 502 when places list fetch returns non-ok response', async () => {
     mockCheckRateLimit.mockResolvedValueOnce(RATE_LIMIT_OK);
     mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
 
@@ -418,9 +419,10 @@ describe('POST /api/discover/import — with API key configured', () => {
 
     const res = await POSTWithKey(makeReq(VALID_BODY));
 
-    expect(res.status).toBe(500);
+    // Non-ok API responses are now correctly returned as 502 Bad Gateway
+    expect(res.status).toBe(502);
     const body = await res.json();
-    expect(body.error).toMatch(/failed to import/i);
+    expect(body.error).toMatch(/failed to fetch places from OpenTripMap/i);
 
     vi.unstubAllGlobals();
   });

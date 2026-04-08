@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { getModel, checkRateLimit } from '@/lib/ai/client';
 import { logError } from '@/lib/logger';
+import { captureException } from '@/lib/sentry';
 
 const aiRecommendationItemSchema = z.object({
   name: z.string(),
@@ -244,6 +245,7 @@ Generate ${limit} personalized activity recommendations. Return ONLY valid JSON.
     });
   } catch (error) {
     logError('AI_RECOMMEND', error);
+    captureException(error, { route: 'POST /api/ai/recommend' });
     return NextResponse.json(
       { error: 'Failed to generate recommendations' },
       { status: 500 }
@@ -365,6 +367,7 @@ Generate ${getLimit} activities that would complement existing plans and appeal 
     });
   } catch (error) {
     logError('AI_RECOMMEND_GET', error);
+    captureException(error, { route: 'GET /api/ai/recommend' });
     return NextResponse.json(
       { error: 'Failed to get recommendations' },
       { status: 500 }

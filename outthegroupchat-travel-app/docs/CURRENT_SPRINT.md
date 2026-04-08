@@ -1,3 +1,32 @@
+## Completed 2026-04-07 (Nightly Build #33)
+
+### Wave 1: Tests (152 new tests)
+- [L1] events.service.ts test suite — 45 tests — ✅
+- [L2] User follow/unfollow integration tests — 24 tests — ✅
+- [M1] sanitize.ts utility test suite — 51 tests — ✅
+- [M2] pusher.ts test suite — 32 tests — ✅
+
+### Wave 2: Features & Refactors
+- [L3] DeleteTripModal component created + wired to DELETE /api/trips/[tripId] — ✅
+- [L4] Privacy Policy + Terms of Service pages created — ✅
+- [L5] /api/beta/status rate limiting upgraded to Redis (removed in-memory Map) — ✅
+- [L6] SearchResults component + discover page search wiring — ✅
+- [M3] Sentry error capture added to generate-itinerary, suggest-activities, ai/search — ✅
+- [M4] Import audit — all imports confirmed used, no changes — ✅
+- [M5] SignUpForm.tsx deprecated, README updated (1234+ tests) — ✅
+- [M6] JSDoc @module blocks added to email.ts, rate-limit.ts; discover/import error handling improved — ✅
+
+### Automated Metrics (2026-04-07)
+- any types: 0 ✅
+- console.*: 0 ✅
+- TODO/FIXME: 0 ✅
+- Files >600 lines (prod): 0 ✅
+- Tests: 1234 → 1386 (est. +152)
+- API routes: 48
+
+*Updated: 2026-04-07*
+---
+
 # ✅ Previous Sprint - December 2025
 
 > **Sprint Duration:** Dec 16 - Dec 29, 2025

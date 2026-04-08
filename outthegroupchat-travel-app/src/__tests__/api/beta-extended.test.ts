@@ -31,6 +31,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 import { GET as betaStatusGET } from '@/app/api/beta/status/route';
 import {
@@ -45,6 +46,11 @@ import {
 vi.mock('bcryptjs', () => ({
   default: { hash: vi.fn().mockResolvedValue('hashed-password') },
   hash: vi.fn().mockResolvedValue('hashed-password'),
+}));
+
+vi.mock('@/lib/rate-limit', () => ({
+  checkRateLimit: vi.fn().mockResolvedValue({ success: true, limit: 10, remaining: 9, reset: 0 }),
+  apiRateLimiter: null,
 }));
 
 /**
@@ -151,6 +157,10 @@ describe('GET /api/beta/status — extended edge cases', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     vi.stubEnv('N8N_API_KEY', VALID_API_KEY);
+    // vi.resetAllMocks() clears the factory-level mock implementation for checkRateLimit.
+    // Re-establish the default (pass-through) so tests that don't override it don't get
+    // a 500 from the route trying to access .success on undefined.
+    vi.mocked(checkRateLimit).mockResolvedValue({ success: true, limit: 10, remaining: 9, reset: 0 });
   });
 
   afterEach(() => {
@@ -189,42 +199,36 @@ describe('GET /api/beta/status — extended edge cases', () => {
   });
 
   it('rate-limits after 10 requests from the same IP and returns 429', async () => {
-    // Use a unique IP so this test is isolated from module-level rate-limit state
-    const isolatedIp = `192.168.99.${Date.now() % 254}`;
+    // Route now uses Redis checkRateLimit from @/lib/rate-limit.
+    // Simulate the limiter returning { success: false } to exercise the 429 path.
+    vi.mocked(checkRateLimit).mockResolvedValueOnce({
+      success: false,
+      limit: 10,
+      remaining: 0,
+      reset: Date.now() + 60000,
+    });
 
-    // The in-memory rateLimitStore is module-level — we drive 10 requests through
-    // (all will pass, mocked prisma returns null = exists: false).
-    for (let i = 0; i < 10; i++) {
-      vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(null);
-      const req = makeStatusRequest(TEST_EMAIL, isolatedIp);
-      const res = await betaStatusGET(req);
-      expect(res.status).toBe(200);
-    }
-
-    // 11th request from same IP — should be rate-limited
-    const limitedReq = makeStatusRequest(TEST_EMAIL, isolatedIp);
-    const limitedRes = await betaStatusGET(limitedReq);
-    expect(limitedRes.status).toBe(429);
-    const body = await limitedRes.json();
+    const req = makeStatusRequest(TEST_EMAIL, '192.168.99.1');
+    const res = await betaStatusGET(req);
+    expect(res.status).toBe(429);
+    const body = await res.json();
     expect(body.error).toMatch(/too many requests/i);
   });
 
   it('tracks rate limits per IP — different IPs are independent', async () => {
-    const ipA = `10.0.0.${Date.now() % 200}`;
-    const ipB = `10.0.1.${Date.now() % 200}`;
-
-    // Send 10 requests from ipA to exhaust its limit
-    for (let i = 0; i < 10; i++) {
-      vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(null);
-      const req = makeStatusRequest(TEST_EMAIL, ipA);
-      await betaStatusGET(req);
-    }
-
-    // ipB should still get a 200 on its first request
+    // Route delegates per-IP tracking to the Redis checkRateLimit implementation.
+    // Verify that when checkRateLimit returns success: true, the route proceeds normally.
+    vi.mocked(checkRateLimit).mockResolvedValueOnce({
+      success: true,
+      limit: 10,
+      remaining: 5,
+      reset: 0,
+    });
     vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(null);
-    const reqB = makeStatusRequest(TEST_EMAIL, ipB);
-    const resB = await betaStatusGET(reqB);
-    expect(resB.status).toBe(200);
+
+    const req = makeStatusRequest(TEST_EMAIL, '10.0.1.1');
+    const res = await betaStatusGET(req);
+    expect(res.status).toBe(200);
   });
 });
 

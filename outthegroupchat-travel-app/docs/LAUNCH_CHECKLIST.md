@@ -18,7 +18,7 @@
 
 **Overall Readiness: 78%** → Target: 85% for Beta Launch
 
-> Last updated: 2026-03-26
+> Last updated: 2026-04-07
 
 ---
 
@@ -65,7 +65,7 @@
 - [x] Trip detail page
 - [ ] Trip wizard (multi-step creation)
 - [ ] Trip editing
-- [ ] Trip deletion/archiving
+- [x] Trip deletion/archiving ✅ 2026-04-07 (DeleteTripModal wired to DELETE /api/trips/[tripId])
 - [x] Member invitation via email ✅ Dec 17
 - [x] Activity management ✅ Dec 17
 - [x] Itinerary route complete (GET/POST/PUT with $transaction atomicity) ✅ 2026-03-23
@@ -259,8 +259,8 @@
 ## 📝 PHASE 7: Content & Legal
 
 ### Pages Required
-- [ ] Privacy Policy
-- [ ] Terms of Service
+- [x] Privacy Policy ✅ 2026-04-07 (src/app/privacy/page.tsx created)
+- [x] Terms of Service ✅ 2026-04-07 (src/app/terms/page.tsx created)
 - [ ] About page (optional)
 - [ ] Help/FAQ (optional)
 
@@ -378,4 +378,4 @@ git push origin main  # Auto-deploys to Vercel
 
 *This checklist should be reviewed daily during launch preparation.*
 
-*Last Updated: 2026-03-26 - 153 new tests (1156 total, 56 files); rate limiting added as first operation on auth/signup, auth/reset-password, auth/verify-email; newsletter/subscribe now requires auth; ai/search GET+POST fully implemented; dead components removed (NotificationCenter.tsx, SharePreview.tsx); recommendation.service.test.ts, survey.service.test.ts, geocoding-images.test.ts created. Also includes 2026-03-29 changes: JSON.parse safety on 5 AI routes + notifications/[notificationId]; Zod strengthened on ai/chat; notifications/[notificationId] bugfix (read was hardcoded true); JSDoc added to geocoding.ts; 3 new test files (ai-generate-itinerary, ai-suggest-activities, discover-import)*
+*Last Updated: 2026-04-07 - 152 new tests (~1386 total, 63 files); DeleteTripModal wired to DELETE /api/trips/[tripId]; Privacy Policy + Terms of Service pages created; /api/beta/status rate limiting upgraded to Redis; Sentry error capture added to generate-itinerary, suggest-activities, ai/search; SearchResults component created; 4 new test files (events.service, user-follow-integration, sanitize, pusher). Also includes 2026-03-26 changes: 153 new tests (1156 total, 56 files); rate limiting first operation on auth routes; newsletter/subscribe now requires auth; ai/search fully implemented; dead components removed. Also includes 2026-03-29 changes: JSON.parse safety on 5 AI routes + notifications/[notificationId]; Zod strengthened on ai/chat; notifications/[notificationId] bugfix; JSDoc added to geocoding.ts; 3 new test files*

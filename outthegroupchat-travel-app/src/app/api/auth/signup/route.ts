@@ -6,6 +6,7 @@ import { randomBytes } from 'crypto';
 import { logger } from '@/lib/logger';
 import { sendNotificationEmail } from '@/lib/email';
 import { authRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
+import { captureException } from '@/lib/sentry';
 
 const SignupSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
@@ -259,7 +260,7 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     logger.error({ err: error, context: 'SIGNUP' }, 'Error during signup');
-    
+
     // Handle specific Prisma errors
     if (error instanceof Error) {
       if (error.message.includes('Unique constraint')) {
@@ -269,7 +270,8 @@ export async function POST(req: Request) {
         );
       }
     }
-    
+
+    captureException(error, { route: 'POST /api/auth/signup' });
     return NextResponse.json(
       { error: 'Unable to create account. Please try again.' },
       { status: 500 }

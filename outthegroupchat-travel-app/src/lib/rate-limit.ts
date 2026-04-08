@@ -1,3 +1,8 @@
+/**
+ * @module rate-limit
+ * @description Provides configurable rate limiters (AI, API, auth) backed by Upstash Redis, with a graceful fallback when Redis is not configured.
+ */
+
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { logger } from '@/lib/logger';

@@ -1,3 +1,8 @@
+/**
+ * @module email
+ * @description Provides email sending utilities for trip invitations and general notifications via the Resend API.
+ */
+
 import { Resend } from 'resend';
 import { logError, logSuccess } from '@/lib/logger';
 
