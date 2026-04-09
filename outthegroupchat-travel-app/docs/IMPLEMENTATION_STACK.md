@@ -4,7 +4,7 @@
 
 OutTheGroupchat is a full-stack group travel planning application built with modern web technologies, AI integration, and real-time collaboration features.
 
-*Last Updated: 2026-03-25*
+*Last Updated: 2026-04-08*
 
 ---
 
@@ -114,7 +114,7 @@ OutTheGroupchat is a full-stack group travel planning application built with mod
 
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| **Next.js API Routes** | 14.1.3 | REST API (48 endpoints as of 2026-03-24) |
+| **Next.js API Routes** | 14.1.3 | REST API (48 endpoints, all rate-limited as of 2026-04-04) |
 | **Prisma** | 5.22.0 | Database ORM |
 | **PostgreSQL** | 15+ | Relational database via Supabase |
 | **NextAuth.js** | 4.24.7 | Authentication (credentials provider) |
@@ -154,7 +154,7 @@ OutTheGroupchat is a full-stack group travel planning application built with mod
 
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| **@sentry/nextjs** | 10.43.0 | Error tracking (needs real DSN in Vercel) |
+| **@sentry/nextjs** | 10.43.0 | Error tracking; captureException in 8 routes (needs real DSN in Vercel) |
 | **@vercel/analytics** | 2.0.1 | Web analytics (active in production) |
 
 ### Testing
@@ -164,7 +164,7 @@ OutTheGroupchat is a full-stack group travel planning application built with mod
 | **Vitest** | 4.0.18 | Unit/integration test runner |
 | **@playwright/test** | 1.48.0 | E2E testing (browsers need install) |
 
-> As of 2026-03-25: 925+ Vitest tests across 49 test files, 0 failures. Playwright spec exists; browsers need `npx playwright install chromium`.
+> As of 2026-04-08: 1386 Vitest tests across 63 test files, 0 failures. Playwright config added (playwright.config.ts); browsers need `npx playwright install chromium` in CI. GitHub Actions CI workflow added (.github/workflows/ci.yml).
 
 ### External APIs
 
@@ -179,7 +179,7 @@ OutTheGroupchat is a full-stack group travel planning application built with mod
 
 ## Database Schema
 
-### Core Models (Actual, as of 2026-03-25)
+### Core Models (Actual, as of 2026-04-08)
 
 ```prisma
 model User {
@@ -268,7 +268,7 @@ enum PriceRange {
 
 ---
 
-## API Endpoints (48 total as of 2026-03-24)
+## API Endpoints (48 total — all rate-limited as of 2026-04-04)
 
 ### Trips
 
@@ -347,7 +347,7 @@ enum PriceRange {
 
 ---
 
-## File Structure (Actual, 2026-03-25)
+## File Structure (Actual, 2026-04-08)
 
 ```
 src/
@@ -376,9 +376,14 @@ src/
 |   |   +-- page.tsx
 |   |   +-- new/page.tsx
 |   |   +-- [tripId]/
-|   |       +-- page.tsx
+|   |       +-- page.tsx          # Wired EditTripModal + DeleteTripModal (2026-04-01 to 2026-04-07)
 |   |       +-- survey/page.tsx
 |   |       +-- vote/page.tsx
+|   |       +-- members/page.tsx  # Members management (2026-04-01)
+|   +-- profile/
+|   |   +-- [userId]/page.tsx     # Public profile (2026-04-01)
+|   +-- privacy/page.tsx          # Privacy Policy (2026-04-07)
+|   +-- terms/page.tsx            # Terms of Service (2026-04-07)
 |   +-- layout.tsx
 |   +-- page.tsx
 |   +-- not-found.tsx             # Custom 404 page
@@ -387,10 +392,11 @@ src/
 |
 +-- components/
 |   +-- ui/                       # Base components (Button, Card, Input)
-|   +-- trips/                    # TripCard, TripList, InviteMemberModal
+|   +-- trips/                    # TripCard, TripList, InviteMemberModal, EditTripModal, DeleteTripModal
 |   +-- surveys/                  # QuestionRenderer
 |   +-- voting/                   # VotingCard, ResultsChart
-|   +-- social/                   # ActivityCard
+|   +-- social/                   # ActivityCard, FollowButton
+|   +-- discover/                 # SearchResults
 |   +-- profile/                  # ProfileStatsTab
 |   +-- Navigation.tsx
 |
@@ -427,12 +433,15 @@ src/
 |   +-- index.ts
 |
 +-- __tests__/
-|   +-- setup.ts                  # Prisma mocks for all models
-    (49 test files, 925+ tests as of 2026-03-24)
+|   +-- setup.ts                  # Prisma mocks for all models + Sentry mock (2026-04-07)
+    (63 test files, 1386 tests as of 2026-04-08)
 
 e2e/
 +-- auth-flow.spec.ts             # Playwright E2E (browsers need install)
 +-- smoke.spec.ts
+
+.github/
++-- workflows/ci.yml              # GitHub Actions CI workflow
 ```
 
 ---
@@ -515,7 +524,7 @@ npm run build        # prisma generate + next build
 npm run db:push      # Push schema to database
 npm run db:migrate   # Create migrations
 npm run db:generate  # Regenerate Prisma client
-npm run test         # Run Vitest test suite (925+ tests)
+npm run test         # Run Vitest test suite (1386+ tests)
 npm run test:e2e     # Run Playwright E2E (requires browser install)
 ```
 
@@ -526,7 +535,7 @@ npm run test:e2e     # Run Playwright E2E (requires browser install)
 1. **Authentication**: NextAuth.js with session-based auth, bcrypt password hashing
 2. **Authorization**: Role-based access control (OWNER, ADMIN, MEMBER) + auth guards on all protected routes
 3. **Input Validation**: Zod schemas on all major API endpoints
-4. **Rate Limiting**: Upstash Redis-based rate limiting on all high-risk routes
+4. **Rate Limiting**: Upstash Redis-based rate limiting on ALL 48 routes (100% coverage, 2026-04-04)
 5. **CORS**: Configured in vercel.json and next.config.js (2026-03-23)
 6. **Security Headers**: HSTS, X-Frame-Options, Content-Security-Policy (2026-03-10)
 7. **Logging**: pino structured logging (0 `console.*` in production code)
@@ -536,7 +545,7 @@ npm run test:e2e     # Run Playwright E2E (requires browser install)
 
 ---
 
-## Code Quality Metrics (2026-03-25)
+## Code Quality Metrics (2026-04-08)
 
 | Metric | Target | Current |
 |--------|--------|---------|
@@ -544,10 +553,13 @@ npm run test:e2e     # Run Playwright E2E (requires browser install)
 | `console.*` in prod | 0 | 0 |
 | Files > 600 lines (prod) | 0 | 0 |
 | TSC errors | 0 | 0 |
-| Test count | 500+ | 925+ |
-| Test files | - | 49 |
+| Test count | 500+ | 1386 |
+| Test files | - | 63 |
 | API routes | - | 48 |
-| TypeScript files | - | 253 |
+| API routes with rate limiting | 48 | 48 (100%) |
+| Sentry-instrumented routes | - | 8 |
+| Security score | - | 9/10 |
+| TypeScript files | - | 253+ |
 | Lint warnings/errors | 0 | 0 |
 
 ---
@@ -564,4 +576,4 @@ npm run test:e2e     # Run Playwright E2E (requires browser install)
 
 ---
 
-*Last Updated: 2026-03-25*
+*Last Updated: 2026-04-08*

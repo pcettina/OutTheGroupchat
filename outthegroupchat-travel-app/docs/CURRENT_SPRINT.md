@@ -191,7 +191,7 @@
 
 | Metric | Target | Current | Previous |
 |--------|--------|---------|---------|
-| Test count | 500+ | 1156 (56 test files) | 1003 (53 files) |
+| Test count | 500+ | 1343 (64 test files) | 1234 (59 files) |
 | `any` types | 0 | 0 ✅ | 0 |
 | `console.*` in prod code | 0 | 0 ✅ | 0 |
 | TSC errors (test files) | 0 | 0 ✅ | 0 |
@@ -201,7 +201,44 @@
 
 ---
 
-*Updated: 2026-03-21*
+*Updated: 2026-04-08*
+---
+
+## 🟢 Completed 2026-04-08 (Nightly Build #34)
+
+### Wave 1 — Test Writers (109 new tests, 5 new test files)
+- [L1] Created health.test.ts (16 tests — GET /api/health comprehensive suite: DB connectivity, 503 on degraded, response shape, rate limiting)
+- [L2] Created trip-collaboration-integration.test.ts (36 tests — end-to-end trip collaboration lifecycle integration tests)
+- [L3] Created ai-chain-integration.test.ts (24 tests — AI chain integration: generate-itinerary, suggest-activities, recommend chained flows)
+- [M1] Created users-follow-edge.test.ts (17 tests — POST /api/users/[userId] follow/unfollow edge cases)
+- [M2] Created newsletter-email-edge.test.ts (16 tests — Newsletter subscription edge cases and email service paths)
+
+### Wave 2 — Features & Refactors
+- [L4] Fixed voting page silent error handling (src/app/trips/[tripId]/vote/page.tsx — added error UI with retry, logger.error on catch)
+- [L5] Improved survey page empty state and UX (src/app/trips/[tripId]/survey/page.tsx — empty state component, loading improvements)
+- [L6] Created GitHub Actions CI workflow (.github/workflows/ci.yml), Playwright config (playwright.config.ts), and smoke spec (e2e/smoke.spec.ts)
+- [M3] Added Sentry captureException to /api/trips (GET/POST) and /api/trips/[tripId] (GET/PATCH/DELETE) — Sentry coverage: 6 → 8 routes
+- [M4] Updated SECURITY_AUDIT.md (score: 8 → 9/10, last updated: 2026-04-08)
+- [M5] Updated stale strategic docs: PRODUCTION_ROADMAP.md, FUTURE_IMPLEMENTATION.md, IMPLEMENTATION_STACK.md (all to 2026-04-08)
+- [M6] Updated README.md: test count, feature list, security score (9/10)
+
+### Automated (Phase 3.5 — 8 small tasks)
+- All metrics clean: any=0, console.*=0, TODO/FIXME=0, files >600 lines (prod)=0
+- API routes: 48 | Test files: 59 → 64 | TS/TSX files: ~274
+
+### Setup.ts Expansion
+- Added `$queryRaw: vi.fn()` to prisma mock (required by health route tests)
+- Added `aiLogger`, `dbLogger`, `createRequestLogger` to logger mock
+- Added `@/lib/sentry` mock (prevents module-level logger.child crash)
+
+### Metrics
+- Tests: 1234 → 1343 passing (+109 new tests)
+- Test files: 59 → 64
+- Routes: 48 (unchanged)
+- TS files: ~274 (+8 new files)
+- any types: 0 | console.*: 0 | TODO: 0 | Files >600 lines (prod): 0
+
+*Updated: 2026-04-08*
 ---
 
 ## 🟢 Completed 2026-03-20 (Nightly Build)

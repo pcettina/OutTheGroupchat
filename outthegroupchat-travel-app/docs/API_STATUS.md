@@ -1,9 +1,9 @@
 # 📡 API & Integration Status
 
-> **Last updated: 2026-03-26**
+> **Last updated: 2026-04-08**
 >
-> **Last Audit:** March 2026
-> **Overall Status:** 86% Complete
+> **Last Audit:** April 2026
+> **Overall Status:** 88% Complete
 > **Target:** 100% for Beta Launch
 
 ---
@@ -213,7 +213,7 @@ BLOCKED - Need Environment Variables:
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
 | `/api/cron` | GET | ✅ | N/A | Background jobs; CRON_SECRET validation hardened 2026-03-22 |
-| Sentry lib | N/A | ✅ | N/A | `src/lib/sentry.ts` created 2026-03-25 — centralized Sentry helpers (captureException, addBreadcrumb, setUser) |
+| Sentry lib | N/A | ✅ | N/A | `src/lib/sentry.ts` created 2026-03-25 — centralized Sentry helpers (captureException, addBreadcrumb, setUser); coverage: 8/48 routes (chat, recommend, signup, generate-itinerary, suggest-activities, ai/search, trips GET/POST, trips/[tripId] GET/PATCH/DELETE) ✅ 2026-04-08 |
 | `/api/health` | GET | ✅ | N/A | DB connectivity check, 503 on degraded ✅ 2026-03-10; response hardened 2026-03-25 (NODE_ENV + version removed for data minimization — returns {status, timestamp, database}) |
 | `/api/users/me` | GET | ✅ | 🔶 | Get current authenticated user |
 | `/api/users/me` | PATCH | ✅ | 🔶 | Update current user profile + preferences |
@@ -372,4 +372,4 @@ EMAIL_FROM=             # Email sender (onboarding@resend.dev) ✅
 
 *Review and update after each API change.*
 
-*Last Updated: 2026-03-26 - /api/ai/search GET+POST fully implemented (semantic search, destinations branch); /api/newsletter/subscribe now requires auth; /api/auth/signup, /api/auth/reset-password, /api/auth/verify-email: rate limiting now first operation; 153 new tests tonight (1156 total, 56 test files); dead components (NotificationCenter.tsx, SharePreview.tsx) removed; JSDoc added to costs.ts; README updated. Also includes 2026-03-29 changes: /api/ai/chat Zod strengthened + JSON.parse safety; /api/ai/recommend Zod GET params + JSON.parse safety; /api/ai/suggest-activities + generate-itinerary JSON.parse safety; /api/notifications/[notificationId] Zod params (cuid) + bugfix (read was hardcoded true); JSDoc added to src/lib/geocoding.ts; N8N docs deprecated*
+*Last Updated: 2026-04-08 - Sentry captureException added to /api/trips (GET/POST) and /api/trips/[tripId] (GET/PATCH/DELETE); Sentry coverage now 8/48 routes; 109 new tests tonight (1343 total, 64 test files); Security score updated to 9/10; GitHub Actions CI workflow added (.github/workflows/ci.yml); Playwright config added; voting page silent error handling fixed; survey page UX improved. Previous: /api/ai/search GET+POST fully implemented; /api/newsletter/subscribe now requires auth; /api/auth/signup, /api/auth/reset-password, /api/auth/verify-email: rate limiting now first operation; /api/beta/status now uses Redis rate limiting; /api/discover/import now returns 502 for upstream failures*

@@ -7,6 +7,7 @@ import { Prisma, TripStatus } from '@prisma/client';
 import { logError } from '@/lib/logger';
 import { processInvitations } from '@/lib/invitations';
 import { apiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
+import { captureException } from '@/lib/sentry';
 
 // Route segment config - limit request body size to prevent memory exhaustion
 export const maxDuration = 30; // seconds
@@ -109,6 +110,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ success: true, data: trips });
   } catch (error) {
+    captureException(error);
     logError('TRIPS_GET', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch trips' },
@@ -210,6 +212,7 @@ export async function POST(req: Request) {
       { status: 201 }
     );
   } catch (error) {
+    captureException(error);
     logError('TRIPS_POST', error);
     return NextResponse.json(
       { success: false, error: 'Failed to create trip' },

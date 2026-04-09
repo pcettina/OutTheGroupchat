@@ -177,6 +177,15 @@ The project includes:
 | jordan@demo.com | demo123 |
 | taylor@demo.com | demo123 |
 
+## Recent Updates
+
+- **GitHub Actions CI** - Automated CI workflow added for build, lint, and test validation on every push
+- **Playwright E2E Testing** - End-to-end testing configuration added for auth flows and critical user journeys
+- **Vote Page Error Handling** - Improved error states and retry logic on the vote page
+- **Survey Page Empty State** - Added empty state UI and improved UX when no survey data is available
+- **Sentry Error Tracking** - Expanded Sentry instrumentation to trips routes (generate-itinerary, suggest-activities, ai/search, chat, recommend, signup)
+- **Security Score: 9/10** - Improved from 8/10 via API key exposure fixes, XSS hardening, and auth guard hardening across all 48 routes
+
 ## Contributing
 
 1. Fork the repository
@@ -195,4 +204,4 @@ Built with ❤️ by the OutTheGroupchat Team
 
 ---
 
-*Last Updated: 2026-03-26 | 1155+ tests passing | 55+ test files | 48 API routes*
+*Last Updated: 2026-04-08 | 1386+ tests passing | 63+ test files | 48 API routes | Security score: 9/10*

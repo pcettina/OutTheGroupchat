@@ -2,13 +2,13 @@
 
 ## Overview
 
-This document outlines future features, improvements, and technical debt to address for the OutTheGroupchat platform. Items already completed as of 2026-03-25 are marked accordingly.
+This document outlines future features, improvements, and technical debt to address for the OutTheGroupchat platform. Items already completed as of 2026-04-08 are marked accordingly.
 
-*Last Updated: 2026-03-25*
+*Last Updated: 2026-04-08*
 
 ---
 
-## Current State Summary (2026-03-25)
+## Current State Summary (2026-04-08)
 
 The following items from earlier versions of this roadmap have been **completed**:
 
@@ -22,12 +22,19 @@ The following items from earlier versions of this roadmap have been **completed*
 ### Completed from Former "Technical Debt"
 - [x] **TypeScript strict mode** — Enabled, 0 `any` types
 - [x] **Error Handling** — Global error boundary, standardized API error responses, pino logging
-- [x] **Testing** — 925+ unit/integration tests across 49 Vitest test files; Playwright E2E framework configured
-- [x] **Rate Limiting** — Upstash Redis on all high-risk routes
+- [x] **Testing** — 1386 unit/integration tests across 63 Vitest test files; Playwright E2E framework configured (2026-04-07)
+- [x] **Rate Limiting** — Upstash Redis on ALL 48 routes (100% coverage, 2026-04-04)
 - [x] **Input Sanitization** — Zod on all major API endpoints
 - [x] **Security Headers** — HSTS, X-Frame-Options, CSP (2026-03-10)
 - [x] **CORS** — Configured in next.config.js (2026-03-23)
 - [x] **Itinerary API** — GET/POST/PUT with $transaction atomicity (2026-03-23)
+- [x] **GitHub Actions CI** — .github/workflows/ci.yml added
+- [x] **Playwright Config** — playwright.config.ts configured
+- [x] **Privacy Policy** — /privacy page added (2026-04-07)
+- [x] **Terms of Service** — /terms page added (2026-04-07)
+- [x] **Trip Deletion UI** — DeleteTripModal wired to DELETE /api/trips/[tripId] (2026-04-07)
+- [x] **Trip Editing UI** — EditTripModal wired to PATCH /api/trips/[tripId] (2026-04-06)
+- [x] **Sentry captureException** — Active in 8 routes: chat, recommend, signup, generate-itinerary, suggest-activities, ai/search, trips (2026-04-05 to 2026-04-07)
 
 ### Completed from Former "Phase 3: Monitoring"
 - [x] **Sentry installed and configured** — Needs real DSN in Vercel production
@@ -46,7 +53,7 @@ These items are blockers or near-blockers for the Q2 2026 beta launch. See LAUNC
 |------|----------|--------|
 | Set OPENAI_API_KEY in Vercel | Critical | Missing |
 | Set Pusher env vars in Vercel | Critical | Missing |
-| Obtain Sentry DSN + set in Vercel | High | Missing |
+| Obtain Sentry DSN + set in Vercel | High | Missing (infrastructure ready, 8 routes instrumented) |
 | Verify Resend domain | High | Pending |
 | Install Playwright browsers in CI | High | `npx playwright install chromium` needed |
 | NEXTAUTH_SECRET rotation (32+ chars) | High | Unverified |
@@ -56,19 +63,19 @@ These items are blockers or near-blockers for the Q2 2026 beta launch. See LAUNC
 | Feature | Priority | Complexity | Description |
 |---------|----------|------------|-------------|
 | Trip wizard (multi-step) | High | Medium | Replace single-page form with step-by-step wizard |
-| Trip editing flow | High | Low | PATCH /api/trips/[tripId] UI |
-| Trip deletion/archiving | High | Low | DELETE + soft-delete UI |
+| Trip editing flow | Complete | Low | PATCH /api/trips/[tripId] UI — EditTripModal wired (2026-04-06) |
+| Trip deletion/archiving | Complete | Low | DELETE + soft-delete UI — DeleteTripModal wired (2026-04-07) |
 | Survey frontend integration | High | Medium | Connect survey API to frontend |
 | Voting frontend integration | High | Medium | Connect voting API to frontend |
 | Real-time vote updates | High | Medium | Pusher event on vote cast |
 | Survey results display | Medium | Medium | Results visualization |
-| Follow system integration | Medium | Medium | Follow API exists; frontend wiring needed |
+| Follow system integration | Medium | Medium | Follow API exists; FollowButton component added (2026-04-01) |
 
 ### 1.3 Security Completions
 
 | Item | Priority | Description |
 |------|----------|-------------|
-| Rate limiting on remaining endpoints | High | Ensure 100% coverage |
+| Rate limiting on remaining endpoints | Complete | 48/48 routes covered (2026-04-04) |
 | Session timeout configuration | High | NextAuth session maxAge |
 | Failed login attempt limiting | High | Track failures per IP/email |
 | Form validation errors inline | Medium | Client-side Zod feedback |
@@ -224,8 +231,8 @@ These items are blockers or near-blockers for the Q2 2026 beta launch. See LAUNC
 
 | Feature | Priority | Complexity | Status |
 |---------|----------|------------|--------|
-| **User Profiles** | High | Medium | Basic profile exists; public trip history pending |
-| **Follow System** | High | Medium | API exists; frontend wiring pending |
+| **User Profiles** | High | Medium | Basic profile exists; public profile page added (2026-04-01) |
+| **Follow System** | High | Medium | API exists; FollowButton component added (2026-04-01), wired in discover (2026-04-03) |
 | **Trip Reviews** | High | Medium | Rate and review completed trips |
 | **Activity Sharing** | Medium | Low | Share activities to feed |
 | **Group Matching** | Low | High | Find travel buddies |
@@ -272,9 +279,9 @@ These items are blockers or near-blockers for the Q2 2026 beta launch. See LAUNC
 
 | Item | Priority | Complexity | Description |
 |------|----------|------------|-------------|
-| Privacy Policy page | High | Low | Required before public launch |
-| Terms of Service page | High | Low | Required before public launch |
-| SEO meta tags | Medium | Low | All pages need titles, descriptions, OG tags |
+| Privacy Policy page | Complete | Low | /privacy page added (2026-04-07) |
+| Terms of Service page | Complete | Low | /terms page added (2026-04-07) |
+| SEO meta tags | Partial | Low | OG/Twitter Card tags added (2026-04-01); all pages need audit |
 | GDPR account deletion | Medium | Medium | Permanent data removal flow |
 
 ---
@@ -356,8 +363,8 @@ Q1 2027 — Social & Mobile
 - Error rate < 1% (Sentry)
 - AI latency (per provider)
 - Uptime > 99.9%
-- Test coverage (currently 925+ tests, targeting > 80% line coverage)
+- Test coverage (currently 1386 tests across 63 files, targeting > 80% line coverage)
 
 ---
 
-*Last Updated: 2026-03-25*
+*Last Updated: 2026-04-08*

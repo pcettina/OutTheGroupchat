@@ -18,7 +18,7 @@
 
 **Overall Readiness: 78%** → Target: 85% for Beta Launch
 
-> Last updated: 2026-03-26
+> Last updated: 2026-04-08
 
 ---
 
@@ -81,8 +81,8 @@
 ### Group Coordination 🔶
 - [x] Survey API structure
 - [x] Voting API structure
-- [ ] Survey frontend integration
-- [ ] Voting frontend integration
+- [x] Survey frontend integration ✅ 2026-04-08 (empty state improved, UX polished — survey/page.tsx)
+- [x] Voting frontend integration ✅ 2026-04-08 (silent error handling fixed, error UI + retry added — vote/page.tsx)
 - [ ] Real-time vote updates
 - [ ] Survey results display
 
@@ -174,6 +174,11 @@
 - [x] API route tests (invitations-post 18, ai-get-methods 16, beta-extended 21, users-follow 24) ✅ 2026-03-25 — total: 1003 tests across 53 files
 - [x] Service tests + API tests (recommendation.service 45, survey.service 36, geocoding-images 32, inspiration +39) ✅ 2026-03-26 — total: 1156 tests across 56 files
 - [x] API route tests (ai-generate-itinerary 31, ai-suggest-activities 25, discover-import 21) ✅ 2026-03-29
+- [x] API route tests (health 16, trip-collaboration-integration 36, ai-chain-integration 24, users-follow-edge 17, newsletter-email-edge 16) ✅ 2026-04-08 — total: ~1343 tests across 64 files
+
+### CI/CD Tests
+- [x] GitHub Actions CI workflow ✅ 2026-04-08 (.github/workflows/ci.yml — lint, test, build on PR/push)
+- [x] Playwright configuration ✅ 2026-04-08 (playwright.config.ts — chromium, auto dev server in CI)
 
 ### Integration Tests
 - [ ] Auth flow tests
@@ -378,4 +383,4 @@ git push origin main  # Auto-deploys to Vercel
 
 *This checklist should be reviewed daily during launch preparation.*
 
-*Last Updated: 2026-03-26 - 153 new tests (1156 total, 56 files); rate limiting added as first operation on auth/signup, auth/reset-password, auth/verify-email; newsletter/subscribe now requires auth; ai/search GET+POST fully implemented; dead components removed (NotificationCenter.tsx, SharePreview.tsx); recommendation.service.test.ts, survey.service.test.ts, geocoding-images.test.ts created. Also includes 2026-03-29 changes: JSON.parse safety on 5 AI routes + notifications/[notificationId]; Zod strengthened on ai/chat; notifications/[notificationId] bugfix (read was hardcoded true); JSDoc added to geocoding.ts; 3 new test files (ai-generate-itinerary, ai-suggest-activities, discover-import)*
+*Last Updated: 2026-04-08 - 109 new tests (~1343 total, 64 files); GitHub Actions CI + Playwright config added; voting page silent error handling fixed; survey page UX improved; Sentry coverage expanded to 8/48 routes (trips GET/POST + trips/[tripId] GET/PATCH/DELETE added); security score 8→9/10; $queryRaw added to prisma mock in setup.ts; aiLogger/dbLogger/createRequestLogger + sentry mock added to setup.ts. Previous: 152 new tests, DeleteTripModal wired to DELETE API, privacy+terms pages, SearchResults restored, beta/status Redis rate limiting, discover/import 502 error codes.*

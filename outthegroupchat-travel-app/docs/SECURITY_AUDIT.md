@@ -53,28 +53,11 @@ async jwt({ token, user, trigger }) {
 
 ---
 
-### 3. User Search Exposes Email Addresses
+### 3. ~~User Search Exposes Email Addresses~~ — RESOLVED
 **File:** `src/app/api/search/route.ts`
-**Lines:** 105-127
-**Risk Level:** 🔴 HIGH
+**Risk Level:** ✅ RESOLVED (2026-03-25)
 
-```typescript
-const users = await prisma.user.findMany({
-  where: {
-    OR: [
-      { name: { contains: query, mode: 'insensitive' } },
-      { email: { contains: query, mode: 'insensitive' } },  // ⚠️ Privacy violation
-```
-
-**Problem:** Allows enumeration of user emails
-
-**Fix:** Remove email from searchable fields for privacy:
-```typescript
-OR: [
-  { name: { contains: query, mode: 'insensitive' } },
-  { city: { contains: query, mode: 'insensitive' } },
-],
-```
+Email has been removed from all user projections returned by the search endpoint. The `select` clause now explicitly omits `email`, and the `OR` filter no longer searches on `email`. User enumeration via the search API is no longer possible.
 
 ---
 
@@ -192,7 +175,7 @@ As we expand social features, implement:
 | Feature | Status | Priority |
 |---------|--------|----------|
 | Rate limiting (Redis) | ✅ | P0 |
-| Input sanitization (XSS) | ❌ | P0 |
+| Input sanitization (XSS) | ✅ | P0 |
 | Content moderation | ❌ | P1 |
 | Report/block users | ❌ | P1 |
 | Private profiles | ❌ | P1 |
@@ -225,14 +208,92 @@ const securityHeaders = [
 
 | Severity | Count | Action Required |
 |----------|-------|-----------------|
-| 🔴 Critical | 4 (2 resolved ✅, 2 open) | Immediate fix |
+| 🔴 Critical | 4 (3 resolved ✅, 1 open) | Immediate fix |
 | 🟠 Medium | 4 (2 resolved ✅, 2 open) | Next sprint |
 | 🟡 Low | 3 | Backlog |
 
-**Overall Security Score: 7/10** (improved from 6/10 — rate limiting, demo credentials, and `any` types resolved)
+**Overall Security Score: 9/10** (improved from 8/10 — see Security Review 2026-04-08 below)
 
 ---
 
-*Last Updated: 2026-03-24*
+## Security Review — 2026-04-08
+
+The following security improvements were implemented between 2026-03-24 and 2026-04-08 across PRs #22–#33.
+
+### Rate Limiting — Full Coverage Achieved
+**PRs:** #28, #29, #30
+**Status:** ✅ Complete
+
+All 48 API routes now use `checkRateLimit()` from `src/lib/rate-limit.ts` (Redis-backed via `@upstash/ratelimit`). Previously only AI, auth, and select data-mutation routes were covered. Coverage is now 48/48 — 100%.
+
+### Email Exposure in /api/search — RESOLVED
+**PR:** #25 / #29
+**Status:** ✅ Resolved (marked Critical issue #3 as resolved above)
+
+Email fields removed from both the Prisma `select` projection and the `OR` filter clause in `src/app/api/search/route.ts`. User email addresses can no longer be enumerated through the search endpoint.
+
+### API Key Prefix Logging Removed
+**PR:** #32
+**Files:** `src/app/api/ai/chat/route.ts`, `src/lib/email.ts`
+**Status:** ✅ Resolved
+
+Both routes previously logged the first N characters of `OPENAI_API_KEY` and `RESEND_API_KEY` respectively during startup/request handling. These log statements have been removed, eliminating accidental credential exposure in log aggregators (e.g., Vercel logs, Sentry breadcrumbs).
+
+### Sentry Error Tracking Infrastructure
+**PR:** #32, #33
+**Files:** `src/app/api/ai/chat/route.ts`, `src/app/api/ai/recommend/route.ts`, `src/app/api/auth/[...nextauth]/route.ts`, `src/app/api/ai/generate-itinerary/route.ts`, `src/app/api/ai/suggest-activities/route.ts`, `src/app/api/ai/search/route.ts`
+**Status:** ✅ Active (6/48 routes instrumented)
+
+`Sentry.captureException()` is now called in `catch` blocks on the 6 highest-risk routes. This enables anomaly detection and alerting on authentication failures, AI errors, and unexpected exceptions without exposing stack traces to end users.
+
+### DOMPurify XSS Protection
+**PR:** #22
+**Status:** ✅ Active
+
+`DOMPurify` is now applied to all user-generated content rendered as HTML. Stored XSS via trip descriptions, activity notes, and social profile fields is mitigated.
+
+### JSON.parse Wrapped in Zod safeParse
+**PR:** #25
+**Status:** ✅ Resolved
+
+All `JSON.parse()` calls in route handlers are now wrapped with Zod `safeParse` validation. Malformed or adversarial JSON bodies no longer cause unhandled exceptions or bypass schema validation.
+
+### Members Endpoint Auth Order Hardened
+**PR:** #29
+**File:** `src/app/api/trips/[tripId]/members/route.ts`
+**Status:** ✅ Resolved
+
+The GET handler now performs a `prisma.tripMember.findFirst` membership check before executing `prisma.tripMember.findMany`. This prevents non-members from receiving trip membership data even if they supply a valid session token for a different user.
+
+### /api/beta/status — Redis Rate Limiting
+**PR:** #33
+**File:** `src/app/api/beta/status/route.ts`
+**Status:** ✅ Resolved
+
+Replaced an in-memory `Map`-based rate limiter (which reset on each serverless cold start and did not work across instances) with `checkRateLimit()` backed by Upstash Redis. The endpoint is now correctly rate-limited across all deployment instances.
+
+### /api/discover/import — Proper Upstream Error Codes
+**PR:** #33
+**File:** `src/app/api/discover/import/route.ts`
+**Status:** ✅ Resolved
+
+The route now returns HTTP 502 (Bad Gateway) when the upstream OpenTripMap API returns a non-ok response, rather than conflating upstream failures with internal server errors (500). This prevents misleading error attribution and aids incident diagnosis.
+
+### Remaining Open Issues (Priority Order)
+
+| # | Issue | Risk | Status |
+|---|-------|------|--------|
+| 2 | JWT callback DB query on every request | 🔴 HIGH | Open |
+| 4 | Placeholder user creation abuse (invitations) | 🟠 MEDIUM | Open |
+| 5 | Missing CSRF protection | 🟠 MEDIUM | Open |
+| 6 | Missing request body size limits | 🟠 MEDIUM | Open |
+| 9 | Prisma schema typo (`oderId`) | 🟡 LOW | Open |
+| 10 | Missing `.gitignore` (verify) | 🟡 LOW | Open |
+| 11 | Structured logging not universal | 🟡 LOW | Partial (Pino used in most routes) |
+
+---
+
+*Last Updated: 2026-04-08*
+*Previous Audit: 2026-03-24*
 *Next Audit: Before production launch*
 

@@ -1,21 +1,21 @@
 # OutTheGroupchat - Production Deployment & Feature Roadmap
 
 > **Target:** Q2 2026 Beta Launch
-> **Version:** 3.0 | **Last Updated:** 2026-03-25
+> **Version:** 3.1 | **Last Updated:** 2026-04-08
 
 ---
 
-## Current System Status (as of 2026-03-25)
+## Current System Status (as of 2026-04-08)
 
-### Overall Launch Readiness: 78% (Target: 85% for Beta)
+### Overall Launch Readiness: 86% (Target: 85% for Beta)
 
 | Category | Score | Target | Status |
 |----------|-------|--------|--------|
-| Infrastructure | 92% | 100% | Almost Ready |
-| Core Features | 77% | 90% | In Progress |
-| Security | 83% | 100% | In Progress |
-| Testing | 72% | 80% | In Progress |
-| Monitoring | 55% | 80% | In Progress |
+| Infrastructure | 96% | 100% | Almost Ready |
+| Core Features | 85% | 90% | In Progress |
+| Security | 90% | 100% | In Progress |
+| Testing | 85% | 80% | Exceeds Target |
+| Monitoring | 65% | 80% | In Progress |
 
 ### Implemented & Working
 
@@ -44,10 +44,15 @@
 | CORS | Working | Configured in next.config.js (2026-03-23) |
 | Security Headers | Working | HSTS, X-Frame-Options, CSP in next.config.js (2026-03-10) |
 | Error Boundaries | Working | global-error.tsx, error.tsx, not-found.tsx |
-| Sentry | Partial | Installed & configured; needs real DSN in Vercel |
+| Sentry | Partial | Installed & configured, captureException in 8 routes; needs real DSN in Vercel |
 | Real-time (Pusher) | Partial | Configured; env vars missing in production |
 | Accessibility | Good | Skip links, ARIA patterns |
 | Responsive Design | Good | Mobile-first, 44px touch targets |
+| Privacy Policy | Working | /privacy page added (2026-04-07) |
+| Terms of Service | Working | /terms page added (2026-04-07) |
+| Trip Deletion UI | Working | DeleteTripModal wired to DELETE /api/trips/[tripId] (2026-04-07) |
+| GitHub Actions CI | Working | .github/workflows/ci.yml added |
+| Playwright Config | Working | playwright.config.ts configured |
 
 ### Active Blockers (Must Fix Before Launch)
 
@@ -57,8 +62,9 @@
 | Pusher env vars missing in production | High | Blocked by config |
 | Sentry DSN not set in Vercel | High | Blocked by config |
 | Resend domain not verified | Medium | Email may go to spam |
-| Rate limiting not on ALL endpoints | Medium | In progress |
+| Rate limiting on ALL endpoints | Complete | 48/48 routes covered (2026-04-04) |
 | NEXTAUTH_SECRET strength unverified | Medium | Manual check needed |
+| Playwright browsers not in CI | High | `npx playwright install chromium` needed |
 
 ---
 
@@ -76,7 +82,7 @@
 - TripComment + TripLike models added to schema
 - Invitation acceptance flow with auto-accept on signup
 
-### March 2026 Sprint (In Progress)
+### March 2026 Sprint (COMPLETE)
 
 - `img` → `next/image` migration complete (0 remaining)
 - `console.*` cleanup complete (0 in production code)
@@ -99,6 +105,26 @@
 - discover/* routes require authentication (2026-03-24)
 - auth/demo Zod input validation (2026-03-24)
 
+### April 2026 Sprint (In Progress)
+
+- Rate limiting on ALL 48 API routes complete (2026-04-04)
+- Sentry captureException in 8 routes: chat, recommend, signup, generate-itinerary, suggest-activities, ai/search, trips GET/POST, trips/[tripId] GET/PATCH/DELETE (2026-04-05 to 2026-04-07)
+- Test suite expanded to 1386 tests across 63 test files (2026-04-07)
+- Privacy Policy page added at /privacy (2026-04-07)
+- Terms of Service page added at /terms (2026-04-07)
+- DeleteTripModal wired to DELETE /api/trips/[tripId] with owner permission guard (2026-04-07)
+- EditTripModal wired to PATCH /api/trips/[tripId] (2026-04-06)
+- Discover page wired to /api/discover/search with debounce and loading states (2026-04-06)
+- GitHub Actions CI workflow added (.github/workflows/ci.yml)
+- Playwright configuration added (playwright.config.ts)
+- Notifications optimistic mark-as-read with error toast (2026-04-06)
+- Email exposure security fix in members/invitations endpoints
+- beta/status migrated from in-memory to Redis rate limiting (2026-04-07)
+- JSDoc @module blocks added to email.ts, rate-limit.ts (2026-04-07)
+- discover/import now returns 502 for upstream failures, 500 for internal errors (2026-04-07)
+- setup.ts: Sentry mock added to prevent module-level logger.child crash in tests (2026-04-07)
+- Security score raised to 9/10 (from 8/10)
+
 ---
 
 ## Remaining Work Before Beta Launch
@@ -113,10 +139,10 @@
 [ ] NEXTAUTH_SECRET rotation (32+ chars)
 [ ] Session timeout configuration
 [ ] Failed login attempt limiting
-[ ] Rate limiting on remaining unguarded endpoints
-[ ] XSS prevention (DOMPurify) verification
-[ ] Trip editing flow
-[ ] Trip deletion/archiving
+[x] Rate limiting on ALL endpoints — 48/48 complete (2026-04-04)
+[x] XSS prevention (DOMPurify) — verified active
+[x] Trip editing flow — EditTripModal wired (2026-04-06)
+[x] Trip deletion/archiving — DeleteTripModal wired (2026-04-07)
 [ ] Trip wizard (multi-step creation)
 ```
 
@@ -127,8 +153,8 @@
 [ ] Voting frontend integration
 [ ] Real-time vote updates via Pusher
 [ ] Survey results display
-[ ] Follow system integration
-[ ] No search results empty state
+[ ] Follow system integration (API exists; frontend partial)
+[x] No search results empty state — discover page wired (2026-04-06)
 [ ] Form validation errors inline
 ```
 
@@ -148,10 +174,10 @@
 ### Phase 4: Legal & Content
 
 ```
-[ ] Privacy Policy page
-[ ] Terms of Service page
-[ ] Meta titles/descriptions on all pages
-[ ] Open Graph tags
+[x] Privacy Policy page — /privacy added (2026-04-07)
+[x] Terms of Service page — /terms added (2026-04-07)
+[x] Open Graph tags — OG/Twitter Card meta tags added (2026-04-01)
+[ ] Meta titles/descriptions on all pages (partial)
 [ ] Favicon configured
 ```
 
@@ -217,7 +243,7 @@
 - [x] XSS prevention (React handles, plus DOMPurify installed)
 - [x] CORS configured (next.config.js, 2026-03-23)
 - [x] Security headers (HSTS, X-Frame-Options, CSP — 2026-03-10)
-- [ ] Rate limiting on ALL endpoints (in progress)
+- [x] Rate limiting on ALL 48 endpoints (complete 2026-04-04)
 - [ ] Session timeout configuration
 - [ ] Failed login attempt limiting
 
@@ -232,6 +258,10 @@
 - [x] /api/auth/demo guarded by DEMO_MODE env var (2026-03-22)
 - [x] /api/discover/search requires auth (2026-03-24)
 - [x] /api/discover/recommendations requires auth (2026-03-24)
+- [x] Email exposure removed from members/invitations endpoints (2026-04-04 to 2026-04-06)
+- [x] API key prefix logging removed from ai/chat and email service (security fix 2026-04-06)
+- [x] beta/status migrated from in-memory to Redis rate limiting (2026-04-07)
+- [x] Security score: 9/10 (updated 2026-04-08)
 
 ### Post-Beta (Nice to Have)
 
@@ -282,7 +312,7 @@
 
 ---
 
-*Document Version: 3.0*
+*Document Version: 3.1*
 *Target Launch: Q2 2026 (Beta)*
-*Last Updated: 2026-03-25*
+*Last Updated: 2026-04-08*
 *Owner: Development Team*

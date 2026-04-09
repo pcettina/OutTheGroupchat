@@ -34,6 +34,7 @@ export default function VotePage() {
   const [showResults, setShowResults] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isOwnerOrAdmin, setIsOwnerOrAdmin] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchVotingSessions = useCallback(async () => {
     try {
@@ -48,8 +49,8 @@ export default function VotePage() {
           setShowResults(true);
         }
       }
-    } catch (err) {
-      // silently handle fetch error
+    } catch {
+      setError('Failed to load voting sessions. Please refresh.');
     } finally {
       setIsLoading(false);
     }
@@ -115,8 +116,8 @@ export default function VotePage() {
       const data = await res.json();
       setResults(data.data);
       setShowResults(true);
-    } catch (err) {
-      // silently handle submit error
+    } catch {
+      setError('Failed to submit your vote. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -255,6 +256,14 @@ export default function VotePage() {
         )}
       </motion.div>
 
+      {/* Error banner */}
+      {error && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-center justify-between">
+          <span>{error}</span>
+          <button onClick={() => setError(null)} className="text-red-500 hover:text-red-700 ml-2">✕</button>
+        </div>
+      )}
+
       {/* Session tabs if multiple */}
       {sessions.length > 1 && (
         <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
@@ -316,8 +325,8 @@ export default function VotePage() {
               option={option}
               isSelected={selectedOptions.includes(option.id)}
               showResults={true}
-              voteCount={0}
-              totalVotes={0}
+              voteCount={0} // TODO: fetch actual vote counts from API
+              totalVotes={0} // TODO: fetch actual vote counts from API
               onVote={() => {}}
             />
           ))}

@@ -41,6 +41,15 @@ export default function SurveyPage() {
       )
     : false;
 
+  // Update document title when survey loads
+  useEffect(() => {
+    if (survey?.title) {
+      document.title = `${survey.title} | OutTheGroupchat`;
+    } else if (!isLoading) {
+      document.title = 'Trip Survey | OutTheGroupchat';
+    }
+  }, [survey?.title, isLoading]);
+
   useEffect(() => {
     async function fetchData() {
       try {
@@ -279,16 +288,53 @@ export default function SurveyPage() {
     // Non-owner: no survey yet
     return (
       <div className="container mx-auto px-4 py-8 max-w-2xl">
-        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 text-center">
-          <h2 className="text-xl font-semibold text-yellow-700 mb-2">No Survey Yet</h2>
-          <p className="text-yellow-600">The trip organizer hasn&apos;t created a survey yet. Check back later!</p>
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-10 text-center"
+        >
+          <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center mx-auto mb-5">
+            <svg
+              className="w-8 h-8 text-slate-400 dark:text-slate-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+              />
+            </svg>
+          </div>
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-3">
+            No Survey Yet
+          </h2>
+          <p className="text-slate-600 dark:text-slate-400 mb-2 max-w-sm mx-auto">
+            No survey has been created for this trip yet.
+          </p>
+          <p className="text-slate-500 dark:text-slate-500 text-sm mb-8">
+            Ask the trip organizer to create one so you can share your preferences.
+          </p>
           <button
-            onClick={() => router.back()}
-            className="mt-4 text-primary font-medium hover:underline"
+            onClick={() => router.push(`/trips/${tripId}`)}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all"
           >
-            Go back to trip
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to trip
           </button>
-        </div>
+        </motion.div>
       </div>
     );
   }
@@ -299,26 +345,33 @@ export default function SurveyPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
+      {/* Survey title */}
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white text-center mb-6">
+        {survey.title}
+      </h1>
+
       {/* Progress bar */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm text-gray-500">
-            Question {currentQuestion + 1} of {survey.questions.length}
+          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+            Question{' '}
+            <span className="text-gray-900 dark:text-white font-semibold">{currentQuestion + 1}</span>
+            {' '}of{' '}
+            <span className="text-gray-900 dark:text-white font-semibold">{survey.questions.length}</span>
           </span>
-          <span className="text-sm font-medium text-primary">{Math.round(progress)}%</span>
+          <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+            {Math.round(progress)}% complete
+          </span>
         </div>
-        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+        <div className="h-2.5 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
           <motion.div
-            className="h-full bg-gradient-to-r from-primary to-accent"
+            className="h-full bg-gradient-to-r from-emerald-500 to-teal-500"
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
           />
         </div>
       </div>
-
-      {/* Survey title */}
-      <h1 className="text-2xl font-bold text-gray-900 text-center mb-8">{survey.title}</h1>
 
       {/* Question card */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
