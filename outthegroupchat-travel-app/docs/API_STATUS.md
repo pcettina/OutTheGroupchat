@@ -1,8 +1,8 @@
 # 📡 API & Integration Status
 
-> **Last updated: 2026-03-26**
+> **Last updated: 2026-04-09**
 >
-> **Last Audit:** March 2026
+> **Last Audit:** April 2026
 > **Overall Status:** 86% Complete
 > **Target:** 100% for Beta Launch
 
@@ -193,7 +193,7 @@ COMPLETED ✅ Dec 17:
 
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
-| `/api/pusher/auth` | POST | 🔒 | 🔒 | **Needs env vars** |
+| `/api/pusher/auth` | POST | ✅ | 🔒 | Route implemented + 14 tests passing ✅ 2026-04-09; **Needs env vars for production** |
 
 ### Pusher Issues to Fix
 ```
@@ -213,7 +213,7 @@ BLOCKED - Need Environment Variables:
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
 | `/api/cron` | GET | ✅ | N/A | Background jobs; CRON_SECRET validation hardened 2026-03-22 |
-| Sentry lib | N/A | ✅ | N/A | `src/lib/sentry.ts` created 2026-03-25 — centralized Sentry helpers (captureException, addBreadcrumb, setUser) |
+| Sentry lib | N/A | ✅ | N/A | `src/lib/sentry.ts` created 2026-03-25 — centralized Sentry helpers (captureException, addBreadcrumb, setUser); 16/48 routes instrumented as of 2026-04-09 |
 | `/api/health` | GET | ✅ | N/A | DB connectivity check, 503 on degraded ✅ 2026-03-10; response hardened 2026-03-25 (NODE_ENV + version removed for data minimization — returns {status, timestamp, database}) |
 | `/api/users/me` | GET | ✅ | 🔶 | Get current authenticated user |
 | `/api/users/me` | PATCH | ✅ | 🔶 | Update current user profile + preferences |
@@ -372,4 +372,4 @@ EMAIL_FROM=             # Email sender (onboarding@resend.dev) ✅
 
 *Review and update after each API change.*
 
-*Last Updated: 2026-03-26 - /api/ai/search GET+POST fully implemented (semantic search, destinations branch); /api/newsletter/subscribe now requires auth; /api/auth/signup, /api/auth/reset-password, /api/auth/verify-email: rate limiting now first operation; 153 new tests tonight (1156 total, 56 test files); dead components (NotificationCenter.tsx, SharePreview.tsx) removed; JSDoc added to costs.ts; README updated. Also includes 2026-03-29 changes: /api/ai/chat Zod strengthened + JSON.parse safety; /api/ai/recommend Zod GET params + JSON.parse safety; /api/ai/suggest-activities + generate-itinerary JSON.parse safety; /api/notifications/[notificationId] Zod params (cuid) + bugfix (read was hardcoded true); JSDoc added to src/lib/geocoding.ts; N8N docs deprecated*
+*Last Updated: 2026-04-09 — Nightly Build #35: /api/pusher/auth confirmed implemented with 14 tests passing; Sentry coverage expanded from 8/48 to 16/48 routes; vote counts fixed (vote/page.tsx + voting/route.ts); 5 new test files (health.test.ts, trips-itinerary-recommendations.test.ts, events.service.test.ts, sanitize.test.ts, pusher.test.ts); CI workflow + Playwright chromium install added; email.ts JSDoc added; README updated.*

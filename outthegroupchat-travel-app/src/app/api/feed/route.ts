@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { logError } from '@/lib/logger';
+import { captureException } from '@/lib/sentry';
 
 const feedQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
@@ -277,6 +278,7 @@ export async function GET(req: Request) {
       },
     });
   } catch (error) {
+    captureException(error);
     logError('FEED_GET', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch feed' },
@@ -326,6 +328,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, action });
   } catch (error) {
+    captureException(error);
     logError('FEED_POST', error);
     return NextResponse.json(
       { error: 'Failed to save activity' },

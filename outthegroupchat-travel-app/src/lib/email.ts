@@ -1,3 +1,13 @@
+/**
+ * Email delivery utilities using the Resend API.
+ *
+ * Provides helpers for sending transactional emails (invitations,
+ * notifications). All functions return a `{ success, messageId?, error? }`
+ * shape so callers can handle delivery failures without throwing.
+ *
+ * @module email
+ */
+
 import { Resend } from 'resend';
 import { logError, logSuccess } from '@/lib/logger';
 
@@ -13,14 +23,27 @@ const DEFAULT_FROM = process.env.EMAIL_FROM || 'OutTheGroupchat <noreply@outtheg
 const APP_URL = process.env.NEXTAUTH_URL || 'https://outthegroupchat.com';
 
 /**
- * Check if email service is configured
+ * Check if the Resend email service is configured.
+ * @returns `true` when a valid `RESEND_API_KEY` is present, `false` otherwise.
  */
 export function isEmailConfigured(): boolean {
   return !!resend;
 }
 
 /**
- * Send a trip invitation email to a non-registered user
+ * Send a trip invitation email to a non-registered user.
+ *
+ * Generates a sign-up link pre-scoped to the target trip and dispatches an
+ * HTML + plain-text invitation via Resend. Validates the recipient address
+ * before making the API call.
+ *
+ * @param params.to - Recipient email address.
+ * @param params.tripTitle - Display name of the trip being shared.
+ * @param params.inviterName - Full name of the user sending the invitation.
+ * @param params.tripId - Prisma trip ID used to build the redirect URL.
+ * @param params.expiresAt - Optional expiry date shown in the email body.
+ * @returns Object with `success` flag, optional `messageId` on success, or
+ *   `error` message on failure.
  */
 export async function sendInvitationEmail(params: {
   to: string;
@@ -131,7 +154,21 @@ export async function sendInvitationEmail(params: {
 }
 
 /**
- * Send a notification email (generic)
+ * Send a generic notification email to a user.
+ *
+ * Accepts an arbitrary subject, title, and body message so the same helper
+ * can power any system-generated notification (e.g. trip updates, new
+ * comments). An optional CTA button can be included by providing both
+ * `actionUrl` and `actionText`.
+ *
+ * @param params.to - Recipient email address.
+ * @param params.subject - Email subject line.
+ * @param params.title - Heading displayed inside the email body.
+ * @param params.message - Main body copy of the notification.
+ * @param params.actionUrl - Optional URL for the call-to-action button.
+ * @param params.actionText - Optional label for the call-to-action button.
+ * @returns Object with `success` flag, optional `messageId` on success, or
+ *   `error` message on failure.
  */
 export async function sendNotificationEmail(params: {
   to: string;

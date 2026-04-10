@@ -132,6 +132,7 @@ The project includes:
 - `vercel.json` with cron job configuration
 - Optimized function durations for AI routes
 - Automatic builds on push
+- GitHub Actions CI (`.github/workflows/ci.yml`) — TSC, lint, Vitest, Playwright
 
 ### Manual Deployment
 
@@ -195,4 +196,13 @@ Built with ❤️ by the OutTheGroupchat Team
 
 ---
 
-*Last Updated: 2026-03-26 | 1155+ tests passing | 55+ test files | 48 API routes*
+## Recent Updates
+
+- **2026-04-08** — GitHub Actions CI added, Playwright config added, Sentry instrumentation on 8 routes (chat, recommend, signup, generate-itinerary, suggest-activities, ai/search, trips GET/POST/PATCH/DELETE), security score reached 9/10, voting page error handling improved, survey page UX improvements, 109 new tests
+- **2026-04-07** — DeleteTripModal wired to DELETE API, privacy/terms pages added, beta/status route migrated to Redis rate limiting, Sentry added to 3 AI routes, discover/import returns 502 on upstream failures, 152 new tests
+- **2026-04-06** — EditTripModal wired to PATCH API, discover search wired to backend with debounce, API key logging security fix, notifications optimistic mark-as-read, JSDoc added to 14 files, 104 new tests
+- **2026-04-01** — Members management page, public profile page, FollowButton component, edit/delete trip modals, OG/Twitter Card meta tags, rate limiting on 4 more routes, 110 new tests
+
+---
+
+*Last Updated: 2026-04-09 | 1343 tests passing (main: 1234 tests, 59 files) | 48 API routes | Security: 9/10 | CI: GitHub Actions ✅ | E2E: Playwright ✅ | Sentry: 8 routes ✅*

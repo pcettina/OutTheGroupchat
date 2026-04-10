@@ -191,7 +191,7 @@
 
 | Metric | Target | Current | Previous |
 |--------|--------|---------|---------|
-| Test count | 500+ | 1156 (56 test files) | 1003 (53 files) |
+| Test count | 500+ | 1415 (64 test files) | 1343 (59 files) |
 | `any` types | 0 | 0 ✅ | 0 |
 | `console.*` in prod code | 0 | 0 ✅ | 0 |
 | TSC errors (test files) | 0 | 0 ✅ | 0 |
@@ -414,6 +414,40 @@
 **Tests: ~577 total (+35 from tonight); TSC errors: 0 (was 104 across test files)**
 
 *Updated: 2026-03-21*
+---
+
+## 🟢 Completed 2026-04-09 (Nightly Build #35)
+
+### Wave 1 — Test Writers (181 new tests, 5 new test files)
+- [L1] Created health.test.ts (9 tests for GET /api/health — DB connected, timestamp format, public access, content-type, $queryRaw called, 503 on DB failure, timeout, timestamp on degraded, no raw error exposure)
+- [L2] Created trips-itinerary-recommendations.test.ts (17 tests — GET /api/trips/[tripId]/itinerary + GET /api/trips/[tripId]/recommendations)
+- [L3] Created events.service.test.ts (42 tests — EventsService.searchEvents, searchPlaces, getPlaceDetails, searchFlights, getPriceEstimate, getDestinationInfo)
+- [M1] Created sanitize.test.ts (89 tests — sanitizeHTML, sanitizeInput, XSS vectors, edge cases)
+- [M2] Created pusher.test.ts (24 tests — Pusher auth, channel helpers, broadcast functions)
+
+### Wave 2 — Features & Hardening
+- [L4] /api/pusher/auth — confirmed implemented, 14 tests verified ✅ (0 new files, route already existed)
+- [L5] Sentry expanded to 8 more routes — 16/48 routes now covered ✅ (8 route files modified)
+- [M3] Vote counts fixed in vote/page.tsx + voting/route.ts — also updated voting.test.ts + trips-voting.test.ts (findMany mock added)
+- [M4+M5] CI workflow recreated (.github/workflows/ci.yml) + email.ts JSDoc added ✅
+- [M6+M7] README.md updated + docs/UPGRADE_PLAN.md created ✅
+
+### Shared File Consolidation
+- TSC errors fixed: health.test.ts (PrismaClient double-cast); events.service.test.ts (FlightOffer import corrected to @/lib/api/flights)
+- setup.ts expanded: $queryRaw: vi.fn() added; aiLogger, dbLogger, createRequestLogger stubs added to logger mock
+- API_STATUS.md: Sentry coverage 8/48 → 16/48; pusher/auth marked ✅; Last Updated 2026-04-09
+- CODEMAP.md: stats updated (test count, test files, Sentry coverage); 5 new test files added; UPGRADE_PLAN.md added to docs index
+- LAUNCH_CHECKLIST.md: Playwright browser install in CI checked off; Last Updated 2026-04-09
+
+### Metrics
+- Tests: 1343 → 1415 passing (72 new tests net — 5 new test files)
+- Test files: 59 → 64
+- Routes: 48 (unchanged)
+- TS files: 266
+- any types: 0 | console.*: 0 | TODO: 0 | Files >600 lines (prod): 0
+- Sentry coverage: 8/48 → 16/48
+
+*Updated: 2026-04-09*
 ---
 
 ## 🟢 Completed 2026-03-19 (Nightly Build)

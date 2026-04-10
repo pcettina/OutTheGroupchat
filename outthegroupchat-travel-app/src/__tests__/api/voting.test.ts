@@ -49,6 +49,7 @@ vi.mock('@/lib/prisma', async (importOriginal) => {
       vote: {
         upsert: vi.fn(),
         groupBy: vi.fn(),
+        findMany: vi.fn(),
       },
       trip: {
         findMany: vi.fn(),
@@ -92,6 +93,7 @@ const mockPrismaVotingSession = prisma.votingSession as unknown as {
 const mockPrismaVote = prisma.vote as unknown as {
   upsert: ReturnType<typeof vi.fn>;
   groupBy: ReturnType<typeof vi.fn>;
+  findMany: ReturnType<typeof vi.fn>;
 };
 
 // ---------------------------------------------------------------------------
@@ -384,6 +386,8 @@ describe('PUT /api/trips/[tripId]/voting', () => {
     // Simulate 3 members total, only 1 has voted → session should stay ACTIVE
     mockPrismaTripMember.count.mockResolvedValueOnce(3);
     mockPrismaVote.groupBy.mockResolvedValueOnce([{ orderId: MOCK_USER_ID }]);
+    // findMany returns the votes for vote count aggregation
+    mockPrismaVote.findMany.mockResolvedValueOnce([{ optionId: 'opt-1' }]);
 
     const req = makeRequest(`/api/trips/${MOCK_TRIP_ID}/voting`, {
       method: 'PUT',
@@ -396,6 +400,12 @@ describe('PUT /api/trips/[tripId]/voting', () => {
     expect(body.success).toBe(true);
     expect(body.data.optionId).toBe('opt-1');
     expect(mockPrismaVote.upsert).toHaveBeenCalledOnce();
+
+    // Response now includes per-option vote counts and a total
+    expect(body.voteCounts).toBeDefined();
+    expect(body.voteCounts['opt-1']).toBe(1);
+    expect(body.voteCounts['opt-2']).toBe(0);
+    expect(body.totalVotes).toBe(1);
 
     // Session must NOT be closed because not all members have voted yet
     expect(mockPrismaVotingSession.update).not.toHaveBeenCalled();

@@ -301,7 +301,26 @@ export async function PUT(
       });
     }
 
-    return NextResponse.json({ success: true, data: vote });
+    // Aggregate vote counts per option for the response
+    const allVotes = await prisma.vote.findMany({
+      where: { sessionId },
+      select: { optionId: true },
+    });
+
+    const voteCounts: Record<string, number> = {};
+    options.forEach(opt => {
+      voteCounts[opt.id] = 0;
+    });
+    allVotes.forEach(v => {
+      voteCounts[v.optionId] = (voteCounts[v.optionId] ?? 0) + 1;
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: vote,
+      voteCounts,
+      totalVotes: allVotes.length,
+    });
   } catch {
     return NextResponse.json(
       { success: false, error: 'Failed to submit vote' },

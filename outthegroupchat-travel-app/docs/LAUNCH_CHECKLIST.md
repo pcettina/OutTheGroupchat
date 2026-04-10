@@ -18,7 +18,7 @@
 
 **Overall Readiness: 78%** → Target: 85% for Beta Launch
 
-> Last updated: 2026-03-26
+> Last updated: 2026-04-09
 
 ---
 
@@ -182,6 +182,7 @@
 
 ### E2E Tests (Critical Flows)
 - [x] Auth flow E2E spec created (Playwright) ✅ 2026-03-23 — e2e/auth-flow.spec.ts
+- [x] Playwright browser install in CI (`npx playwright install chromium`) ✅ 2026-04-09 — added to GitHub Actions workflow
 - [ ] User signup → trip creation → invite flow
 - [ ] Survey completion flow
 - [ ] Voting flow
@@ -378,4 +379,4 @@ git push origin main  # Auto-deploys to Vercel
 
 *This checklist should be reviewed daily during launch preparation.*
 
-*Last Updated: 2026-03-26 - 153 new tests (1156 total, 56 files); rate limiting added as first operation on auth/signup, auth/reset-password, auth/verify-email; newsletter/subscribe now requires auth; ai/search GET+POST fully implemented; dead components removed (NotificationCenter.tsx, SharePreview.tsx); recommendation.service.test.ts, survey.service.test.ts, geocoding-images.test.ts created. Also includes 2026-03-29 changes: JSON.parse safety on 5 AI routes + notifications/[notificationId]; Zod strengthened on ai/chat; notifications/[notificationId] bugfix (read was hardcoded true); JSDoc added to geocoding.ts; 3 new test files (ai-generate-itinerary, ai-suggest-activities, discover-import)*
+*Last Updated: 2026-04-09 — Nightly Build #35: Playwright browser install in CI checked off; 5 new test files (health, trips-itinerary-recommendations, events.service, sanitize, pusher — 181 tests); Sentry coverage 8/48 → 16/48 routes; vote counts fixed; CI workflow + Playwright chromium install in GitHub Actions; UPGRADE_PLAN.md created; 1343 → ~1415 tests passing.*

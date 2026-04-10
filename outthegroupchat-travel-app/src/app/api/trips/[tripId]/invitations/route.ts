@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
 import { processInvitations } from '@/lib/invitations';
+import { captureException } from '@/lib/sentry';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -55,6 +56,7 @@ export async function GET(
 
     return NextResponse.json({ success: true, data: invitations });
   } catch (error) {
+    captureException(error);
     logger.error({ err: error, context: 'INVITATIONS_GET' }, 'Failed to fetch invitations');
     return NextResponse.json(
       { success: false, error: 'Failed to fetch invitations' },
@@ -131,6 +133,7 @@ export async function POST(
       data: result,
     });
   } catch (error) {
+    captureException(error);
     logger.error({ err: error, context: 'INVITATIONS_POST' }, 'Failed to send invitations');
     return NextResponse.json(
       { success: false, error: 'Failed to send invitations' },

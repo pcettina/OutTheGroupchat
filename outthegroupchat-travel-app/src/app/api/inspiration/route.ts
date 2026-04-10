@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
+import { captureException } from '@/lib/sentry';
 
 const searchSchema = z.object({
   query: z.string().optional(),
@@ -303,6 +304,7 @@ export async function GET(req: Request) {
       },
     });
   } catch (error) {
+    captureException(error);
     logger.error({ error }, '[INSPIRATION_GET] Failed to fetch inspiration');
     return NextResponse.json(
       { error: 'Failed to fetch inspiration' },
@@ -347,6 +349,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error) {
+    captureException(error);
     logger.error({ error }, '[INSPIRATION_POST] Failed to process request');
     return NextResponse.json(
       { error: 'Failed to process request' },

@@ -47,6 +47,7 @@ const mockVotingSession = {
 const mockVote = {
   upsert: vi.fn(),
   groupBy: vi.fn(),
+  findMany: vi.fn(),
 };
 
 // Attach to prisma mock object
@@ -183,6 +184,8 @@ async function parseJson(res: Response) {
 // ---------------------------------------------------------------------------
 beforeEach(() => {
   vi.clearAllMocks();
+  // Re-establish default for findMany after clearAllMocks wipes implementations
+  mockVote.findMany.mockResolvedValue([]);
 });
 
 // ===========================================================================

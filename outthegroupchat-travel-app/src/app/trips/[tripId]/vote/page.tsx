@@ -29,6 +29,8 @@ export default function VotePage() {
   const [activeSession, setActiveSession] = useState<VotingSession | null>(null);
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
   const [results, setResults] = useState<VotingResults | null>(null);
+  const [voteCounts, setVoteCounts] = useState<Record<string, number>>({});
+  const [totalVotes, setTotalVotes] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showResults, setShowResults] = useState(false);
@@ -101,21 +103,45 @@ export default function VotePage() {
 
     setIsSubmitting(true);
     try {
-      const res = await fetch(`/api/trips/${tripId}/voting`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionId: activeSession.id,
-          votes: selectedOptions,
-        }),
-      });
+      // Submit each selected option via PUT (the vote submission handler).
+      // For SINGLE_CHOICE sessions only one option is ever in selectedOptions.
+      // For MULTIPLE_CHOICE / RANKED sessions submit each option sequentially;
+      // use the last response for vote counts since it reflects all submitted votes.
+      type VoteResponse = {
+        success: boolean;
+        voteCounts?: Record<string, number>;
+        totalVotes?: number;
+        data?: VotingResults;
+      };
+      let lastResponse: VoteResponse | null = null;
 
-      if (!res.ok) throw new Error('Failed to submit vote');
+      for (const optionId of selectedOptions) {
+        const res = await fetch(`/api/trips/${tripId}/voting`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId: activeSession.id,
+            optionId,
+          }),
+        });
 
-      const data = await res.json();
-      setResults(data.data);
+        if (!res.ok) throw new Error('Failed to submit vote');
+        lastResponse = (await res.json()) as VoteResponse;
+      }
+
+      if (lastResponse) {
+        if (lastResponse.voteCounts) {
+          setVoteCounts(lastResponse.voteCounts);
+        }
+        if (typeof lastResponse.totalVotes === 'number') {
+          setTotalVotes(lastResponse.totalVotes);
+        }
+        if (lastResponse.data) {
+          setResults(lastResponse.data);
+        }
+      }
       setShowResults(true);
-    } catch (err) {
+    } catch {
       // silently handle submit error
     } finally {
       setIsSubmitting(false);
@@ -266,6 +292,8 @@ export default function VotePage() {
                 setSelectedOptions(s.userVote || []);
                 setShowResults(!!s.userVote);
                 setResults(null);
+                setVoteCounts({});
+                setTotalVotes(0);
               }}
               className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
                 activeSession?.id === s.id
@@ -316,8 +344,8 @@ export default function VotePage() {
               option={option}
               isSelected={selectedOptions.includes(option.id)}
               showResults={true}
-              voteCount={0}
-              totalVotes={0}
+              voteCount={voteCounts[option.id] ?? 0}
+              totalVotes={totalVotes}
               onVote={() => {}}
             />
           ))}
