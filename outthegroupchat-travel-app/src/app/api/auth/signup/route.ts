@@ -6,6 +6,7 @@ import { randomBytes } from 'crypto';
 import { logger } from '@/lib/logger';
 import { sendNotificationEmail } from '@/lib/email';
 import { authRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
+import { captureException, captureMessage } from '@/lib/sentry';
 
 const SignupSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
@@ -22,6 +23,7 @@ async function sendVerificationEmail(userId: string, email: string): Promise<voi
     const token = randomBytes(32).toString('hex');
     const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
 
+    captureMessage('auth: creating verification token in database', 'info');
     await prisma.verificationToken.create({
       data: {
         identifier: email,
@@ -33,6 +35,7 @@ async function sendVerificationEmail(userId: string, email: string): Promise<voi
     const appUrl = process.env.NEXTAUTH_URL ?? 'https://outthegroupchat.com';
     const verifyUrl = `${appUrl}/api/auth/verify-email?token=${token}`;
 
+    captureMessage('auth: sending verification email', 'info');
     const result = await sendNotificationEmail({
       to: email,
       subject: 'Verify your OutTheGroupchat email address',
@@ -95,6 +98,7 @@ export async function POST(req: Request) {
     const { name, email, password } = parseResult.data;
 
     // Check if user already exists
+    captureMessage('auth: checking for existing user by email', 'info');
     const existingUser = await prisma.user.findUnique({
       where: { email },
     });
@@ -184,6 +188,7 @@ export async function POST(req: Request) {
     }
 
     // Hash password
+    captureMessage('auth: creating new user account', 'info');
     const hashedPassword = await bcrypt.hash(password, 12);
 
     // Create user
@@ -259,7 +264,7 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     logger.error({ err: error, context: 'SIGNUP' }, 'Error during signup');
-    
+
     // Handle specific Prisma errors
     if (error instanceof Error) {
       if (error.message.includes('Unique constraint')) {
@@ -269,7 +274,8 @@ export async function POST(req: Request) {
         );
       }
     }
-    
+
+    captureException(error, { tags: { route: '/api/auth/signup' } });
     return NextResponse.json(
       { error: 'Unable to create account. Please try again.' },
       { status: 500 }

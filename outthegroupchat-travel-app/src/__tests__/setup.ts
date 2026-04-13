@@ -214,6 +214,14 @@ vi.mock('@/lib/logger', () => ({
   logSuccess: vi.fn(),
   apiLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
   authLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+  aiLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+  dbLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+  createRequestLogger: vi.fn(() => ({
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
+  })),
 }));
 
 // ---------------------------------------------------------------------------
@@ -223,4 +231,18 @@ vi.mock('@/lib/logger', () => ({
 // ---------------------------------------------------------------------------
 vi.mock('@/lib/invitations', () => ({
   processInvitations: vi.fn().mockResolvedValue({ invitations: [], errors: [] }),
+}));
+
+// ---------------------------------------------------------------------------
+// Mock: @/lib/sentry
+// Prevents module-level logger.child() crash in sentry.ts when routes that
+// import sentry are tested in files with local logger mock overrides (no child).
+// ---------------------------------------------------------------------------
+vi.mock('@/lib/sentry', () => ({
+  captureException: vi.fn(),
+  captureMessage: vi.fn(),
+  addBreadcrumb: vi.fn(),
+  setSentryUser: vi.fn(),
+  clearSentryUser: vi.fn(),
+  isSentryEnabled: vi.fn().mockReturnValue(false),
 }));

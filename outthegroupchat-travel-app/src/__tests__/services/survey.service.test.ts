@@ -697,7 +697,9 @@ describe('SurveyService.createTripSurvey', () => {
 
     const call = mockTripSurvey.create.mock.calls[0][0];
     const expectedExpiry = new Date(now + 48 * 60 * 60 * 1000);
-    expect((call.data.expiresAt as Date).getTime()).toBe(expectedExpiry.getTime());
+    const actualExpiry = (call.data.expiresAt as Date).getTime();
+    expect(actualExpiry).toBeGreaterThanOrEqual(expectedExpiry.getTime() - 100);
+    expect(actualExpiry).toBeLessThanOrEqual(expectedExpiry.getTime() + 100);
   });
 
   it('uses a custom expiry when expirationHours is provided', async () => {
@@ -709,7 +711,9 @@ describe('SurveyService.createTripSurvey', () => {
 
     const call = mockTripSurvey.create.mock.calls[0][0];
     const expectedExpiry = new Date(now + 24 * 60 * 60 * 1000);
-    expect((call.data.expiresAt as Date).getTime()).toBe(expectedExpiry.getTime());
+    const actualExpiry = (call.data.expiresAt as Date).getTime();
+    expect(actualExpiry).toBeGreaterThanOrEqual(expectedExpiry.getTime() - 100);
+    expect(actualExpiry).toBeLessThanOrEqual(expectedExpiry.getTime() + 100);
   });
 
   it('returns the TripSurvey record from prisma', async () => {

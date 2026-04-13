@@ -6,6 +6,7 @@ import { authOptions } from '@/lib/auth';
 import { getModel, isOpenAIConfigured } from '@/lib/ai/client';
 import { aiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 import { logError } from '@/lib/logger';
+import { captureException, addBreadcrumb } from '@/lib/sentry';
 
 // Route segment config for AI streaming
 export const maxDuration = 60; // seconds - AI responses can take longer
@@ -129,6 +130,7 @@ Use this context to provide relevant, specific advice about their trip to ${trip
     }
 
     // Stream the response
+    addBreadcrumb({ message: 'Starting AI chat stream', category: 'ai', level: 'info' });
     let result;
     try {
       result = await streamText({
@@ -142,7 +144,7 @@ Use this context to provide relevant, specific advice about their trip to ${trip
     } catch (streamError) {
       const errorMsg = streamError instanceof Error ? streamError.message : 'Failed to stream response';
       logError('AI_CHAT_STREAM', streamError, { errorMsg });
-      
+
       // Check for specific OpenAI errors
       if (errorMsg.includes('API key') || errorMsg.includes('Invalid')) {
         return NextResponse.json(
@@ -150,7 +152,8 @@ Use this context to provide relevant, specific advice about their trip to ${trip
           { status: 503 }
         );
       }
-      
+
+      captureException(streamError, { tags: { route: '/api/ai/chat' } });
       throw streamError; // Re-throw to be caught by outer catch
     }
 
@@ -160,7 +163,7 @@ Use this context to provide relevant, specific advice about their trip to ${trip
     // Log detailed error for debugging
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     logError('AI_CHAT', error, { errorMessage });
-    
+
     // Check for specific error types
     if (errorMessage.includes('API key') || errorMessage.includes('authentication')) {
       return NextResponse.json(
@@ -168,14 +171,15 @@ Use this context to provide relevant, specific advice about their trip to ${trip
         { status: 503 }
       );
     }
-    
+
     if (errorMessage.includes('rate limit') || errorMessage.includes('quota')) {
       return NextResponse.json(
         { success: false, error: 'AI service rate limit exceeded. Please try again later.' },
         { status: 429 }
       );
     }
-    
+
+    captureException(error, { tags: { route: '/api/ai/chat' } });
     return NextResponse.json(
       { success: false, error: 'Failed to process chat message. Please try again.' },
       { status: 500 }
@@ -213,6 +217,7 @@ export async function GET(req: Request) {
     // Quick destination tips (cached response for common queries)
     const quickTipsPrompt = `Give 5 essential quick tips for visiting ${destination}. Format as a JSON array of strings.`;
 
+    addBreadcrumb({ message: 'Starting AI destination tips generation', category: 'ai', level: 'info' });
     const model = getModel('chat');
     const result = await streamText({
       model,
@@ -241,6 +246,7 @@ export async function GET(req: Request) {
     });
   } catch (error) {
     logError('AI_CHAT_GET', error);
+    captureException(error, { tags: { route: '/api/ai/chat' } });
     return NextResponse.json(
       { success: false, error: 'Failed to get tips' },
       { status: 500 }

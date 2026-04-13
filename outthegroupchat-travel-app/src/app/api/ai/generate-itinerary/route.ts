@@ -8,6 +8,7 @@ import { getModel, isOpenAIConfigured } from '@/lib/ai/client';
 import { aiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 import { itinerarySystemPrompt, buildItineraryPrompt } from '@/lib/ai/prompts';
 import { logError } from '@/lib/logger';
+import { captureException, addBreadcrumb } from '@/lib/sentry';
 import type { AIGeneratedItinerary, TripPreferences } from '@/types';
 
 // Route segment config for AI itinerary generation
@@ -185,6 +186,7 @@ export async function POST(req: Request) {
       : prompt;
 
     // Generate itinerary using AI
+    addBreadcrumb({ message: 'Starting AI itinerary generation', category: 'ai', level: 'info' });
     const model = getModel('itinerary');
     const { text } = await generateText({
       model,
@@ -214,6 +216,7 @@ export async function POST(req: Request) {
       itinerary = itineraryResult.data;
     } catch (parseError) {
       logError('ITINERARY_PARSE_ERROR', parseError);
+      captureException(parseError, { tags: { route: '/api/ai/generate-itinerary' } });
       return NextResponse.json(
         { success: false, error: 'Failed to parse AI response', rawResponse: text },
         { status: 500 }
@@ -222,6 +225,7 @@ export async function POST(req: Request) {
 
     // Optionally save to database
     // Create itinerary days from AI response
+    addBreadcrumb({ message: 'Saving generated itinerary to database', category: 'ai', level: 'info' });
     const savedItinerary = await prisma.$transaction(async (tx) => {
       // Delete existing itinerary
       await tx.itineraryItem.deleteMany({
@@ -276,6 +280,7 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     logError('AI_GENERATE_ITINERARY', error);
+    captureException(error, { tags: { route: '/api/ai/generate-itinerary' } });
     return NextResponse.json(
       { success: false, error: 'Failed to generate itinerary' },
       { status: 500 }

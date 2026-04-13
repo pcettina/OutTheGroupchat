@@ -191,17 +191,54 @@
 
 | Metric | Target | Current | Previous |
 |--------|--------|---------|---------|
-| Test count | 500+ | 1156 (56 test files) | 1003 (53 files) |
+| Test count | 500+ | 1425 (64 test files) | 1234 (59 files) |
 | `any` types | 0 | 0 ✅ | 0 |
 | `console.*` in prod code | 0 | 0 ✅ | 0 |
 | TSC errors (test files) | 0 | 0 ✅ | 0 |
-| Sentry configured | Yes | Infrastructure ready | Infrastructure ready |
+| Sentry configured | Yes | 9/48 routes instrumented | 0/48 |
 | `<img>` warnings on build | 0 | 0 ✅ | 0 |
 | Launch readiness | 85% | 78% | 75% |
 
 ---
 
 *Updated: 2026-03-21*
+---
+
+## 🟢 Completed 2026-04-13 (Nightly Build)
+
+### Wave 1 — Test Writers (191 new tests, 5 new test files)
+- [L1] Created health.test.ts (11 tests — GET /api/health: DB connected/error, timestamps, concurrent requests)
+- [L2] Created events.service.test.ts (44 tests — EventsService: searchEvents, searchPlaces, getPlaceDetails, searchFlights, getPriceEstimate, getDestinationInfo)
+- [L3] Created trip-collaboration-integration.test.ts (31 tests — trip creation, member management, real-time collab, invitation lifecycle integration)
+- [M1] Created sanitize.test.ts (66 tests — sanitizeHTML, sanitizeInput: XSS vectors, edge cases, DOMPurify integration)
+- [M2] Created pusher-lib.test.ts (39 tests — Pusher server/client instantiation, channel helpers, broadcastToTrip/broadcastToUser)
+
+### Wave 2 — Features & Sentry Instrumentation
+- [L4] Sentry captureException added to 4 auth routes: signup, reset-password (POST+PATCH), verify-email, demo
+- [L5] Sentry captureException + addBreadcrumb added to 5 AI routes: chat, recommend, generate-itinerary, suggest-activities, search
+  ⚠️ FIXED: L5 used `import { addBreadcrumb } from '@sentry/nextjs'` — not exported in current SDK version. Wave 3 added `addBreadcrumb` wrapper to `src/lib/sentry.ts` and fixed all 5 AI route imports to `@/lib/sentry`.
+- [L6] Deleted SignUpForm.tsx; removed TravelBadges/BadgeDetailModal/defaultBadges from social/index.ts (dead code cleanup)
+- [M3] Fixed survey.service.test.ts timing flaky test (1 previously failing test now stable)
+- [M4] JSDoc added to src/lib/invitations.ts
+- [M5] README.md + docs/README.md metrics updated to 2026-04-13
+- [M6] JSDoc added to src/services/events.service.ts
+
+### Wave 3 — Shared File Consolidation
+- sentry.ts: `addBreadcrumb` wrapper function exported (wraps SentrySDK.addBreadcrumb, no-ops when SENTRY_DSN unset)
+- All 5 AI routes: `addBreadcrumb` import changed from `@sentry/nextjs` → `@/lib/sentry` (9 TSC errors fixed)
+- setup.ts: `aiLogger`, `dbLogger`, `createRequestLogger` stubs added to vi.mock('@/lib/logger') factory
+- API_STATUS.md: Sentry coverage updated (9/48 routes); auth + AI routes noted; Last Updated 2026-04-13
+- CODEMAP.md: test count 1234→1425, test files 59→64, 5 new test files added, Last Updated 2026-04-13
+- LAUNCH_CHECKLIST.md: Sentry items checked, Last Updated 2026-04-13
+
+### Metrics
+- Tests: 1234 → 1425 passing (+191 new tests)
+- Test files: 59 → 64
+- Routes: 48 (unchanged)
+- Sentry coverage: 0/48 → 9/48
+- any types: 0 | console.*: 0 | TODO: 0 | Files >600 lines (prod): 0 | TSC errors: 0
+
+*Updated: 2026-04-13*
 ---
 
 ## 🟢 Completed 2026-03-20 (Nightly Build)

@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { getModel, checkRateLimit } from '@/lib/ai/client';
 import { logError } from '@/lib/logger';
+import { captureException, addBreadcrumb } from '@/lib/sentry';
 
 const aiRecommendationItemSchema = z.object({
   name: z.string(),
@@ -167,6 +168,7 @@ USER CONTEXT:
 
 Generate ${limit} personalized activity recommendations. Return ONLY valid JSON.`;
 
+    addBreadcrumb({ message: 'Starting AI recommendation generation', category: 'ai', level: 'info' });
     const model = getModel('recommendations');
     const { text } = await generateText({
       model,
@@ -244,6 +246,7 @@ Generate ${limit} personalized activity recommendations. Return ONLY valid JSON.
     });
   } catch (error) {
     logError('AI_RECOMMEND', error);
+    captureException(error, { tags: { route: '/api/ai/recommend' } });
     return NextResponse.json(
       { error: 'Failed to generate recommendations' },
       { status: 500 }
@@ -332,6 +335,7 @@ TRIP CONTEXT:
 
 Generate ${getLimit} activities that would complement existing plans and appeal to the whole group. Prioritize categories NOT already in their itinerary. Return ONLY valid JSON.`;
 
+    addBreadcrumb({ message: 'Starting AI trip recommendation generation', category: 'ai', level: 'info' });
     const model = getModel('recommendations');
     const { text } = await generateText({
       model,
@@ -365,6 +369,7 @@ Generate ${getLimit} activities that would complement existing plans and appeal 
     });
   } catch (error) {
     logError('AI_RECOMMEND_GET', error);
+    captureException(error, { tags: { route: '/api/ai/recommend' } });
     return NextResponse.json(
       { error: 'Failed to get recommendations' },
       { status: 500 }

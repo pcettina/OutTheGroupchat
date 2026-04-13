@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { logError } from '@/lib/logger';
+import { captureException, captureMessage } from '@/lib/sentry';
 
 // DEMO_MODE must be explicitly set to 'true' in the environment to enable this endpoint.
 // This prevents demo credentials from being exposed in production environments where the
@@ -58,12 +59,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if demo user exists
+    captureMessage('auth: looking up demo user account', 'info');
     let user = await prisma.user.findUnique({
       where: { email: DEMO_EMAIL },
     });
 
     // If not, create the demo user
     if (!user) {
+      captureMessage('auth: creating demo user account', 'info');
       const hashedPassword = await bcrypt.hash(demoPassword, 10);
       user = await prisma.user.create({
         data: {
@@ -100,6 +103,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     logError('DEMO_AUTH', error);
+    captureException(error, { tags: { route: '/api/auth/demo' } });
     return NextResponse.json(
       { success: false, error: 'Failed to setup demo account' },
       { status: 500 }

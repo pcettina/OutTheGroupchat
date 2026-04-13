@@ -88,3 +88,29 @@ export function captureMessage(
 
   SentrySDK.captureMessage(message, level);
 }
+
+/**
+ * Adds a breadcrumb to the current Sentry scope. No-ops when SENTRY_DSN is not set.
+ *
+ * Breadcrumbs form a trail of events leading up to an error and are visible in the Sentry
+ * issue detail view. Use them to mark significant steps in a request lifecycle (e.g.
+ * "Starting AI itinerary generation") so failures have richer context.
+ *
+ * @param breadcrumb - Object with at minimum a `message` string; optional `category` and
+ *                     `level` ('fatal'|'error'|'warning'|'info'|'debug') fields.
+ */
+export function addBreadcrumb(breadcrumb: {
+  message: string;
+  category?: string;
+  level?: SentrySDK.SeverityLevel;
+}): void {
+  if (!isEnabled) {
+    sentryLogger.debug(
+      { breadcrumb },
+      'Sentry disabled — breadcrumb not recorded'
+    );
+    return;
+  }
+
+  SentrySDK.addBreadcrumb(breadcrumb);
+}

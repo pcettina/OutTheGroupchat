@@ -5,6 +5,7 @@ import { z } from 'zod';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { authRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
+import { captureException, captureMessage } from '@/lib/sentry';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -51,6 +52,7 @@ export async function POST(req: Request) {
     const { email } = parsed.data;
 
     // Look up user — do not reveal existence to prevent enumeration
+    captureMessage('auth: looking up user for password reset', 'info');
     const user = await prisma.user.findUnique({
       where: { email },
       select: { id: true, email: true, name: true },
@@ -79,6 +81,7 @@ export async function POST(req: Request) {
       const resetUrl = `${APP_URL}/auth/reset-password/confirm?token=${token}&email=${encodeURIComponent(email)}`;
 
       // Attempt to send email (non-blocking — log failure but return 200)
+      captureMessage('auth: sending password reset email', 'info');
       try {
         const { isEmailConfigured } = await import('@/lib/email');
         if (isEmailConfigured()) {
@@ -121,6 +124,7 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     logError('RESET_PASSWORD_REQUEST', error);
+    captureException(error, { tags: { route: '/api/auth/reset-password' } });
     return NextResponse.json(
       { error: 'Failed to process reset request' },
       { status: 500 }
@@ -157,6 +161,7 @@ export async function PATCH(req: Request) {
     const { token, email, password } = parsed.data;
 
     // Look up the reset token
+    captureMessage('auth: looking up password reset token', 'info');
     const verificationToken = await prisma.verificationToken.findUnique({
       where: {
         identifier_token: {
@@ -203,6 +208,7 @@ export async function PATCH(req: Request) {
     }
 
     // Hash the new password and update
+    captureMessage('auth: updating user password after reset', 'info');
     const hashedPassword = await bcrypt.hash(password, 12);
 
     await prisma.$transaction([
@@ -228,6 +234,7 @@ export async function PATCH(req: Request) {
     });
   } catch (error) {
     logError('RESET_PASSWORD_CONFIRM', error);
+    captureException(error, { tags: { route: '/api/auth/reset-password' } });
     return NextResponse.json(
       { error: 'Failed to reset password' },
       { status: 500 }

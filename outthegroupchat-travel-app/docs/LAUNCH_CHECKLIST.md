@@ -18,7 +18,7 @@
 
 **Overall Readiness: 78%** → Target: 85% for Beta Launch
 
-> Last updated: 2026-03-26
+> Last updated: 2026-04-13
 
 ---
 
@@ -204,7 +204,9 @@
 ## 📊 PHASE 5: Monitoring & Observability
 
 ### Error Tracking
-- [x] Sentry installed and configured ✅ 2026-03-10 (instrumentation-client.ts onRouterTransitionStart fixed 2026-03-20; src/lib/sentry.ts helper created 2026-03-25; needs real DSN in Vercel)
+- [x] Sentry installed and configured ✅ 2026-03-10 (instrumentation-client.ts onRouterTransitionStart fixed 2026-03-20; src/lib/sentry.ts helper created 2026-03-25; addBreadcrumb wrapper added 2026-04-13; needs real DSN in Vercel)
+- [x] Sentry added to auth routes (signup, reset-password, verify-email, demo) ✅ 2026-04-13
+- [x] Sentry added to AI routes (chat, recommend, generate-itinerary, suggest-activities, search) ✅ 2026-04-13
 - [ ] Error alerts configured (pending Sentry DSN)
 - [ ] Source maps uploaded (pending Sentry DSN)
 
@@ -378,4 +380,4 @@ git push origin main  # Auto-deploys to Vercel
 
 *This checklist should be reviewed daily during launch preparation.*
 
-*Last Updated: 2026-03-26 - 153 new tests (1156 total, 56 files); rate limiting added as first operation on auth/signup, auth/reset-password, auth/verify-email; newsletter/subscribe now requires auth; ai/search GET+POST fully implemented; dead components removed (NotificationCenter.tsx, SharePreview.tsx); recommendation.service.test.ts, survey.service.test.ts, geocoding-images.test.ts created. Also includes 2026-03-29 changes: JSON.parse safety on 5 AI routes + notifications/[notificationId]; Zod strengthened on ai/chat; notifications/[notificationId] bugfix (read was hardcoded true); JSDoc added to geocoding.ts; 3 new test files (ai-generate-itinerary, ai-suggest-activities, discover-import)*
+*Last Updated: 2026-04-13 — 191 new tests (1425 total, 64 test files); Sentry captureException added to 4 auth routes + 5 AI routes (9/48 total); addBreadcrumb wrapper exported from src/lib/sentry.ts; SignUpForm.tsx + dead social components removed; JSDoc added to invitations.ts + events.service.ts; 5 new test files: health.test.ts, events.service.test.ts, trip-collaboration-integration.test.ts, sanitize.test.ts, pusher-lib.test.ts; survey.service.test.ts flaky timing test fixed; aiLogger/dbLogger/createRequestLogger mocks added to setup.ts. TSC: 0 errors.*

@@ -24,6 +24,10 @@ const CITY_COORDINATES: Record<string, { lat: number; lng: number }> = {
 
 /**
  * @description Parameters for searching Ticketmaster events in a city during a date range.
+ * @property city - The destination city name (e.g., "Nashville", "Chicago")
+ * @property startDate - The start of the date range to search for events
+ * @property endDate - The end of the date range to search for events
+ * @property categories - Optional list of category filters (e.g., "sports", "music", "comedy", "theater")
  */
 export interface SearchEventsParams {
   city: string;
@@ -34,6 +38,10 @@ export interface SearchEventsParams {
 
 /**
  * @description Parameters for searching places (restaurants, bars, attractions, hotels) in a city.
+ * @property city - The destination city name to search within
+ * @property type - The category of place to search for; defaults to 'all' which queries
+ *   restaurants, things to do, and nightlife in a single call
+ * @property limit - Maximum number of results to return; defaults to 20
  */
 export interface SearchPlacesParams {
   city: string;
@@ -43,6 +51,11 @@ export interface SearchPlacesParams {
 
 /**
  * @description Parameters for searching available flights between two locations.
+ * @property origin - City or airport name for the departure location
+ * @property destination - City or airport name for the arrival location
+ * @property departureDate - The outbound flight date
+ * @property returnDate - Optional return flight date for round-trip searches
+ * @property adults - Number of adult passengers (minimum 1)
  */
 export interface SearchFlightsParams {
   origin: string;
@@ -58,7 +71,12 @@ export interface SearchFlightsParams {
  */
 export class EventsService {
   /**
-   * Search for events in a city during a date range
+   * Search for events in a city during a date range using the Ticketmaster API.
+   * Results are optionally filtered by category keywords matched against event names.
+   * @param params - Search parameters including city, date range, and optional category filters
+   * @returns A promise resolving to an array of normalised event results; returns an empty
+   *   array when the Ticketmaster API is unavailable
+   * @throws Never — Ticketmaster errors are caught internally and treated as empty results
    */
   static async searchEvents(params: SearchEventsParams): Promise<EventSearchResult[]> {
     const { city, startDate, endDate, categories } = params;
@@ -117,7 +135,13 @@ export class EventsService {
   }
 
   /**
-   * Search for places (restaurants, bars, attractions) in a city
+   * Search for places (restaurants, bars, attractions, hotels) in a city using the
+   * Google Places API. When `type` is 'all', multiple queries are issued in sequence
+   * and results are de-duplicated by `place_id`.
+   * @param params - Search parameters including city, place type, and result limit
+   * @returns A promise resolving to a de-duplicated array of place details up to `limit`
+   *   entries; individual query failures are silently skipped
+   * @throws Never — per-query errors are caught internally and treated as empty sub-results
    */
   static async searchPlaces(params: SearchPlacesParams): Promise<PlaceDetails[]> {
     const { city, type = 'all', limit = 20 } = params;
@@ -175,14 +199,25 @@ export class EventsService {
   }
 
   /**
-   * Get place details with enhanced information
+   * Retrieve detailed information for a single place by its Google Places ID.
+   * Delegates directly to the underlying `getPlaceDetails` library function.
+   * @param placeId - The Google Places `place_id` string identifying the venue
+   * @returns A promise resolving to the full `PlaceDetails` object, or `null` when
+   *   the place cannot be found or the API is unavailable
+   * @throws When the external Places API returns an unexpected error
    */
   static async getPlaceDetails(placeId: string): Promise<PlaceDetails | null> {
     return getPlaceDetails(placeId);
   }
 
   /**
-   * Search for flights
+   * Search for available flights between two cities using the Amadeus flights API.
+   * City names are resolved to IATA airport codes before the search is executed.
+   * @param params - Search parameters including origin, destination, departure date,
+   *   optional return date, and number of adults
+   * @returns A promise resolving to an array of up to 10 normalised `FlightOffer` objects;
+   *   returns an empty array when airport codes cannot be resolved or the API fails
+   * @throws Never — all errors are caught internally and result in an empty array return
    */
   static async searchFlights(params: SearchFlightsParams): Promise<FlightOffer[]> {
     const { origin, destination, departureDate, returnDate, adults } = params;
@@ -219,19 +254,32 @@ export class EventsService {
   }
 
   /**
-   * Get price estimate text from price level
+   * Convert a numeric Google Places price level into a human-readable estimate string.
+   * Delegates directly to the underlying `getPriceEstimate` library function.
+   * @param priceLevel - Google Places price level integer (0–4), or `undefined` when
+   *   the place has no pricing data
+   * @returns A display string such as "Free", "$", "$$", "$$$", or "$$$$";
+   *   returns a default value for `undefined` or out-of-range inputs
    */
   static getPriceEstimate(priceLevel: number | undefined): string {
     return getPriceEstimate(priceLevel);
   }
 
   /**
-   * Get comprehensive destination info including events, restaurants, attractions, and nightlife
+   * Fetch comprehensive destination information including events, restaurants,
+   * attractions, and nightlife for a given city and date range.
+   * All four data sources are queried concurrently via `Promise.all`.
    * @param city - The destination city name (e.g., "Nashville", "New York")
-   * @param startDate - The start date of the trip for event search
-   * @param endDate - The end date of the trip for event search
-   * @returns An object containing events (up to 20), restaurants with price estimates,
-   *   attractions, nightlife venues, and lat/lng coordinates for the city (or null if unknown)
+   * @param startDate - The start date of the trip used to bound the event search window
+   * @param endDate - The end date of the trip used to bound the event search window
+   * @returns A promise resolving to an object with the following shape:
+   *   - `events` — up to 20 `EventSearchResult` items from Ticketmaster
+   *   - `restaurants` — up to 10 `PlaceDetails` entries each augmented with a `priceEstimate` string
+   *   - `attractions` — up to 10 `PlaceDetails` entries for tourist attractions
+   *   - `nightlife` — up to 10 `PlaceDetails` entries for bars and nightlife venues
+   *   - `coordinates` — `{ lat, lng }` for known cities, or `null` when the city is not in
+   *     the built-in coordinate mapping
+   * @throws Never — individual sub-requests swallow errors and return empty arrays on failure
    */
   static async getDestinationInfo(city: string, startDate: Date, endDate: Date) {
     const [events, restaurants, attractions, nightlife] = await Promise.all([

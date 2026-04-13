@@ -1,3 +1,11 @@
+/**
+ * @module invitations
+ * @description Utilities for processing trip member invitations. Handles both
+ * registered users (creates a TripInvitation record and in-app notification) and
+ * unregistered email addresses (creates a PendingInvitation and dispatches an
+ * invitation email when the email service is configured).
+ */
+
 import { prisma } from '@/lib/prisma';
 import { sendInvitationEmail, isEmailConfigured } from '@/lib/email';
 import { logger } from '@/lib/logger';
@@ -22,6 +30,24 @@ interface ProcessInvitationsParams {
  * Process member invitation emails for a trip.
  * Handles both registered users (creates TripInvitation) and
  * unregistered emails (creates PendingInvitation + sends email).
+ *
+ * For registered users, a TripInvitation record and an in-app notification are
+ * created. For unregistered addresses, a PendingInvitation is upserted and an
+ * invitation email is sent when the email service is available.
+ *
+ * After processing all addresses the trip's status is transitioned from
+ * `PLANNING` to `INVITING` (no-op if the trip is already in another status).
+ *
+ * @param params - Invitation parameters.
+ * @param params.tripId - The ID of the trip to invite users to.
+ * @param params.tripTitle - Human-readable trip title used in notification messages.
+ * @param params.emails - List of email addresses to invite.
+ * @param params.inviterId - User ID of the person sending the invitations.
+ * @param params.inviterName - Display name of the inviter, used in email content.
+ * @param params.expirationHours - Number of hours until the invitation expires (default: 24).
+ * @returns A Promise resolving to an object with two arrays:
+ *   - `invitations`: successfully processed addresses with a status string and optional message.
+ *   - `errors`: addresses that were skipped or encountered an error, with a status string and error description.
  */
 export async function processInvitations({
   tripId,

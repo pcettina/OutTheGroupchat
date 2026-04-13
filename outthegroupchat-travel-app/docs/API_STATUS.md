@@ -1,8 +1,8 @@
 # 📡 API & Integration Status
 
-> **Last updated: 2026-03-26**
+> **Last updated: 2026-04-13**
 >
-> **Last Audit:** March 2026
+> **Last Audit:** April 2026
 > **Overall Status:** 86% Complete
 > **Target:** 100% for Beta Launch
 
@@ -25,12 +25,12 @@
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
 | `/api/auth/[...nextauth]` | ALL | ✅ | ✅ | NextAuth handler |
-| `/api/auth/signup` | POST | ✅ | ✅ | Zod validation added 2026-03-18; email verification sending added 2026-03-21; rate limiting now first operation 2026-03-26 |
-| `/api/auth/demo` | POST | ✅ | ✅ | Demo credentials in env vars ✅ 2026-03-10; DEMO_MODE env guard added 2026-03-22; Zod input validation added 2026-03-24; z.object({}).strict() replacing passthrough 2026-03-25 |
+| `/api/auth/signup` | POST | ✅ | ✅ | Zod validation added 2026-03-18; email verification sending added 2026-03-21; rate limiting now first operation 2026-03-26; Sentry captureException added 2026-04-13 |
+| `/api/auth/demo` | POST | ✅ | ✅ | Demo credentials in env vars ✅ 2026-03-10; DEMO_MODE env guard added 2026-03-22; Zod input validation added 2026-03-24; z.object({}).strict() replacing passthrough 2026-03-25; Sentry captureException added 2026-04-13 |
 | `/api/auth/demo` | GET | ✅ | ✅ | Returns demo account info (hides password in prod); requires DEMO_MODE=true env var ✅ 2026-03-22 |
-| `/api/auth/reset-password` | POST | ✅ | ✅ | Request reset token; email-safe 200 response ✅ 2026-03-12; UI page added 2026-03-14; rate limiting now first operation 2026-03-26 |
-| `/api/auth/reset-password` | PATCH | ✅ | ✅ | Confirm reset with token + new password ✅ 2026-03-12; UI confirm page added 2026-03-14 |
-| `/api/auth/verify-email` | GET | ✅ | ✅ | Email token verification ✅ 2026-03-19; signup now sends verification email ✅ 2026-03-21; rate limiting now first operation 2026-03-26 |
+| `/api/auth/reset-password` | POST | ✅ | ✅ | Request reset token; email-safe 200 response ✅ 2026-03-12; UI page added 2026-03-14; rate limiting now first operation 2026-03-26; Sentry captureException added 2026-04-13 |
+| `/api/auth/reset-password` | PATCH | ✅ | ✅ | Confirm reset with token + new password ✅ 2026-03-12; UI confirm page added 2026-03-14; Sentry captureException added 2026-04-13 |
+| `/api/auth/verify-email` | GET | ✅ | ✅ | Email token verification ✅ 2026-03-19; signup now sends verification email ✅ 2026-03-21; rate limiting now first operation 2026-03-26; Sentry captureException added 2026-04-13 |
 
 ### Auth Issues to Fix
 - [x] Add password reset endpoint ✅ 2026-03-12
@@ -160,12 +160,12 @@ Email removed from select projection in /api/search/route.ts
 
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
-| `/api/ai/chat` | POST | ✅ | ✅ | **OpenAI connected** ✅ Dec 17; Zod strengthened (role enum, content limits, max 50 messages, tripContext limits) + JSON.parse safety added 2026-03-29 |
-| `/api/ai/recommend` | POST | ✅ | ⏳ | Personalized activity recommendations using user saved/rated history; AI + DB hybrid results; JSON.parse safety added 2026-03-29 |
+| `/api/ai/chat` | POST | ✅ | ✅ | **OpenAI connected** ✅ Dec 17; Zod strengthened (role enum, content limits, max 50 messages, tripContext limits) + JSON.parse safety added 2026-03-29; Sentry captureException + addBreadcrumb added 2026-04-13 |
+| `/api/ai/recommend` | POST | ✅ | ⏳ | Personalized activity recommendations using user saved/rated history; AI + DB hybrid results; JSON.parse safety added 2026-03-29; Sentry captureException + addBreadcrumb added 2026-04-13 |
 | `/api/ai/recommend` | GET | ✅ | ⏳ | Trip-scoped recommendations by `?tripId=`; Zod getQuerySchema (tripId required, limit clamped 1-20) added 2026-03-29; aggregates group member preferences to suggest activities |
-| `/api/ai/generate-itinerary` | POST | ✅ | ⏳ | Complete — isOpenAIConfigured() guard returns 503 when key absent ✅ 2026-03-23; JSON.parse safety added 2026-03-29 |
-| `/api/ai/suggest-activities` | POST | ✅ | ⏳ | Complete — isOpenAIConfigured() guard returns 503 when key absent ✅ 2026-03-23; JSON.parse safety added 2026-03-29 |
-| `/api/ai/search` | GET/POST | ✅ | ⏳ | Semantic search with embeddings — GET + POST fully implemented (destinations branch added) ✅ 2026-03-26 |
+| `/api/ai/generate-itinerary` | POST | ✅ | ⏳ | Complete — isOpenAIConfigured() guard returns 503 when key absent ✅ 2026-03-23; JSON.parse safety added 2026-03-29; Sentry captureException + addBreadcrumb added 2026-04-13 |
+| `/api/ai/suggest-activities` | POST | ✅ | ⏳ | Complete — isOpenAIConfigured() guard returns 503 when key absent ✅ 2026-03-23; JSON.parse safety added 2026-03-29; Sentry captureException + addBreadcrumb added 2026-04-13 |
+| `/api/ai/search` | GET/POST | ✅ | ⏳ | Semantic search with embeddings — GET + POST fully implemented (destinations branch added) ✅ 2026-03-26; Sentry captureException + addBreadcrumb added 2026-04-13 |
 
 ### AI Issues to Fix
 ```
@@ -213,7 +213,7 @@ BLOCKED - Need Environment Variables:
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
 | `/api/cron` | GET | ✅ | N/A | Background jobs; CRON_SECRET validation hardened 2026-03-22 |
-| Sentry lib | N/A | ✅ | N/A | `src/lib/sentry.ts` created 2026-03-25 — centralized Sentry helpers (captureException, addBreadcrumb, setUser) |
+| Sentry lib | N/A | ✅ | N/A | `src/lib/sentry.ts` created 2026-03-25 — centralized Sentry helpers (captureException, addBreadcrumb, setUser); addBreadcrumb wrapper added 2026-04-13; 9/48 routes instrumented |
 | `/api/health` | GET | ✅ | N/A | DB connectivity check, 503 on degraded ✅ 2026-03-10; response hardened 2026-03-25 (NODE_ENV + version removed for data minimization — returns {status, timestamp, database}) |
 | `/api/users/me` | GET | ✅ | 🔶 | Get current authenticated user |
 | `/api/users/me` | PATCH | ✅ | 🔶 | Update current user profile + preferences |
@@ -372,4 +372,4 @@ EMAIL_FROM=             # Email sender (onboarding@resend.dev) ✅
 
 *Review and update after each API change.*
 
-*Last Updated: 2026-03-26 - /api/ai/search GET+POST fully implemented (semantic search, destinations branch); /api/newsletter/subscribe now requires auth; /api/auth/signup, /api/auth/reset-password, /api/auth/verify-email: rate limiting now first operation; 153 new tests tonight (1156 total, 56 test files); dead components (NotificationCenter.tsx, SharePreview.tsx) removed; JSDoc added to costs.ts; README updated. Also includes 2026-03-29 changes: /api/ai/chat Zod strengthened + JSON.parse safety; /api/ai/recommend Zod GET params + JSON.parse safety; /api/ai/suggest-activities + generate-itinerary JSON.parse safety; /api/notifications/[notificationId] Zod params (cuid) + bugfix (read was hardcoded true); JSDoc added to src/lib/geocoding.ts; N8N docs deprecated*
+*Last Updated: 2026-04-13 — Sentry captureException added to auth routes (signup, reset-password, verify-email, demo); Sentry captureException + addBreadcrumb added to AI routes (chat, recommend, generate-itinerary, suggest-activities, search); addBreadcrumb exported from src/lib/sentry.ts (wrapper around @sentry/nextjs SDK — fixes TSC errors from direct SDK import); Sentry coverage now 9/48 routes; 191 new tests (1425 total, 64 test files). Also: 5 new test files added (health.test.ts, events.service.test.ts, trip-collaboration-integration.test.ts, sanitize.test.ts, pusher-lib.test.ts); JSDoc added to invitations.ts + events.service.ts; SignUpForm.tsx + dead social components removed*

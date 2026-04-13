@@ -7,6 +7,7 @@ import { getModel, isOpenAIConfigured } from '@/lib/ai/client';
 import { aiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 import { activityRecommendationSystemPrompt, buildActivityPrompt } from '@/lib/ai/prompts';
 import { logError } from '@/lib/logger';
+import { captureException, addBreadcrumb } from '@/lib/sentry';
 import type { AIActivityRecommendation } from '@/types';
 
 // Route segment config for AI suggestions
@@ -111,6 +112,7 @@ export async function POST(req: Request) {
     });
 
     // Generate recommendations using AI
+    addBreadcrumb({ message: 'Starting AI activity suggestions generation', category: 'ai', level: 'info' });
     const model = getModel('suggestions');
     const { text } = await generateText({
       model,
@@ -143,6 +145,7 @@ export async function POST(req: Request) {
       recommendations = parseValidation.data;
     } catch (parseError) {
       logError('ACTIVITY_SUGGESTIONS_PARSE_ERROR', parseError);
+      captureException(parseError, { tags: { route: '/api/ai/suggest-activities' } });
       return NextResponse.json(
         { success: false, error: 'Failed to parse AI response', rawResponse: text },
         { status: 500 }
@@ -164,6 +167,7 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     logError('AI_SUGGEST_ACTIVITIES', error);
+    captureException(error, { tags: { route: '/api/ai/suggest-activities' } });
     return NextResponse.json(
       { success: false, error: 'Failed to generate activity suggestions' },
       { status: 500 }

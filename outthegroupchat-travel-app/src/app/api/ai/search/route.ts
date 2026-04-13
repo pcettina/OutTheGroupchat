@@ -11,6 +11,7 @@ import {
 import { z } from 'zod';
 import { ActivityCategory, PriceRange } from '@prisma/client';
 import { logError } from '@/lib/logger';
+import { captureException, addBreadcrumb } from '@/lib/sentry';
 import { aiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 
 const semanticSearchSchema = z.object({
@@ -232,6 +233,7 @@ export async function POST(req: Request) {
 
     const { query, type, limit, filters } = validationResult.data;
 
+    addBreadcrumb({ message: 'Starting AI semantic search', category: 'ai', level: 'info' });
     const results = await runSemanticSearch(query, type, limit, filters);
 
     const totalResults =
@@ -248,6 +250,7 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     logError('AI_SEMANTIC_SEARCH', error);
+    captureException(error, { tags: { route: '/api/ai/search' } });
     return NextResponse.json(
       { success: false, error: 'Semantic search failed' },
       { status: 500 }
@@ -302,6 +305,7 @@ export async function GET(req: Request) {
 
     const { query: validQuery, type, limit, filters } = validationResult.data;
 
+    addBreadcrumb({ message: 'Starting AI semantic search', category: 'ai', level: 'info' });
     const results = await runSemanticSearch(validQuery, type, limit, filters);
 
     const totalResults =
@@ -318,6 +322,7 @@ export async function GET(req: Request) {
     });
   } catch (error) {
     logError('AI_SEMANTIC_SEARCH_GET', error);
+    captureException(error, { tags: { route: '/api/ai/search' } });
     return NextResponse.json(
       { success: false, error: 'Semantic search failed' },
       { status: 500 }

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { authRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
+import { captureException, captureMessage } from '@/lib/sentry';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,6 +37,7 @@ export async function GET(req: NextRequest) {
     const { token } = parseResult.data;
 
     // Look up the verification token record
+    captureMessage('auth: looking up email verification token', 'info');
     const verificationToken = await prisma.verificationToken.findUnique({
       where: { token },
     });
@@ -64,6 +66,7 @@ export async function GET(req: NextRequest) {
     const userEmail = verificationToken.identifier;
 
     // Update the user's emailVerified field
+    captureMessage('auth: marking user email as verified', 'info');
     await prisma.user.update({
       where: { email: userEmail },
       data: { emailVerified: new Date() },
@@ -82,6 +85,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ message: 'Email verified successfully' });
   } catch (error) {
     logger.error({ err: error, context: 'VERIFY_EMAIL' }, 'Error verifying email');
+    captureException(error, { tags: { route: '/api/auth/verify-email' } });
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
