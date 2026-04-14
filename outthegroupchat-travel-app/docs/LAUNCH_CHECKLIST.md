@@ -2,7 +2,7 @@
 
 > **Target Launch:** Q2 2026 (Beta)
 > **Current Status:** Active Development
-> **Last Updated:** March 2026
+> **Last Updated:** April 2026
 
 ---
 
@@ -18,7 +18,7 @@
 
 **Overall Readiness: 78%** → Target: 85% for Beta Launch
 
-> Last updated: 2026-03-26
+> Last updated: 2026-04-14
 
 ---
 
@@ -111,7 +111,7 @@
 - [x] Rate limiting infrastructure (Upstash)
 - [x] Rate limiting on all authentication endpoints ✅ 2026-03-26 (signup, reset-password, verify-email — rate limiting now first operation)
 - [ ] Rate limiting on ALL remaining endpoints
-- [x] Input validation on major API routes (Zod) ✅ 2026-03-24 — notifications, feed/comments, feed/engagement, pusher/auth, users/[userId], discover/*, images/search, inspiration, cron, auth/demo added; ai/chat Zod strengthened + JSON.parse safety on 5 AI routes + notifications/[notificationId] ✅ 2026-03-29
+- [x] Input validation on major API routes (Zod) ✅ 2026-03-24 — notifications, feed/comments, feed/engagement, pusher/auth, users/[userId], discover/*, images/search, inspiration, cron, auth/demo added; ai/chat Zod strengthened + JSON.parse safety on 5 AI routes + notifications/[notificationId] ✅ 2026-03-29; flights, suggestions, cron routes updated ✅ 2026-04-14
 - [x] /api/discover/search requires authentication ✅ 2026-03-24 (security improvement — was unauthenticated)
 - [x] /api/discover/recommendations requires authentication ✅ 2026-03-24
 - [x] /api/auth/demo has Zod input validation ✅ 2026-03-24
@@ -174,6 +174,7 @@
 - [x] API route tests (invitations-post 18, ai-get-methods 16, beta-extended 21, users-follow 24) ✅ 2026-03-25 — total: 1003 tests across 53 files
 - [x] Service tests + API tests (recommendation.service 45, survey.service 36, geocoding-images 32, inspiration +39) ✅ 2026-03-26 — total: 1156 tests across 56 files
 - [x] API route tests (ai-generate-itinerary 31, ai-suggest-activities 25, discover-import 21) ✅ 2026-03-29
+- [x] API route tests (beta-routes 48, voting-edge-cases 45, cron-health-extended 35) + integration tests (sentry-routes 35, profile-social 54) ✅ 2026-04-14 — total: 1451 tests across 64 files
 
 ### Integration Tests
 - [ ] Auth flow tests
@@ -204,7 +205,7 @@
 ## 📊 PHASE 5: Monitoring & Observability
 
 ### Error Tracking
-- [x] Sentry installed and configured ✅ 2026-03-10 (instrumentation-client.ts onRouterTransitionStart fixed 2026-03-20; src/lib/sentry.ts helper created 2026-03-25; needs real DSN in Vercel)
+- [x] Sentry installed and configured ✅ 2026-03-10 (instrumentation-client.ts onRouterTransitionStart fixed 2026-03-20; src/lib/sentry.ts helper created 2026-03-25; needs real DSN in Vercel); coverage expanded to 18/48 routes ✅ 2026-04-14
 - [ ] Error alerts configured (pending Sentry DSN)
 - [ ] Source maps uploaded (pending Sentry DSN)
 

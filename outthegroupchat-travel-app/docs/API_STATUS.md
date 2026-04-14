@@ -1,8 +1,8 @@
 # 📡 API & Integration Status
 
-> **Last updated: 2026-03-26**
+> **Last updated: 2026-04-14**
 >
-> **Last Audit:** March 2026
+> **Last Audit:** April 2026
 > **Overall Status:** 86% Complete
 > **Target:** 100% for Beta Launch
 
@@ -80,8 +80,8 @@
 | `/api/trips/[tripId]/voting` | GET | ✅ | 🔶 | Get voting session |
 | `/api/trips/[tripId]/voting` | POST | ✅ | 🔶 | Create/cast vote |
 | `/api/trips/[tripId]/recommendations` | GET | ✅ | ⏳ | AI recommendations |
-| `/api/trips/[tripId]/flights` | GET | ✅ | ⏳ | Search flights for trip dates using user's profile city as origin; uses Amadeus API |
-| `/api/trips/[tripId]/suggestions` | GET | ✅ | ⏳ | Fetch events (Ticketmaster), attractions, and restaurants for trip destination; includes daily cost estimate |
+| `/api/trips/[tripId]/flights` | GET | ✅ | ⏳ | Search flights for trip dates using user's profile city as origin; uses Amadeus API; Zod validation added 2026-04-14 |
+| `/api/trips/[tripId]/suggestions` | GET | ✅ | ⏳ | Fetch events (Ticketmaster), attractions, and restaurants for trip destination; includes daily cost estimate; Zod validation added 2026-04-14 |
 
 ### Invitation Management APIs
 
@@ -90,8 +90,8 @@
 | `/api/invitations` | GET | ✅ | ⏳ | List all invitations for current user; auto-marks expired PENDING invitations |
 | `/api/invitations/[invitationId]` | GET | ✅ | ⏳ | Get invitation details including trip + members; auth + ownership check |
 | `/api/invitations/[invitationId]` | POST | ✅ | ⏳ | Accept or decline invitation (`action: 'accept'|'decline'`); on accept adds user as TripMember and notifies owner |
-| `/api/trips/[tripId]/suggestions` | GET | 🔶 | ⏳ | Activity suggestions via Ticketmaster + Places APIs; requires ext API keys |
-| `/api/trips/[tripId]/flights` | GET | 🔶 | ⏳ | Flight search via Amadeus-style integration; requires AMADEUS_API_KEY |
+| `/api/trips/[tripId]/suggestions` | GET | 🔶 | ⏳ | Activity suggestions via Ticketmaster + Places APIs; requires ext API keys; Zod validation added 2026-04-14 |
+| `/api/trips/[tripId]/flights` | GET | 🔶 | ⏳ | Flight search via Amadeus-style integration; requires AMADEUS_API_KEY; Zod validation added 2026-04-14 |
 
 ---
 
@@ -212,8 +212,8 @@ BLOCKED - Need Environment Variables:
 
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
-| `/api/cron` | GET | ✅ | N/A | Background jobs; CRON_SECRET validation hardened 2026-03-22 |
-| Sentry lib | N/A | ✅ | N/A | `src/lib/sentry.ts` created 2026-03-25 — centralized Sentry helpers (captureException, addBreadcrumb, setUser) |
+| `/api/cron` | GET | ✅ | N/A | Background jobs; CRON_SECRET validation hardened 2026-03-22; Zod validation added 2026-04-14 |
+| Sentry lib | N/A | ✅ | N/A | `src/lib/sentry.ts` created 2026-03-25 — centralized Sentry helpers (captureException, addBreadcrumb, setUser); coverage expanded to 18/48 routes as of 2026-04-14 |
 | `/api/health` | GET | ✅ | N/A | DB connectivity check, 503 on degraded ✅ 2026-03-10; response hardened 2026-03-25 (NODE_ENV + version removed for data minimization — returns {status, timestamp, database}) |
 | `/api/users/me` | GET | ✅ | 🔶 | Get current authenticated user |
 | `/api/users/me` | PATCH | ✅ | 🔶 | Update current user profile + preferences |
@@ -241,6 +241,20 @@ BLOCKED - Need Environment Variables:
 | `/api/beta/status` | GET | ✅ | ✅ | Check beta access status; IP rate limiting added 2026-03-21; response narrowed to {exists, passwordInitialized} only (data minimization) ✅ 2026-03-22 |
 | `/api/beta/initialize-password` | POST | ✅ | ✅ | Beta user password init — now protected with N8N_API_KEY auth ✅ 2026-03-19 (was unauthenticated — account takeover vulnerability fixed) |
 | `/api/newsletter/subscribe` | POST | ✅ | ✅ | Newsletter subscription; auth now required 2026-03-26 |
+
+---
+
+## 🔍 Sentry Coverage Summary
+
+**Coverage: 18/48 routes instrumented (as of 2026-04-14)**
+
+| Route Group | Routes | Coverage |
+|-------------|--------|----------|
+| Auth (signup, reset-password, verify-email, demo) | 4 | ✅ |
+| AI (chat, recommend, generate-itinerary, suggest-activities, search) | 5 | ✅ |
+| Trips / tripId group (trips, trips/[tripId]) | 5 routes added 2026-04-14 | ✅ |
+| Feed / notifications / invitations | 4 routes added 2026-04-14 | ✅ |
+| All other routes | ~30 | ⏳ Pending |
 
 ---
 

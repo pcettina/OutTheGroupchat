@@ -88,3 +88,33 @@ export function captureMessage(
 
   SentrySDK.captureMessage(message, level);
 }
+
+/**
+ * Adds a breadcrumb to the current Sentry scope. No-ops when SENTRY_DSN is not set.
+ *
+ * @param breadcrumb - Breadcrumb data including category, message, and level.
+ */
+export function addBreadcrumb(breadcrumb: SentrySDK.Breadcrumb): void {
+  if (!isEnabled) {
+    sentryLogger.debug(
+      { breadcrumb },
+      'Sentry disabled — breadcrumb not forwarded'
+    );
+    return;
+  }
+
+  SentrySDK.addBreadcrumb(breadcrumb);
+}
+
+/**
+ * Sets the current Sentry user context. No-ops when SENTRY_DSN is not set.
+ *
+ * @param user - User data to attach to subsequent Sentry events.
+ */
+export function setUser(user: SentrySDK.User | null): void {
+  if (!isEnabled) {
+    return;
+  }
+
+  SentrySDK.setUser(user);
+}

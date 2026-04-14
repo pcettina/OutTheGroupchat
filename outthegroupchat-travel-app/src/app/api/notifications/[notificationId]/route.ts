@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 import { z } from 'zod';
+import { captureException, addBreadcrumb } from '@/lib/sentry';
 
 const paramsSchema = z.object({
   notificationId: z.string().cuid(),
@@ -25,6 +26,7 @@ export async function PATCH(
   const { notificationId } = parsedParams.data;
 
   try {
+    addBreadcrumb({ category: 'notifications', message: 'Updating single notification', level: 'info' });
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
@@ -74,6 +76,7 @@ export async function PATCH(
 
     return NextResponse.json({ success: true, data: updated });
   } catch (error) {
+    captureException(error);
     logger.error({ error }, '[NOTIFICATION_PATCH] Failed to update notification');
     return NextResponse.json(
       { success: false, error: 'Failed to update notification' },
@@ -94,6 +97,7 @@ export async function DELETE(
   const { notificationId } = parsedParams.data;
 
   try {
+    addBreadcrumb({ category: 'notifications', message: 'Deleting notification', level: 'info' });
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
@@ -124,6 +128,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true, message: 'Notification deleted' });
   } catch (error) {
+    captureException(error);
     logger.error({ error }, '[NOTIFICATION_DELETE] Failed to delete notification');
     return NextResponse.json(
       { success: false, error: 'Failed to delete notification' },

@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth';
 import { RecommendationService } from '@/services/recommendation.service';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
+import { captureException, addBreadcrumb } from '@/lib/sentry';
 
 const applyRecommendationSchema = z.object({
   recommendationId: z.string(),
@@ -22,6 +23,8 @@ export async function GET(
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    addBreadcrumb({ category: 'trips.recommendations', message: 'Generate recommendations started', level: 'info', data: { tripId } });
 
     // Check if user is a member
     const isMember = await prisma.tripMember.findFirst({
@@ -66,6 +69,7 @@ export async function GET(
 
     return NextResponse.json({ success: true, data: recommendations });
   } catch (error) {
+    captureException(error);
     logger.error({ error }, '[RECOMMENDATIONS_GET] Failed to generate recommendations');
     return NextResponse.json(
       { success: false, error: 'Failed to generate recommendations' },
@@ -86,6 +90,8 @@ export async function POST(
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    addBreadcrumb({ category: 'trips.recommendations', message: 'Apply recommendation started', level: 'info', data: { tripId } });
 
     // Check if user is owner or admin
     const membership = await prisma.tripMember.findFirst({
@@ -141,6 +147,7 @@ export async function POST(
       { status: 400 }
     );
   } catch (error) {
+    captureException(error);
     logger.error({ error }, '[RECOMMENDATIONS_POST] Failed to apply recommendation');
     return NextResponse.json(
       { success: false, error: 'Failed to apply recommendation' },

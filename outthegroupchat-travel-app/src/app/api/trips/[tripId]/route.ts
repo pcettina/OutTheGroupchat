@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
 import { apiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
+import { captureException, addBreadcrumb } from '@/lib/sentry';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -65,6 +66,8 @@ export async function GET(
   try {
     const session = await getServerSession(authOptions);
     const { tripId } = await params;
+
+    addBreadcrumb({ category: 'trips', message: 'Trip fetch started', level: 'info', data: { tripId } });
 
     if (session?.user?.id) {
       const rateLimitResult = await checkRateLimit(apiRateLimiter, session.user.id);
@@ -186,7 +189,8 @@ export async function GET(
     }
 
     return NextResponse.json({ success: true, data: trip });
-  } catch {
+  } catch (error) {
+    captureException(error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch trip' },
       { status: 500 }
@@ -205,6 +209,8 @@ export async function PATCH(
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    addBreadcrumb({ category: 'trips', message: 'Trip update started', level: 'info', data: { tripId } });
 
     const rateLimitResult = await checkRateLimit(apiRateLimiter, session.user.id);
     if (!rateLimitResult.success) {
@@ -277,7 +283,8 @@ export async function PATCH(
     });
 
     return NextResponse.json({ success: true, data: trip });
-  } catch {
+  } catch (error) {
+    captureException(error);
     return NextResponse.json(
       { success: false, error: 'Failed to update trip' },
       { status: 500 }
@@ -296,6 +303,8 @@ export async function DELETE(
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    addBreadcrumb({ category: 'trips', message: 'Trip delete started', level: 'info', data: { tripId } });
 
     const rateLimitResult = await checkRateLimit(apiRateLimiter, session.user.id);
     if (!rateLimitResult.success) {
@@ -319,7 +328,8 @@ export async function DELETE(
     });
 
     return NextResponse.json({ success: true, message: 'Trip deleted successfully' });
-  } catch {
+  } catch (error) {
+    captureException(error);
     return NextResponse.json(
       { success: false, error: 'Failed to delete trip' },
       { status: 500 }

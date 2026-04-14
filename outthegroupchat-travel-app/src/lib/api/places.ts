@@ -4,6 +4,18 @@ import { logger } from '@/lib/logger';
 const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY;
 const GOOGLE_PLACES_BASE_URL = 'https://maps.googleapis.com/maps/api/place';
 
+/**
+ * @description Represents detailed information about a place returned from the Google Places API.
+ * @property {string} place_id - Unique Google Places identifier for the location.
+ * @property {string} name - Human-readable display name of the place.
+ * @property {string} formatted_address - Full formatted mailing address of the place.
+ * @property {object} geometry - Geographic information for the place.
+ * @property {{ lat: number; lng: number }} geometry.location - Latitude and longitude coordinates of the place.
+ * @property {number} [price_level] - Optional price level on a scale of 0 (free) to 4 (very expensive) as defined by Google.
+ * @property {number} [rating] - Optional average user rating from 1.0 to 5.0.
+ * @property {string[]} types - List of Google Places type tags describing the place (e.g. ["restaurant", "food"]).
+ * @property {Array<{ photo_reference: string }>} [photos] - Optional array of photo references usable with the Places Photo API.
+ */
 export interface PlaceDetails {
   place_id: string;
   name: string;
@@ -22,6 +34,13 @@ export interface PlaceDetails {
   }>;
 }
 
+/**
+ * @description Parameters accepted by the searchPlaces function to query the Google Places Text Search API.
+ * @property {string} query - Free-text search query (e.g. "restaurants in Paris").
+ * @property {{ lat: number; lng: number }} [location] - Optional center point for geographic bias; biases results toward this coordinate.
+ * @property {number} [radius] - Search radius in meters when location is provided (default: 5000).
+ * @property {string} [type] - Optional Google Places type filter to restrict results (e.g. "restaurant", "museum").
+ */
 export interface PlaceSearchParams {
   query: string;
   location?: {

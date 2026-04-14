@@ -185,6 +185,30 @@ Should use structured logging (e.g., Pino, Winston).
 
 ---
 
+## 🔍 2026-04-14 Security Review
+
+**Reviewer:** Nightly build audit
+**Score:** 9/10 (unchanged — Sentry coverage improving)
+
+### Rate Limiting Coverage
+- 48/48 API routes now have Redis-backed rate limiting ✅ (complete as of 2026-04-13)
+- No unguarded endpoints remain.
+
+### Sentry Error Tracking Coverage
+- Current: 9/48 routes instrumented (auth x4: signup, reset-password, verify-email, demo; AI x5: chat, recommend, generate-itinerary, suggest-activities, search)
+- Tonight's build target: ~18/48 routes (expanding to members, activities, invitations, survey, users, notifications, feed, inspiration)
+- Sentry DSN still missing in Vercel production — infrastructure is ready, needs env var set.
+
+### Notes on Unauthenticated Endpoints
+- `/api/beta/status` allows unauthenticated email existence checks by design (beta enrollment flow requires it). Risk is low — response is narrowed to `{ exists, passwordInitialized }` only. Accepted low risk.
+
+### No New Critical Issues Identified
+- `any` types: 0 ✅
+- `console.*` in production: 0 ✅
+- Files > 600 lines (prod): 0 ✅
+
+---
+
 ## 📋 Security Checklist for Social Features
 
 As we expand social features, implement:
@@ -192,7 +216,7 @@ As we expand social features, implement:
 | Feature | Status | Priority |
 |---------|--------|----------|
 | Rate limiting (Redis) | ✅ | P0 |
-| Input sanitization (XSS) | ❌ | P0 |
+| Input sanitization (XSS) | ✅ | P0 |
 | Content moderation | ❌ | P1 |
 | Report/block users | ❌ | P1 |
 | Private profiles | ❌ | P1 |
@@ -229,10 +253,10 @@ const securityHeaders = [
 | 🟠 Medium | 4 (2 resolved ✅, 2 open) | Next sprint |
 | 🟡 Low | 3 | Backlog |
 
-**Overall Security Score: 7/10** (improved from 6/10 — rate limiting, demo credentials, and `any` types resolved)
+**Overall Security Score: 9/10** (improved from 7/10 — DOMPurify XSS, Sentry instrumentation, rate limiting on all 48 routes, email exposure fix in members endpoint, structured logging throughout)
 
 ---
 
-*Last Updated: 2026-03-24*
+*Last Updated: 2026-04-14*
 *Next Audit: Before production launch*
 

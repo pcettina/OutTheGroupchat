@@ -11,6 +11,24 @@ interface AmadeusToken {
 
 let amadeusToken: AmadeusToken | null = null;
 
+/**
+ * @description Represents a normalized flight offer returned from the Amadeus Flight Offers API.
+ * @property {string} id - Unique identifier for the flight offer assigned by Amadeus.
+ * @property {{ iataCode: string; cityName: string }} source - Departure airport IATA code and city name.
+ * @property {{ iataCode: string; cityName: string }} destination - Arrival airport IATA code and city name.
+ * @property {Array<object>} itineraries - One or more itineraries (outbound, return) each containing flight segments.
+ * @property {string} itineraries[].duration - Total itinerary duration in ISO 8601 duration format (e.g. "PT5H30M").
+ * @property {Array<object>} itineraries[].segments - Individual flight segments within this itinerary.
+ * @property {object} itineraries[].segments[].departure - Departure details including IATA code, optional terminal, and datetime.
+ * @property {object} itineraries[].segments[].arrival - Arrival details including IATA code, optional terminal, and datetime.
+ * @property {string} itineraries[].segments[].carrierCode - IATA airline carrier code (e.g. "AA", "UA").
+ * @property {string} itineraries[].segments[].number - Flight number (e.g. "1234").
+ * @property {{ code: string }} itineraries[].segments[].aircraft - Aircraft type code.
+ * @property {string} itineraries[].segments[].duration - Segment flight duration in ISO 8601 duration format.
+ * @property {string} itineraries[].segments[].id - Unique segment identifier within the offer.
+ * @property {{ currency: string; total: string; base: string }} price - Pricing details with currency, total, and base fare.
+ * @property {number} numberOfBookableSeats - Number of seats available to book at this price.
+ */
 export interface FlightOffer {
   id: string;
   source: {
@@ -104,6 +122,17 @@ interface AmadeusOfferRaw {
   numberOfBookableSeats: number;
 }
 
+/**
+ * @description Parameters accepted by the searchFlights function to query the Amadeus Flight Offers API.
+ * @property {string} originLocationCode - IATA code for the departure airport or city (e.g. "JFK").
+ * @property {string} destinationLocationCode - IATA code for the arrival airport or city (e.g. "CDG").
+ * @property {string} departureDate - Departure date in YYYY-MM-DD format.
+ * @property {string} [returnDate] - Optional return date in YYYY-MM-DD format for round-trip searches.
+ * @property {number} [adults] - Number of adult passengers (default: 1).
+ * @property {boolean} [nonStop] - When true, returns only non-stop flights (default: false).
+ * @property {string} [currencyCode] - ISO 4217 currency code for pricing (default: "USD").
+ * @property {number} [max] - Maximum number of flight offers to return (default: 10).
+ */
 export interface FlightSearchParams {
   originLocationCode: string;
   destinationLocationCode: string;

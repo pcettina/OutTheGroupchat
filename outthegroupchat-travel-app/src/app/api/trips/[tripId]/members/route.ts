@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
 import type { Prisma } from '@prisma/client';
+import { captureException, addBreadcrumb } from '@/lib/sentry';
 
 const addMemberSchema = z.object({
   userId: z.string().optional(),
@@ -41,6 +42,8 @@ export async function POST(
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    addBreadcrumb({ category: 'trips.members', message: 'Add member started', level: 'info', data: { tripId } });
 
     const body = await req.json();
     const validationResult = addMemberSchema.safeParse(body);
@@ -109,7 +112,8 @@ export async function POST(
     });
 
     return NextResponse.json({ success: true, data: newMember }, { status: 201 });
-  } catch {
+  } catch (error) {
+    captureException(error);
     return NextResponse.json(
       { success: false, error: 'Failed to add member' },
       { status: 500 }
@@ -129,6 +133,8 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    addBreadcrumb({ category: 'trips.members', message: 'Fetch members started', level: 'info', data: { tripId } });
+
     const members = await prisma.tripMember.findMany({
       where: { tripId },
       include: {
@@ -147,7 +153,8 @@ export async function GET(
     });
 
     return NextResponse.json({ success: true, data: members });
-  } catch {
+  } catch (error) {
+    captureException(error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch members' },
       { status: 500 }
@@ -166,6 +173,8 @@ export async function PATCH(
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    addBreadcrumb({ category: 'trips.members', message: 'Update member started', level: 'info', data: { tripId } });
 
     const body = await req.json();
     const { memberId, ...updateData } = body;
@@ -242,7 +251,8 @@ export async function PATCH(
     });
 
     return NextResponse.json({ success: true, data: updatedMember });
-  } catch {
+  } catch (error) {
+    captureException(error);
     return NextResponse.json(
       { success: false, error: 'Failed to update member' },
       { status: 500 }
@@ -261,6 +271,8 @@ export async function DELETE(
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    addBreadcrumb({ category: 'trips.members', message: 'Remove member started', level: 'info', data: { tripId } });
 
     const { searchParams } = new URL(req.url);
     const memberId = searchParams.get('memberId');
@@ -318,7 +330,8 @@ export async function DELETE(
     });
 
     return NextResponse.json({ success: true, message: 'Member removed' });
-  } catch {
+  } catch (error) {
+    captureException(error);
     return NextResponse.json(
       { success: false, error: 'Failed to remove member' },
       { status: 500 }

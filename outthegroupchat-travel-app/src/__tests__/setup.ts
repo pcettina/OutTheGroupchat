@@ -172,6 +172,8 @@ vi.mock('@/lib/prisma', () => ({
       findUnique: vi.fn(),
       upsert: vi.fn(),
     },
+    $queryRaw: vi.fn(),
+    $transaction: vi.fn(),
   },
 }));
 
@@ -214,6 +216,9 @@ vi.mock('@/lib/logger', () => ({
   logSuccess: vi.fn(),
   apiLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
   authLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+  aiLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+  dbLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+  createRequestLogger: vi.fn(() => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() })),
 }));
 
 // ---------------------------------------------------------------------------
@@ -223,4 +228,15 @@ vi.mock('@/lib/logger', () => ({
 // ---------------------------------------------------------------------------
 vi.mock('@/lib/invitations', () => ({
   processInvitations: vi.fn().mockResolvedValue({ invitations: [], errors: [] }),
+}));
+
+// ---------------------------------------------------------------------------
+// Mock: @/lib/sentry
+// Prevents sentry.ts from calling logger.child() at module level in test
+// environments where the real Sentry SDK is not configured.
+// ---------------------------------------------------------------------------
+vi.mock('@/lib/sentry', () => ({
+  captureException: vi.fn(),
+  addBreadcrumb: vi.fn(),
+  setUser: vi.fn(),
 }));

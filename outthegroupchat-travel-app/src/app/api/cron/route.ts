@@ -1,7 +1,12 @@
 // Protected by CRON_SECRET bearer token — set CRON_SECRET env var before deploying
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { logError, apiLogger } from '@/lib/logger';
+
+const AuthHeaderSchema = z.object({
+  authorization: z.string().min(1, 'Authorization header is required'),
+});
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -21,8 +26,19 @@ export async function GET(req: Request) {
       );
     }
 
+    // Validate authorization header format
+    const headerResult = AuthHeaderSchema.safeParse({
+      authorization: req.headers.get('authorization') ?? '',
+    });
+    if (!headerResult.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: headerResult.error.issues },
+        { status: 400 }
+      );
+    }
+
     // Verify cron secret (set in Vercel environment)
-    const authHeader = req.headers.get('authorization');
+    const authHeader = headerResult.data.authorization;
     if (authHeader !== `Bearer ${cronSecret}`) {
       apiLogger.warn({ context: 'CRON' }, 'Unauthorized cron request — invalid or missing bearer token');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

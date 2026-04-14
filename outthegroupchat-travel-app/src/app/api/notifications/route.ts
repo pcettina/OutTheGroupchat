@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 import { z } from 'zod';
+import { captureException, addBreadcrumb } from '@/lib/sentry';
 
 const getNotificationsQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
@@ -14,6 +15,7 @@ const getNotificationsQuerySchema = z.object({
 // Get all notifications for current user
 export async function GET(req: Request) {
   try {
+    addBreadcrumb({ category: 'notifications', message: 'Fetching notifications', level: 'info' });
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
@@ -55,6 +57,7 @@ export async function GET(req: Request) {
       },
     });
   } catch (error) {
+    captureException(error);
     logger.error({ error }, '[NOTIFICATIONS_GET] Failed to fetch notifications');
     return NextResponse.json(
       { success: false, error: 'Failed to fetch notifications' },
@@ -66,6 +69,7 @@ export async function GET(req: Request) {
 // Mark all notifications as read
 export async function PATCH(req: Request) {
   try {
+    addBreadcrumb({ category: 'notifications', message: 'Marking all notifications as read', level: 'info' });
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
@@ -85,6 +89,7 @@ export async function PATCH(req: Request) {
       message: 'All notifications marked as read',
     });
   } catch (error) {
+    captureException(error);
     logger.error({ error }, '[NOTIFICATIONS_PATCH] Failed to update notifications');
     return NextResponse.json(
       { success: false, error: 'Failed to update notifications' },

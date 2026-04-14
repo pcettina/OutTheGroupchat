@@ -1,13 +1,13 @@
 # OutTheGroupchat - Production Deployment & Feature Roadmap
 
 > **Target:** Q2 2026 Beta Launch
-> **Version:** 3.0 | **Last Updated:** 2026-03-25
+> **Version:** 3.0 | **Last Updated:** 2026-04-14
 
 ---
 
-## Current System Status (as of 2026-03-25)
+## Current System Status (as of 2026-04-14)
 
-### Overall Launch Readiness: 78% (Target: 85% for Beta)
+### Overall Launch Readiness: 82% (Target: 85% for Beta)
 
 | Category | Score | Target | Status |
 |----------|-------|--------|--------|
@@ -37,10 +37,10 @@
 | AI Chat Assistant | Working | OpenAI connected, streaming; 503 guard when key absent |
 | AI Activity Suggestions | Working | 503 guard when OPENAI_API_KEY absent (2026-03-23) |
 | AI Itinerary Generation | Working | 503 guard when OPENAI_API_KEY absent (2026-03-23) |
-| Survey API | Working | API structure complete; frontend integration pending |
-| Voting API | Working | API structure complete; frontend integration pending |
+| Survey API | Working | API complete + frontend wired (2026-04-08) |
+| Voting API | Working | API complete + frontend wired with real vote counts (2026-04-09) |
 | Member Invitations | Working | Email-based via Resend |
-| Rate Limiting | Working | Upstash Redis-based on all major routes |
+| Rate Limiting | Working | Upstash Redis-based on ALL 48 routes (2026-04-13) |
 | CORS | Working | Configured in next.config.js (2026-03-23) |
 | Security Headers | Working | HSTS, X-Frame-Options, CSP in next.config.js (2026-03-10) |
 | Error Boundaries | Working | global-error.tsx, error.tsx, not-found.tsx |
@@ -57,7 +57,7 @@
 | Pusher env vars missing in production | High | Blocked by config |
 | Sentry DSN not set in Vercel | High | Blocked by config |
 | Resend domain not verified | Medium | Email may go to spam |
-| Rate limiting not on ALL endpoints | Medium | In progress |
+| Rate limiting on all 48 endpoints | Medium | ✅ Complete (2026-04-13) |
 | NEXTAUTH_SECRET strength unverified | Medium | Manual check needed |
 
 ---
@@ -82,9 +82,9 @@
 - `console.*` cleanup complete (0 in production code)
 - `any` type elimination complete (0 remaining)
 - Zod validation on all major API routes
-- Test suite from 0 to 925+ tests (49 test files)
+- Test suite from 0 to 1234+ tests (65 test files) on main
 - Vitest + Testing Library configured
-- Playwright E2E framework configured (browsers need `npx playwright install chromium`)
+- Playwright E2E framework configured + CI workflow created with browser install step (2026-04-08)
 - Password reset API + UI complete
 - Email verification endpoint created and wired into signup
 - Global error boundary + custom 404/500 pages
@@ -98,6 +98,17 @@
 - /api/feed/share implemented
 - discover/* routes require authentication (2026-03-24)
 - auth/demo Zod input validation (2026-03-24)
+- Privacy Policy page (2026-04-07) ✅
+- Terms of Service page (2026-04-07) ✅
+- Open Graph / Twitter Card meta tags (2026-04-01) ✅
+- Trip edit + delete modals wired (2026-04-01) ✅
+- Survey frontend integration complete (2026-04-08) ✅
+- Voting frontend integration with real vote counts (2026-04-09) ✅
+- GitHub Actions CI/CD pipeline (2026-04-08) ✅
+- Members management page (2026-04-01) ✅
+- Public profile page + Follow system (2026-04-01) ✅
+- Rate limiting on all 48 routes (2026-04-13) ✅
+- Sentry instrumentation on 9 routes (2026-04-13) ✅
 
 ---
 
@@ -113,22 +124,22 @@
 [ ] NEXTAUTH_SECRET rotation (32+ chars)
 [ ] Session timeout configuration
 [ ] Failed login attempt limiting
-[ ] Rate limiting on remaining unguarded endpoints
-[ ] XSS prevention (DOMPurify) verification
-[ ] Trip editing flow
-[ ] Trip deletion/archiving
+[x] Rate limiting on ALL endpoints — 48/48 complete (2026-04-13)
+[x] XSS prevention (DOMPurify) — isomorphic-dompurify installed + sanitize.ts (2026-04-07)
+[x] Trip editing flow — EditTripModal wired (2026-04-01)
+[x] Trip deletion/archiving — DeleteTripModal wired (2026-04-01)
 [ ] Trip wizard (multi-step creation)
 ```
 
 ### Phase 2: Core Feature Completion
 
 ```
-[ ] Survey frontend integration
-[ ] Voting frontend integration
+[x] Survey frontend integration (2026-04-08)
+[x] Voting frontend integration with real vote counts (2026-04-09)
 [ ] Real-time vote updates via Pusher
 [ ] Survey results display
-[ ] Follow system integration
-[ ] No search results empty state
+[x] Follow system integration — FollowButton component + public profiles (2026-04-01)
+[x] No search results empty state — SearchResults component (2026-04-01)
 [ ] Form validation errors inline
 ```
 
@@ -140,7 +151,7 @@
 [ ] Alert channels (Slack/Email)
 [ ] Log aggregation
 [ ] Database backup schedule
-[ ] Playwright browsers installed in CI
+[x] Playwright browsers installed in CI — GitHub Actions workflow (2026-04-08)
 [ ] Auth flow E2E tests complete
 [ ] Custom domain (optional for beta)
 ```
@@ -148,10 +159,10 @@
 ### Phase 4: Legal & Content
 
 ```
-[ ] Privacy Policy page
-[ ] Terms of Service page
+[x] Privacy Policy page (2026-04-07)
+[x] Terms of Service page (2026-04-07)
 [ ] Meta titles/descriptions on all pages
-[ ] Open Graph tags
+[x] Open Graph tags — buildMetadata() helper, OG/Twitter Card (2026-04-01)
 [ ] Favicon configured
 ```
 
@@ -211,13 +222,12 @@
 - [ ] NEXTAUTH_SECRET is strong (32+ chars) — verify
 - [x] Database credentials not in code
 - [x] API keys not exposed to client
-- [x] Rate limiting on major endpoints (Upstash)
+- [x] Rate limiting on ALL 48 endpoints (Upstash — complete 2026-04-13)
 - [x] Input validation on major API routes (Zod)
 - [x] SQL injection prevention (Prisma)
-- [x] XSS prevention (React handles, plus DOMPurify installed)
+- [x] XSS prevention (React handles, plus DOMPurify installed 2026-04-07)
 - [x] CORS configured (next.config.js, 2026-03-23)
 - [x] Security headers (HSTS, X-Frame-Options, CSP — 2026-03-10)
-- [ ] Rate limiting on ALL endpoints (in progress)
 - [ ] Session timeout configuration
 - [ ] Failed login attempt limiting
 
@@ -284,5 +294,5 @@
 
 *Document Version: 3.0*
 *Target Launch: Q2 2026 (Beta)*
-*Last Updated: 2026-03-25*
+*Last Updated: 2026-04-14*
 *Owner: Development Team*

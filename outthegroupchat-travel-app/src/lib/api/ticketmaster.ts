@@ -4,6 +4,23 @@ import { logger } from '@/lib/logger';
 const TICKETMASTER_BASE_URL = 'https://app.ticketmaster.com/discovery/v2';
 const TICKETMASTER_API_KEY = process.env.TICKETMASTER_API_KEY;
 
+/**
+ * @description Represents an event returned from the Ticketmaster Discovery API.
+ * @property {string} id - Unique Ticketmaster identifier for the event.
+ * @property {string} name - Display name of the event.
+ * @property {string} url - URL to the event's Ticketmaster purchase page.
+ * @property {object} dates - Scheduling information for the event.
+ * @property {object} dates.start - Start date and time details.
+ * @property {string} dates.start.localDate - Event start date in YYYY-MM-DD format (local time zone).
+ * @property {string} dates.start.localTime - Event start time in HH:MM:SS format (local time zone).
+ * @property {Array<{ min: number; max: number; currency: string }>} [priceRanges] - Optional ticket price ranges; each entry has a min, max, and ISO 4217 currency code.
+ * @property {object} [_embedded] - Optional embedded related resources returned by the Ticketmaster API.
+ * @property {Array<object>} [_embedded.venues] - List of venues associated with the event.
+ * @property {string} _embedded.venues[].name - Venue name.
+ * @property {{ name: string }} _embedded.venues[].city - City where the venue is located.
+ * @property {{ name: string }} _embedded.venues[].state - State or region where the venue is located.
+ * @property {{ name: string }} _embedded.venues[].country - Country where the venue is located.
+ */
 export interface TicketmasterEvent {
   id: string;
   name: string;
@@ -35,6 +52,13 @@ export interface TicketmasterEvent {
   };
 }
 
+/**
+ * @description Parameters accepted by the searchEvents function to query the Ticketmaster Discovery API.
+ * @property {string} city - The city name to search for events in (e.g. "New York").
+ * @property {string} startDateTime - ISO 8601 start of the date range (e.g. "2026-06-01T00:00:00Z").
+ * @property {string} endDateTime - ISO 8601 end of the date range (e.g. "2026-06-07T23:59:59Z").
+ * @property {number} [size] - Maximum number of events to return (default: 20).
+ */
 export interface EventSearchParams {
   city: string;
   startDateTime: string;

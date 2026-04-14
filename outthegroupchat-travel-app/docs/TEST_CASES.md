@@ -932,5 +932,101 @@ jobs:
 
 ---
 
-*Last Updated: 2026-03-24*
+## Mock Patterns
+
+### Rate Limit Mock (Required for All Routes Using `checkRateLimit`)
+
+Any test file whose route calls `checkRateLimit` must include this module-level mock or real HTTP calls to Upstash Redis will run (~4300 ms/test):
+
+```typescript
+vi.mock('@/lib/rate-limit', () => ({
+  checkRateLimit: vi.fn().mockResolvedValue({ success: true }),
+  apiRateLimiter: null,
+}));
+```
+
+Include `apiRateLimiter: null` to avoid `undefined` errors when routes import the limiter object directly.
+
+---
+
+### Sentry Mock Pattern
+
+#### Background: Module-Level Crash
+
+`src/lib/sentry.ts` calls `logger.child()` at **module level** when it is imported. If a test file has a local `vi.mock('@/lib/logger')` that does not include a `child()` stub, the import chain crashes with:
+
+```
+TypeError: logger.child is not a function
+```
+
+This crash occurs the moment any route in the test imports `sentry.ts` — even indirectly.
+
+#### Solution: Global Mock in setup.ts
+
+A global `vi.mock('@/lib/sentry')` is registered in `src/__tests__/setup.ts`. It intercepts the Sentry module before the module-level `logger.child()` call executes.
+
+**Do not add `vi.mock('@/lib/sentry')` to individual test files.** The global mock covers all files. Adding a local override can shadow the global and destabilize other tests in the same run.
+
+#### Spying on Sentry Calls
+
+To assert that `captureException` (or any other Sentry export) was called in a route handler, use `vi.spyOn` against the already-mocked module:
+
+```typescript
+import * as sentry from '@/lib/sentry';
+
+it('captures exception on DB error', async () => {
+  vi.mocked(prisma.trip.findMany).mockRejectedValueOnce(new Error('DB down'));
+  const captureSpy = vi.spyOn(sentry, 'captureException');
+
+  const response = await GET(new NextRequest('http://localhost/api/trips'));
+
+  expect(response.status).toBe(500);
+  expect(captureSpy).toHaveBeenCalledWith(expect.any(Error));
+});
+```
+
+#### Import Source Rule
+
+Always import Sentry utilities from `@/lib/sentry`. Never import directly from `@sentry/nextjs` — that causes `TS2305` type errors because the conditional wrapper is the canonical entry point.
+
+```typescript
+// CORRECT
+import { captureException, addBreadcrumb, setUser } from '@/lib/sentry';
+
+// WRONG — TS2305
+import { captureException } from '@sentry/nextjs';
+```
+
+#### Local Logger Mock — Required `child()` Stub
+
+If a test file must override `vi.mock('@/lib/logger')` locally (rare), the mock must include a `child()` stub to prevent the sentry.ts crash:
+
+```typescript
+vi.mock('@/lib/logger', () => ({
+  default: {
+    info: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
+    debug: vi.fn(),
+    child: vi.fn().mockReturnValue({
+      info: vi.fn(),
+      error: vi.fn(),
+      warn: vi.fn(),
+      debug: vi.fn(),
+    }),
+  },
+  logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() },
+  logError: vi.fn(),
+  logSuccess: vi.fn(),
+  apiLogger: { info: vi.fn(), error: vi.fn(), warn: vi.fn() },
+  authLogger: { info: vi.fn(), error: vi.fn(), warn: vi.fn() },
+  aiLogger: { info: vi.fn(), error: vi.fn(), warn: vi.fn() },
+  dbLogger: { info: vi.fn(), error: vi.fn(), warn: vi.fn() },
+  createRequestLogger: vi.fn().mockReturnValue({ info: vi.fn(), error: vi.fn(), warn: vi.fn() }),
+}));
+```
+
+---
+
+*Last Updated: 2026-04-14*
 

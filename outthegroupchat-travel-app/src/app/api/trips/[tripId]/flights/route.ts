@@ -1,9 +1,14 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { searchFlights, getAirportCode } from '@/lib/api/flights';
 import { logger } from '@/lib/logger';
+
+const ParamsSchema = z.object({
+  tripId: z.string().min(1),
+});
 
 interface TripMember {
   id: string;
@@ -14,6 +19,14 @@ export async function GET(
   { params }: { params: { tripId: string } }
 ) {
   try {
+    const paramsResult = ParamsSchema.safeParse(params);
+    if (!paramsResult.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: paramsResult.error.issues },
+        { status: 400 }
+      );
+    }
+
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {

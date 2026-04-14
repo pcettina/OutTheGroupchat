@@ -1,3 +1,20 @@
+## Completed 2026-04-14 (Nightly Build)
+- [L1] Beta routes test suite — 48 tests added
+- [L2] Sentry integration test suite — 35 tests added
+- [L3] Profile/social integration tests — 54 tests added
+- [L4] Sentry expansion: trips/[tripId] route group (5 routes: 9→14/48)
+- [L5] Sentry expansion: feed/notifications/invitations (4 routes: 14→18/48)
+- [L6] Dead component cleanup: removed DestinationCard, CategoryFilter, TrendingSection
+- [M1] Voting edge case tests — 45 tests added
+- [M2] Cron/health extended tests — 35 tests added
+- [M3] Zod validation: flights, suggestions, cron routes
+- [M4] JSDoc on lib/api interfaces (FlightOffer, TicketmasterEvent, PlaceDetails)
+- [M5] Agent guide docs: sentry mock pattern documented
+- [M6] Security audit + roadmap docs updated to 2026-04-14
+- Automated: any=0, console.*=0, TODO=0, files>600=0, tests=1427+217=1451 (estimated), routes=48 (all rate-limited)
+
+---
+
 # ✅ Previous Sprint - December 2025
 
 > **Sprint Duration:** Dec 16 - Dec 29, 2025

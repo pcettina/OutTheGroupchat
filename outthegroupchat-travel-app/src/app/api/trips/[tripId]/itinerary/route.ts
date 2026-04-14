@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
+import { captureException, addBreadcrumb } from '@/lib/sentry';
 
 const itineraryItemSchema = z.object({
   order: z.number(),
@@ -33,6 +34,8 @@ export async function GET(
   try {
     const session = await getServerSession(authOptions);
     const { tripId } = params;
+
+    addBreadcrumb({ category: 'trips.itinerary', message: 'Fetch itinerary started', level: 'info', data: { tripId } });
 
     // Check access
     const trip = await prisma.trip.findUnique({
@@ -85,6 +88,7 @@ export async function GET(
 
     return NextResponse.json({ success: true, data: itinerary });
   } catch (error) {
+    captureException(error);
     logger.error({ error }, '[ITINERARY_GET] Failed to fetch itinerary');
     return NextResponse.json(
       { success: false, error: 'Failed to fetch itinerary' },
@@ -105,6 +109,8 @@ export async function PUT(
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    addBreadcrumb({ category: 'trips.itinerary', message: 'Update itinerary started', level: 'info', data: { tripId } });
 
     // Check if user is owner or admin
     const membership = await prisma.tripMember.findFirst({
@@ -184,6 +190,7 @@ export async function PUT(
 
     return NextResponse.json({ success: true, data: itinerary });
   } catch (error) {
+    captureException(error);
     logger.error({ error }, '[ITINERARY_PUT] Failed to update itinerary');
     return NextResponse.json(
       { success: false, error: 'Failed to update itinerary' },

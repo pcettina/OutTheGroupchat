@@ -316,6 +316,51 @@ return NextResponse.json({
 
 ---
 
+## 🧪 Sentry Mock Pattern (Test Files)
+
+### Background
+
+`src/lib/sentry.ts` calls `logger.child()` at **module level** during import. Any test file that overrides `vi.mock('@/lib/logger')` locally without including a `child()` stub will crash with `"logger.child is not a function"` as soon as its route imports `sentry.ts`.
+
+### Solution
+
+A global `vi.mock('@/lib/sentry')` is registered in `src/__tests__/setup.ts`. This intercepts the Sentry module before any route can trigger the module-level `logger.child()` call.
+
+**Rule:** Never add a local `vi.mock('@/lib/sentry')` in individual test files. The global mock in `setup.ts` handles it. If you add a local override you risk overriding the global and causing unpredictable behavior in other test files.
+
+### Spying on Sentry in a Test
+
+```typescript
+import * as sentry from '@/lib/sentry';
+
+// In your test:
+const captureSpy = vi.spyOn(sentry, 'captureException');
+
+// Assert it was called:
+expect(captureSpy).toHaveBeenCalledWith(expect.any(Error));
+```
+
+### Import Source Rule
+
+Always import Sentry utilities from `@/lib/sentry`, **never** from `@sentry/nextjs` directly. The wrapper module is the conditional entry point for all Sentry exports. Direct `@sentry/nextjs` imports cause `TS2305` type errors.
+
+```typescript
+// CORRECT
+import { captureException, addBreadcrumb } from '@/lib/sentry';
+
+// WRONG — causes TS2305
+import { captureException } from '@sentry/nextjs';
+```
+
+### Checklist When Adding Sentry to a Route
+
+- [ ] Import only from `@/lib/sentry`
+- [ ] Do NOT add `vi.mock('@/lib/sentry')` to the route's test file (global mock already in setup.ts)
+- [ ] If the test file has a local `vi.mock('@/lib/logger')`, verify it includes `child: vi.fn().mockReturnValue({ info: vi.fn(), error: vi.fn(), warn: vi.fn() })`
+- [ ] Run `tsc --noEmit` to confirm no TS2305 errors from the import
+
+---
+
 ## 🚫 Auto-Reject Patterns
 
 These patterns should automatically fail code review:
@@ -374,5 +419,5 @@ These patterns should automatically fail code review:
 
 *Quality is not negotiable. Every line of code should serve the mission.*
 
-*Last Updated: 2026-03-24*
+*Last Updated: 2026-04-14*
 

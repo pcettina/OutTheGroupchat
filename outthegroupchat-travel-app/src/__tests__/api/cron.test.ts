@@ -126,16 +126,16 @@ describe('GET /api/cron', () => {
   });
 
   // -------------------------------------------------------------------------
-  // 2. No Authorization header → 401
+  // 2. No Authorization header → 400 (Zod validates header presence before auth check)
   // -------------------------------------------------------------------------
-  it('returns 401 when Authorization header is missing', async () => {
+  it('returns 400 when Authorization header is missing', async () => {
     vi.stubEnv('CRON_SECRET', 'test-cron-secret');
 
     const res = await GET(makeRequest());
     const body = await res.json();
 
-    expect(res.status).toBe(401);
-    expect(body.error).toMatch(/unauthorized/i);
+    expect(res.status).toBe(400);
+    expect(body.error).toMatch(/validation failed/i);
   });
 
   // -------------------------------------------------------------------------

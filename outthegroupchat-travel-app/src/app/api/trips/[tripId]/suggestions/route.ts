@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { searchEvents } from '@/lib/api/ticketmaster';
@@ -7,11 +8,23 @@ import { searchPlaces } from '@/lib/api/places';
 import { calculateDailyCosts } from '@/lib/utils/costs';
 import { logger } from '@/lib/logger';
 
+const ParamsSchema = z.object({
+  tripId: z.string().min(1),
+});
+
 export async function GET(
   req: Request,
   { params }: { params: { tripId: string } }
 ) {
   try {
+    const paramsResult = ParamsSchema.safeParse(params);
+    if (!paramsResult.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: paramsResult.error.issues },
+        { status: 400 }
+      );
+    }
+
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {

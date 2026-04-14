@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { logError } from '@/lib/logger';
+import { captureException, addBreadcrumb } from '@/lib/sentry';
 
 const feedQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
@@ -53,6 +54,7 @@ interface FeedItem {
 // Get activity feed (public activities from followed users and popular activities)
 export async function GET(req: Request) {
   try {
+    addBreadcrumb({ category: 'feed', message: 'Fetching activity feed', level: 'info' });
     const session = await getServerSession(authOptions);
     const userId = session?.user?.id;
 
@@ -277,6 +279,7 @@ export async function GET(req: Request) {
       },
     });
   } catch (error) {
+    captureException(error);
     logError('FEED_GET', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch feed' },
@@ -288,6 +291,7 @@ export async function GET(req: Request) {
 // Save/unsave an activity
 export async function POST(req: Request) {
   try {
+    addBreadcrumb({ category: 'feed', message: 'Save/unsave activity request', level: 'info' });
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
@@ -326,6 +330,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, action });
   } catch (error) {
+    captureException(error);
     logError('FEED_POST', error);
     return NextResponse.json(
       { error: 'Failed to save activity' },

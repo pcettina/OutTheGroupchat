@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth';
 import { logError } from '@/lib/logger';
 import { z } from 'zod';
 import type { Prisma, ActivityCategory, ActivityStatus } from '@prisma/client';
+import { captureException, addBreadcrumb } from '@/lib/sentry';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -76,9 +77,11 @@ export async function GET(
     const session = await getServerSession(authOptions);
     const { tripId } = await params;
     const { searchParams } = new URL(req.url);
-    
+
     const category = searchParams.get('category');
     const status = searchParams.get('status');
+
+    addBreadcrumb({ category: 'trips.activities', message: 'Fetch activities started', level: 'info', data: { tripId } });
 
     // Check access
     const trip = await prisma.trip.findUnique({
@@ -144,6 +147,7 @@ export async function GET(
 
     return NextResponse.json({ success: true, data: activitiesWithRatings });
   } catch (error) {
+    captureException(error);
     logError('ACTIVITIES_GET', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch activities' },
@@ -163,6 +167,8 @@ export async function POST(
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    addBreadcrumb({ category: 'trips.activities', message: 'Create activity started', level: 'info', data: { tripId } });
 
     // Check if user is owner or member
     const [trip, isMember] = await Promise.all([
@@ -237,6 +243,7 @@ export async function POST(
 
     return NextResponse.json({ success: true, data: activity }, { status: 201 });
   } catch (error) {
+    captureException(error);
     logError('ACTIVITIES_POST', error);
     return NextResponse.json(
       { success: false, error: 'Failed to create activity' },

@@ -1,6 +1,6 @@
 # OutTheGroupchat — Full Codemap
 
-> Auto-generated 2026-03-10. Last updated 2026-03-26. Comprehensive reference for agents and developers.
+> Auto-generated 2026-03-10. Last updated 2026-04-14. Comprehensive reference for agents and developers.
 
 ## Table of Contents
 
@@ -83,7 +83,7 @@ outthegroupchat-travel-app/
 │   │   ├── accessibility/         # FocusTrap, SkipLinks, VisuallyHidden, LiveRegion
 │   │   ├── ai/                    # TripChat (360L), ChatMessage, ChatLoadingIndicator, ChatQuickPrompts, chat-types.ts
 │   │   ├── auth/                  # SignUpForm
-│   │   ├── discover/              # CategoryFilter, DestinationCard, TrendingSection
+│   │   ├── discover/              # (DestinationCard, CategoryFilter, TrendingSection deleted 2026-04-14 — unused)
 │   │   ├── feed/                  # FeedItem, RichFeedItem, CommentThread, ShareModal, etc.
 │   │   ├── notifications/         # NotificationBell, NotificationCenter, NotificationList
 │   │   ├── onboarding/            # WelcomeScreen, InterestSelector, TravelStyleQuiz
@@ -556,9 +556,9 @@ db:seed        → npx tsx prisma/seed/index.ts
 
 | Component | Props | Purpose |
 |-----------|-------|---------|
-| `CategoryFilter` | categories, selectedCategory, onSelectCategory | Horizontal category pill selector |
-| `DestinationCard` | id, city, country, image?, averagePrice?, rating?, tags?, featured? | Destination grid card with hover zoom |
-| `TrendingSection` | destinations?, events? | Horizontal trending content row |
+| `CategoryFilter` | ~~deleted 2026-04-14~~ | ~~Horizontal category pill selector~~ |
+| `DestinationCard` | ~~deleted 2026-04-14~~ | ~~Destination grid card with hover zoom~~ |
+| `TrendingSection` | ~~deleted 2026-04-14~~ | ~~Horizontal trending content row~~ |
 
 ### Feed (`components/feed/`)
 
@@ -807,7 +807,7 @@ db:seed        → npx tsx prisma/seed/index.ts
 
 ## Tests
 
-**Total: 1156 tests across 56 Vitest unit/integration test files** (0 TSC errors in production code, 0 in test files as of 2026-03-26)
+**Total: 1451 tests across 64 Vitest unit/integration test files** (0 TSC errors in production code, 0 in test files as of 2026-04-14)
 
 | File | Lines | Tests | Coverage |
 |------|-------|-------|----------|
@@ -874,6 +874,11 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `src/__tests__/api/users-me.test.ts` | — | 18 | GET/PATCH /api/users/me |
 | `src/__tests__/api/feed-comments-engagement.test.ts` | — | 46 | GET/POST /api/feed/comments; POST /api/feed/engagement |
 | `src/__tests__/api/invitations.test.ts` | — | 24 | GET /api/invitations; GET/POST /api/invitations/[invitationId] |
+| `src/__tests__/api/beta-routes.test.ts` | — | 48 | Beta signup/status/initialize-password routes — full coverage ✅ 2026-04-14 |
+| `src/__tests__/integration/sentry-routes.test.ts` | — | 35 | Sentry captureException integration for auth routes ✅ 2026-04-14 |
+| `src/__tests__/api/profile-social.test.ts` | — | 54 | Profile + social API integration tests ✅ 2026-04-14 |
+| `src/__tests__/api/voting-edge-cases.test.ts` | — | 45 | GET/POST/PUT /api/trips/[tripId]/voting — edge cases, duplicate votes, session auto-close ✅ 2026-04-14 |
+| `src/__tests__/api/cron-health-extended.test.ts` | — | 35 | Extended cron job coverage + health route DB states ✅ 2026-04-14 |
 | `src/__tests__/setup.ts` | — | — | Test environment/fixture config |
 | `vitest.config.ts` | 16 | — | Vitest runner configuration |
 
@@ -909,9 +914,9 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `any` types | 0 ✅ |
 | `console.*` | 0 ✅ |
 | TSC errors (prod + test) | 0 ✅ |
-| Vitest tests | 1156 passing (56 files) |
+| Vitest tests | 1451 passing (64 files) |
 | E2E tests | 11 Playwright smoke tests (4 suites) |
-| Error monitoring | Sentry installed (server + client + edge) — needs `SENTRY_DSN` in Vercel |
+| Error monitoring | Sentry installed (server + client + edge) — 18/48 routes instrumented — needs `SENTRY_DSN` in Vercel |
 | Files >400 lines | ~10 (0 files exceed 600 lines) |
 | Production env gaps | OPENAI_API_KEY, Pusher vars, Sentry DSN, Resend domain |
 
