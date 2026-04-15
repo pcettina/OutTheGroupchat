@@ -1,6 +1,6 @@
 # OutTheGroupchat — Full Codemap
 
-> Auto-generated 2026-03-10. Last updated 2026-03-26. Comprehensive reference for agents and developers.
+> Auto-generated 2026-03-10. Last updated 2026-04-15. Comprehensive reference for agents and developers.
 
 ## Table of Contents
 
@@ -29,7 +29,7 @@ Full-stack Next.js 14 collaborative travel planning app. Groups plan trips toget
 
 **App root:** `outthegroupchat-travel-app/`
 **Source:** `outthegroupchat-travel-app/src/`
-**Stats:** ~263 TS/TSX files | ~33,500 LOC | 48 API routes | 92 components | 20 pages
+**Stats:** ~268 TS/TSX files | ~34,000 LOC | 48 API routes | 65 test files | 20 pages
 
 ---
 
@@ -83,14 +83,14 @@ outthegroupchat-travel-app/
 │   │   ├── accessibility/         # FocusTrap, SkipLinks, VisuallyHidden, LiveRegion
 │   │   ├── ai/                    # TripChat (360L), ChatMessage, ChatLoadingIndicator, ChatQuickPrompts, chat-types.ts
 │   │   ├── auth/                  # SignUpForm
-│   │   ├── discover/              # CategoryFilter, DestinationCard, TrendingSection
+│   │   ├── discover/              # SearchResults (CategoryFilter, DestinationCard, TrendingSection deleted 2026-04-15)
 │   │   ├── feed/                  # FeedItem, RichFeedItem, CommentThread, ShareModal, etc.
 │   │   ├── notifications/         # NotificationBell, NotificationCenter, NotificationList
 │   │   ├── onboarding/            # WelcomeScreen, InterestSelector, TravelStyleQuiz
 │   │   ├── profile/               # ProfileHeader, TripHistory, BadgeShowcase, PreferencesCard
 │   │   ├── search/                # SearchFilters, FilterChip, SearchResults
 │   │   ├── settings/              # NotificationSettings, PrivacySettings, ProfileSettings, SecuritySettings
-│   │   ├── social/                # ActivityCard, TravelBadges
+│   │   ├── social/                # ActivityCard (TravelBadges deleted 2026-04-15)
 │   │   ├── surveys/               # SurveyBuilder, SurveyForm, QuestionRenderer, question types
 │   │   ├── trips/                 # TripCard, TripWizard, TripHeader, MemberList, ItineraryTimeline, etc.
 │   │   ├── ui/                    # Button, Card, Input, Dialog, Avatar, Badge, Toast, etc.
@@ -807,7 +807,7 @@ db:seed        → npx tsx prisma/seed/index.ts
 
 ## Tests
 
-**Total: 1156 tests across 56 Vitest unit/integration test files** (0 TSC errors in production code, 0 in test files as of 2026-03-26)
+**Total: ~1628 tests across 65 Vitest unit/integration test files** (0 TSC errors in production code, 0 in test files as of 2026-04-15)
 
 | File | Lines | Tests | Coverage |
 |------|-------|-------|----------|
@@ -874,6 +874,12 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `src/__tests__/api/users-me.test.ts` | — | 18 | GET/PATCH /api/users/me |
 | `src/__tests__/api/feed-comments-engagement.test.ts` | — | 46 | GET/POST /api/feed/comments; POST /api/feed/engagement |
 | `src/__tests__/api/invitations.test.ts` | — | 24 | GET /api/invitations; GET/POST /api/invitations/[invitationId] |
+| `src/__tests__/api/sentry-spy-assertions.test.ts` | — | 42 | Sentry captureException spy tests for trips, trips/[tripId], feed, notifications routes ✅ 2026-04-15 |
+| `src/__tests__/api/invitations-extended.test.ts` | — | 36 | Extended invitation route edge cases ✅ 2026-04-15 |
+| `src/__tests__/api/discover-edge-cases.test.ts` | — | 26 | Edge cases for discover route group (type-switch, error paths, rate-limit) ✅ 2026-04-15 |
+| `src/__tests__/api/users-social-edge.test.ts` | — | 44 | User social feature edge cases ✅ 2026-04-15 |
+| `src/__tests__/api/beta-routes.test.ts` | — | 16 | Beta route coverage (beta/status Redis rate limiting) ✅ 2026-04-15 |
+| `src/__tests__/api/beta-status-redis.test.ts` | — | 13 | beta/status Redis checkRateLimit migration tests ✅ 2026-04-15 |
 | `src/__tests__/setup.ts` | — | — | Test environment/fixture config |
 | `vitest.config.ts` | 16 | — | Vitest runner configuration |
 
@@ -909,10 +915,10 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `any` types | 0 ✅ |
 | `console.*` | 0 ✅ |
 | TSC errors (prod + test) | 0 ✅ |
-| Vitest tests | 1156 passing (56 files) |
+| Vitest tests | ~1628 passing (65 files) |
 | E2E tests | 11 Playwright smoke tests (4 suites) |
-| Error monitoring | Sentry installed (server + client + edge) — needs `SENTRY_DSN` in Vercel |
-| Files >400 lines | ~10 (0 files exceed 600 lines) |
+| Error monitoring | Sentry installed (server + client + edge) — 13/48 routes instrumented; needs `SENTRY_DSN` in Vercel |
+| Files >600 lines (prod) | 0 ✅ |
 | Production env gaps | OPENAI_API_KEY, Pusher vars, Sentry DSN, Resend domain |
 
 ### Largest Files (>400 lines)

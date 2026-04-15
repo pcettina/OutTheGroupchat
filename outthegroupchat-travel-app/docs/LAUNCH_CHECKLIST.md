@@ -2,7 +2,7 @@
 
 > **Target Launch:** Q2 2026 (Beta)
 > **Current Status:** Active Development
-> **Last Updated:** March 2026
+> **Last Updated:** April 2026
 
 ---
 
@@ -18,7 +18,7 @@
 
 **Overall Readiness: 78%** → Target: 85% for Beta Launch
 
-> Last updated: 2026-03-26
+> Last updated: 2026-04-15
 
 ---
 
@@ -110,6 +110,7 @@
 - [x] SQL injection prevention (Prisma)
 - [x] Rate limiting infrastructure (Upstash)
 - [x] Rate limiting on all authentication endpoints ✅ 2026-03-26 (signup, reset-password, verify-email — rate limiting now first operation)
+- [x] /api/beta/status rate limiting standardized to Redis checkRateLimit ✅ 2026-04-15
 - [ ] Rate limiting on ALL remaining endpoints
 - [x] Input validation on major API routes (Zod) ✅ 2026-03-24 — notifications, feed/comments, feed/engagement, pusher/auth, users/[userId], discover/*, images/search, inspiration, cron, auth/demo added; ai/chat Zod strengthened + JSON.parse safety on 5 AI routes + notifications/[notificationId] ✅ 2026-03-29
 - [x] /api/discover/search requires authentication ✅ 2026-03-24 (security improvement — was unauthenticated)
@@ -378,4 +379,4 @@ git push origin main  # Auto-deploys to Vercel
 
 *This checklist should be reviewed daily during launch preparation.*
 
-*Last Updated: 2026-03-26 - 153 new tests (1156 total, 56 files); rate limiting added as first operation on auth/signup, auth/reset-password, auth/verify-email; newsletter/subscribe now requires auth; ai/search GET+POST fully implemented; dead components removed (NotificationCenter.tsx, SharePreview.tsx); recommendation.service.test.ts, survey.service.test.ts, geocoding-images.test.ts created. Also includes 2026-03-29 changes: JSON.parse safety on 5 AI routes + notifications/[notificationId]; Zod strengthened on ai/chat; notifications/[notificationId] bugfix (read was hardcoded true); JSDoc added to geocoding.ts; 3 new test files (ai-generate-itinerary, ai-suggest-activities, discover-import)*
+*Last Updated: 2026-04-15 — beta/status migrated to Redis checkRateLimit ✅; dead components deleted (DestinationCard.tsx, CategoryFilter.tsx, TrendingSection.tsx, TravelBadges.tsx); Sentry captureException added to 13 routes; ~1628 tests (65 test files)*

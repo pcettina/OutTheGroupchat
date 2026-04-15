@@ -191,17 +191,17 @@
 
 | Metric | Target | Current | Previous |
 |--------|--------|---------|---------|
-| Test count | 500+ | 1156 (56 test files) | 1003 (53 files) |
+| Test count | 500+ | ~1628 (65 test files) | 1451 (59 files) |
 | `any` types | 0 | 0 ✅ | 0 |
 | `console.*` in prod code | 0 | 0 ✅ | 0 |
 | TSC errors (test files) | 0 | 0 ✅ | 0 |
-| Sentry configured | Yes | Infrastructure ready | Infrastructure ready |
+| Sentry coverage | 48/48 routes | 13/48 routes | 18/48 (unmerged PRs) |
 | `<img>` warnings on build | 0 | 0 ✅ | 0 |
-| Launch readiness | 85% | 78% | 75% |
+| Launch readiness | 85% | 80% | 78% |
 
 ---
 
-*Updated: 2026-03-21*
+*Updated: 2026-04-15*
 ---
 
 ## 🟢 Completed 2026-03-20 (Nightly Build)
@@ -222,6 +222,39 @@
 **Tests: 382 total (+78 from tonight)**
 
 *Updated: 2026-03-20*
+---
+
+## 🟢 Completed 2026-04-15 (Nightly Build)
+
+### Wave 1 — Test Writers (148 new tests, 4 new test files)
+- [L1] sentry-spy-assertions.test.ts (42 tests) — Sentry captureException spy assertions for trips, trips/[tripId], feed, notifications routes
+- [L2] invitations-extended.test.ts (36 tests) — Extended invitation route edge case coverage
+- [M1] discover-edge-cases.test.ts (26 tests) — Edge cases for discover route group (type-switch, error paths, rate-limit)
+- [M2] users-social-edge.test.ts (44 tests) — User social feature edge cases; used local follow.findFirst workaround
+
+### Wave 2 — Features & Sentry Expansion
+- [L3] beta/status: migrated from in-memory Map rate limiter to Redis checkRateLimit; 29 new tests across beta test files (beta-routes.test.ts 16, beta-status-redis.test.ts 13)
+- [L4] captureException added to: trips/route.ts, activities/[activityId]/route.ts, search/route.ts, inspiration/route.ts
+- [L5] captureException added to: users/[userId]/route.ts, users/me/route.ts, profile/route.ts, discover/route.ts
+- [L6] captureException added to: discover/search/route.ts, discover/recommendations/route.ts, discover/import/route.ts
+- [M3] captureException added to ai/chat/route.ts, ai/recommend/route.ts + JSON parse safety improved
+- [M4] Dead components deleted: DestinationCard.tsx, CategoryFilter.tsx, TrendingSection.tsx, TravelBadges.tsx; cleaned discover/index.ts and social/index.ts barrel exports
+- [M5] JSDoc added to unsplash.ts; agent guides updated to 2026-04-15
+- [M6] FUTURE_IMPLEMENTATION.md, PRODUCTION_ROADMAP.md, IMPLEMENTATION_STACK.md updated to 2026-04-15
+
+### Small Task Metrics
+- any types: 0 | console.*: 0 | TODO: 0 | Files >600 lines (prod): 0
+- Routes: 48 | Test files: 65 | TS/TSX files: 268
+
+### Metrics
+- Tests: 1451 → ~1628 passing (+177 new tests)
+- Test files: 59 → 65
+- Routes: 48 (unchanged)
+- TS/TSX files: 268
+- Sentry coverage: 13/48 routes instrumented
+- any types: 0 | console.*: 0 | TODO: 0 | Files >600 lines (prod): 0
+
+*Updated: 2026-04-15*
 ---
 
 ## 🟢 Completed 2026-03-29 (Nightly Build)

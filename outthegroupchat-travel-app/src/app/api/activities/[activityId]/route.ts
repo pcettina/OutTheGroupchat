@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
+import { captureException } from '@/lib/sentry';
 
 const commentSchema = z.object({
   text: z.string().min(1).max(500),
@@ -131,6 +132,7 @@ export async function GET(
       },
     });
   } catch (error) {
+    captureException(error);
     logger.error({ error }, '[ACTIVITY_GET] Failed to fetch activity');
     return NextResponse.json(
       { success: false, error: 'Failed to fetch activity' },
@@ -210,6 +212,7 @@ export async function POST(
       });
     }
   } catch (error) {
+    captureException(error);
     logger.error({ error }, '[ACTIVITY_SAVE] Failed to save/unsave activity');
     return NextResponse.json(
       { success: false, error: 'Failed to save/unsave activity' },
@@ -297,6 +300,7 @@ export async function PUT(
       { status: 400 }
     );
   } catch (error) {
+    captureException(error);
     logger.error({ error }, '[ACTIVITY_PUT] Failed to process action');
     return NextResponse.json(
       { success: false, error: 'Failed to process action' },

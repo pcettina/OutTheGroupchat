@@ -163,8 +163,16 @@ vi.mock('@/lib/prisma', () => ({
     follow: {
       create: vi.fn(),
       delete: vi.fn(),
+      findFirst: vi.fn(),
       findUnique: vi.fn(),
       findMany: vi.fn(),
+    },
+    destinationCache: {
+      create: vi.fn(),
+      findUnique: vi.fn(),
+      findFirst: vi.fn(),
+      findMany: vi.fn(),
+      upsert: vi.fn(),
     },
     surveyResponse: {
       create: vi.fn(),
@@ -214,6 +222,14 @@ vi.mock('@/lib/logger', () => ({
   logSuccess: vi.fn(),
   apiLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
   authLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+  aiLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+  dbLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+  createRequestLogger: vi.fn(() => ({
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
+  })),
 }));
 
 // ---------------------------------------------------------------------------
@@ -223,4 +239,16 @@ vi.mock('@/lib/logger', () => ({
 // ---------------------------------------------------------------------------
 vi.mock('@/lib/invitations', () => ({
   processInvitations: vi.fn().mockResolvedValue({ invitations: [], errors: [] }),
+}));
+
+// ---------------------------------------------------------------------------
+// Mock: @/lib/sentry
+// Global stub prevents module-level logger.child() crash when routes import
+// sentry.ts (which calls logger.child at module level). Must be global so all
+// test files benefit without needing a local vi.mock declaration.
+// ---------------------------------------------------------------------------
+vi.mock('@/lib/sentry', () => ({
+  captureException: vi.fn(),
+  addBreadcrumb: vi.fn(),
+  setUser: vi.fn(),
 }));

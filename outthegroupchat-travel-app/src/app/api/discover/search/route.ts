@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { checkRateLimit, apiRateLimiter } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
+import { captureException } from '@/lib/sentry';
 
 const DiscoverSearchSchema = z.object({
   q: z.string().max(200).optional().default(''),
@@ -211,6 +212,7 @@ export async function GET(req: NextRequest) {
       data: results,
     });
   } catch (error) {
+    captureException(error);
     logger.error({ error }, '[DISCOVER/SEARCH] Failed to search activities');
     return NextResponse.json(
       { error: 'Failed to search activities' },

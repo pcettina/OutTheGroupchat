@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { logError } from '@/lib/logger';
+import { captureException } from '@/lib/sentry';
 import { z } from 'zod';
 import type { JsonValue } from '@prisma/client/runtime/library';
 
@@ -185,6 +186,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ success: true, data: results });
   } catch (error) {
+    captureException(error);
     logError('SEARCH_GET', error);
     return NextResponse.json(
       { success: false, error: 'Search failed' },

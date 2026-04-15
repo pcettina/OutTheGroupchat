@@ -3,34 +3,63 @@ import { logger } from '@/lib/logger';
 const UNSPLASH_ACCESS_KEY = process.env.UNSPLASH_ACCESS_KEY;
 const UNSPLASH_API_URL = 'https://api.unsplash.com';
 
+/**
+ * @description Represents a single photo returned by the Unsplash API.
+ * Contains multiple resolution URLs, attribution metadata, and photographer info.
+ */
 export interface UnsplashImage {
+  /** Unique Unsplash photo identifier. */
   id: string;
+  /** Object containing pre-signed URLs at various resolutions (raw, full, regular, small, thumb). */
   urls: {
+    /** Original unprocessed image URL. */
     raw: string;
+    /** Full-resolution image URL. */
     full: string;
+    /** Regular-resolution image URL (suitable for most display uses, ~1080px wide). */
     regular: string;
+    /** Small-resolution image URL (~400px wide). */
     small: string;
+    /** Thumbnail image URL (~200px wide). */
     thumb: string;
   };
+  /** Machine-generated alt text for the image, or null if unavailable. */
   alt_description: string | null;
+  /** Human-provided description of the image, or null if unavailable. */
   description: string | null;
+  /** Image width in pixels. */
   width: number;
+  /** Image height in pixels. */
   height: number;
+  /** Photographer attribution metadata. */
   user: {
+    /** Photographer's display name. */
     name: string;
+    /** Photographer's Unsplash username. */
     username: string;
+    /** Links to the photographer's Unsplash profile. */
     links: {
+      /** URL to the photographer's public Unsplash profile page. */
       html: string;
     };
   };
+  /** Links related to the photo itself. */
   links: {
+    /** URL to the photo's public Unsplash page. */
     html: string;
   };
 }
 
+/**
+ * @description Represents the paginated response from the Unsplash photo search endpoint.
+ * Contains the total match count, total page count, and the array of photo results.
+ */
 export interface UnsplashSearchResult {
+  /** Total number of photos matching the search query across all pages. */
   total: number;
+  /** Total number of pages available for the current query and per-page size. */
   total_pages: number;
+  /** Array of photo objects for the current page. */
   results: UnsplashImage[];
 }
 

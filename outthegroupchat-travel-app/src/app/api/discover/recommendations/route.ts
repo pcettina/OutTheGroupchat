@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { checkRateLimit, apiRateLimiter } from '@/lib/rate-limit';
 import { logError } from '@/lib/logger';
+import { captureException } from '@/lib/sentry';
 import { z } from 'zod';
 import type { ActivityCategory } from '@prisma/client';
 
@@ -237,6 +238,7 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error) {
+    captureException(error);
     logError('RECOMMENDATIONS', error);
     return NextResponse.json(
       { error: 'Failed to get recommendations' },

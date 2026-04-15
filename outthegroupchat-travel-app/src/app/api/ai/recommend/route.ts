@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { getModel, checkRateLimit } from '@/lib/ai/client';
 import { logError } from '@/lib/logger';
+import { captureException } from '@/lib/sentry';
 
 const aiRecommendationItemSchema = z.object({
   name: z.string(),
@@ -185,8 +186,9 @@ Generate ${limit} personalized activity recommendations. Return ONLY valid JSON.
           issues: parseValidation.error.flatten(),
         });
       }
-    } catch {
-      logError('AI_RECOMMEND_PARSE', new Error('Failed to parse AI recommendations'));
+    } catch (parseErr) {
+      captureException(parseErr);
+      logError('AI_RECOMMEND_PARSE', parseErr instanceof Error ? parseErr : new Error('Failed to parse AI recommendations'));
       recommendations = [];
     }
 
@@ -243,6 +245,7 @@ Generate ${limit} personalized activity recommendations. Return ONLY valid JSON.
       },
     });
   } catch (error) {
+    captureException(error);
     logError('AI_RECOMMEND', error);
     return NextResponse.json(
       { error: 'Failed to generate recommendations' },
@@ -350,7 +353,8 @@ Generate ${getLimit} activities that would complement existing plans and appeal 
         });
       }
     } catch (parseErr) {
-      logError('AI_RECOMMEND_GET_PARSE', new Error('Failed to parse AI recommendations'), { parseErr });
+      captureException(parseErr);
+      logError('AI_RECOMMEND_GET_PARSE', parseErr instanceof Error ? parseErr : new Error('Failed to parse AI recommendations'), { parseErr });
       recommendations = [];
     }
 
@@ -364,6 +368,7 @@ Generate ${getLimit} activities that would complement existing plans and appeal 
       },
     });
   } catch (error) {
+    captureException(error);
     logError('AI_RECOMMEND_GET', error);
     return NextResponse.json(
       { error: 'Failed to get recommendations' },

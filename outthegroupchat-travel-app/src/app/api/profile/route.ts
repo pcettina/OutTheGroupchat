@@ -4,6 +4,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { logger } from '@/lib/logger';
+import { captureException } from '@/lib/sentry';
 import { z } from 'zod';
 
 const updateProfileSchema = z.object({
@@ -45,6 +46,7 @@ export async function GET() {
 
     return NextResponse.json(user);
   } catch (error) {
+    captureException(error)
     logger.error({ error }, '[PROFILE_GET] Internal error');
     return new NextResponse('Internal error', { status: 500 });
   }
@@ -91,6 +93,7 @@ export async function PUT(req: Request) {
 
     return NextResponse.json(user);
   } catch (error) {
+    captureException(error)
     logger.error({ error }, '[PROFILE_PUT] Internal error');
     return new NextResponse('Internal error', { status: 500 });
   }

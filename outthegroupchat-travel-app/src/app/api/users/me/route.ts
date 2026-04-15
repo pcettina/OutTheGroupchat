@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
+import { captureException } from '@/lib/sentry';
 
 const updateProfileSchema = z.object({
   name: z.string().min(1).optional(),
@@ -112,6 +113,7 @@ export async function GET() {
       },
     });
   } catch (error) {
+    captureException(error)
     logger.error({ error }, '[USER_ME_GET] Failed to fetch profile');
     return NextResponse.json(
       { success: false, error: 'Failed to fetch profile' },
@@ -175,6 +177,7 @@ export async function PATCH(req: Request) {
 
     return NextResponse.json({ success: true, data: updatedUser });
   } catch (error) {
+    captureException(error)
     logger.error({ error }, '[USER_ME_PATCH] Failed to update profile');
     return NextResponse.json(
       { success: false, error: 'Failed to update profile' },

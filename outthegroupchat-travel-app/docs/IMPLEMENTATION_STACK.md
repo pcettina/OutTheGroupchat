@@ -4,7 +4,7 @@
 
 OutTheGroupchat is a full-stack group travel planning application built with modern web technologies, AI integration, and real-time collaboration features.
 
-*Last Updated: 2026-03-25*
+*Last Updated: 2026-04-15*
 
 ---
 
@@ -114,7 +114,7 @@ OutTheGroupchat is a full-stack group travel planning application built with mod
 
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| **Next.js API Routes** | 14.1.3 | REST API (48 endpoints as of 2026-03-24) |
+| **Next.js API Routes** | 14.1.3 | REST API (48 endpoints, all with rate limiting) |
 | **Prisma** | 5.22.0 | Database ORM |
 | **PostgreSQL** | 15+ | Relational database via Supabase |
 | **NextAuth.js** | 4.24.7 | Authentication (credentials provider) |
@@ -148,13 +148,13 @@ OutTheGroupchat is a full-stack group travel planning application built with mod
 | **Pusher** | 5.2.0 | Server-side WebSocket |
 | **Pusher-js** | 8.4.0 | Client-side WebSocket |
 
-> Note: Pusher is configured but environment variables are missing in Vercel production as of 2026-03-25.
+> Note: Pusher is configured but environment variables are missing in Vercel production as of 2026-04-15.
 
 ### Monitoring & Observability
 
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| **@sentry/nextjs** | 10.43.0 | Error tracking (needs real DSN in Vercel) |
+| **@sentry/nextjs** | 10.43.0 | Error tracking — 18/48 routes instrumented; needs real DSN in Vercel |
 | **@vercel/analytics** | 2.0.1 | Web analytics (active in production) |
 
 ### Testing
@@ -162,9 +162,9 @@ OutTheGroupchat is a full-stack group travel planning application built with mod
 | Technology | Version | Purpose |
 |------------|---------|---------|
 | **Vitest** | 4.0.18 | Unit/integration test runner |
-| **@playwright/test** | 1.48.0 | E2E testing (browsers need install) |
+| **@playwright/test** | 1.48.0 | E2E testing (smoke test configured) |
 
-> As of 2026-03-25: 925+ Vitest tests across 49 test files, 0 failures. Playwright spec exists; browsers need `npx playwright install chromium`.
+> As of 2026-04-15: 1451 Vitest tests across 59 test files, 0 failures. Playwright smoke test configured and running in GitHub Actions CI (added 2026-04-08).
 
 ### External APIs
 
@@ -179,7 +179,7 @@ OutTheGroupchat is a full-stack group travel planning application built with mod
 
 ## Database Schema
 
-### Core Models (Actual, as of 2026-03-25)
+### Core Models (Actual, as of 2026-04-15)
 
 ```prisma
 model User {
@@ -268,7 +268,7 @@ enum PriceRange {
 
 ---
 
-## API Endpoints (48 total as of 2026-03-24)
+## API Endpoints (48 total as of 2026-04-15)
 
 ### Trips
 
@@ -347,7 +347,7 @@ enum PriceRange {
 
 ---
 
-## File Structure (Actual, 2026-03-25)
+## File Structure (Actual, 2026-04-15)
 
 ```
 src/
@@ -428,11 +428,11 @@ src/
 |
 +-- __tests__/
 |   +-- setup.ts                  # Prisma mocks for all models
-    (49 test files, 925+ tests as of 2026-03-24)
+    (59 test files, 1451 tests as of 2026-04-15)
 
 e2e/
-+-- auth-flow.spec.ts             # Playwright E2E (browsers need install)
-+-- smoke.spec.ts
++-- auth-flow.spec.ts             # Playwright E2E
++-- smoke.spec.ts                 # Smoke test (runs in GitHub Actions CI)
 ```
 
 ---
@@ -515,8 +515,8 @@ npm run build        # prisma generate + next build
 npm run db:push      # Push schema to database
 npm run db:migrate   # Create migrations
 npm run db:generate  # Regenerate Prisma client
-npm run test         # Run Vitest test suite (925+ tests)
-npm run test:e2e     # Run Playwright E2E (requires browser install)
+npm run test         # Run Vitest test suite (1451 tests)
+npm run test:e2e     # Run Playwright E2E (GitHub Actions CI configured)
 ```
 
 ---
@@ -526,17 +526,19 @@ npm run test:e2e     # Run Playwright E2E (requires browser install)
 1. **Authentication**: NextAuth.js with session-based auth, bcrypt password hashing
 2. **Authorization**: Role-based access control (OWNER, ADMIN, MEMBER) + auth guards on all protected routes
 3. **Input Validation**: Zod schemas on all major API endpoints
-4. **Rate Limiting**: Upstash Redis-based rate limiting on all high-risk routes
+4. **Rate Limiting**: Upstash Redis-based rate limiting on all 48 routes (100% coverage)
 5. **CORS**: Configured in vercel.json and next.config.js (2026-03-23)
 6. **Security Headers**: HSTS, X-Frame-Options, Content-Security-Policy (2026-03-10)
 7. **Logging**: pino structured logging (0 `console.*` in production code)
 8. **Type Safety**: TypeScript strict mode, 0 `any` types
 9. **XSS**: React + isomorphic-dompurify
 10. **SQL Injection**: Prisma ORM parameterized queries
+11. **CI**: GitHub Actions workflow (.github/workflows/ci.yml) — TSC, lint, Vitest, Playwright on every push (2026-04-08)
+12. **Error Tracking**: Sentry captureException on 18/48 routes; security score 9/10
 
 ---
 
-## Code Quality Metrics (2026-03-25)
+## Code Quality Metrics (2026-04-15)
 
 | Metric | Target | Current |
 |--------|--------|---------|
@@ -544,9 +546,12 @@ npm run test:e2e     # Run Playwright E2E (requires browser install)
 | `console.*` in prod | 0 | 0 |
 | Files > 600 lines (prod) | 0 | 0 |
 | TSC errors | 0 | 0 |
-| Test count | 500+ | 925+ |
-| Test files | - | 49 |
+| Test count | 500+ | 1451 |
+| Test files | - | 59 |
 | API routes | - | 48 |
+| Rate-limited routes | 48 | 48 |
+| Sentry-instrumented routes | - | 18 |
+| Security score | 10/10 | 9/10 |
 | TypeScript files | - | 253 |
 | Lint warnings/errors | 0 | 0 |
 
@@ -564,4 +569,4 @@ npm run test:e2e     # Run Playwright E2E (requires browser install)
 
 ---
 
-*Last Updated: 2026-03-25*
+*Last Updated: 2026-04-15*

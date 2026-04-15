@@ -2,13 +2,13 @@
 
 ## Overview
 
-This document outlines future features, improvements, and technical debt to address for the OutTheGroupchat platform. Items already completed as of 2026-03-25 are marked accordingly.
+This document outlines future features, improvements, and technical debt to address for the OutTheGroupchat platform. Items already completed as of 2026-04-15 are marked accordingly.
 
-*Last Updated: 2026-03-25*
+*Last Updated: 2026-04-15*
 
 ---
 
-## Current State Summary (2026-03-25)
+## Current State Summary (2026-04-15)
 
 The following items from earlier versions of this roadmap have been **completed**:
 
@@ -22,7 +22,7 @@ The following items from earlier versions of this roadmap have been **completed*
 ### Completed from Former "Technical Debt"
 - [x] **TypeScript strict mode** — Enabled, 0 `any` types
 - [x] **Error Handling** — Global error boundary, standardized API error responses, pino logging
-- [x] **Testing** — 925+ unit/integration tests across 49 Vitest test files; Playwright E2E framework configured
+- [x] **Testing** — 1451 unit/integration tests across 59 Vitest test files; Playwright E2E smoke test configured
 - [x] **Rate Limiting** — Upstash Redis on all high-risk routes
 - [x] **Input Sanitization** — Zod on all major API endpoints
 - [x] **Security Headers** — HSTS, X-Frame-Options, CSP (2026-03-10)
@@ -30,7 +30,7 @@ The following items from earlier versions of this roadmap have been **completed*
 - [x] **Itinerary API** — GET/POST/PUT with $transaction atomicity (2026-03-23)
 
 ### Completed from Former "Phase 3: Monitoring"
-- [x] **Sentry installed and configured** — Needs real DSN in Vercel production
+- [x] **Sentry installed and configured** — 18/48 routes instrumented; needs real DSN in Vercel production
 - [x] **Vercel Analytics** — Active in production (2026-03-16)
 - [x] **Structured logging** — pino via @/lib/logger (2026-03-09)
 
@@ -48,7 +48,7 @@ These items are blockers or near-blockers for the Q2 2026 beta launch. See LAUNC
 | Set Pusher env vars in Vercel | Critical | Missing |
 | Obtain Sentry DSN + set in Vercel | High | Missing |
 | Verify Resend domain | High | Pending |
-| Install Playwright browsers in CI | High | `npx playwright install chromium` needed |
+| Install Playwright browsers in CI | Done | GitHub Actions CI configured with `npx playwright install chromium` (2026-04-08) |
 | NEXTAUTH_SECRET rotation (32+ chars) | High | Unverified |
 
 ### 1.2 Core Feature Completion
@@ -68,7 +68,7 @@ These items are blockers or near-blockers for the Q2 2026 beta launch. See LAUNC
 
 | Item | Priority | Description |
 |------|----------|-------------|
-| Rate limiting on remaining endpoints | High | Ensure 100% coverage |
+| Rate limiting on remaining endpoints | Done | 48/48 routes covered (2026-04-14) |
 | Session timeout configuration | High | NextAuth session maxAge |
 | Failed login attempt limiting | High | Track failures per IP/email |
 | Form validation errors inline | Medium | Client-side Zod feedback |
@@ -356,8 +356,8 @@ Q1 2027 — Social & Mobile
 - Error rate < 1% (Sentry)
 - AI latency (per provider)
 - Uptime > 99.9%
-- Test coverage (currently 925+ tests, targeting > 80% line coverage)
+- Test coverage (currently 1451 tests across 59 files, targeting > 80% line coverage)
 
 ---
 
-*Last Updated: 2026-03-25*
+*Last Updated: 2026-04-15*

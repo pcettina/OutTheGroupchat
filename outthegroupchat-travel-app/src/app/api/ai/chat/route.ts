@@ -6,6 +6,7 @@ import { authOptions } from '@/lib/auth';
 import { getModel, isOpenAIConfigured } from '@/lib/ai/client';
 import { aiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 import { logError } from '@/lib/logger';
+import { captureException } from '@/lib/sentry';
 
 // Route segment config for AI streaming
 export const maxDuration = 60; // seconds - AI responses can take longer
@@ -158,6 +159,7 @@ Use this context to provide relevant, specific advice about their trip to ${trip
     return result.toTextStreamResponse();
   } catch (error) {
     // Log detailed error for debugging
+    captureException(error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     logError('AI_CHAT', error, { errorMessage });
     
@@ -227,11 +229,18 @@ export async function GET(req: Request) {
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[0]);
         const tipsResult = tipsOutputSchema.safeParse(parsed);
+        if (!tipsResult.success) {
+          logError('AI_CHAT_GET_PARSE', new Error('AI tips response did not match expected schema'), {
+            issues: tipsResult.error.flatten(),
+          });
+        }
         tips = tipsResult.success ? tipsResult.data : [textContent];
       } else {
         tips = [textContent];
       }
-    } catch {
+    } catch (parseErr) {
+      captureException(parseErr);
+      logError('AI_CHAT_GET_PARSE', parseErr instanceof Error ? parseErr : new Error('Failed to parse AI tips response'));
       tips = [textContent];
     }
 
@@ -240,6 +249,7 @@ export async function GET(req: Request) {
       data: { destination, tips },
     });
   } catch (error) {
+    captureException(error);
     logError('AI_CHAT_GET', error);
     return NextResponse.json(
       { success: false, error: 'Failed to get tips' },
