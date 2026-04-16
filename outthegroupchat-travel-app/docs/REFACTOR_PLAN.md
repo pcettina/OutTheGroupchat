@@ -240,18 +240,21 @@ Each phase targets a discrete session (or a nightly build if small). Phases are 
 ---
 
 ### Phase 1 — Archive & stash trip planning (1–2 sessions)
+
+> ✅ **COMPLETE as of 2026-04-16 (PR #<TBD>)** — Wave 1 + Wave 2 executed in real-time session. See PR description for per-file audit.
+
 **Objective:** Every byte of trip-planning code moved to `_archive/`, zero runtime footprint, everything still compiles.
 **Actions:**
-1. Create `src/_archive/` directory scaffolding
-2. Move files (per §4.2 layer 2)
-3. Move tests (per §4.2 layer 4), update `vitest.config.ts` exclude glob
-4. Add Prisma `@deprecated` comments to trip-related models (per §4.2 layer 3)
-5. Snapshot doc sections into `docs/archive/trip-planning/` (per §4.2 layer 5)
-6. Remove trip links from `Navigation.tsx`
-7. Delete trip routes from any middleware routing rules (replace with 404 response — or leave paths unhandled)
-8. Add `ENABLE_TRIP_PLANNING` env var stub to `.env.example`
-9. Update `docs/CODEMAP.md`, `docs/API_STATUS.md`, `docs/LAUNCH_CHECKLIST.md` to reflect archived surface
-10. Write `src/_archive/README.md` explaining the preservation scheme
+1. ✅ Create `src/_archive/` directory scaffolding
+2. ✅ Move files (per §4.2 layer 2)
+3. ✅ Move tests (per §4.2 layer 4), update `vitest.config.ts` exclude glob
+4. ✅ Add Prisma `@deprecated` comments to trip-related models (per §4.2 layer 3)
+5. ✅ Snapshot doc sections into `docs/archive/trip-planning/` (per §4.2 layer 5)
+6. ✅ Remove trip links from `Navigation.tsx`
+7. ✅ Delete trip routes from any middleware routing rules (replace with 404 response — or leave paths unhandled)
+8. ✅ Add `ENABLE_TRIP_PLANNING` env var stub to `.env.example`
+9. ✅ Update `docs/CODEMAP.md`, `docs/API_STATUS.md`, `docs/LAUNCH_CHECKLIST.md` to reflect archived surface
+10. ✅ Write `src/_archive/README.md` explaining the preservation scheme
 
 **Exit criteria:** `npm run build` passes, `npm test` passes (archive tests excluded), `npx tsc --noEmit` clean, no trip links visible in UI, no active routes under `/api/trips/*`.
 

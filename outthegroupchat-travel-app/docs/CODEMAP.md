@@ -1,6 +1,8 @@
 # OutTheGroupchat — Full Codemap
 
 > Auto-generated 2026-03-10. Last updated 2026-04-16. Comprehensive reference for agents and developers.
+>
+> **🔀 Pivot in progress:** See `docs/REFACTOR_PLAN.md`. Trip-planning surface archived under `_archive/` directories as of Phase 1 (2026-04-16). See [Archived surface (Phase 1)](#archived-surface-phase-1) section below and `src/_archive/README.md` for the preservation scheme.
 
 ## Table of Contents
 
@@ -29,8 +31,8 @@ Full-stack Next.js 14 collaborative travel planning app. Groups plan trips toget
 
 **App root:** `outthegroupchat-travel-app/`
 **Source:** `outthegroupchat-travel-app/src/`
-**Stats:** ~258 TS/TSX files | ~33,500 LOC | 48 API routes | 87 components | 20 pages
-**Test Health (2026-04-16):** 1346 tests passing | 63 test files | 0 TSC errors | Sentry 19/48 routes
+**Stats (post-archive, 2026-04-16):** ~35 live API routes (14 archived) | live component groups: auth, feed, social, discover, notifications, profile, search, settings, onboarding, ai, ui, accessibility + Navigation | live services: survey (repurpose-pending) | live pages: /, /auth/*, /profile, /feed, /discover, /inspiration, /notifications, /search, /settings, /onboarding, /privacy, /terms
+**Test Health (2026-04-16):** ~46 live test files post-archive (Wave 3 to confirm exact count) | 0 TSC errors | Sentry 19/48 routes on pre-archive branch
 
 ---
 
@@ -423,26 +425,13 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `/api/beta/initialize-password` | POST | API Key | Yes | Password init for beta users — N8N_API_KEY auth protection added 2026-03-19 |
 | `/api/beta/status` | GET | No | No | Beta signup status check |
 
-### Trips CRUD
+### Trips CRUD (📦 ARCHIVED 2026-04-16)
 
-| Endpoint | Methods | Auth | Zod | Purpose |
-|----------|---------|------|-----|---------|
-| `/api/trips` | GET, POST | Yes | Yes (POST) | List user trips, create trip |
-| `/api/trips/[tripId]` | GET, PATCH, DELETE | Yes | Yes (PATCH) | Trip detail, update, delete |
-| `/api/trips/[tripId]/members` | GET, PATCH, DELETE | Yes | Yes (PATCH) | Member management, role changes |
-| `/api/trips/[tripId]/activities` | GET, POST | Yes | Yes (POST) | Trip activities CRUD |
-| `/api/trips/[tripId]/invitations` | GET, POST | Yes | Yes (POST) | Send/list invitations |
-| `/api/trips/[tripId]/itinerary` | GET, PUT | Yes | Yes (PUT) | Day-by-day itinerary |
-| `/api/trips/[tripId]/survey` | GET, POST, PUT | Yes | Yes (POST/PUT) | Trip preference surveys |
-| `/api/trips/[tripId]/voting` | GET, POST, PUT | Yes | Yes (POST/PUT) | Voting sessions with auto-close |
-| `/api/trips/[tripId]/recommendations` | GET, POST | Yes | No | AI recommendations from survey data |
-| `/api/trips/[tripId]/suggestions` | GET | Yes | No | Destination-based suggestions |
+> Moved to `src/app/api/_archive/trips/`. See [Archived surface (Phase 1)](#archived-surface-phase-1). Paths below no longer resolve at runtime.
 
-### Activities
+### Activities (📦 ARCHIVED 2026-04-16)
 
-| Endpoint | Methods | Auth | Zod | Purpose |
-|----------|---------|------|-----|---------|
-| `/api/activities/[activityId]` | GET, POST, PUT | Yes | Yes (PUT) | Activity detail, save/unsave, comments, ratings |
+> `/api/activities/[activityId]` moved to `src/app/api/_archive/activities/`. See [Archived surface (Phase 1)](#archived-surface-phase-1).
 
 ### Users & Social
 
@@ -511,11 +500,11 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `/auth/signup` | `app/auth/signup/page.tsx` | Client | Public | Registration form |
 | `/auth/reset-password` | `app/auth/reset-password/page.tsx` | Client | Public | Password reset request form — submits email to POST /api/auth/reset-password |
 | `/auth/reset-password/confirm` | `app/auth/reset-password/confirm/page.tsx` | Client | Public | Password reset confirmation — reads token+email from query params, submits PATCH /api/auth/reset-password |
-| `/trips` | `app/trips/page.tsx` | Client | Required | Trip list with stats, filters, creation |
-| `/trips/new` | `app/trips/new/page.tsx` | Client | Required | Multi-step trip wizard |
-| `/trips/[tripId]` | `app/trips/[tripId]/page.tsx` | Client | Required | Trip detail: itinerary, members, activities |
-| `/trips/[tripId]/survey` | `app/trips/[tripId]/survey/page.tsx` | Client | Required | Survey form for preferences |
-| `/trips/[tripId]/vote` | `app/trips/[tripId]/vote/page.tsx` | Client | Required | Voting interface |
+| ~~`/trips`~~ | 📦 archived to `app/_archive/trips/page.tsx` 2026-04-16 | — | — | Archived in Phase 1 pivot |
+| ~~`/trips/new`~~ | 📦 archived 2026-04-16 | — | — | — |
+| ~~`/trips/[tripId]`~~ | 📦 archived 2026-04-16 | — | — | — |
+| ~~`/trips/[tripId]/survey`~~ | 📦 archived 2026-04-16 | — | — | — |
+| ~~`/trips/[tripId]/vote`~~ | 📦 archived 2026-04-16 | — | — | — |
 | `/discover` | `app/discover/page.tsx` | Client | Public | Destination discovery & inspiration |
 | `/inspiration` | `app/inspiration/page.tsx` | Client | Public | Trending trips, events |
 | `/feed` | `app/feed/page.tsx` | Client | Required | Social activity feed |
@@ -620,39 +609,13 @@ db:seed        → npx tsx prisma/seed/index.ts
 
 > Note: `TravelBadges` was deleted 2026-04-16 (confirmed unused dead code).
 
-### Surveys (`components/surveys/`)
+### Surveys (`components/surveys/`) — 📦 ARCHIVED 2026-04-16
 
-| Component | Lines | Props | Purpose |
-|-----------|-------|-------|---------|
-| `SurveyBuilder` | 473 | questions?, onSave?, readOnly? | Drag-drop question builder |
-| `SurveyForm` | 317 | survey, onSubmit?, loading? | Survey response form |
-| `QuestionRenderer` | — | question, response?, onResponseChange? | Routes to correct question type |
-| `MultipleChoice` | — | options, value, onChange, multiple? | Radio/checkbox selection |
-| `TextInput` | — | value, onChange, placeholder?, type? | Open-ended text |
-| `RangeSlider` | — | min, max, step?, value, onChange | Budget range / Likert |
-| `DateRangePicker` | — | startDate, endDate, onStartChange, onEndChange | Date range |
-| `RankingQuestion` | — | items, onReorder, dragHint? | Drag-to-rank priorities |
+> Moved to `src/components/_archive/surveys/`. May be repurposed for Poll UI in Phase 2. See [Archived surface (Phase 1)](#archived-surface-phase-1).
 
-### Trips (`components/trips/`)
+### Trips (`components/trips/`) — 📦 ARCHIVED 2026-04-16
 
-| Component | Lines | Props | Purpose |
-|-----------|-------|-------|---------|
-| `TripCard` | — | trip, variant? (default\|compact) | Trip card for list view |
-| `TripList` | — | trips, loading?, onTripClick?, groupBy? | Trip grid/list with filtering |
-| `TripWizard` | — | onComplete? | Multi-step: destination → dates → budget → members |
-| `TripHeader` | — | trip, onEdit?, onShare?, editable? | Hero with cover image + title |
-| `TripOverview` | — | trip, compact? | Summary (dates, members, budget) |
-| `MemberList` | — | members, onRemove?, onRoleChange?, editable? | Member list with roles |
-| `ItineraryTimeline` | — | days, onAddDay?, onEditDay?, editable? | Day-by-day schedule |
-| `InviteModal` | — | tripId, open, onOpenChange, onInvite? | Email invite form |
-| `InviteMemberModal` | — | tripId, open, onOpenChange, onInvited? | Invite member UI with member search and email invite ✅ 2026-03-19 |
-| `AddActivityModal` | 492 | tripId, date?, open, onOpenChange, onAdd? | Add activity to itinerary |
-
-**Trip wizard steps** (`components/trips/steps/`):
-- `DestinationStep` — City/country search
-- `DateStep` — Start & end dates
-- `BudgetStep` — Total budget & currency
-- `MembersStep` — Invite by email
+> All trip components (TripCard, TripList, TripWizard, TripHeader, TripOverview, MemberList, ItineraryTimeline, InviteModal, InviteMemberModal, AddActivityModal, wizard steps) moved to `src/components/_archive/trips/`. See [Archived surface (Phase 1)](#archived-surface-phase-1).
 
 ### UI (`components/ui/`)
 
@@ -676,16 +639,9 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `FloatingShareButton` | itemId, itemType, onShare? | Floating share FAB |
 | `Toast` | message, type (success\|error\|info), duration?, onClose | Toast notification |
 
-### Voting (`components/voting/`)
+### Voting (`components/voting/`) — 📦 ARCHIVED 2026-04-16
 
-| Component | Lines | Props | Purpose |
-|-----------|-------|-------|---------|
-| `VotingSession` | 274 | session, tripId, currentUserId, onVoteComplete? | Vote UI (single, multiple, ranking) |
-| `VotingCard` | — | session, onVote? | Compact voting card |
-| `VotingOption` | — | option, selected?, onSelect?, percentage?, voters? | Single option with progress |
-| `ResultsChart` | — | results, type? (pie\|bar\|ranking) | Results visualization |
-| `VotingDeadline` | — | expiresAt, onExpire?, compact? | Countdown timer |
-| `CreateVotingModal` | 281 | tripId, open, onOpenChange, onCreate? | Create voting session |
+> All voting components moved to `src/components/_archive/voting/`. May be repurposed for Poll UI in Phase 2. See [Archived surface (Phase 1)](#archived-surface-phase-1).
 
 ### Navigation
 
@@ -751,10 +707,10 @@ db:seed        → npx tsx prisma/seed/index.ts
 
 | Service | File | Lines | Key Methods | Purpose |
 |---------|------|-------|-------------|---------|
-| RecommendationService | `services/recommendation.service.ts` | 459 | generateRecommendations(tripMembers, preferences), analyzeDestination(destination, budget), rankDestinations(options, preferences) | AI + survey-based recommendation engine |
-| RecommendationData | `services/recommendation-data.ts` | 185 | — | Static destination databases, activity lists, cost constants, and airport code mappings used by RecommendationService (extracted to keep service under 600 lines) |
-| SurveyService | `services/survey.service.ts` | 377 | createSurvey(tripId, questions), recordResponse(surveyId, userId, response), analyzeSurvey(surveyId) | Survey CRUD + analysis |
-| EventsService | `services/events.service.ts` | — | searchEvents(destination, date), getEventDetails(eventId) | Event discovery (Ticketmaster) |
+| SurveyService | `services/survey.service.ts` | 377 | createSurvey, recordResponse, analyzeSurvey | Retained (may be repurposed as generic Poll service in Phase 2) |
+| ~~RecommendationService~~ | 📦 `services/_archive/recommendation.service.ts` | — | — | Archived 2026-04-16 |
+| ~~RecommendationData~~ | 📦 `services/_archive/recommendation-data.ts` | — | — | Archived 2026-04-16 |
+| ~~EventsService~~ | 📦 `services/_archive/events.service.ts` | — | — | Archived 2026-04-16 |
 
 ---
 
@@ -764,11 +720,7 @@ db:seed        → npx tsx prisma/seed/index.ts
 
 | Hook | File | Returns | Purpose |
 |------|------|---------|---------|
-| `useTrips` | useTrips.ts | {data: Trip[], isLoading, error} | React Query: list user trips |
-| `useTrip` | useTrips.ts | {data: Trip, isLoading, error} | React Query: single trip |
-| `useCreateTrip` | useTrips.ts | {mutate, isPending, error} | Mutation: create trip |
-| `useUpdateTrip` | useTrips.ts | {mutate, isPending, error} | Mutation: update trip |
-| `useDeleteTrip` | useTrips.ts | {mutate, isPending, error} | Mutation: delete trip |
+| ~~`useTrips` / `useTrip` / `useCreateTrip` / `useUpdateTrip` / `useDeleteTrip`~~ | 📦 archived to `hooks/_archive/useTrips.ts` 2026-04-16 | — | — |
 | `usePusherChannel` | usePusher.ts | {channel, isConnected, bind} | Generic Pusher channel sub |
 | `useTripChannel` | usePusher.ts | — | Trip-specific channel |
 | `useUserChannel` | usePusher.ts | — | User notification channel |
@@ -908,12 +860,37 @@ db:seed        → npx tsx prisma/seed/index.ts
 | Lint warnings | 0 |
 | `any` types | 0 ✅ |
 | `console.*` | 0 ✅ |
-| TSC errors (prod + test) | 0 ✅ |
-| Vitest tests | 1346 passing (63 files) as of 2026-04-16 |
-| E2E tests | 11 Playwright smoke tests (4 suites) |
-| Error monitoring | Sentry installed — 19/48 routes instrumented (2026-04-16); needs `SENTRY_DSN` in Vercel |
-| Files >400 lines | ~10 (0 files exceed 600 lines) |
+| TSC errors (prod + test) | 0 ✅ (post-archive; Wave 3 re-verifies) |
+| Vitest tests | Live suite reduced post-archive (Wave 3 confirms count); archived tests runnable on demand via `npm run test:archive` |
+| E2E tests | 11 Playwright smoke tests (4 suites) — trip-specific specs archived |
+| Error monitoring | Sentry — 19/48 coverage on pre-archive branch; coverage recomputed on new live surface in Phase 2 |
+| Files >400 lines | — (all largest files were in archived trip surface) |
 | Production env gaps | OPENAI_API_KEY, Pusher vars, Sentry DSN, Resend domain |
+
+---
+
+## Archived surface (Phase 1)
+
+As of **2026-04-16** the trip-planning product surface has been archived to `_archive/` directories with zero runtime footprint. The code remains browsable, `grep`-able, and revivable. See `src/_archive/README.md` for the preservation scheme and reactivation steps.
+
+### What's archived
+| Layer | Destination |
+|-------|-------------|
+| API routes (14) | `src/app/api/_archive/trips/**`, `src/app/api/_archive/activities/**` |
+| Pages | `src/app/_archive/trips/**` |
+| Components | `src/components/_archive/trips/**`, `src/components/_archive/surveys/**`, `src/components/_archive/voting/**` |
+| Services | `src/services/_archive/recommendation.service.ts`, `recommendation-data.ts`, `events.service.ts` |
+| Tests | `src/__tests__/_archive/**` (excluded from default `npm test`) |
+| Docs snapshots | `docs/archive/trip-planning/` (owned by agent F) |
+| Prisma models | 16 models marked `@deprecated` (Trip, TripMember, TripInvitation, PendingInvitation, TripSurvey, SurveyResponse, VotingSession, Vote, Activity, SavedActivity, ActivityComment, ActivityRating, ItineraryDay, ItineraryItem, ExternalActivity) |
+| Git tag | `v1.0-trip-planning` anchors the pre-pivot commit |
+
+### What remains live
+- **API (~35 routes):** auth/*, beta/*, feed/*, users/*, profile, search, notifications/*, invitations/*, discover/*, inspiration, ai/* (chat/recommend/search), pusher/auth, geocoding, images/search, newsletter, cron, health
+- **Pages:** /, /auth/*, /profile, /feed, /discover, /inspiration, /notifications, /search, /settings, /onboarding, /privacy, /terms
+- **Components:** accessibility, ai (chat), auth, discover, feed, notifications, onboarding, profile, search, settings, social, ui + Navigation.tsx (trip links removed)
+- **Services:** survey.service.ts (repurpose-pending)
+- **Prisma models retained:** User, Account, Session, VerificationToken, Follow, Notification, TripComment, TripLike (last two to be generalized into Post* in Phase 2+)
 
 ### Largest Files (>400 lines)
 
