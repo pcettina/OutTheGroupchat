@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
 import type { Prisma } from '@prisma/client';
+import { captureException } from '@/lib/sentry';
 
 interface VotingOption {
   id: string;
@@ -100,7 +101,8 @@ export async function GET(
     });
 
     return NextResponse.json({ success: true, data: sessionsWithResults });
-  } catch {
+  } catch (error) {
+    captureException(error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch voting sessions' },
       { status: 500 }
@@ -182,7 +184,8 @@ export async function POST(
     });
 
     return NextResponse.json({ success: true, data: votingSession }, { status: 201 });
-  } catch {
+  } catch (error) {
+    captureException(error);
     return NextResponse.json(
       { success: false, error: 'Failed to create voting session' },
       { status: 500 }
@@ -302,7 +305,8 @@ export async function PUT(
     }
 
     return NextResponse.json({ success: true, data: vote });
-  } catch {
+  } catch (error) {
+    captureException(error);
     return NextResponse.json(
       { success: false, error: 'Failed to submit vote' },
       { status: 500 }

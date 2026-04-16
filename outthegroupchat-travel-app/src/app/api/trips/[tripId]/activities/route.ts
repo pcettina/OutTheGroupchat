@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth';
 import { logError } from '@/lib/logger';
 import { z } from 'zod';
 import type { Prisma, ActivityCategory, ActivityStatus } from '@prisma/client';
+import { captureException } from '@/lib/sentry';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -144,6 +145,7 @@ export async function GET(
 
     return NextResponse.json({ success: true, data: activitiesWithRatings });
   } catch (error) {
+    captureException(error);
     logError('ACTIVITIES_GET', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch activities' },
@@ -237,6 +239,7 @@ export async function POST(
 
     return NextResponse.json({ success: true, data: activity }, { status: 201 });
   } catch (error) {
+    captureException(error);
     logError('ACTIVITIES_POST', error);
     return NextResponse.json(
       { success: false, error: 'Failed to create activity' },

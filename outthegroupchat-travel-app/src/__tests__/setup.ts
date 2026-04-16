@@ -164,6 +164,7 @@ vi.mock('@/lib/prisma', () => ({
       create: vi.fn(),
       delete: vi.fn(),
       findUnique: vi.fn(),
+      findFirst: vi.fn(),
       findMany: vi.fn(),
     },
     surveyResponse: {
@@ -172,6 +173,18 @@ vi.mock('@/lib/prisma', () => ({
       findUnique: vi.fn(),
       upsert: vi.fn(),
     },
+    destinationCache: {
+      findFirst: vi.fn(),
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      upsert: vi.fn(),
+    },
+    $queryRaw: vi.fn().mockResolvedValue([{ now: new Date() }]),
+    $transaction: vi.fn().mockImplementation((fn: unknown) =>
+      typeof fn === 'function' ? fn({}) : Promise.resolve(fn)
+    ),
   },
 }));
 
@@ -214,6 +227,14 @@ vi.mock('@/lib/logger', () => ({
   logSuccess: vi.fn(),
   apiLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
   authLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+  aiLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+  dbLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+  createRequestLogger: vi.fn(() => ({
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
+  })),
 }));
 
 // ---------------------------------------------------------------------------
@@ -224,3 +245,15 @@ vi.mock('@/lib/logger', () => ({
 vi.mock('@/lib/invitations', () => ({
   processInvitations: vi.fn().mockResolvedValue({ invitations: [], errors: [] }),
 }));
+
+// ---------------------------------------------------------------------------
+// Mock: @/lib/sentry
+// Prevents module-level logger.child() crash when routes import sentry.ts.
+// ---------------------------------------------------------------------------
+vi.mock('@/lib/sentry', () => ({
+  captureException: vi.fn(),
+  addBreadcrumb: vi.fn(),
+  setUser: vi.fn(),
+  withSentry: vi.fn((fn: unknown) => fn),
+}));
+

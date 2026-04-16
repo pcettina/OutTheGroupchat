@@ -1,6 +1,6 @@
 # OutTheGroupchat — Full Codemap
 
-> Auto-generated 2026-03-10. Last updated 2026-03-26. Comprehensive reference for agents and developers.
+> Auto-generated 2026-03-10. Last updated 2026-04-16. Comprehensive reference for agents and developers.
 
 ## Table of Contents
 
@@ -29,7 +29,8 @@ Full-stack Next.js 14 collaborative travel planning app. Groups plan trips toget
 
 **App root:** `outthegroupchat-travel-app/`
 **Source:** `outthegroupchat-travel-app/src/`
-**Stats:** ~263 TS/TSX files | ~33,500 LOC | 48 API routes | 92 components | 20 pages
+**Stats:** ~258 TS/TSX files | ~33,500 LOC | 48 API routes | 87 components | 20 pages
+**Test Health (2026-04-16):** 1346 tests passing | 63 test files | 0 TSC errors | Sentry 19/48 routes
 
 ---
 
@@ -548,17 +549,11 @@ db:seed        → npx tsx prisma/seed/index.ts
 
 ### Auth (`components/auth/`)
 
-| Component | Props | Purpose |
-|-----------|-------|---------|
-| `SignUpForm` | — | Email/password registration with validation, auto sign-in |
+> Note: `SignUpForm` was deleted 2026-04-16 (confirmed unused dead code).
 
 ### Discover (`components/discover/`)
 
-| Component | Props | Purpose |
-|-----------|-------|---------|
-| `CategoryFilter` | categories, selectedCategory, onSelectCategory | Horizontal category pill selector |
-| `DestinationCard` | id, city, country, image?, averagePrice?, rating?, tags?, featured? | Destination grid card with hover zoom |
-| `TrendingSection` | destinations?, events? | Horizontal trending content row |
+> Note: `CategoryFilter`, `DestinationCard`, `TrendingSection` were deleted 2026-04-16 (confirmed unused dead code).
 
 ### Feed (`components/feed/`)
 
@@ -622,7 +617,8 @@ db:seed        → npx tsx prisma/seed/index.ts
 | Component | Lines | Props | Purpose |
 |-----------|-------|-------|---------|
 | `ActivityCard` | — | activity, trip?, onSave?, onShare? | Activity recommendation card |
-| `TravelBadges` | 391 | badges, userId?, interactive? | Achievement/travel badges |
+
+> Note: `TravelBadges` was deleted 2026-04-16 (confirmed unused dead code).
 
 ### Surveys (`components/surveys/`)
 
@@ -807,10 +803,14 @@ db:seed        → npx tsx prisma/seed/index.ts
 
 ## Tests
 
-**Total: 1156 tests across 56 Vitest unit/integration test files** (0 TSC errors in production code, 0 in test files as of 2026-03-26)
+**Total: 1346 tests across 63 Vitest unit/integration test files** (0 TSC errors in production code, 0 in test files as of 2026-04-16; Sentry 19/48 routes instrumented)
 
 | File | Lines | Tests | Coverage |
 |------|-------|-------|----------|
+| `src/__tests__/api/feed-extended.test.ts` | — | 42 | Feed API edge cases: pagination, empty following, multiple activity types, DB errors, feedType params, POST errors ✅ 2026-04-16 |
+| `src/__tests__/api/notifications-extended.test.ts` | — | 33 | Notifications lifecycle edge cases ✅ 2026-04-16 |
+| `src/__tests__/api/health.test.ts` | — | 14 | GET /api/health — healthy/degraded paths, content-type, $queryRaw invocation ✅ 2026-04-16 |
+| `src/__tests__/api/trips-survey-voting-extended.test.ts` | — | 23 | Survey + voting API edge cases ✅ 2026-04-16 |
 | `src/__tests__/api/trips.test.ts` | 525 | 30 | Trips API (GET, POST, PATCH, DELETE) |
 | `src/__tests__/api/trips-suggestions.test.ts` | — | 23 | Trips suggestions API (Ticketmaster + Places) |
 | `src/__tests__/api/trips-flights.test.ts` | — | 26 | Trips flights API (Amadeus-style) |
@@ -909,9 +909,9 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `any` types | 0 ✅ |
 | `console.*` | 0 ✅ |
 | TSC errors (prod + test) | 0 ✅ |
-| Vitest tests | 1156 passing (56 files) |
+| Vitest tests | 1346 passing (63 files) as of 2026-04-16 |
 | E2E tests | 11 Playwright smoke tests (4 suites) |
-| Error monitoring | Sentry installed (server + client + edge) — needs `SENTRY_DSN` in Vercel |
+| Error monitoring | Sentry installed — 19/48 routes instrumented (2026-04-16); needs `SENTRY_DSN` in Vercel |
 | Files >400 lines | ~10 (0 files exceed 600 lines) |
 | Production env gaps | OPENAI_API_KEY, Pusher vars, Sentry DSN, Resend domain |
 

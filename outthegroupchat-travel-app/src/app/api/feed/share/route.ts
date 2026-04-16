@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { logError } from '@/lib/logger';
+import { captureException } from '@/lib/sentry';
 import { z } from 'zod';
 
 // Force dynamic rendering for this route
@@ -126,6 +127,7 @@ export async function POST(req: Request) {
       { status: 400 }
     );
   } catch (error) {
+    captureException(error);
     logError('FEED_SHARE_POST', error);
     return NextResponse.json(
       { success: false, error: 'Failed to share item' },

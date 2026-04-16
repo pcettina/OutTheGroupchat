@@ -1,21 +1,38 @@
 # OutTheGroupchat - Production Deployment & Feature Roadmap
 
 > **Target:** Q2 2026 Beta Launch
-> **Version:** 3.0 | **Last Updated:** 2026-03-25
+> **Version:** 3.1 | **Last Updated:** 2026-04-16
 
 ---
 
-## Current System Status (as of 2026-03-25)
+## Current System Status (as of 2026-04-16)
 
-### Overall Launch Readiness: 78% (Target: 85% for Beta)
+### Codebase Health Snapshot
+
+| Metric | Value |
+|--------|-------|
+| Tests passing (main) | 1,234 (59 test files) |
+| API routes | 48 (all rate-limited) |
+| TypeScript files | 266 |
+| `any` types | 0 |
+| `console.*` in prod | 0 |
+| Files > 600 lines (prod) | 0 |
+| Build | PASS |
+| Lint warnings | 0 |
+| TSC errors | 0 |
+| Security score | 9/10 |
+| Sentry coverage | 19/48 routes |
+| GitHub Actions CI | Passing |
+
+### Overall Launch Readiness: 83% (Target: 85% for Beta)
 
 | Category | Score | Target | Status |
 |----------|-------|--------|--------|
-| Infrastructure | 92% | 100% | Almost Ready |
-| Core Features | 77% | 90% | In Progress |
-| Security | 83% | 100% | In Progress |
-| Testing | 72% | 80% | In Progress |
-| Monitoring | 55% | 80% | In Progress |
+| Infrastructure | 95% | 100% | Almost Ready |
+| Core Features | 82% | 90% | In Progress |
+| Security | 90% | 100% | In Progress |
+| Testing | 85% | 80% | Met |
+| Monitoring | 65% | 80% | In Progress |
 
 ### Implemented & Working
 
@@ -44,7 +61,7 @@
 | CORS | Working | Configured in next.config.js (2026-03-23) |
 | Security Headers | Working | HSTS, X-Frame-Options, CSP in next.config.js (2026-03-10) |
 | Error Boundaries | Working | global-error.tsx, error.tsx, not-found.tsx |
-| Sentry | Partial | Installed & configured; needs real DSN in Vercel |
+| Sentry | Partial | 19/48 routes instrumented (2026-04-16); needs real DSN in Vercel |
 | Real-time (Pusher) | Partial | Configured; env vars missing in production |
 | Accessibility | Good | Skip links, ARIA patterns |
 | Responsive Design | Good | Mobile-first, 44px touch targets |
@@ -57,7 +74,7 @@
 | Pusher env vars missing in production | High | Blocked by config |
 | Sentry DSN not set in Vercel | High | Blocked by config |
 | Resend domain not verified | Medium | Email may go to spam |
-| Rate limiting not on ALL endpoints | Medium | In progress |
+| Rate limiting not on ALL endpoints | Medium | RESOLVED — 48/48 routes covered |
 | NEXTAUTH_SECRET strength unverified | Medium | Manual check needed |
 
 ---
@@ -76,7 +93,7 @@
 - TripComment + TripLike models added to schema
 - Invitation acceptance flow with auto-accept on signup
 
-### March 2026 Sprint (In Progress)
+### March 2026 Sprint (COMPLETE)
 
 - `img` → `next/image` migration complete (0 remaining)
 - `console.*` cleanup complete (0 in production code)
@@ -99,6 +116,21 @@
 - discover/* routes require authentication (2026-03-24)
 - auth/demo Zod input validation (2026-03-24)
 
+### April 2026 Sprint (In Progress)
+
+- Test suite scaled to 1,234+ tests on main (59 test files); nightly builds adding ~100 tests per run
+- Rate limiting expanded to all 48 API routes (48/48 — 100% coverage)
+- Security score raised to 9/10 (JSDoc, Zod coerce, input sanitization)
+- Sentry error monitoring expanded to 19/48 routes (trips, activities, search, inspiration, users, profile, discover x4, AI routes, auth routes) — 2026-04-16
+- beta/status route migrated from in-memory Map to Redis checkRateLimit (2026-04-16)
+- GitHub Actions CI pipeline added (.github/workflows/ci.yml) with TSC, lint, Vitest, Playwright
+- DeleteTripModal component wired to DELETE /api/trips/[tripId]
+- Privacy + Terms of Service pages added
+- JSDoc added across 14+ lib/service files
+- Dead components removed: DestinationCard, CategoryFilter, TrendingSection, TravelBadges
+- Voting page displays real vote counts from API (no more hardcoded zeros)
+- Voting PUT response now returns voteCounts + totalVotes
+
 ---
 
 ## Remaining Work Before Beta Launch
@@ -113,11 +145,13 @@
 [ ] NEXTAUTH_SECRET rotation (32+ chars)
 [ ] Session timeout configuration
 [ ] Failed login attempt limiting
-[ ] Rate limiting on remaining unguarded endpoints
+[x] Rate limiting on all endpoints (COMPLETE — 48/48 covered as of 2026-04-16)
 [ ] XSS prevention (DOMPurify) verification
 [ ] Trip editing flow
-[ ] Trip deletion/archiving
+[ ] Trip deletion/archiving (DeleteTripModal added 2026-04-08)
 [ ] Trip wizard (multi-step creation)
+[ ] Expand Sentry to remaining 29/48 routes (19/48 instrumented)
+[ ] Merge 22 open PRs into main (PRs #17–#38 open)
 ```
 
 ### Phase 2: Core Feature Completion
@@ -217,7 +251,7 @@
 - [x] XSS prevention (React handles, plus DOMPurify installed)
 - [x] CORS configured (next.config.js, 2026-03-23)
 - [x] Security headers (HSTS, X-Frame-Options, CSP — 2026-03-10)
-- [ ] Rate limiting on ALL endpoints (in progress)
+- [x] Rate limiting on ALL 48 endpoints (COMPLETE — 2026-04-16)
 - [ ] Session timeout configuration
 - [ ] Failed login attempt limiting
 
@@ -282,7 +316,7 @@
 
 ---
 
-*Document Version: 3.0*
+*Document Version: 3.1*
 *Target Launch: Q2 2026 (Beta)*
-*Last Updated: 2026-03-25*
+*Last Updated: 2026-04-16*
 *Owner: Development Team*
