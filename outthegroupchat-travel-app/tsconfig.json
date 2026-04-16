@@ -35,6 +35,8 @@
   "exclude": [
     "node_modules",
     "playwright.config.ts",
-    "e2e/**"
+    "e2e/**",
+    "src/_archive/**",
+    "src/**/_archive/**"
   ]
 }

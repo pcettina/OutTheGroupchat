@@ -1,11 +1,14 @@
 # 📡 API & Integration Status
 
-> **Last updated: 2026-04-16**
+> **Last Updated: 2026-04-16**
+>
+> **Archival:** trip/activity routes moved to `src/app/api/_archive/` as of 2026-04-16 Phase 1. See REFACTOR_PLAN.md. Sections below that reference `/api/trips/*` and `/api/activities/*` reflect the pre-archive state for historical context; authoritative status for these routes is the "📦 Archived Routes" section near the bottom of this file.
 >
 > **Last Audit:** April 2026
-> **Overall Status:** 88% Complete
-> **Target:** 100% for Beta Launch
-> **Sentry Coverage:** 19/48 routes instrumented
+> **Live API routes (post-archive):** ~35
+> **Archived API routes (Phase 1):** 14
+> **Target:** 100% for Beta Launch (re-baselined in Phase 8)
+> **Sentry Coverage:** 19/48 routes instrumented on pre-archive branch; coverage on new live surface re-computed after Phase 2
 
 ---
 
@@ -40,59 +43,17 @@
 
 ---
 
-## 📋 Trip APIs
+## 📋 Trip APIs — 📦 ARCHIVED 2026-04-16
 
-| Endpoint | Method | Status | Frontend Connected | Notes |
-|----------|--------|--------|-------------------|-------|
-| `/api/trips` | GET | ✅ | 🔶 | Lists user's trips; **Sentry added 2026-04-16** |
-| `/api/trips` | POST | ✅ | 🔶 | Creates new trip; **Sentry added 2026-04-16** |
-| `/api/trips/[tripId]` | GET | ✅ | 🔶 | Get trip details; email stripped from unauthenticated public responses (security hardened 2026-03-25); **Sentry added 2026-04-16** |
-| `/api/trips/[tripId]` | PATCH | ✅ | ⏳ | Update trip; **Sentry added 2026-04-16** |
-| `/api/trips/[tripId]` | DELETE | ✅ | ⏳ | Delete trip; **Sentry added 2026-04-16** |
-
-### Trip Member APIs
-
-| Endpoint | Method | Status | Frontend Connected | Notes |
-|----------|--------|--------|-------------------|-------|
-| `/api/trips/[tripId]/members` | GET | ✅ | 🔶 | List members; **Sentry added 2026-04-16** |
-| `/api/trips/[tripId]/members` | POST | ✅ | ⏳ | Add member — POST handler implemented 2026-03-20; **Sentry added 2026-04-16** |
-| `/api/trips/[tripId]/invitations` | GET | ✅ | 🔶 | List invitations; **Sentry added 2026-04-16** |
-| `/api/trips/[tripId]/invitations` | POST | ✅ | ✅ | **Email service configured** ✅ Dec 17; **Sentry added 2026-04-16** |
-
-### Trip Activity APIs
-
-| Endpoint | Method | Status | Frontend Connected | Notes |
-|----------|--------|--------|-------------------|-------|
-| `/api/trips/[tripId]/activities` | GET | ✅ | 🔶 | List activities; **Sentry added 2026-04-16** |
-| `/api/trips/[tripId]/activities` | POST | ✅ | 🔶 | Add activity; **Sentry added 2026-04-16** |
-| `/api/trips/[tripId]/itinerary` | GET | ✅ | 🔶 | Get itinerary — complete ✅ 2026-03-23; **Sentry added 2026-04-16** |
-| `/api/trips/[tripId]/itinerary` | POST | ✅ | ⏳ | Create itinerary day — complete ✅ 2026-03-23; **Sentry added 2026-04-16** |
-| `/api/trips/[tripId]/itinerary` | PUT | ✅ | ⏳ | Update itinerary (atomic $transaction) — complete ✅ 2026-03-23; **Sentry added 2026-04-16** |
-| `/api/activities/[activityId]` | GET | ✅ | ⏳ | Get activity detail with comments, ratings, avg score; public activities accessible without auth |
-| `/api/activities/[activityId]` | POST | ✅ | ⏳ | Save/unsave activity (toggle); auth required |
-| `/api/activities/[activityId]` | PUT | ✅ | ⏳ | Add comment (`action: 'comment'`) or rating (`action: 'rate'`) to activity; auth required |
-
-### Trip Planning APIs
-
-| Endpoint | Method | Status | Frontend Connected | Notes |
-|----------|--------|--------|-------------------|-------|
-| `/api/trips/[tripId]/survey` | GET | ✅ | 🔶 | Get survey; **Sentry added 2026-04-16** |
-| `/api/trips/[tripId]/survey` | POST | ✅ | 🔶 | Create/respond to survey; **Sentry added 2026-04-16** |
-| `/api/trips/[tripId]/voting` | GET | ✅ | 🔶 | Get voting session; **Sentry added 2026-04-16** |
-| `/api/trips/[tripId]/voting` | POST | ✅ | 🔶 | Create/cast vote; **Sentry added 2026-04-16** |
-| `/api/trips/[tripId]/recommendations` | GET | ✅ | ⏳ | AI recommendations; **Sentry added 2026-04-16** |
-| `/api/trips/[tripId]/flights` | GET | ✅ | ⏳ | Search flights for trip dates using user's profile city as origin; uses Amadeus API |
-| `/api/trips/[tripId]/suggestions` | GET | ✅ | ⏳ | Fetch events (Ticketmaster), attractions, and restaurants for trip destination; includes daily cost estimate |
+> All trip and trip-child routes (`/api/trips/*` — 13 routes incl. members, activities, itinerary, survey, voting, recommendations, flights, suggestions, invitations) have been moved to `src/app/api/_archive/trips/`. See [📦 Archived Routes](#-archived-routes-phase-1) section below for the full list retained for historical reference.
 
 ### Invitation Management APIs
 
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
-| `/api/invitations` | GET | ✅ | ⏳ | List all invitations for current user; auto-marks expired PENDING invitations |
-| `/api/invitations/[invitationId]` | GET | ✅ | ⏳ | Get invitation details including trip + members; auth + ownership check |
-| `/api/invitations/[invitationId]` | POST | ✅ | ⏳ | Accept or decline invitation (`action: 'accept'|'decline'`); on accept adds user as TripMember and notifies owner |
-| `/api/trips/[tripId]/suggestions` | GET | 🔶 | ⏳ | Activity suggestions via Ticketmaster + Places APIs; requires ext API keys |
-| `/api/trips/[tripId]/flights` | GET | 🔶 | ⏳ | Flight search via Amadeus-style integration; requires AMADEUS_API_KEY |
+| `/api/invitations` | GET | ✅ | ⏳ | List all invitations for current user; auto-marks expired PENDING invitations (will be retargeted to connection invites in Phase 3) |
+| `/api/invitations/[invitationId]` | GET | ✅ | ⏳ | Get invitation details; retained — Phase 3 will rescope for connection requests |
+| `/api/invitations/[invitationId]` | POST | ✅ | ⏳ | Accept/decline invitation; retained — Phase 3 will rescope |
 
 ---
 
@@ -161,12 +122,12 @@ Email removed from select projection in /api/search/route.ts
 
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
-| `/api/ai/chat` | POST | ✅ | ✅ | **OpenAI connected** ✅ Dec 17; Zod strengthened (role enum, content limits, max 50 messages, tripContext limits) + JSON.parse safety added 2026-03-29 |
-| `/api/ai/recommend` | POST | ✅ | ⏳ | Personalized activity recommendations using user saved/rated history; AI + DB hybrid results; JSON.parse safety added 2026-03-29 |
-| `/api/ai/recommend` | GET | ✅ | ⏳ | Trip-scoped recommendations by `?tripId=`; Zod getQuerySchema (tripId required, limit clamped 1-20) added 2026-03-29; aggregates group member preferences to suggest activities |
-| `/api/ai/generate-itinerary` | POST | ✅ | ⏳ | Complete — isOpenAIConfigured() guard returns 503 when key absent ✅ 2026-03-23; JSON.parse safety added 2026-03-29 |
-| `/api/ai/suggest-activities` | POST | ✅ | ⏳ | Complete — isOpenAIConfigured() guard returns 503 when key absent ✅ 2026-03-23; JSON.parse safety added 2026-03-29 |
-| `/api/ai/search` | GET/POST | ✅ | ⏳ | Semantic search with embeddings — GET + POST fully implemented (destinations branch added) ✅ 2026-03-26 |
+| `/api/ai/chat` | POST | ✅ | ✅ | **OpenAI connected** ✅ Dec 17; retained (generic chat assistant, Phase 6 retarget) |
+| `/api/ai/recommend` | POST | ✅ | ⏳ | Retained — Phase 6 will retarget to venues/meetups |
+| `/api/ai/recommend` | GET | ✅ | ⏳ | Retained; trip-scoped `?tripId=` branch archived with trip routes |
+| `/api/ai/search` | GET/POST | ✅ | ⏳ | Semantic search with embeddings — retained (destinations branch to be repurposed for venues/cities) |
+| ~~`/api/ai/generate-itinerary`~~ | POST | 📦 | — | Archived 2026-04-16 — see Archived Routes |
+| ~~`/api/ai/suggest-activities`~~ | POST | 📦 | — | Archived 2026-04-16 — see Archived Routes |
 
 ### AI Issues to Fix
 ```
@@ -221,14 +182,13 @@ BLOCKED - Need Environment Variables:
 
 ---
 
-## 🎯 Activity & Invitation APIs
+## 🎯 Invitation APIs (activities archived 2026-04-16)
+
+> `/api/activities/[activityId]` (GET/POST/PUT) archived — see [📦 Archived Routes](#-archived-routes-phase-1).
 
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
-| `/api/activities/[activityId]` | GET | ✅ | 🔶 | Get activity detail, ratings, comments |
-| `/api/activities/[activityId]` | POST | ✅ | 🔶 | Save/unsave activity (toggle) |
-| `/api/activities/[activityId]` | PUT | ✅ | 🔶 | Add comment or rating to activity |
-| `/api/invitations` | GET | ✅ | 🔶 | List user's pending trip invitations |
+| `/api/invitations` | GET | ✅ | 🔶 | List user's pending invitations; Phase 3 will retarget for connection requests |
 | `/api/invitations/[invitationId]` | GET | ✅ | 🔶 | Get invitation detail |
 | `/api/invitations/[invitationId]` | POST | ✅ | 🔶 | Respond to invitation (accept/decline) |
 
@@ -245,7 +205,10 @@ BLOCKED - Need Environment Variables:
 
 ---
 
-## 📊 API Completion Summary
+## 📊 API Completion Summary (pre-archive reference — to be rebaselined in Phase 2)
+
+> The counts below reflect the pre-archive 48-route surface and are retained for historical reference. Live route count is ~35 (see top of file); a fresh summary will be produced after Phase 2.
+
 
 | Category | Total | Working | Partial | Broken | Not Started |
 |----------|-------|---------|---------|--------|-------------|
@@ -368,6 +331,43 @@ OPENAI_API_KEY=         # For AI features ✅
 RESEND_API_KEY=         # Email service ✅
 EMAIL_FROM=             # Email sender (onboarding@resend.dev) ✅
 ```
+
+---
+
+## 📦 Archived Routes (Phase 1)
+
+All routes below were moved to `src/app/api/_archive/` on **2026-04-16** as part of the social-meetup pivot. They are not bundled or routed at runtime. See `docs/REFACTOR_PLAN.md` and `src/_archive/README.md` for reactivation scheme.
+
+### Trips (📦 13 routes)
+
+| Endpoint | Method | Prior Status | Notes |
+|----------|--------|--------------|-------|
+| 📦 `/api/trips` | GET, POST | ✅ | List/create trips — moved to `_archive/trips/route.ts` |
+| 📦 `/api/trips/[tripId]` | GET, PATCH, DELETE | ✅ | Trip detail/update/delete |
+| 📦 `/api/trips/[tripId]/members` | GET, POST, PATCH, DELETE | ✅ | Member management |
+| 📦 `/api/trips/[tripId]/invitations` | GET, POST | ✅ | Trip-scoped invitations |
+| 📦 `/api/trips/[tripId]/activities` | GET, POST | ✅ | Trip activity list/create |
+| 📦 `/api/trips/[tripId]/itinerary` | GET, POST, PUT | ✅ | Itinerary CRUD |
+| 📦 `/api/trips/[tripId]/survey` | GET, POST, PUT | ✅ | Trip preference survey (may repurpose as Poll in Phase 2) |
+| 📦 `/api/trips/[tripId]/voting` | GET, POST, PUT | ✅ | Voting session (may repurpose as Poll) |
+| 📦 `/api/trips/[tripId]/recommendations` | GET, POST | ✅ | AI recommendations from survey data |
+| 📦 `/api/trips/[tripId]/flights` | GET | 🔶 | Amadeus flight search |
+| 📦 `/api/trips/[tripId]/suggestions` | GET | 🔶 | Ticketmaster + Places suggestions |
+
+### Activities (📦 1 route)
+
+| Endpoint | Method | Prior Status | Notes |
+|----------|--------|--------------|-------|
+| 📦 `/api/activities/[activityId]` | GET, POST, PUT | ✅ | Activity detail / save / comment / rate |
+
+### AI (📦 2 trip-specific routes)
+
+| Endpoint | Method | Prior Status | Notes |
+|----------|--------|--------------|-------|
+| 📦 `/api/ai/generate-itinerary` | POST | ✅ | Trip itinerary generation (no equivalent in new product) |
+| 📦 `/api/ai/suggest-activities` | POST | ✅ | Trip activity suggestions (to be rewritten as `/api/ai/suggest-meetups` in Phase 6) |
+
+**Archived route count: 14**
 
 ---
 

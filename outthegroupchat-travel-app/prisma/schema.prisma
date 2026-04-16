@@ -196,6 +196,7 @@ model TripLike {
 // TRIP MODELS
 // ============================================
 
+/// @deprecated Archived 2026-04-16 during social pivot (REFACTOR_PLAN.md Phase 1). Retained for potential future reactivation. See src/_archive/README.md.
 model Trip {
   id          String     @id @default(cuid())
   title       String
@@ -260,6 +261,7 @@ enum TripStatus {
   CANCELLED
 }
 
+/// @deprecated Archived 2026-04-16 during social pivot (REFACTOR_PLAN.md Phase 1). Retained for potential future reactivation. See src/_archive/README.md.
 model TripMember {
   id        String         @id @default(cuid())
   tripId    String
@@ -286,6 +288,7 @@ enum TripMemberRole {
   MEMBER
 }
 
+/// @deprecated Archived 2026-04-16 during social pivot (REFACTOR_PLAN.md Phase 1). Retained for potential future reactivation. See src/_archive/README.md.
 model TripInvitation {
   id        String           @id @default(cuid())
   tripId    String
@@ -312,6 +315,7 @@ enum InvitationStatus {
 
 // Pending invitations for users who don't exist yet
 // This prevents creating placeholder users which could be abused
+/// @deprecated Archived 2026-04-16 during social pivot (REFACTOR_PLAN.md Phase 1). Retained for potential future reactivation. See src/_archive/README.md.
 model PendingInvitation {
   id         String   @id @default(cuid())
   email      String
@@ -332,6 +336,7 @@ model PendingInvitation {
 // SURVEY MODELS
 // ============================================
 
+/// @deprecated Archived 2026-04-16 during social pivot (REFACTOR_PLAN.md Phase 1). Retained for potential future reactivation. See src/_archive/README.md.
 model TripSurvey {
   id        String   @id @default(cuid())
   tripId    String   @unique
@@ -355,6 +360,7 @@ enum SurveyStatus {
   ANALYZED
 }
 
+/// @deprecated Archived 2026-04-16 during social pivot (REFACTOR_PLAN.md Phase 1). Retained for potential future reactivation. See src/_archive/README.md.
 model SurveyResponse {
   id        String   @id @default(cuid())
   surveyId  String
@@ -374,6 +380,7 @@ model SurveyResponse {
 // VOTING MODELS
 // ============================================
 
+/// @deprecated Archived 2026-04-16 during social pivot (REFACTOR_PLAN.md Phase 1). Retained for potential future reactivation. See src/_archive/README.md.
 model VotingSession {
   id        String       @id @default(cuid())
   tripId    String
@@ -406,6 +413,7 @@ enum VotingStatus {
   CANCELLED
 }
 
+/// @deprecated Archived 2026-04-16 during social pivot (REFACTOR_PLAN.md Phase 1). Retained for potential future reactivation. See src/_archive/README.md.
 model Vote {
   id        String   @id @default(cuid())
   sessionId String
@@ -424,6 +432,7 @@ model Vote {
 // ACTIVITY MODELS
 // ============================================
 
+/// @deprecated Archived 2026-04-16 during social pivot (REFACTOR_PLAN.md Phase 1). Retained for potential future reactivation. See src/_archive/README.md.
 model Activity {
   id          String         @id @default(cuid())
   tripId      String
@@ -517,6 +526,7 @@ enum BookingStatus {
   CONFIRMED
 }
 
+/// @deprecated Archived 2026-04-16 during social pivot (REFACTOR_PLAN.md Phase 1). Retained for potential future reactivation. See src/_archive/README.md.
 model SavedActivity {
   id         String   @id @default(cuid())
   userId     String
@@ -530,6 +540,7 @@ model SavedActivity {
   @@index([userId])
 }
 
+/// @deprecated Archived 2026-04-16 during social pivot (REFACTOR_PLAN.md Phase 1). Retained for potential future reactivation. See src/_archive/README.md.
 model ActivityComment {
   id         String   @id @default(cuid())
   activityId String
@@ -544,6 +555,7 @@ model ActivityComment {
   @@index([activityId])
 }
 
+/// @deprecated Archived 2026-04-16 during social pivot (REFACTOR_PLAN.md Phase 1). Retained for potential future reactivation. See src/_archive/README.md.
 model ActivityRating {
   id         String   @id @default(cuid())
   activityId String
@@ -563,6 +575,7 @@ model ActivityRating {
 // ITINERARY MODELS
 // ============================================
 
+/// @deprecated Archived 2026-04-16 during social pivot (REFACTOR_PLAN.md Phase 1). Retained for potential future reactivation. See src/_archive/README.md.
 model ItineraryDay {
   id        String   @id @default(cuid())
   tripId    String
@@ -577,6 +590,7 @@ model ItineraryDay {
   @@index([tripId])
 }
 
+/// @deprecated Archived 2026-04-16 during social pivot (REFACTOR_PLAN.md Phase 1). Retained for potential future reactivation. See src/_archive/README.md.
 model ItineraryItem {
   id            String   @id @default(cuid())
   itineraryDayId String
@@ -597,6 +611,7 @@ model ItineraryItem {
 // EXTERNAL DATA MODELS (Open Source POIs)
 // ============================================
 
+/// @deprecated Archived 2026-04-16 during social pivot (REFACTOR_PLAN.md Phase 1). Retained for potential future reactivation. See src/_archive/README.md.
 model ExternalActivity {
   id              String   @id @default(cuid())
   externalId      String   // ID from source API (e.g., OpenTripMap xid)
@@ -650,6 +665,7 @@ enum ExternalSource {
 }
 
 // Cache for destination data
+/// @deprecated Archived 2026-04-16 during social pivot (REFACTOR_PLAN.md Phase 1). Retained for potential future reactivation. See src/_archive/README.md.
 model DestinationCache {
   id          String   @id @default(cuid())
   city        String

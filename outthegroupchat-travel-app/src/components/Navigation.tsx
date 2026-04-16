@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useSession, signOut } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plane, Sparkles, Search, Newspaper, Bell, User, Globe, Heart, Mail, LogOut, Menu, X, ChevronDown } from 'lucide-react';
+import { Sparkles, Search, Newspaper, Bell, User, Globe, Heart, Mail, LogOut, Menu, X, ChevronDown } from 'lucide-react';
 
 export function Navigation() {
   const { data: session, status } = useSession();
@@ -33,7 +33,6 @@ export function Navigation() {
   };
 
   const navLinks = [
-    { href: '/trips', label: 'My Trips', icon: <Plane className="w-4 h-4" /> },
     { href: '/inspiration', label: 'Inspiration', icon: <Sparkles className="w-4 h-4" /> },
     { href: '/discover', label: 'Discover', icon: <Search className="w-4 h-4" /> },
     { href: '/feed', label: 'Feed', icon: <Newspaper className="w-4 h-4" /> },

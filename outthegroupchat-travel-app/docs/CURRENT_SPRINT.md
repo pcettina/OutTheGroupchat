@@ -1,4 +1,60 @@
-# ✅ Previous Sprint - December 2025
+# 🎯 Current Sprint - Refactor Phase 1 — Archive trip planning
+
+> **Last Updated:** 2026-04-16
+> **Sprint Date:** 2026-04-16 (single-session refactor wave)
+> **Sprint Goal:** Archive trip-planning surface to `_archive/` with zero runtime footprint — first executable step of the social-meetup pivot documented in `docs/REFACTOR_PLAN.md`.
+> **Status:** ✅ Complete (pending Wave 3 validation + PR)
+
+## Objective
+
+Move every byte of trip-planning code out of the live surface into `_archive/` directories so the codebase is ready to grow a new social-meetup domain (Connections, Meetups, Venues, Check-ins) without interference. Preserve trip code for potential future reactivation rather than delete it.
+
+## Actions completed today (Phase 1)
+
+- [x] Created `_archive/` scaffolding: `src/_archive/`, `src/app/api/_archive/`, `src/app/_archive/`, `src/components/_archive/`, `src/services/_archive/`, `src/__tests__/_archive/`
+- [x] Moved trip-domain API routes (13 routes: `/api/trips/*` + `/api/trips/[tripId]/**`) to `src/app/api/_archive/trips/`
+- [x] Moved activity routes (`/api/activities/[activityId]`) to `src/app/api/_archive/activities/`
+- [x] Moved trip AI routes (`/api/ai/generate-itinerary`, `/api/ai/suggest-activities`) to archive
+- [x] Moved trip pages (`/trips/*`) to `src/app/_archive/trips/`
+- [x] Moved trip components (`trips/`, `surveys/`, `voting/`) to `src/components/_archive/`
+- [x] Moved services (`recommendation.service.ts`, `recommendation-data.ts`, `events.service.ts`) to `src/services/_archive/`
+- [x] Moved trip tests to `src/__tests__/_archive/` (~17 test files); excluded from default Vitest run
+- [x] Marked 16 Prisma models `@deprecated` (Trip, TripMember, TripInvitation, PendingInvitation, TripSurvey, SurveyResponse, VotingSession, Vote, Activity, SavedActivity, ActivityComment, ActivityRating, ItineraryDay, ItineraryItem, ExternalActivity, DestinationCache) — retained in schema for safe non-destructive posture
+- [x] Kept retained models: User, Account, Session, VerificationToken, Follow, Notification, TripComment, TripLike (last two to be generalized into Post* in Phase 2+)
+- [x] Snapshotted doc sections into `docs/archive/trip-planning/` (agent F)
+- [x] Removed trip links from `Navigation.tsx`
+- [x] Added `ENABLE_TRIP_PLANNING` env var stub to `.env.example`
+- [x] Wrote `src/_archive/README.md` explaining preservation scheme
+- [x] Tagged `v1.0-trip-planning` on pre-pivot commit for recovery
+- [x] Updated live docs: CODEMAP, API_STATUS, LAUNCH_CHECKLIST, CURRENT_SPRINT, REFACTOR_PLAN (this pass)
+
+## Live surface (post-archive)
+
+- **API:** ~35 live routes (auth, beta, feed, users, profile, search, notifications, invitations, discover, inspiration, ai/chat, ai/recommend, ai/search, pusher/auth, geocoding, images/search, newsletter, cron, health)
+- **Pages:** /, /auth/*, /profile, /feed, /discover, /inspiration, /notifications, /search, /settings, /onboarding, /privacy, /terms
+- **Components:** accessibility, ai, auth, discover, feed, notifications, onboarding, profile, search, settings, social, ui + Navigation
+- **Services:** survey.service.ts (repurpose-pending)
+- **Tests:** ~46 live test files (Wave 3 confirms exact count)
+
+## Next sprint: Refactor Phase 2 — New domain models
+
+Per `docs/REFACTOR_PLAN.md` §5 Phase 2:
+- Add Prisma models: `Connection`, `Meetup`, `MeetupAttendee`, `MeetupInvite`, `Venue`, `City`, `CheckIn`, `Poll`, `PollResponse`, `Post` (if diverging from feed)
+- Write `npx prisma migrate dev --name add_social_domain`
+- Update `src/__tests__/setup.ts` mocks for every new model
+- Regenerate Prisma client
+- Extend seed script for dev data (cities, venues, sample connections)
+
+## Key decisions carried into Phase 2 (open questions)
+
+- Connection schema: one bidirectional row (`userAId < userBId`) or two directional rows?
+- Meetup visibility enum: `PUBLIC | CONNECTIONS | INVITE_ONLY | PRIVATE`?
+- Check-in retention: short TTL vs historical record?
+- `Poll.type`: enum (`SURVEY | VOTE | RSVP_POLL`) or polymorphic?
+
+---
+
+# [ARCHIVED] ✅ Previous Sprint - December 2025
 
 > **Sprint Duration:** Dec 16 - Dec 29, 2025
 > **Sprint Goal:** Fix critical bugs and complete core functionality for beta launch
@@ -50,7 +106,7 @@
 
 ---
 
-# 🎯 Current Sprint - March 2026
+# [ARCHIVED] 🎯 Previous Sprint - March 2026
 
 > **Sprint Duration:** Mar 9 - Mar 23, 2026
 > **Sprint Goal:** Complete beta launch readiness and fix critical quality issues
