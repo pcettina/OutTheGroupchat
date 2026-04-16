@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { logError } from '@/lib/logger';
+import { captureException } from '@/lib/sentry';
 
 // DEMO_MODE must be explicitly set to 'true' in the environment to enable this endpoint.
 // This prevents demo credentials from being exposed in production environments where the
@@ -100,6 +101,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     logError('DEMO_AUTH', error);
+    captureException(error);
     return NextResponse.json(
       { success: false, error: 'Failed to setup demo account' },
       { status: 500 }

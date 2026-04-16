@@ -5,6 +5,7 @@ import { z } from 'zod';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { authRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
+import { captureException } from '@/lib/sentry';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -121,6 +122,7 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     logError('RESET_PASSWORD_REQUEST', error);
+    captureException(error);
     return NextResponse.json(
       { error: 'Failed to process reset request' },
       { status: 500 }
@@ -228,6 +230,7 @@ export async function PATCH(req: Request) {
     });
   } catch (error) {
     logError('RESET_PASSWORD_CONFIRM', error);
+    captureException(error);
     return NextResponse.json(
       { error: 'Failed to reset password' },
       { status: 500 }

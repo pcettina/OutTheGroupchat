@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
+import { captureException } from '@/lib/sentry';
 
 const itineraryItemSchema = z.object({
   order: z.number(),
@@ -85,6 +86,7 @@ export async function GET(
 
     return NextResponse.json({ success: true, data: itinerary });
   } catch (error) {
+    captureException(error);
     logger.error({ error }, '[ITINERARY_GET] Failed to fetch itinerary');
     return NextResponse.json(
       { success: false, error: 'Failed to fetch itinerary' },
@@ -184,6 +186,7 @@ export async function PUT(
 
     return NextResponse.json({ success: true, data: itinerary });
   } catch (error) {
+    captureException(error);
     logger.error({ error }, '[ITINERARY_PUT] Failed to update itinerary');
     return NextResponse.json(
       { success: false, error: 'Failed to update itinerary' },

@@ -14,9 +14,11 @@ import DOMPurify from 'isomorphic-dompurify';
  */
 
 /**
- * Sanitize plain text input - removes ALL HTML tags
- * Use for: usernames, titles, single-line text fields
- * 
+ * Sanitizes plain text input by removing all HTML tags.
+ * Use for: usernames, titles, single-line text fields.
+ *
+ * @param input - Raw string from user input to be sanitized
+ * @returns Plain text with all HTML stripped and whitespace trimmed
  * @example
  * sanitizeInput('<script>alert("xss")</script>Hello') // Returns: 'Hello'
  */
@@ -31,9 +33,11 @@ export function sanitizeInput(input: string): string {
 }
 
 /**
- * Sanitize rich text/HTML content - allows safe HTML formatting
- * Use for: descriptions, bio, comments, rich text editor content
- * 
+ * Sanitizes rich text/HTML content, allowing a safe allowlist of formatting tags.
+ * Use for: descriptions, bio, comments, rich text editor content.
+ *
+ * @param html - Raw HTML string from user input
+ * @returns HTML with unsafe tags and attributes removed, safe for rendering
  * @example
  * sanitizeHtml('<b>Hello</b> <script>evil()</script>') // Returns: '<b>Hello</b>'
  */
@@ -68,8 +72,11 @@ export function sanitizeHtml(html: string): string {
 }
 
 /**
- * Sanitize markdown content - removes HTML but keeps markdown syntax
- * Use for: markdown editor content before processing
+ * Sanitizes markdown content by stripping HTML while preserving markdown syntax.
+ * Use for: markdown editor content before processing.
+ *
+ * @param markdown - Raw markdown string potentially containing HTML
+ * @returns Markdown string with all HTML removed, markdown syntax intact
  */
 export function sanitizeMarkdown(markdown: string): string {
   if (!markdown || typeof markdown !== 'string') return '';
@@ -82,10 +89,11 @@ export function sanitizeMarkdown(markdown: string): string {
 }
 
 /**
- * Sanitize URL - validates and sanitizes URLs
- * Use for: external links, image URLs, redirect URLs
- * 
- * @returns sanitized URL or empty string if invalid/dangerous
+ * Validates and sanitizes a URL, rejecting dangerous protocols such as javascript: or data:.
+ * Use for: external links, image URLs, redirect URLs.
+ *
+ * @param url - Raw URL string to validate and sanitize
+ * @returns Sanitized URL string, or an empty string if the URL is invalid or dangerous
  */
 export function sanitizeUrl(url: string): string {
   if (!url || typeof url !== 'string') return '';
@@ -108,10 +116,12 @@ export function sanitizeUrl(url: string): string {
 }
 
 /**
- * Sanitize JSON input - ensures JSON is safe and properly formatted
- * Use for: API request bodies, stored JSON data
- * 
- * @returns sanitized object or null if invalid
+ * Recursively sanitizes a JSON object, stripping dangerous strings from all string values.
+ * Use for: API request bodies, stored JSON data.
+ *
+ * @param json - Unknown value expected to be a plain object; non-objects return null
+ * @param allowedKeys - Optional allowlist of top-level keys to include; omitting allows all keys
+ * @returns Sanitized object cast to T, or null if the input is not a valid object
  */
 export function sanitizeJson<T extends Record<string, unknown>>(
   json: unknown,
@@ -155,8 +165,11 @@ export function sanitizeJson<T extends Record<string, unknown>>(
 }
 
 /**
- * Sanitize email address
- * Use for: email input fields
+ * Sanitizes and validates an email address, lowercasing and stripping HTML.
+ * Use for: email input fields.
+ *
+ * @param email - Raw email string from user input
+ * @returns Lowercase sanitized email string, or an empty string if the format is invalid
  */
 export function sanitizeEmail(email: string): string {
   if (!email || typeof email !== 'string') return '';
@@ -170,8 +183,12 @@ export function sanitizeEmail(email: string): string {
 }
 
 /**
- * Sanitize search query
- * Use for: search inputs, filter queries
+ * Sanitizes a search query by stripping HTML and truncating to a maximum length.
+ * Use for: search inputs, filter queries.
+ *
+ * @param query - Raw search string from user input
+ * @param maxLength - Maximum character length to allow (default: 100)
+ * @returns Sanitized query string truncated to maxLength
  */
 export function sanitizeSearchQuery(query: string, maxLength = 100): string {
   if (!query || typeof query !== 'string') return '';
@@ -182,8 +199,15 @@ export function sanitizeSearchQuery(query: string, maxLength = 100): string {
 }
 
 /**
- * Create a sanitization middleware for API routes
- * Use in API routes to sanitize request body before processing
+ * Creates a reusable sanitizer function for API route request bodies.
+ * Configures which fields to treat as plain text, HTML, URL, or email.
+ *
+ * @param fieldsConfig - Object mapping sanitization strategy to arrays of field names
+ * @param fieldsConfig.text - Field names to sanitize as plain text (all HTML removed)
+ * @param fieldsConfig.html - Field names to sanitize as HTML (safe tags allowed)
+ * @param fieldsConfig.url - Field names to sanitize as URLs (dangerous protocols rejected)
+ * @param fieldsConfig.email - Field names to sanitize as email addresses
+ * @returns A sanitizer function that accepts a raw body object and returns the sanitized version cast to T
  */
 export function createBodySanitizer<T extends Record<string, unknown>>(
   fieldsConfig: {

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { authRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
+import { captureException } from '@/lib/sentry';
 
 export const dynamic = 'force-dynamic';
 
@@ -82,6 +83,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ message: 'Email verified successfully' });
   } catch (error) {
     logger.error({ err: error, context: 'VERIFY_EMAIL' }, 'Error verifying email');
+    captureException(error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

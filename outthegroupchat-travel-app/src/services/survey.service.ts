@@ -179,21 +179,29 @@ export const TRIP_PLANNING_SURVEY: SurveyQuestion[] = [
 
 export class SurveyService {
   /**
-   * Get the default user preferences survey
+   * Returns the default user preferences survey template.
+   *
+   * @returns Array of survey questions covering travel style, budget, interests, accommodation, and activity level
    */
   static getUserPreferencesSurvey(): SurveyQuestion[] {
     return INITIAL_USER_SURVEY;
   }
 
   /**
-   * Get the default trip planning survey
+   * Returns the default trip planning survey template.
+   *
+   * @returns Array of survey questions covering availability, duration, destinations, activities, budget, and accommodation
    */
   static getTripPlanningSurvey(): SurveyQuestion[] {
     return TRIP_PLANNING_SURVEY;
   }
 
   /**
-   * Analyze survey responses for a trip
+   * Analyzes all survey responses for a given survey, computing budget, date, location, and activity aggregates.
+   *
+   * @param surveyId - The unique ID of the TripSurvey record to analyze
+   * @returns A SurveyAnalysis object with response rate, budget range, optimal dates, and ranked preferences
+   * @throws {Error} If no survey is found with the given ID
    */
   static async analyzeSurveyResponses(surveyId: string): Promise<SurveyAnalysis> {
     const survey = await prisma.tripSurvey.findUnique({
@@ -390,7 +398,10 @@ export class SurveyService {
   }
 
   /**
-   * Close a survey and trigger analysis
+   * Closes an active survey by setting its status to CLOSED in the database.
+   *
+   * @param surveyId - The unique ID of the TripSurvey to close
+   * @returns Promise that resolves when the survey status has been updated
    */
   static async closeSurvey(surveyId: string): Promise<void> {
     await prisma.tripSurvey.update({
@@ -400,7 +411,11 @@ export class SurveyService {
   }
 
   /**
-   * Create a default trip planning survey for a trip
+   * Creates a new trip planning survey using the default TRIP_PLANNING_SURVEY template.
+   *
+   * @param tripId - The ID of the trip to associate the survey with
+   * @param expirationHours - Number of hours until the survey expires (default: 48)
+   * @returns The newly created TripSurvey record
    */
   static async createTripSurvey(tripId: string, expirationHours: number = 48): Promise<TripSurvey> {
     const expiresAt = new Date(Date.now() + expirationHours * 60 * 60 * 1000);

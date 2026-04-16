@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { logError } from '@/lib/logger';
+import { captureException } from '@/lib/sentry';
 import { z } from 'zod';
 
 const postCommentSchema = z.object({
@@ -84,6 +85,7 @@ export async function GET(req: Request) {
       comments: formattedComments,
     });
   } catch (error) {
+    captureException(error);
     logError('COMMENTS_GET', error);
     return NextResponse.json(
       { error: 'Failed to fetch comments' },
@@ -237,6 +239,7 @@ export async function POST(req: Request) {
       },
     });
   } catch (error) {
+    captureException(error);
     logError('COMMENTS_POST', error);
     return NextResponse.json(
       { error: 'Failed to post comment' },
@@ -307,6 +310,7 @@ export async function DELETE(req: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    captureException(error);
     logError('COMMENTS_DELETE', error);
     return NextResponse.json(
       { error: 'Failed to delete comment' },

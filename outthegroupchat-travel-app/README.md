@@ -195,4 +195,15 @@ Built with ❤️ by the OutTheGroupchat Team
 
 ---
 
-*Last Updated: 2026-03-26 | 1155+ tests passing | 55+ test files | 48 API routes*
+## Recent Updates
+
+- **2026-04-16:** Sentry error monitoring expanded to 19/48 API routes (trips, activities, search, inspiration, users, profile, discover, AI endpoints); beta/status migrated to Redis rate limiting; dead components removed (DestinationCard, CategoryFilter, TrendingSection, TravelBadges); 112 new tests added (1,346+ total across 65 test files)
+- **2026-04-15:** Sentry instrumented on 13 routes; beta/status Redis migration; JSDoc additions across lib/api modules
+- **2026-04-14:** Zod validation added to flights, suggestions, cron routes; Sentry expanded to 18 routes on branch
+- **2026-04-13:** Sentry installed on auth and AI routes; addBreadcrumb wrapper exported from lib/sentry; structured logging complete
+- **2026-04-08:** GitHub Actions CI configured; DeleteTripModal wired; survey/vote page error handling improved
+- **2026-04-06:** Security audit score 8→9/10; JSDoc added across 14 lib/service files; discover search wired
+
+---
+
+*Last Updated: 2026-04-16 | 1234+ tests passing (main) | 59 test files | 48 API routes | 0 any types | 0 console.* | Build: PASS*

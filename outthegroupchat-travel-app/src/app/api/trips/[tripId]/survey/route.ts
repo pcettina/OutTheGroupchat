@@ -4,6 +4,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
+import { captureException } from '@/lib/sentry';
 
 const questionSchema = z.object({
   id: z.string(),
@@ -95,7 +96,8 @@ export async function GET(
         userResponse: userResponse?.answers,
       },
     });
-  } catch {
+  } catch (error) {
+    captureException(error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch survey' },
       { status: 500 }
@@ -188,7 +190,8 @@ export async function POST(
     });
 
     return NextResponse.json({ success: true, data: survey }, { status: 201 });
-  } catch {
+  } catch (error) {
+    captureException(error);
     return NextResponse.json(
       { success: false, error: 'Failed to create survey' },
       { status: 500 }
@@ -290,7 +293,8 @@ export async function PUT(
     }
 
     return NextResponse.json({ success: true, data: response });
-  } catch {
+  } catch (error) {
+    captureException(error);
     return NextResponse.json(
       { success: false, error: 'Failed to submit response' },
       { status: 500 }
