@@ -1,10 +1,11 @@
 # 📡 API & Integration Status
 
-> **Last updated: 2026-03-26**
+> **Last updated: 2026-04-16**
 >
-> **Last Audit:** March 2026
-> **Overall Status:** 86% Complete
+> **Last Audit:** April 2026
+> **Overall Status:** 88% Complete
 > **Target:** 100% for Beta Launch
+> **Sentry Coverage:** 19/48 routes instrumented
 
 ---
 
@@ -25,12 +26,12 @@
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
 | `/api/auth/[...nextauth]` | ALL | ✅ | ✅ | NextAuth handler |
-| `/api/auth/signup` | POST | ✅ | ✅ | Zod validation added 2026-03-18; email verification sending added 2026-03-21; rate limiting now first operation 2026-03-26 |
-| `/api/auth/demo` | POST | ✅ | ✅ | Demo credentials in env vars ✅ 2026-03-10; DEMO_MODE env guard added 2026-03-22; Zod input validation added 2026-03-24; z.object({}).strict() replacing passthrough 2026-03-25 |
+| `/api/auth/signup` | POST | ✅ | ✅ | Zod validation added 2026-03-18; email verification sending added 2026-03-21; rate limiting now first operation 2026-03-26; **Sentry captureException added 2026-04-16** |
+| `/api/auth/demo` | POST | ✅ | ✅ | Demo credentials in env vars ✅ 2026-03-10; DEMO_MODE env guard added 2026-03-22; Zod input validation added 2026-03-24; z.object({}).strict() replacing passthrough 2026-03-25; **Sentry added 2026-04-16** |
 | `/api/auth/demo` | GET | ✅ | ✅ | Returns demo account info (hides password in prod); requires DEMO_MODE=true env var ✅ 2026-03-22 |
-| `/api/auth/reset-password` | POST | ✅ | ✅ | Request reset token; email-safe 200 response ✅ 2026-03-12; UI page added 2026-03-14; rate limiting now first operation 2026-03-26 |
+| `/api/auth/reset-password` | POST | ✅ | ✅ | Request reset token; email-safe 200 response ✅ 2026-03-12; UI page added 2026-03-14; rate limiting now first operation 2026-03-26; **Sentry added 2026-04-16** |
 | `/api/auth/reset-password` | PATCH | ✅ | ✅ | Confirm reset with token + new password ✅ 2026-03-12; UI confirm page added 2026-03-14 |
-| `/api/auth/verify-email` | GET | ✅ | ✅ | Email token verification ✅ 2026-03-19; signup now sends verification email ✅ 2026-03-21; rate limiting now first operation 2026-03-26 |
+| `/api/auth/verify-email` | GET | ✅ | ✅ | Email token verification ✅ 2026-03-19; signup now sends verification email ✅ 2026-03-21; rate limiting now first operation 2026-03-26; **Sentry added 2026-04-16** |
 
 ### Auth Issues to Fix
 - [x] Add password reset endpoint ✅ 2026-03-12
@@ -43,30 +44,30 @@
 
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
-| `/api/trips` | GET | ✅ | 🔶 | Lists user's trips |
-| `/api/trips` | POST | ✅ | 🔶 | Creates new trip |
-| `/api/trips/[tripId]` | GET | ✅ | 🔶 | Get trip details; email stripped from unauthenticated public responses (security hardened 2026-03-25) |
-| `/api/trips/[tripId]` | PATCH | ✅ | ⏳ | Update trip |
-| `/api/trips/[tripId]` | DELETE | ✅ | ⏳ | Delete trip |
+| `/api/trips` | GET | ✅ | 🔶 | Lists user's trips; **Sentry added 2026-04-16** |
+| `/api/trips` | POST | ✅ | 🔶 | Creates new trip; **Sentry added 2026-04-16** |
+| `/api/trips/[tripId]` | GET | ✅ | 🔶 | Get trip details; email stripped from unauthenticated public responses (security hardened 2026-03-25); **Sentry added 2026-04-16** |
+| `/api/trips/[tripId]` | PATCH | ✅ | ⏳ | Update trip; **Sentry added 2026-04-16** |
+| `/api/trips/[tripId]` | DELETE | ✅ | ⏳ | Delete trip; **Sentry added 2026-04-16** |
 
 ### Trip Member APIs
 
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
-| `/api/trips/[tripId]/members` | GET | ✅ | 🔶 | List members |
-| `/api/trips/[tripId]/members` | POST | ✅ | ⏳ | Add member — POST handler implemented 2026-03-20 |
-| `/api/trips/[tripId]/invitations` | GET | ✅ | 🔶 | List invitations |
-| `/api/trips/[tripId]/invitations` | POST | ✅ | ✅ | **Email service configured** ✅ Dec 17 |
+| `/api/trips/[tripId]/members` | GET | ✅ | 🔶 | List members; **Sentry added 2026-04-16** |
+| `/api/trips/[tripId]/members` | POST | ✅ | ⏳ | Add member — POST handler implemented 2026-03-20; **Sentry added 2026-04-16** |
+| `/api/trips/[tripId]/invitations` | GET | ✅ | 🔶 | List invitations; **Sentry added 2026-04-16** |
+| `/api/trips/[tripId]/invitations` | POST | ✅ | ✅ | **Email service configured** ✅ Dec 17; **Sentry added 2026-04-16** |
 
 ### Trip Activity APIs
 
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
-| `/api/trips/[tripId]/activities` | GET | ✅ | 🔶 | List activities |
-| `/api/trips/[tripId]/activities` | POST | ✅ | 🔶 | Add activity |
-| `/api/trips/[tripId]/itinerary` | GET | ✅ | 🔶 | Get itinerary — complete ✅ 2026-03-23 |
-| `/api/trips/[tripId]/itinerary` | POST | ✅ | ⏳ | Create itinerary day — complete ✅ 2026-03-23 |
-| `/api/trips/[tripId]/itinerary` | PUT | ✅ | ⏳ | Update itinerary (atomic $transaction) — complete ✅ 2026-03-23 |
+| `/api/trips/[tripId]/activities` | GET | ✅ | 🔶 | List activities; **Sentry added 2026-04-16** |
+| `/api/trips/[tripId]/activities` | POST | ✅ | 🔶 | Add activity; **Sentry added 2026-04-16** |
+| `/api/trips/[tripId]/itinerary` | GET | ✅ | 🔶 | Get itinerary — complete ✅ 2026-03-23; **Sentry added 2026-04-16** |
+| `/api/trips/[tripId]/itinerary` | POST | ✅ | ⏳ | Create itinerary day — complete ✅ 2026-03-23; **Sentry added 2026-04-16** |
+| `/api/trips/[tripId]/itinerary` | PUT | ✅ | ⏳ | Update itinerary (atomic $transaction) — complete ✅ 2026-03-23; **Sentry added 2026-04-16** |
 | `/api/activities/[activityId]` | GET | ✅ | ⏳ | Get activity detail with comments, ratings, avg score; public activities accessible without auth |
 | `/api/activities/[activityId]` | POST | ✅ | ⏳ | Save/unsave activity (toggle); auth required |
 | `/api/activities/[activityId]` | PUT | ✅ | ⏳ | Add comment (`action: 'comment'`) or rating (`action: 'rate'`) to activity; auth required |
@@ -75,11 +76,11 @@
 
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
-| `/api/trips/[tripId]/survey` | GET | ✅ | 🔶 | Get survey |
-| `/api/trips/[tripId]/survey` | POST | ✅ | 🔶 | Create/respond to survey |
-| `/api/trips/[tripId]/voting` | GET | ✅ | 🔶 | Get voting session |
-| `/api/trips/[tripId]/voting` | POST | ✅ | 🔶 | Create/cast vote |
-| `/api/trips/[tripId]/recommendations` | GET | ✅ | ⏳ | AI recommendations |
+| `/api/trips/[tripId]/survey` | GET | ✅ | 🔶 | Get survey; **Sentry added 2026-04-16** |
+| `/api/trips/[tripId]/survey` | POST | ✅ | 🔶 | Create/respond to survey; **Sentry added 2026-04-16** |
+| `/api/trips/[tripId]/voting` | GET | ✅ | 🔶 | Get voting session; **Sentry added 2026-04-16** |
+| `/api/trips/[tripId]/voting` | POST | ✅ | 🔶 | Create/cast vote; **Sentry added 2026-04-16** |
+| `/api/trips/[tripId]/recommendations` | GET | ✅ | ⏳ | AI recommendations; **Sentry added 2026-04-16** |
 | `/api/trips/[tripId]/flights` | GET | ✅ | ⏳ | Search flights for trip dates using user's profile city as origin; uses Amadeus API |
 | `/api/trips/[tripId]/suggestions` | GET | ✅ | ⏳ | Fetch events (Ticketmaster), attractions, and restaurants for trip destination; includes daily cost estimate |
 
@@ -99,11 +100,11 @@
 
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
-| `/api/feed` | GET | ✅ | ✅ | Main feed; Zod validation added 2026-03-21 |
-| `/api/feed/comments` | GET | ✅ | ✅ | **Trip support added** ✅ Dec 17 |
-| `/api/feed/comments` | POST | ✅ | ✅ | **Trip support added** ✅ Dec 17 |
-| `/api/feed/engagement` | POST | ✅ | ✅ | **Trip support added** ✅ Dec 17 |
-| `/api/feed/share` | POST | ✅ | ⏳ | Implemented with Zod validation + notification ✅ 2026-03-16 |
+| `/api/feed` | GET | ✅ | ✅ | Main feed; Zod validation added 2026-03-21; **Sentry added 2026-04-16** |
+| `/api/feed/comments` | GET | ✅ | ✅ | **Trip support added** ✅ Dec 17; **Sentry added 2026-04-16** |
+| `/api/feed/comments` | POST | ✅ | ✅ | **Trip support added** ✅ Dec 17; **Sentry added 2026-04-16** |
+| `/api/feed/engagement` | POST | ✅ | ✅ | **Trip support added** ✅ Dec 17; **Sentry added 2026-04-16** |
+| `/api/feed/share` | POST | ✅ | ⏳ | Implemented with Zod validation + notification ✅ 2026-03-16; **Sentry added 2026-04-16** |
 
 ### Feed Issues to Fix
 ```
@@ -121,9 +122,9 @@ COMPLETED ✅ Dec 17:
 
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
-| `/api/notifications` | GET | ✅ | ✅ | **Data structure verified** ✅ Dec 17; Zod pagination params improved 2026-03-22 |
-| `/api/notifications` | PATCH | ✅ | ✅ | Mark as read |
-| `/api/notifications/[id]` | PATCH | ✅ | ✅ | Mark individual notification read; Zod validation added 2026-03-13; Zod params (cuid), JSON.parse safety, bugfix (read field was hardcoded true) 2026-03-29 |
+| `/api/notifications` | GET | ✅ | ✅ | **Data structure verified** ✅ Dec 17; Zod pagination params improved 2026-03-22; **Sentry added 2026-04-16** |
+| `/api/notifications` | PATCH | ✅ | ✅ | Mark as read; **Sentry added 2026-04-16** |
+| `/api/notifications/[id]` | PATCH | ✅ | ✅ | Mark individual notification read; Zod validation added 2026-03-13; Zod params (cuid), JSON.parse safety, bugfix (read field was hardcoded true) 2026-03-29; **Sentry added 2026-04-16** |
 
 ### Notification Issues to Fix
 ```
@@ -213,7 +214,7 @@ BLOCKED - Need Environment Variables:
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
 | `/api/cron` | GET | ✅ | N/A | Background jobs; CRON_SECRET validation hardened 2026-03-22 |
-| Sentry lib | N/A | ✅ | N/A | `src/lib/sentry.ts` created 2026-03-25 — centralized Sentry helpers (captureException, addBreadcrumb, setUser) |
+| Sentry lib | N/A | ✅ | N/A | `src/lib/sentry.ts` created 2026-03-25 — centralized Sentry helpers (captureException, addBreadcrumb, setUser); **19/48 routes instrumented as of 2026-04-16** |
 | `/api/health` | GET | ✅ | N/A | DB connectivity check, 503 on degraded ✅ 2026-03-10; response hardened 2026-03-25 (NODE_ENV + version removed for data minimization — returns {status, timestamp, database}) |
 | `/api/users/me` | GET | ✅ | 🔶 | Get current authenticated user |
 | `/api/users/me` | PATCH | ✅ | 🔶 | Update current user profile + preferences |

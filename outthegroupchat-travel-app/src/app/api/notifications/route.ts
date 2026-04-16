@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { logger } from '@/lib/logger';
+import { captureException } from '@/lib/sentry';
 import { z } from 'zod';
 
 const getNotificationsQuerySchema = z.object({
@@ -55,6 +56,7 @@ export async function GET(req: Request) {
       },
     });
   } catch (error) {
+    captureException(error);
     logger.error({ error }, '[NOTIFICATIONS_GET] Failed to fetch notifications');
     return NextResponse.json(
       { success: false, error: 'Failed to fetch notifications' },
@@ -85,6 +87,7 @@ export async function PATCH(req: Request) {
       message: 'All notifications marked as read',
     });
   } catch (error) {
+    captureException(error);
     logger.error({ error }, '[NOTIFICATIONS_PATCH] Failed to update notifications');
     return NextResponse.json(
       { success: false, error: 'Failed to update notifications' },

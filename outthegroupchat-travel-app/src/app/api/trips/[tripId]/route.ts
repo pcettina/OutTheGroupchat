@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
 import { apiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
+import { captureException } from '@/lib/sentry';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -186,7 +187,8 @@ export async function GET(
     }
 
     return NextResponse.json({ success: true, data: trip });
-  } catch {
+  } catch (error) {
+    captureException(error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch trip' },
       { status: 500 }
@@ -277,7 +279,8 @@ export async function PATCH(
     });
 
     return NextResponse.json({ success: true, data: trip });
-  } catch {
+  } catch (error) {
+    captureException(error);
     return NextResponse.json(
       { success: false, error: 'Failed to update trip' },
       { status: 500 }
@@ -319,7 +322,8 @@ export async function DELETE(
     });
 
     return NextResponse.json({ success: true, message: 'Trip deleted successfully' });
-  } catch {
+  } catch (error) {
+    captureException(error);
     return NextResponse.json(
       { success: false, error: 'Failed to delete trip' },
       { status: 500 }

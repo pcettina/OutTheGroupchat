@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { logger } from '@/lib/logger';
+import { captureException } from '@/lib/sentry';
 import { z } from 'zod';
 
 const paramsSchema = z.object({
@@ -74,6 +75,7 @@ export async function PATCH(
 
     return NextResponse.json({ success: true, data: updated });
   } catch (error) {
+    captureException(error);
     logger.error({ error }, '[NOTIFICATION_PATCH] Failed to update notification');
     return NextResponse.json(
       { success: false, error: 'Failed to update notification' },
@@ -124,6 +126,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true, message: 'Notification deleted' });
   } catch (error) {
+    captureException(error);
     logger.error({ error }, '[NOTIFICATION_DELETE] Failed to delete notification');
     return NextResponse.json(
       { success: false, error: 'Failed to delete notification' },

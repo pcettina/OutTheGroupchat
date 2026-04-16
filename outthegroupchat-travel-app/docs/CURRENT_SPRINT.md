@@ -446,6 +446,40 @@
 *Updated: 2026-03-19*
 ---
 
+## 🟢 Completed 2026-04-16 (Nightly Build)
+
+### Wave 1 — New Test Files
+- `feed-extended.test.ts` — 42 tests: pagination edge cases, empty following feed, multiple activity types, DB errors, feedType params, invalid query param validation, authenticated saved-activity flags, POST error paths
+- `notifications-extended.test.ts` — 33 tests: notification lifecycle edge cases
+- `health.test.ts` — 14 tests: GET /api/health — healthy path (200), degraded path (503), content-type, $queryRaw call count
+- `trips-survey-voting-extended.test.ts` — 23 tests: survey + voting edge cases
+
+### Wave 2 — Sentry Expansion (19/48 routes)
+- Feed routes instrumented: `feed/route.ts`, `feed/comments/route.ts`, `feed/engagement/route.ts`, `feed/share/route.ts` (10 catch blocks)
+- Notifications routes instrumented: `notifications/route.ts`, `notifications/[notificationId]/route.ts` (4 catch blocks)
+- Trips routes instrumented: `trips/route.ts`, `trips/[tripId]/route.ts`, `trips/[tripId]/members/route.ts`, `trips/[tripId]/activities/route.ts`, `trips/[tripId]/itinerary/route.ts`, `trips/[tripId]/recommendations/route.ts`, `trips/[tripId]/invitations/route.ts`, `trips/[tripId]/voting/route.ts`, `trips/[tripId]/survey/route.ts` (21 catch blocks)
+- Auth routes instrumented: `auth/signup/route.ts`, `auth/demo/route.ts`, `auth/reset-password/route.ts`, `auth/verify-email/route.ts` (5 catch blocks)
+
+### Wave 2 — Code Quality
+- JSDoc added to `sanitize.ts` (8 functions) and `survey.service.ts` (5 methods)
+- Dead components deleted: `SignUpForm.tsx`, `CategoryFilter.tsx`, `DestinationCard.tsx`, `TrendingSection.tsx`, `TravelBadges.tsx`
+- Barrel exports cleaned: `discover/index.ts`, `social/index.ts`
+
+### Wave 3 — Shared Files
+- `setup.ts` expanded: `aiLogger`, `dbLogger`, `createRequestLogger` logger stubs added; `follow.findFirst` mock added; `destinationCache` mock added; `$queryRaw` and `$transaction` mocks added
+- TSC errors fixed in `health.test.ts` (removed unused req args, removed unused NextRequest import) and `feed-extended.test.ts` (ConstructorParameters cast for RequestInit signal incompatibility)
+- `README.md` and `docs/PRODUCTION_ROADMAP.md` updated to 2026-04-16
+- `docs/API_STATUS.md`, `docs/CURRENT_SPRINT.md`, `docs/CODEMAP.md`, `docs/LAUNCH_CHECKLIST.md` updated
+
+### Metrics
+- Tests: **1346 passing** (63 test files), 0 failing
+- Sentry coverage: **19/48 routes**
+- TSC: 0 errors
+- Lint: 0 warnings/errors
+
+*Updated: 2026-04-16*
+---
+
 ## 🟢 Completed 2026-03-18 (Nightly Build)
 
 - `auth/signup` Zod validation added (replaces manual regex validation)

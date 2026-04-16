@@ -18,7 +18,7 @@
 
 **Overall Readiness: 78%** → Target: 85% for Beta Launch
 
-> Last updated: 2026-03-26
+> Last updated: 2026-04-16
 
 ---
 
@@ -174,6 +174,7 @@
 - [x] API route tests (invitations-post 18, ai-get-methods 16, beta-extended 21, users-follow 24) ✅ 2026-03-25 — total: 1003 tests across 53 files
 - [x] Service tests + API tests (recommendation.service 45, survey.service 36, geocoding-images 32, inspiration +39) ✅ 2026-03-26 — total: 1156 tests across 56 files
 - [x] API route tests (ai-generate-itinerary 31, ai-suggest-activities 25, discover-import 21) ✅ 2026-03-29
+- [x] API route tests (feed-extended 42, notifications-extended 33, health 14, trips-survey-voting-extended 23) ✅ 2026-04-16 — total: **1346 tests across 63 files**
 
 ### Integration Tests
 - [ ] Auth flow tests
@@ -205,6 +206,7 @@
 
 ### Error Tracking
 - [x] Sentry installed and configured ✅ 2026-03-10 (instrumentation-client.ts onRouterTransitionStart fixed 2026-03-20; src/lib/sentry.ts helper created 2026-03-25; needs real DSN in Vercel)
+- [x] Sentry captureException added to 19/48 routes ✅ 2026-04-16 (feed x4, notifications x2, trips/route x1, trips/[tripId] x8, auth x4)
 - [ ] Error alerts configured (pending Sentry DSN)
 - [ ] Source maps uploaded (pending Sentry DSN)
 

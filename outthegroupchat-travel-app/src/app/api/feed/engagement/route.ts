@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { logError } from '@/lib/logger';
+import { captureException } from '@/lib/sentry';
 import { z } from 'zod';
 
 const engagementSchema = z.object({
@@ -140,6 +141,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ error: 'Invalid item type' }, { status: 400 });
   } catch (error) {
+    captureException(error);
     logError('ENGAGEMENT_POST', error);
     return NextResponse.json(
       { error: 'Failed to update engagement' },
@@ -230,6 +232,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ error: 'Invalid item type' }, { status: 400 });
   } catch (error) {
+    captureException(error);
     logError('ENGAGEMENT_GET', error);
     return NextResponse.json(
       { error: 'Failed to get engagement' },
