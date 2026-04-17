@@ -1,12 +1,12 @@
 # 📡 API & Integration Status
 
-> **Last Updated: 2026-04-16**
+> **Last Updated: 2026-04-17**
 >
 > **Archival:** trip/activity routes moved to `src/app/api/_archive/` as of 2026-04-16 Phase 1. See REFACTOR_PLAN.md. Sections below that reference `/api/trips/*` and `/api/activities/*` reflect the pre-archive state for historical context; authoritative status for these routes is the "📦 Archived Routes" section near the bottom of this file.
 >
 > **Last Audit:** April 2026
-> **Live API routes (post-archive):** ~35
-> **Archived API routes (Phase 1):** 14
+> **Live API routes (post-archive):** 35
+> **Archived API routes (Phase 1):** 13
 > **Target:** 100% for Beta Launch (re-baselined in Phase 8)
 > **Sentry Coverage:** 19/48 routes instrumented on pre-archive branch; coverage on new live surface re-computed after Phase 2
 
@@ -331,6 +331,29 @@ OPENAI_API_KEY=         # For AI features ✅
 RESEND_API_KEY=         # Email service ✅
 EMAIL_FROM=             # Email sender (onboarding@resend.dev) ✅
 ```
+
+---
+
+## 🚧 Social Domain Routes (Phase 3–5, Planned)
+
+> Schema complete (Phase 2, 2026-04-17). Routes to be implemented in Phase 3–5. Zod schemas pre-built in `src/lib/validations/social.ts`.
+
+| Endpoint | Method | Phase | Notes |
+|----------|--------|-------|-------|
+| `/api/connections/request` | POST | 3 | Send connection request |
+| `/api/connections/[id]` | PATCH | 3 | Accept / decline / block |
+| `/api/connections/[id]` | DELETE | 3 | Remove connection |
+| `/api/connections` | GET | 3 | List accepted connections |
+| `/api/connections/requests` | GET | 3 | Pending inbox + sent |
+| `/api/meetups` | POST | 4 | Create meetup |
+| `/api/meetups` | GET | 4 | List meetups (city, visibility) |
+| `/api/meetups/[id]` | GET / PATCH / DELETE | 4 | Meetup detail / edit / cancel |
+| `/api/meetups/[id]/rsvp` | POST | 4 | GOING / MAYBE / DECLINED |
+| `/api/meetups/[id]/invite` | POST | 4 | Invite connections |
+| `/api/checkins` | POST | 5 | Create check-in |
+| `/api/checkins/feed` | GET | 5 | Connections' recent check-ins |
+| `/api/checkins/[id]` | DELETE | 5 | Cancel check-in |
+| `/api/venues/search` | GET | 4 | Venue search (repurposes Places API) |
 
 ---
 

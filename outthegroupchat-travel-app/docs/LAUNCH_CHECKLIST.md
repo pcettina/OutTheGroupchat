@@ -1,10 +1,23 @@
 # 🚀 OutTheGroupchat - Launch Checklist
 
+## Pivot Progress (see docs/REFACTOR_PLAN.md)
+- [x] Phase 0: PR backlog merged, `v1.0-trip-planning` tagged
+- [x] Phase 1: Trip code archived to `src/_archive/`, tests excluded, Navigation cleaned
+- [~] Phase 2: Schema ✅ | Generate ✅ | setup.ts mocks ✅ | DB migration ⏳ (manual step)
+- [ ] Phase 3: Connections system (routes + UI)
+- [ ] Phase 4: Meetups core
+- [ ] Phase 5: Check-ins + presence
+- [ ] Phase 6: Feed/AI/notifications rescope
+- [ ] Phase 7: Marketing surface
+- [ ] Phase 8: Launch-readiness re-audit
+
+---
+
 > **⚠️ Scope change (2026-04-16):** This checklist is now STALE against the new social-meetup product. It will be rewritten in Phase 8 of `docs/REFACTOR_PLAN.md`. Trip-era checklist items below remain visible for reference but should **NOT** be used to gate launch. Readiness scores below reflect the archived trip product and are intentionally left unchanged to avoid implying progress against the new scope.
 >
 > **Target Launch:** Q2 2026 (Beta) — to be re-baselined post-pivot
-> **Current Status:** Refactoring (Phase 1 complete — trip-planning surface archived)
-> **Last Updated:** 2026-04-16
+> **Current Status:** Refactoring (Phase 2 in progress — domain models added, DB migration pending)
+> **Last Updated:** 2026-04-17
 
 ---
 

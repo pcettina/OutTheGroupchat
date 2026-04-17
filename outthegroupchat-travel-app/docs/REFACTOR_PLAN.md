@@ -263,6 +263,9 @@ Each phase targets a discrete session (or a nightly build if small). Phases are 
 ---
 
 ### Phase 2 — New domain models & migrations (1–2 sessions)
+
+> **IN PROGRESS as of 2026-04-17 (nightly/2026-04-17)** — Schema ✅ | Generate ✅ | setup.ts mocks ✅ | src/types/social.ts ✅ | Seed generator ✅ | DB migration ⏳ (manual: `npx prisma migrate dev --name add_social_domain` against Supabase)
+
 **Objective:** Prisma schema extended with new primitives; DB migrated; mocks in place.
 **Actions:**
 1. Add Prisma models: `Connection`, `Meetup`, `MeetupAttendee`, `MeetupInvite`, `Venue`, `City`, `CheckIn`, `Poll`, `PollResponse`, `Post` (if diverging from trip feed), indexes, constraints
@@ -465,7 +468,7 @@ Each phase targets a discrete session (or a nightly build if small). Phases are 
 | # | Question | When needed | Owner |
 |---|----------|-------------|-------|
 | Q1 | Do we preserve existing user trip data (user-facing link to read-only archive), or do a clean slate? | Phase 1 | Product |
-| Q2 | `Connection` one-row-bidirectional vs two-rows-per-direction? | Phase 2 | Engineering |
+| Q2 | `Connection` one-row-bidirectional vs two-rows-per-direction? | ~~Phase 2~~ **DECIDED 2026-04-17:** Single-row bidirectional (userAId < userBId convention). See Connection model in schema.prisma. | Engineering |
 | Q3 | Default meetup visibility: PUBLIC, CONNECTIONS, or INVITE_ONLY? | Phase 4 | Product |
 | Q4 | Check-in retention: 24h, 7d, forever? | Phase 5 | Product + Legal |
 | Q5 | Do we drop `Trip*` tables in DB now or wait 6+ months? | Phase 2 / Deferred | Engineering |

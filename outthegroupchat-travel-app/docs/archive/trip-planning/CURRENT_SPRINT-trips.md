@@ -1,25 +1,14 @@
-## Phase 2 — Domain Models (Nightly 2026-04-17, In Progress)
+# Current Sprint — Trip Planning Archive
 
-- [x] prisma/schema.prisma: 10 new models + 8 enums added (Connection, Meetup, MeetupAttendee, MeetupInvite, Venue, City, CheckIn, Poll, PollResponse, Post)
-- [x] prisma generate: Prisma Client v5.22.0 regenerated, TypeScript types available
-- [x] src/types/social.ts: composite TypeScript interfaces (UserPreview, MeetupWithHost, CheckInWithVenue, etc.)
-- [x] src/lib/validations/social.ts: Zod schemas for connections, meetups, check-ins, polls, venues
-- [x] prisma/seed/generators/socialDomain.ts: seed data (NYC/LA cities, 3 venues, meetup, connection, check-in)
-- [x] setup.ts: mocks for all 10 new social models confirmed
-- [x] Navigation.tsx: /trips → /connections, /saved → /meetups (Phase 3 placeholders)
-- [x] middleware.ts: trip route matchers removed
-- [x] src/app/page.tsx: social pivot landing copy
-- [x] README.md: rewritten as social meetup network (841 tests, 35 routes)
-- [x] Archive docs: CURRENT_SPRINT, UPGRADE_PLAN, FUTURE_IMPLEMENTATION snapshots added
-- [ ] DB migration (manual: `npx prisma migrate dev --name add_social_domain` against Supabase)
-
-**Next: Phase 3 — Connections system** (`POST /api/connections/request`, accept/decline, UI)
+> **ARCHIVED 2026-04-17** — This sprint document captured the trip-planning era work (OutTheGroupchat v1.0). Archived during social pivot. See docs/REFACTOR_PLAN.md for current work.
+>
+> Original file: docs/CURRENT_SPRINT.md (last state before full pivot)
 
 ---
 
 # 🎯 Current Sprint - Refactor Phase 1 — Archive trip planning
 
-> **Last Updated:** 2026-04-17
+> **Last Updated:** 2026-04-16
 > **Sprint Date:** 2026-04-16 (single-session refactor wave)
 > **Sprint Goal:** Archive trip-planning surface to `_archive/` with zero runtime footprint — first executable step of the social-meetup pivot documented in `docs/REFACTOR_PLAN.md`.
 > **Status:** ✅ Complete (pending Wave 3 validation + PR)

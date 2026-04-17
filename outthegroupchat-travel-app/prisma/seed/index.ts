@@ -2,12 +2,13 @@ import { PrismaClient } from '@prisma/client';
 import { seedUsers } from './generators/users';
 import { seedTrips } from './generators/trips';
 import { seedActivities } from './generators/activities';
-import { 
-  seedFollows, 
-  seedActivityEngagement, 
+import {
+  seedFollows,
+  seedActivityEngagement,
   seedNotifications,
-  seedSurveys 
+  seedSurveys
 } from './generators/social';
+import { seedSocialDomain } from './generators/socialDomain';
 
 const prisma = new PrismaClient();
 
@@ -71,6 +72,13 @@ async function main() {
   // 7. Create notifications
   await seedNotifications(prisma, userIdMap);
   
+  // 8. Social domain: cities, venues, connections, meetups, check-ins
+  try {
+    await seedSocialDomain(prisma);
+  } catch (err) {
+    console.error('   ⚠️  Social domain seed failed (non-fatal):', err);
+  }
+
   console.log('\n' + '='.repeat(50));
   console.log('\n✅ Database seeding completed!\n');
   

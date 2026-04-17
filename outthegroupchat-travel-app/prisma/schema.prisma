@@ -103,10 +103,23 @@ model User {
   
   // Pending invitations sent by this user
   sentPendingInvitations PendingInvitation[] @relation("InviterRelation")
-  
+
   // Trip social engagement
   tripComments     TripComment[]
   tripLikes        TripLike[]
+
+  // Social domain relations (Phase 2)
+  connectionsAsA        Connection[]     @relation("ConnectionsAsA")
+  connectionsAsB        Connection[]     @relation("ConnectionsAsB")
+  connectionRequests    Connection[]     @relation("ConnectionRequests")
+  hostedMeetups         Meetup[]         @relation("MeetupHost")
+  meetupAttendances     MeetupAttendee[]
+  meetupInvitesReceived MeetupInvite[]   @relation("MeetupInviteReceived")
+  meetupInvitesSent     MeetupInvite[]   @relation("MeetupInviteSent")
+  checkIns              CheckIn[]
+  pollsCreated          Poll[]           @relation("PollCreator")
+  pollResponses         PollResponse[]
+  posts                 Post[]           @relation("PostAuthor")
 
   @@index([email])
   @@map("users")
@@ -156,6 +169,13 @@ enum NotificationType {
   VOTE_REMINDER
   FOLLOW
   SYSTEM
+  // Social domain notification types (Phase 2)
+  CONNECTION_REQUEST
+  CONNECTION_ACCEPTED
+  MEETUP_INVITED
+  MEETUP_RSVP
+  MEETUP_STARTING_SOON
+  CHECK_IN_NEARBY
 }
 
 // ============================================
@@ -688,4 +708,268 @@ model DestinationCache {
   
   @@unique([city, country])
   @@index([country])
+}
+
+// ============================================
+// SOCIAL DOMAIN ENUMS (Phase 2 — 2026-04-17)
+// ============================================
+
+enum ConnectionStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  BLOCKED
+}
+
+enum MeetupVisibility {
+  PUBLIC
+  CONNECTIONS
+  INVITE_ONLY
+  PRIVATE
+}
+
+enum AttendeeStatus {
+  GOING
+  MAYBE
+  DECLINED
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
+
+enum VenueCategory {
+  BAR
+  COFFEE
+  RESTAURANT
+  PARK
+  GYM
+  COWORKING
+  OTHER
+}
+
+enum CheckInVisibility {
+  PUBLIC
+  CONNECTIONS
+  PRIVATE
+}
+
+enum PollType {
+  SURVEY
+  VOTE
+  RSVP_POLL
+}
+
+enum PostType {
+  CHECK_IN
+  MEETUP_CREATED
+  MEETUP_ATTENDED
+  CONNECTION_MADE
+  TEXT_POST
+}
+
+// ============================================
+// SOCIAL DOMAIN MODELS (Phase 2 — 2026-04-17)
+// ============================================
+
+model City {
+  id        String   @id @default(cuid())
+  name      String
+  state     String?
+  country   String
+  timezone  String?
+  latitude  Float
+  longitude Float
+  createdAt DateTime @default(now())
+
+  venues   Venue[]
+  meetups  Meetup[]
+  checkIns CheckIn[]
+
+  @@unique([name, country])
+  @@index([country])
+}
+
+model Venue {
+  id         String        @id @default(cuid())
+  name       String
+  address    String?
+  city       String
+  country    String
+  latitude   Float?
+  longitude  Float?
+  category   VenueCategory @default(OTHER)
+  source     String?       // "google_places", "manual", etc.
+  externalId String?       // ID from source API
+  imageUrl   String?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  cityRef  City?  @relation(fields: [cityId], references: [id])
+  cityId   String?
+
+  meetups  Meetup[]
+  checkIns CheckIn[]
+
+  @@index([city, category])
+  @@index([latitude, longitude])
+}
+
+model Connection {
+  id            String           @id @default(cuid())
+  userAId       String
+  userBId       String
+  status        ConnectionStatus @default(PENDING)
+  requestedById String
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  userA       User @relation("ConnectionsAsA", fields: [userAId], references: [id], onDelete: Cascade)
+  userB       User @relation("ConnectionsAsB", fields: [userBId], references: [id], onDelete: Cascade)
+  requestedBy User @relation("ConnectionRequests", fields: [requestedById], references: [id])
+
+  @@unique([userAId, userBId])
+  @@index([userAId, status])
+  @@index([userBId, status])
+  @@index([requestedById])
+}
+
+model Meetup {
+  id          String           @id @default(cuid())
+  title       String
+  description String?
+  hostId      String
+  venueId     String?
+  venueName   String?
+  cityId      String?
+  scheduledAt DateTime
+  endsAt      DateTime?
+  visibility  MeetupVisibility @default(CONNECTIONS)
+  capacity    Int?
+  cancelled   Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  host  User   @relation("MeetupHost", fields: [hostId], references: [id], onDelete: Cascade)
+  venue Venue? @relation(fields: [venueId], references: [id])
+  city  City?  @relation(fields: [cityId], references: [id])
+
+  attendees MeetupAttendee[]
+  invites   MeetupInvite[]
+  polls     Poll[]
+
+  @@index([hostId])
+  @@index([scheduledAt])
+  @@index([cityId, scheduledAt])
+}
+
+model MeetupAttendee {
+  id          String         @id @default(cuid())
+  meetupId    String
+  userId      String
+  status      AttendeeStatus @default(GOING)
+  checkedInAt DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  meetup Meetup @relation(fields: [meetupId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([meetupId, userId])
+  @@index([meetupId])
+  @@index([userId])
+}
+
+model MeetupInvite {
+  id        String       @id @default(cuid())
+  meetupId  String
+  userId    String
+  invitedBy String
+  status    InviteStatus @default(PENDING)
+  expiresAt DateTime?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  meetup  Meetup @relation(fields: [meetupId], references: [id], onDelete: Cascade)
+  user    User   @relation("MeetupInviteReceived", fields: [userId], references: [id], onDelete: Cascade)
+  inviter User   @relation("MeetupInviteSent", fields: [invitedBy], references: [id])
+
+  @@unique([meetupId, userId])
+  @@index([meetupId])
+  @@index([userId, status])
+}
+
+model CheckIn {
+  id         String            @id @default(cuid())
+  userId     String
+  venueId    String?
+  venueName  String?
+  cityId     String?
+  note       String?
+  visibility CheckInVisibility @default(CONNECTIONS)
+  latitude   Float?
+  longitude  Float?
+  createdAt  DateTime          @default(now())
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  venue Venue? @relation(fields: [venueId], references: [id])
+  city  City?  @relation(fields: [cityId], references: [id])
+
+  @@index([userId])
+  @@index([cityId, createdAt])
+  @@index([createdAt])
+}
+
+model Poll {
+  id        String    @id @default(cuid())
+  title     String
+  type      PollType
+  options   Json      // Array of { id: cuid, text: string }
+  meetupId  String?
+  createdBy String
+  expiresAt DateTime?
+  closed    Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  meetup    Meetup?       @relation(fields: [meetupId], references: [id], onDelete: SetNull)
+  creator   User          @relation("PollCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  responses PollResponse[]
+
+  @@index([meetupId])
+  @@index([createdBy])
+  @@index([expiresAt])
+}
+
+model PollResponse {
+  id        String   @id @default(cuid())
+  pollId    String
+  userId    String
+  answers   Json     // { optionIds: string[] }
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  poll Poll @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([pollId, userId])
+  @@index([pollId])
+}
+
+model Post {
+  id        String   @id @default(cuid())
+  authorId  String
+  type      PostType
+  content   String?
+  data      Json?    // type-specific payload (checkInId, meetupId, connectionId, etc.)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author User @relation("PostAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([authorId, createdAt])
+  @@index([createdAt])
 }

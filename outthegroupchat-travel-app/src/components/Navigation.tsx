@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useSession, signOut } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Search, Newspaper, Bell, User, Globe, Heart, Mail, LogOut, Menu, X, ChevronDown } from 'lucide-react';
+import { Sparkles, Search, Newspaper, Bell, User, Users, Calendar, Mail, LogOut, Menu, X, ChevronDown } from 'lucide-react';
 
 export function Navigation() {
   const { data: session, status } = useSession();
@@ -135,21 +135,22 @@ export function Navigation() {
                               <User className="w-4 h-4" />
                               Profile
                             </Link>
+                            {/* Phase 3: connections + meetups pages coming in Phase 3 */}
                             <Link
-                              href="/trips"
+                              href="/connections"
                               className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                               onClick={() => setIsProfileOpen(false)}
                             >
-                              <Globe className="w-4 h-4" />
-                              My Trips
+                              <Users className="w-4 h-4" />
+                              Connections
                             </Link>
                             <Link
-                              href="/saved"
+                              href="/meetups"
                               className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                               onClick={() => setIsProfileOpen(false)}
                             >
-                              <Heart className="w-4 h-4" />
-                              Saved Activities
+                              <Calendar className="w-4 h-4" />
+                              Meetups
                             </Link>
                             <Link
                               href="/invitations"

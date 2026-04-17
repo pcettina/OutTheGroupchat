@@ -95,9 +95,7 @@ export default withAuth(
 
 export const config = {
   matcher: [
-    '/trips/:path*',
     '/profile/:path*',
-    '/api/trips/:path*',
     '/api/profile/:path*',
     '/api/ai/:path*',
     '/api/notifications/:path*',

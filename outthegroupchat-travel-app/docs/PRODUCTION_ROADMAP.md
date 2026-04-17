@@ -1,11 +1,21 @@
 # OutTheGroupchat - Production Deployment & Feature Roadmap
 
 > **Target:** Q2 2026 Beta Launch
-> **Version:** 3.1 | **Last Updated:** 2026-04-16
+> **Version:** 3.2 | **Last Updated:** 2026-04-17
 
 ---
 
-## Current System Status (as of 2026-04-16)
+## Pivot Status (2026-04-17)
+
+- **Active refactor phase:** Phase 2 — New domain models & migrations
+- **Phases complete:** Phase 0 (PR backlog merged), Phase 1 (trip-planning archived)
+- **Phases remaining:** Phase 2–8 (see docs/REFACTOR_PLAN.md)
+- **Pre-pivot tag:** v1.0-trip-planning (git tag, recoverable)
+- **Next milestone:** Phase 2 complete — Connection/Meetup/Venue models in Prisma, mocks in setup.ts
+
+---
+
+## Current System Status (as of 2026-04-17)
 
 ### Codebase Health Snapshot
 
@@ -24,7 +34,7 @@
 | Sentry coverage | 19/48 routes |
 | GitHub Actions CI | Passing |
 
-### Overall Launch Readiness: 83% (Target: 85% for Beta)
+### Overall Launch Readiness: Launch readiness paused during pivot — will re-audit at Phase 8 (see REFACTOR_PLAN.md §5)
 
 | Category | Score | Target | Status |
 |----------|-------|--------|--------|
@@ -316,7 +326,7 @@
 
 ---
 
-*Document Version: 3.1*
+*Document Version: 3.2*
 *Target Launch: Q2 2026 (Beta)*
-*Last Updated: 2026-04-16*
+*Last Updated: 2026-04-17*
 *Owner: Development Team*
