@@ -18,7 +18,8 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:system": "npx tsx tests/system-check.ts",
-    "test:api": "npx tsx tests/api-check.ts"
+    "test:api": "npx tsx tests/api-check.ts",
+    "test:archive": "vitest run src/__tests__/_archive"
   },
   "prisma": {
     "seed": "npx tsx prisma/seed/index.ts"

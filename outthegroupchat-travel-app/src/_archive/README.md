@@ -1,88 +1,139 @@
-# `src/_archive/` — Stashed trip-planning surface
+# Trip-Planning Archive
 
-> **Archived:** 2026-04-16
-> **Baseline tag:** `v1.0-trip-planning` (`git checkout v1.0-trip-planning` to recover the full pre-archive state)
-> **Canonical plan:** `outthegroupchat-travel-app/docs/REFACTOR_PLAN.md`
+> **Archived 2026-04-16** during social pivot to meetup network (see [docs/REFACTOR_PLAN.md](../../docs/REFACTOR_PLAN.md)).
+> Pre-pivot git tag: `v1.0-trip-planning`
 
-## Why this folder exists
-
-OutTheGroupchat started as a group-trip-planning app. In April 2026 the product pivoted to a LinkedIn-style social network for in-person meetups. Rather than delete the trip-planning code — which represents months of tested, hardened infrastructure — it is stashed here.
-
-**Goals of this stash:**
-- **Zero runtime footprint** — files here are never bundled, never routed, never imported by live code.
-- **Full browsability** — devs can navigate, read, and reason about the archived system without git archaeology.
-- **Revivable in a weekend** — if trip-planning becomes a valuable sub-feature of the social network (e.g., "plan a trip with your connections"), the surface is intact.
+This directory (and its sibling `_archive/` folders across the tree) contains code from OutTheGroupchat v1.0 (the group trip-planning app). It is **excluded from TypeScript compilation and test runs** but remains in the repo for:
+1. Reference while building the social network features
+2. Quick revival if the trip-planning feature becomes worth reactivating
 
 ## How exclusion works
 
 | Layer | Mechanism |
 |-------|-----------|
-| TypeScript | `tsconfig.json` excludes `src/_archive/**` and `src/**/_archive/**` from `noEmit` check |
+| TypeScript | `tsconfig.json` excludes `src/_archive/**` and `src/**/_archive/**` |
 | Vitest | `vitest.config.ts` excludes `**/_archive/**` from the default run |
-| Next.js routing | Directory names starting with `_` are excluded from App Router file-based routing |
-| Webpack/bundler | Nothing here is imported by live code, so it is tree-shaken |
-| Prisma | Models used by archived code are marked `@deprecated` in `schema.prisma` but still exist (DB tables intact) |
+| Next.js routing | `_archive/` prefixed with `_` — App Router ignores these directories |
+| Bundler | Nothing archived is imported by live code — fully tree-shaken |
+| Prisma | Trip models marked `@deprecated` in `schema.prisma`; DB tables still exist |
 
-## Directory layout
+## What's Archived
 
-```
-src/
-├── _archive/
-│   ├── README.md              ← this file
-│   ├── app/
-│   │   ├── api/               ← archived trip API routes (trips/, activities/)
-│   │   └── trips/             ← archived trip pages
-│   ├── components/            ← TripWizard, surveys/, voting/, etc.
-│   └── services/              ← recommendation.service, events.service
-├── __tests__/
-│   └── _archive/              ← archived trip tests
-└── ...                        (live social-meetup surface)
+### API Routes (13 files)
 
-docs/
-└── archive/
-    └── trip-planning/         ← snapshotted trip-era docs
-```
+Under `src/app/api/_archive/`:
 
-## Feature flag
+- `trips/route.ts` — trip collection CRUD (GET/POST)
+- `trips/[tripId]/route.ts` — single-trip CRUD (GET/PATCH/DELETE)
+- `trips/[tripId]/activities/route.ts` — trip activities CRUD
+- `trips/[tripId]/flights/route.ts` — flight search (Amadeus)
+- `trips/[tripId]/invitations/route.ts` — trip invitations
+- `trips/[tripId]/itinerary/route.ts` — itinerary management
+- `trips/[tripId]/members/route.ts` — member management
+- `trips/[tripId]/recommendations/route.ts` — AI recommendations
+- `trips/[tripId]/suggestions/route.ts` — activity suggestions (Places/Ticketmaster)
+- `trips/[tripId]/survey/route.ts` — survey CRUD
+- `trips/[tripId]/voting/route.ts` — voting sessions
+- `activities/[activityId]/route.ts` — activity-by-ID CRUD
+- `discover/route.ts` — trip-era discover/search
 
-`ENABLE_TRIP_PLANNING` (default `false`) in `.env.example`. This flag is a **signal**, not a toggle — setting it to `true` will NOT reactivate the archived surface because the code is tsconfig-excluded and Next.js won't route `_archive/` paths. Real reactivation requires moving files back out of `_archive/` first via a proper PR.
+### Pages (6 files)
 
-## Reactivation criteria
+Under `src/app/_archive/`:
 
-Before ever moving code out of `_archive/`, a future session must confirm (per REFACTOR_PLAN.md §4.4):
+- `trips/page.tsx` — trip list page
+- `trips/loading.tsx` — trip list loading skeleton
+- `trips/new/page.tsx` — new trip wizard page
+- `trips/[tripId]/page.tsx` — trip detail page
+- `trips/[tripId]/survey/page.tsx` — survey page
+- `trips/[tripId]/vote/page.tsx` — vote page
 
-1. Product evidence: ≥X% of active users explicitly request multi-day trip coordination
-2. Connection graph density is proven — trip planning is meaningful only if users have an established social network first
-3. Engineering bandwidth: trip surface doesn't distract from the core meetup loop
-4. Data migration path if models have drifted
+### Components (31 files)
 
-## Running archived tests
+Under `src/components/_archive/`:
 
-Archived tests are excluded from the default Vitest run. To execute them on demand (e.g., during reactivation validation):
+**trips/** (11 files)
+- `TripWizard.tsx`, `TripCard.tsx`, `TripList.tsx`, `TripHeader.tsx`, `TripOverview.tsx`
+- `AddActivityModal.tsx`, `InviteMemberModal.tsx`, `InviteModal.tsx`, `ItineraryTimeline.tsx`, `MemberList.tsx`
+- `index.ts`
+
+**trips/steps/** (5 files)
+- `DestinationStep.tsx`, `DateStep.tsx`, `BudgetStep.tsx`, `MembersStep.tsx`, `index.ts`
+
+**surveys/** (9 files)
+- `SurveyBuilder.tsx`, `SurveyForm.tsx`, `QuestionRenderer.tsx`, `index.ts`
+- `QuestionTypes/MultipleChoice.tsx`, `QuestionTypes/DateRangePicker.tsx`, `QuestionTypes/RangeSlider.tsx`
+- `QuestionTypes/RankingQuestion.tsx`, `QuestionTypes/TextInput.tsx`, `QuestionTypes/index.ts`
+
+**voting/** (7 files)
+- `VotingSession.tsx`, `VotingCard.tsx`, `VotingOption.tsx`, `VotingDeadline.tsx`
+- `CreateVotingModal.tsx`, `ResultsChart.tsx`, `index.ts`
+
+### Services (3 files)
+
+Under `src/services/_archive/`:
+
+- `recommendation.service.ts` — trip recommendation engine
+- `events.service.ts` — Ticketmaster / Places / Flights integration
+- `recommendation-data.ts` — seed data for recommendations
+
+### Tests (20 files)
+
+Under `src/__tests__/_archive/`:
+
+**api/** (17 files)
+- `trips.test.ts`, `trips-tripid.test.ts`, `trips-members.test.ts`, `trips-invitations.test.ts`
+- `trips-tripid-invitations.test.ts`, `trips-tripid-recommendations.test.ts`
+- `trips-activities-itinerary.test.ts`, `trips-itinerary.test.ts`
+- `trips-flights.test.ts`, `trips-suggestions.test.ts`, `trips-suggestions-flights.test.ts`
+- `trips-voting.test.ts`, `trips-survey-voting-extended.test.ts`
+- `survey.test.ts`, `voting.test.ts`, `activities.test.ts`, `discover.test.ts`
+
+**lib/** (1 file)
+- `recommendation.service.test.ts`
+
+**services/** (2 files)
+- `recommendation.service.test.ts`, `survey.service.test.ts`
+
+## Prisma Models (deprecated, not deleted)
+
+All trip-domain Prisma models are marked `@deprecated` in `prisma/schema.prisma`. DB tables still exist and data is preserved.
+
+Models: `Trip`, `TripMember`, `TripInvitation`, `PendingInvitation`, `TripSurvey`, `SurveyResponse`, `VotingSession`, `Vote`, `Activity`, `SavedActivity`, `ActivityComment`, `ActivityRating`, `ItineraryDay`, `ItineraryItem`, `ExternalActivity`, `DestinationCache`.
+
+## What Was Preserved (live, untouched)
+
+Auth, User, Follow, Notification, Feed (TripComment/TripLike being generalized), Pusher, rate limiting, Sentry, CI, and all test infrastructure.
+
+## Revival Instructions
+
+To reactivate trip planning:
+
+1. `git checkout v1.0-trip-planning` to see the full original state
+2. Move API routes: `src/app/api/_archive/trips/` → `src/app/api/trips/` (and `activities/`, `discover/`)
+3. Move pages: `src/app/_archive/trips/` → `src/app/trips/`
+4. Move components: `src/components/_archive/{trips,surveys,voting}/` → `src/components/{trips,surveys,voting}/`
+5. Move services: `src/services/_archive/` → `src/services/`
+6. Move tests: `src/__tests__/_archive/` → `src/__tests__/`
+7. Remove `src/_archive/**` and `src/**/_archive/**` exclusions from `tsconfig.json`
+8. Remove `**/_archive/**` exclusion from `vitest.config.ts`
+9. Remove `@deprecated` from trip Prisma models
+10. Set `ENABLE_TRIP_PLANNING=true` in `.env` as a signal (note: flag alone does NOT revive routes — the file moves above are required)
+11. Run `npm install && npx prisma generate && npm test` to verify
+
+## Compatibility Notes (as of 2026-04-16)
+
+- `Navigation.tsx`: `/trips` and `/saved` links replaced with `/connections` and `/meetups` placeholders — revival requires restoring nav links
+- `middleware.ts`: Trip route matchers removed — revival requires re-adding them
+- `src/__tests__/setup.ts`: Trip model mocks retained from pre-archive (still present in the mocked Prisma client)
+- External API keys required for full functionality: `AMADEUS_*` (flights), `TICKETMASTER_API_KEY` (events), `PLACES_API_KEY` (places)
+
+## Running Archived Tests
+
+Archived tests are excluded from the default Vitest run. To execute them on demand during reactivation validation:
 
 ```bash
 npm run test:archive
 ```
 
-(Script added in Phase 1 alongside this archive. Runs `vitest run --config vitest.archive.config.ts` which re-enables the `_archive/` paths.)
-
-## Recovery / history
-
-- Full pre-pivot state: `git checkout v1.0-trip-planning`
-- Original commit on main: see `git log --all --follow <file>`
-- Doc snapshots: `docs/archive/trip-planning/`
-
-## What lives in this archive
-
-| Path | Original location | Purpose |
-|------|-------------------|---------|
-| `app/api/trips/` | `src/app/api/trips/` | 13 trip API routes |
-| `app/api/activities/` | `src/app/api/activities/` | Activity-by-ID CRUD |
-| `app/trips/` | `src/app/trips/` | Trip list, detail, new, survey, vote, members pages |
-| `components/trips/` | `src/components/trips/` | TripWizard, TripCard, AddActivityModal, etc. |
-| `components/surveys/` | `src/components/surveys/` | SurveyBuilder, SurveyForm, QuestionRenderer |
-| `components/voting/` | `src/components/voting/` | VotingSession, VotingOption, ResultsChart |
-| `services/recommendation.service.ts` | `src/services/recommendation.service.ts` | Trip recommendation engine |
-| `services/events.service.ts` | `src/services/events.service.ts` | Ticketmaster/Places/Flights integration |
-| `services/recommendation-data.ts` | `src/services/recommendation-data.ts` | Seed data |
-| `__tests__/_archive/` | `src/__tests__/api/trips*`, `src/__tests__/services/` | All trip-domain tests |
+This runs `vitest run --config vitest.archive.config.ts` which re-enables `_archive/` paths.

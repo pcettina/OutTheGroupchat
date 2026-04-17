@@ -1,8 +1,8 @@
 # OutTheGroupchat — Scope Pivot & Refactor Plan
 
-> **Status:** Draft v1 — awaiting kickoff approval
-> **Created:** 2026-04-16
-> **Purpose:** Canonical planning doc for the pivot from group-trip-planning app → LinkedIn-style social network centered on in-person meetups. All future refactor sessions reference this document.
+> **Status:** Active — Phase 2 in progress (2026-04-17)
+> **Created:** 2026-04-16 | **Last updated:** 2026-04-17
+> **Purpose:** Canonical planning doc for the pivot from group-trip-planning app → meetup-focused social network with a persistent `Crew` graph. All future refactor sessions reference this document.
 > **Decision:** Refactor in place (not rebuild). Trip-planning infrastructure is archived but preserved for potential future reactivation.
 
 ---
@@ -12,11 +12,11 @@
 ### 1.1 Vision shift
 | | Old vision | New vision |
 |---|------------|------------|
-| **Core loop** | Plan group trips collaboratively | Connect with people → meet up in person |
+| **Core loop** | Plan group trips collaboratively | Build a Crew → meet up in person |
 | **Primary verb** | Plan | Meet |
 | **Horizon** | Weeks/months ahead | Tonight, this weekend, this week |
 | **Unit of engagement** | Multi-day trip itinerary | Single meetup at a venue |
-| **Relationship model** | Trip membership (ephemeral) | Persistent connection (LinkedIn-style) |
+| **Relationship model** | Trip membership (ephemeral) | Persistent Crew (mutual, bidirectional) |
 | **Tagline** | "The easiest way to plan group trips" | **"The social media app that wants to get you off your phone"** |
 | **Success metric** | Trips created & completed | Meetups confirmed & attended IRL |
 
@@ -24,7 +24,7 @@
 Approximately **50–60% of the existing codebase is directly reusable** for the new vision. Critical infrastructure (auth, follows, notifications, feed, real-time, rate limiting, Sentry, security headers, CI, 1346 tests) stays. Only the domain layer (trips, itineraries, activities, surveys, voting) needs to change.
 
 ### 1.3 Stashing principle
-Trip-planning is **archived, not deleted.** It lives on in `src/_archive/trips/`, `docs/archive/trip-planning/`, and marked-deprecated Prisma models. A feature flag `ENABLE_TRIP_PLANNING=false` keeps it dormant but revivable. This preserves optionality: if trip planning becomes a valuable sub-feature of the social network later (e.g., "plan a trip with your connections"), the surface is intact and can be reactivated without archaeology.
+Trip-planning is **archived, not deleted.** It lives on in `src/_archive/trips/`, `docs/archive/trip-planning/`, and marked-deprecated Prisma models. A feature flag `ENABLE_TRIP_PLANNING=false` keeps it dormant but revivable. This preserves optionality: if trip planning becomes a valuable sub-feature of the social network later (e.g., "plan a trip with your Crew"), the surface is intact and can be reactivated without archaeology.
 
 ---
 
@@ -42,7 +42,7 @@ Trip-planning is **archived, not deleted.** It lives on in `src/_archive/trips/`
 |-------|----------|-----|
 | Auth (NextAuth + email verification + password reset + demo mode) | 100% | Auth is auth |
 | `User`, `Account`, `Session`, `VerificationToken` models | 100% | Identical |
-| `Follow` model | Extends | Becomes `Connection` with status |
+| `Follow` model | Extends | Becomes `Crew` with status + bidirectional pairing |
 | `Notification` model + system | 100% | Retarget notification types |
 | Feed infra (`TripComment`, `TripLike`, feed routes) | Renames | Rename to `PostComment`/`PostLike`, reuse pipe |
 | Pusher real-time | 100% | Perfect for RSVPs, presence, check-ins |
@@ -75,19 +75,19 @@ Trip-planning is **archived, not deleted.** It lives on in `src/_archive/trips/`
 ```
  Sign up / verify email
    ↓
- Profile setup: city, interests, bio, photo
+ Profile setup: city, interests, bio, photo, crewLabel (optional)
    ↓
- Connect with people (LinkedIn-style requests)
+ Build your Crew (mutual, bidirectional — one click adds both sides)
    ├─ Import contacts / find by email
-   ├─ Discover nearby / mutual connections
-   └─ Accept / decline requests
+   ├─ Discover nearby / mutual crewmates
+   └─ Accept / decline Crew requests
    ↓
  Daily loop:
    ┌──────────────────────────────────────────────┐
    │  "Who's out tonight?" feed                   │
    │  ──────────────────────────────────────────  │
    │  Post a meetup / check in somewhere          │
-   │  See connections' check-ins + open meetups   │
+   │  See your Crew's check-ins + open meetups    │
    │  RSVP with one tap → live presence           │
    │  Get nudged: "Alex is 2 blocks away"         │
    └──────────────────────────────────────────────┘
@@ -100,13 +100,13 @@ Trip-planning is **archived, not deleted.** It lives on in `src/_archive/trips/`
 ### 3.2 New domain primitives
 | Model | Purpose | Replaces |
 |-------|---------|----------|
-| `Connection` | Bidirectional relationship with status (pending/accepted/declined/blocked) | Extends `Follow` |
-| `Meetup` | Single in-person gathering: host, venue, datetime, capacity, visibility | Replaces `Trip` |
+| `Crew` | Single-row bidirectional relationship (userAId < userBId) with status (PENDING/ACCEPTED/DECLINED/BLOCKED) + `requestedById` + per-user display label via `User.crewLabel` | Extends `Follow` |
+| `Meetup` | Single in-person gathering: host, venue, datetime, capacity, visibility (default `CREW`) | Replaces `Trip` |
 | `MeetupAttendee` | RSVP record: status (going/maybe/declined), checked_in_at | Replaces `TripMember` |
-| `MeetupInvite` | Explicit invite to a meetup (separate from connection request) | Replaces `TripInvitation` |
+| `MeetupInvite` | Explicit invite to a meetup (separate from Crew request) | Replaces `TripInvitation` |
 | `Venue` | Place data: name, address, lat/lng, city, category, source | Replaces `Activity` (partial) |
 | `City` | Geographic grouping for discovery | New |
-| `CheckIn` | "I'm here right now" — user, venue, timestamp, visibility | New |
+| `CheckIn` | "I'm here right now" — user, venue, timestamp, visibility; `activeUntil` (default now+6h) hides from feed after window, row persists for history | New |
 | `Poll` | Generalized survey/vote ("who's in?", "which venue?") | Merges `TripSurvey` + `VotingSession` |
 | `PollResponse` | User's choice on a poll | Merges `SurveyResponse` + `Vote` |
 | `Post` | Generalized feed entry (check-in, meetup recap, photo, text) | Generalizes `TripComment`/`TripLike` feed items |
@@ -114,7 +114,7 @@ Trip-planning is **archived, not deleted.** It lives on in `src/_archive/trips/`
 ### 3.3 Primitive mapping (old → new)
 | Old model | New model | Migration note |
 |-----------|-----------|----------------|
-| `Follow` | `Connection` | Migration: copy follows, default status=`ACCEPTED`, leave direction intact |
+| `Follow` | `Crew` | Migration: collapse reciprocal Follow pairs into a single `Crew` row with `userAId < userBId`; status=`ACCEPTED` for mutual follows, otherwise `PENDING` with the follower as `requestedById`. Asymmetric follows (A→B, no B→A) become PENDING. `Follow` model itself is retained in schema for reference until Phase 6. |
 | `Trip` | `Meetup` (partial) | **No auto-migration.** Trips archive intact; Meetups start fresh |
 | `TripMember` | `MeetupAttendee` | Same — no data migration |
 | `TripInvitation` | `MeetupInvite` | Same |
@@ -129,7 +129,7 @@ Trip-planning is **archived, not deleted.** It lives on in `src/_archive/trips/`
 | `/api/trips/*` (13 routes) | `/api/meetups/*` (~6 routes) |
 | `/api/trips/[tripId]/flights`, `/suggestions` | Removed (out of scope) |
 | `/api/ai/generate-itinerary`, `/suggest-activities` | `/api/ai/suggest-meetups`, `/api/ai/icebreakers` |
-| — | `/api/connections/*` (request, accept, decline, list) |
+| — | `/api/crew/*` (request, accept, decline, list) — 5 routes |
 | — | `/api/checkins` |
 | — | `/api/venues/*` (search, detail) |
 | — | `/api/cities/*` (list, nearby) |
@@ -138,6 +138,20 @@ Trip-planning is **archived, not deleted.** It lives on in `src/_archive/trips/`
 | `/api/notifications` | Keep, retarget content types |
 
 Projected route count after pivot: **~40 active routes** + 13 archived.
+
+---
+
+### 3.5 Naming decision — Crew (locked 2026-04-17)
+
+The relationship entity is named **`Crew`**, not `Connection`. The nightly build on 2026-04-16 scaffolded the schema with `Connection`; this was reversed the next day.
+
+**Why Crew over Connection.** "Connection" is LinkedIn-coded and fights the casual IRL tone the product is built around. "Crew" fits the core loop: it is activity-oriented ("who's in your crew tonight?"), group-coded without implying a fixed hierarchy, and works naturally as a verb form ("add to crew", "crew up"). It lands in UI copy without friction — "Squad request from Alex" or "Alex added you to their crew" read like how users already talk about their friend groups.
+
+**System term vs user-facing term.** `Crew` is the canonical name in the Prisma model, API routes (`/api/crew/*`), enum values (`CREW` on `Meetup.visibility`), notification types (`CREW_REQUEST`, `CREW_ACCEPTED`), and email templates. User-facing copy defaults to "Crew" but each user can personalize their own label via `User.crewLabel String? @db.VarChar(20)` — 1–20 characters, alphanumeric + spaces (e.g., "Squad", "Homies", "The Inner Circle").
+
+**Cross-user resolution rule.** The owner's label wins for their crew. When you view Alex's profile, you see Alex's crew labeled whatever Alex labeled it — "Alex's Squad" rather than "Alex's Crew." This keeps the personalization expressive without forcing every viewer into the owner's vocabulary inside their own UI (the user's personal nav still says "My Crew" or "My Squad" per their own `crewLabel`).
+
+**Ripple into the product.** Enum values, route prefixes, notification types, email subject lines, push notification strings, analytics event names, and the Phase 3 UI components (`CrewRequestCard`, `CrewButton` replacing `FollowButton`, `CrewList`) all use `Crew`. Feature-flagged overrides for user-facing copy read from `crewLabel`; system-level strings stay as `Crew`.
 
 ---
 
@@ -214,7 +228,7 @@ Environment variable `ENABLE_TRIP_PLANNING=false` (default). If ever set to `tru
 ### 4.4 Reactivation criteria (future decision gates)
 Before reactivating trip planning, a future session must confirm:
 1. Product evidence: ≥X% of active users explicitly request multi-day trip coordination
-2. Connection density is proven — trip planning is meaningful only if users have established social graph
+2. Crew graph density is proven — trip planning is meaningful only if users have established social graph
 3. Engineering bandwidth: the trip surface doesn't distract from the core meetup loop
 4. Data migration path if needed (trips created under deprecated models may have different shape)
 
@@ -263,55 +277,63 @@ Each phase targets a discrete session (or a nightly build if small). Phases are 
 ---
 
 ### Phase 2 — New domain models & migrations (1–2 sessions)
+
+> 🟡 **IN PROGRESS as of 2026-04-17** — branch `refactor/phase-2-crew-domain`. Schema renames (Connection→Crew), `User.crewLabel`, and `CheckIn.activeUntil` landing in PR.
+>
+> Prior state (nightly/2026-04-17): Schema ✅ | Generate ✅ | setup.ts mocks ✅ | src/types/social.ts ✅ | Seed generator ✅ | DB migration ⏳ (manual: `npx prisma migrate dev --name add_social_domain` against Supabase). Nightly used `Connection`; Phase 2 PR renames to `Crew`.
+
 **Objective:** Prisma schema extended with new primitives; DB migrated; mocks in place.
 **Actions:**
-1. Add Prisma models: `Connection`, `Meetup`, `MeetupAttendee`, `MeetupInvite`, `Venue`, `City`, `CheckIn`, `Poll`, `PollResponse`, `Post` (if diverging from trip feed), indexes, constraints
-2. Write migration: `npx prisma migrate dev --name add_social_domain`
-3. Update `src/__tests__/setup.ts` with mocks for every new model
-4. Generate TypeScript types via `npx prisma generate`
-5. Seed script for dev: sample cities, venues, connections (`prisma/seed.ts` extension)
+1. Add Prisma models: `Crew`, `Meetup`, `MeetupAttendee`, `MeetupInvite`, `Venue`, `City`, `CheckIn`, `Poll`, `PollResponse`, `Post` (if diverging from trip feed), indexes, constraints
+2. **Rename `Connection` → `Crew` project-wide** (schema model, TypeScript types, Zod validation files, seed generators, setup.ts mocks, any references in documentation). The nightly build scaffolded under `Connection`; this PR is the rename pass.
+3. **Add `User.crewLabel String? @db.VarChar(20)`** — optional per-user display label (1–20 chars, alphanumeric + spaces) for personalizing the term shown in that user's UI. Owner's label wins cross-user (see §3.5).
+4. **Add `CheckIn.activeUntil DateTime`** with `@default(dbgenerated("now() + interval '6 hours'"))`. Feed/presence queries filter `WHERE activeUntil > now()`. Row persists indefinitely for attendance history; only visibility in the live feed is tied to the window.
+5. Write migration: `npx prisma migrate dev --name add_crew_domain` (supersedes `add_social_domain` name; include SQL CHECK constraint `CHECK (userAId < userBId)` on `Crew` table)
+6. Update `src/__tests__/setup.ts` with mocks for every new model (`crew` replaces `connection`)
+7. Generate TypeScript types via `npx prisma generate`
+8. Seed script for dev: sample cities, venues, crews (`prisma/seed/generators/socialDomain.ts` rename-aware)
 
-**Exit criteria:** Migration applied locally + staging, types generated, `setup.ts` mocks added, seed runs successfully.
+**Exit criteria:** Migration applied locally + staging, types generated, `setup.ts` mocks added, seed runs successfully, no references to `Connection` remain in the live surface.
 
-**Key schema decisions to settle here:**
-- `Connection` — bidirectional: single row with `userAId < userBId` convention, or two rows (one per direction)? (Recommend: single row, enforced via DB constraint.)
-- `Meetup` visibility: `PUBLIC | CONNECTIONS | INVITE_ONLY | PRIVATE`?
-- `CheckIn` retention: delete after N hours? Keep as historical record?
-- `Poll.type`: enum or polymorphic (`SURVEY` vs `VOTE` vs `RSVP_POLL`)?
+**Key schema decisions settled here (see §9 Resolved Answers):**
+- Q2 ✅ `Crew` bidirectional: **single row with `userAId < userBId` + DB CHECK constraint**, `requestedById` tracks initiator
+- Q3 ✅ Default `Meetup.visibility`: **`CREW`** (enum: `PUBLIC | CREW | INVITE_ONLY | PRIVATE`)
+- Q4 ✅ `CheckIn` retention: **two-tier via `activeUntil`** — feed filters `WHERE activeUntil > now()` (default now+6h), row kept for history
+- Q5 ⏳ `Poll.type` enum vs polymorphic — deferred
 
 ---
 
-### Phase 3 — Connections system (2–3 sessions)
-**Objective:** Users can send, accept, decline connection requests with LinkedIn-grade UX.
+### Phase 3 — Crew system (2–3 sessions)
+**Objective:** Users can send, accept, decline Crew requests with first-class UX.
 **Actions:**
 1. API routes (Zod-validated, rate-limited, Sentry-instrumented):
-   - `POST /api/connections/request` — send request
-   - `PATCH /api/connections/[id]` — accept/decline
-   - `DELETE /api/connections/[id]` — remove connection
-   - `GET /api/connections` — list accepted
-   - `GET /api/connections/requests` — list pending (inbox + sent)
-2. Pages: `/connections`, `/connections/requests`
-3. Components: `ConnectionRequestCard`, `ConnectButton` (replaces `FollowButton`), `ConnectionList`
-4. Notification types: `CONNECTION_REQUEST`, `CONNECTION_ACCEPTED`
-5. Email templates: connection request notification (Resend)
-6. Tests: API (edge cases, auth, rate limit) + integration (accept flow)
+   - `POST /api/crew/request` — send Crew request (creates `Crew` row with `userAId < userBId`, status=PENDING, `requestedById`=caller)
+   - `PATCH /api/crew/[id]` — accept/decline/block
+   - `DELETE /api/crew/[id]` — remove Crew (soft-deletes the row)
+   - `GET /api/crew` — list accepted Crew members
+   - `GET /api/crew/requests` — list pending (inbox + sent)
+2. Pages: `/crew`, `/crew/requests`
+3. Components: `CrewRequestCard`, `CrewButton` (replaces `FollowButton`), `CrewList`
+4. Notification types: `CREW_REQUEST`, `CREW_ACCEPTED`
+5. Email templates: Crew request notification (Resend) — default "Crew" term, optional per-user `crewLabel` substitution in user-facing strings
+6. Tests: API (edge cases, auth, rate limit, CHECK constraint enforcement) + integration (accept flow)
 7. Docs: add to API_STATUS, CODEMAP, CURRENT_SPRINT
 
-**Exit criteria:** Two users on staging can send, accept, and see each other in their connections list. Notification + email fire on request.
+**Exit criteria:** Two users on staging can send, accept, and see each other in their Crew list. Notification + email fire on request. DB CHECK constraint rejects direct inserts with `userAId >= userBId`.
 
 ---
 
 ### Phase 4 — Meetups core (3–4 sessions)
-**Objective:** Users can create a meetup, invite connections, RSVP, see real-time attendance.
+**Objective:** Users can create a meetup, invite Crew, RSVP, see real-time attendance.
 **Actions:**
 1. API routes:
-   - `POST /api/meetups` — create (with venue, time, visibility)
-   - `GET /api/meetups` — list (filter by city, time range, connection-visible)
+   - `POST /api/meetups` — create (with venue, time, visibility — default `CREW`)
+   - `GET /api/meetups` — list (filter by city, time range, visibility-scoped to caller's Crew)
    - `GET /api/meetups/[id]` — detail
    - `PATCH /api/meetups/[id]` — edit (host only)
    - `DELETE /api/meetups/[id]` — cancel
    - `POST /api/meetups/[id]/rsvp` — going/maybe/declined
-   - `POST /api/meetups/[id]/invite` — invite connections
+   - `POST /api/meetups/[id]/invite` — invite Crew members
 2. Venue search: `GET /api/venues/search` (geocoding + Places API repurposed)
 3. Pages: `/meetups`, `/meetups/new`, `/meetups/[meetupId]`
 4. Components: `CreateMeetupModal`, `MeetupCard`, `MeetupDetail`, `RSVPButton`, `VenuePicker`, `AttendeeList`, `MeetupInviteModal`
@@ -319,37 +341,38 @@ Each phase targets a discrete session (or a nightly build if small). Phases are 
 6. Notifications: `MEETUP_INVITED`, `MEETUP_STARTING_SOON`, `ATTENDEE_RSVPED`
 7. Tests + docs
 
-**Exit criteria:** Host creates meetup → connections see it in feed → RSVP → live count updates → meetup detail page shows confirmed attendees.
+**Exit criteria:** Host creates meetup (default visibility=`CREW`) → Crew members see it in feed → RSVP → live count updates → meetup detail page shows confirmed attendees. Visibility enum enforces `PUBLIC | CREW | INVITE_ONLY | PRIVATE`.
 
 ---
 
 ### Phase 5 — Check-ins & live presence (2–3 sessions)
-**Objective:** The "who's out tonight" loop. Users broadcast they're somewhere; connections see it; one-tap "join me."
+**Objective:** The "who's out tonight" loop. Users broadcast they're somewhere; Crew sees it; one-tap "join me." Short `activeUntil` window prevents stalker vector (R5) while preserving history.
 **Actions:**
-1. API: `POST /api/checkins`, `GET /api/checkins/feed` (connections' recent check-ins), `DELETE /api/checkins/[id]` (cancel)
+1. API: `POST /api/checkins`, `GET /api/checkins/feed` (Crew's recent check-ins, filtered `WHERE activeUntil > now()`), `DELETE /api/checkins/[id]` (cancel)
 2. Pusher channel per city for presence
-3. Components: `CheckInButton`, `LiveActivityCard`, `NearbyConnectionsList`
+3. Components: `CheckInButton`, `LiveActivityCard`, `NearbyCrewList`
 4. Optional: location permission flow (browser geolocation API, progressive)
 5. "Join me" CTA on check-in cards → creates impromptu meetup or joins existing
-6. Notifications: `CONNECTION_CHECKED_IN_NEARBY` (with privacy controls)
-7. Privacy settings page: who can see my check-ins (connections / close connections / public)
+6. Notifications: `CREW_CHECKED_IN_NEARBY` (with privacy controls; only fires within `activeUntil` window)
+7. Privacy settings page: who can see my check-ins (Crew / close Crew / public)
+8. Optional feature: allow user to override default 6h `activeUntil` per check-in (min 30m, max 12h)
 
-**Exit criteria:** Check-in broadcasts to connection feed within 5 seconds. Privacy controls enforced. "Join me" creates a valid meetup or attaches a user to an existing one.
+**Exit criteria:** Check-in broadcasts to Crew feed within 5 seconds. Feed queries filter expired check-ins via `activeUntil > now()`. Rows persist for attendance history (hidden from feed after window). Privacy controls enforced. "Join me" creates a valid meetup or attaches a user to an existing one.
 
 ---
 
 ### Phase 6 — Rescope feed, AI, notifications (2 sessions)
 **Objective:** Retarget cross-cutting surfaces for the new vision.
 **Actions:**
-1. **Feed rescope:** remove trip-related feed item types, add `CONNECTION_MADE`, `MEETUP_CREATED`, `CHECK_IN_POSTED`, `MEETUP_ATTENDED`, `POST_CREATED`
+1. **Feed rescope:** remove trip-related feed item types, add `CREW_FORMED`, `MEETUP_CREATED`, `CHECK_IN_POSTED`, `MEETUP_ATTENDED`, `POST_CREATED`
 2. **AI routes repurpose:**
-   - `/api/ai/suggest-meetups` — given user's city, connections, past check-ins, suggest meetup ideas
-   - `/api/ai/icebreakers` — meeting a new connection for the first time, suggest conversation starters
+   - `/api/ai/suggest-meetups` — given user's city, Crew, past check-ins, suggest meetup ideas
+   - `/api/ai/icebreakers` — meeting a new Crew member for the first time, suggest conversation starters
    - Archive or rewrite: `/api/ai/chat` (retain as generic assistant), `/api/ai/recommend` (retarget to venues)
-3. **Notification types:** finalize the new enum, write migration to map or drop old types
+3. **Notification types:** finalize the new enum (`CREW_REQUEST`, `CREW_ACCEPTED`, `MEETUP_INVITED`, etc.), write migration to map or drop old types
 4. **Search rescope:** people-first, then meetups, then venues; drop trip and activity search
 
-**Exit criteria:** Feed shows only new content types. AI suggestions reference meetup context, not trip context. Search surfaces people first.
+**Exit criteria:** Feed shows only new content types. AI suggestions reference meetup + Crew context, not trip context. Search surfaces people first.
 
 ---
 
@@ -373,9 +396,9 @@ Each phase targets a discrete session (or a nightly build if small). Phases are 
 **Actions:**
 1. Rewrite `docs/LAUNCH_CHECKLIST.md` with meetup-centric milestones
 2. Update `docs/PRODUCTION_ROADMAP.md` (target date, priorities, new risk register)
-3. Security audit focused on new surfaces: location data handling, connection abuse prevention, meetup spam, check-in stalking mitigation
+3. Security audit focused on new surfaces: location data handling, Crew-request abuse prevention, meetup spam, check-in stalking mitigation (Q4 `activeUntil` is first line of defense)
 4. Rate-limit audit for new routes
-5. E2E Playwright tests for new critical paths: signup → connect → meetup create → RSVP → check-in
+5. E2E Playwright tests for new critical paths: signup → Crew request → meetup create → RSVP → check-in
 6. Sentry coverage audit: target 100% on new routes (don't repeat the 0/48-on-main debt)
 
 **Exit criteria:** Updated launch checklist reflects real readiness of the new product, not the archived one.
@@ -387,22 +410,23 @@ Each phase targets a discrete session (or a nightly build if small). Phases are 
 *Replaces trip-centric checklist in docs/LAUNCH_CHECKLIST.md during Phase 8.*
 
 ### Core loops
-- [ ] Signup → email verification → profile complete
-- [ ] Connection request → accept → both users see each other in `/connections`
-- [ ] Meetup create → invite connection → connection RSVPs → count updates real-time
-- [ ] Check-in → connections see it in feed within 5s
-- [ ] Notifications fire for: connection request, meetup invite, nearby check-in
+- [ ] Signup → email verification → profile complete (incl. optional `crewLabel`)
+- [ ] Crew request → accept → both users see each other in `/crew`
+- [ ] Meetup create (default visibility=`CREW`) → invite Crew member → RSVP → count updates real-time
+- [ ] Check-in → Crew sees it in feed within 5s; expired check-ins (`activeUntil < now()`) no longer appear in feed
+- [ ] Notifications fire for: Crew request, meetup invite, nearby check-in (within active window)
 
 ### Trust & safety (new, critical for social + location features)
-- [ ] Block user / unconnect flow
+- [ ] Block user / remove-from-Crew flow
 - [ ] Report user / report meetup
-- [ ] Privacy settings (check-in visibility, profile visibility)
-- [ ] Location data retention policy + user control
+- [ ] Privacy settings (check-in visibility, profile visibility, `activeUntil` override bounds)
+- [ ] Location data retention policy + user control (`CheckIn` row persists; window is visibility not deletion)
 - [ ] Age verification if legally required
 - [ ] Meetup abuse prevention (rate limit meetup creation; flag high-frequency creators)
+- [ ] Crew request rate limit per user (anti-spam)
 
 ### Performance (new requirements for social feed)
-- [ ] Feed query < 200ms p95 (connection graph fan-out)
+- [ ] Feed query < 200ms p95 (Crew graph fan-out)
 - [ ] Pusher connection count budget per user
 - [ ] City-channel sharding plan (presence scales with users-per-city, not total users)
 
@@ -421,9 +445,9 @@ Each phase targets a discrete session (or a nightly build if small). Phases are 
 |---|------|-----------|--------|-----------|
 | R1 | Half-pivoted state: some trip surface leaks into UI after Phase 1 | High | Medium | Phase 1 exit criteria is strict: no trip links in Navigation, no `/trips/*` routes active. Smoke test in CI. |
 | R2 | Prisma migration collision with DB in production | Medium | High | Run migration against staging first. Do NOT drop trip tables in Phase 2 — only add new tables. |
-| R3 | Connection schema wrong on first try (bidirectional vs two rows) | High | Medium | Prototype with 5 users on staging before Phase 4. Wrong choice = painful second migration. |
+| R3 | Crew schema wrong on first try (bidirectional vs two rows) | ~~High~~ RESOLVED | Medium | Q2 resolved 2026-04-17: single-row `userAId < userBId` with DB CHECK constraint + `requestedById`. Migration includes SQL-level enforcement. |
 | R4 | Archived tests rot and become un-revivable | Medium | Low | Quarterly `npm run test:archive` in CI. Remove if they fail for > 2 quarters. |
-| R5 | Check-in feature becomes stalker vector | Low | Very High | Phase 5 must ship with privacy controls; do not launch check-ins without them. Consider connection-approval-per-city default. |
+| R5 | Check-in feature becomes stalker vector | Low | Very High | **Q4 resolved 2026-04-17:** `activeUntil` (default now+6h) hides expired check-ins from feed/presence; Phase 5 must also ship with privacy controls. Do not launch check-ins without both. |
 | R6 | AI suggestions lose context without trip model | Medium | Medium | Phase 6 rewrites prompts carefully. Budget 2–3 iterations of prompt tuning. |
 | R7 | User confusion during migration if existing users had trips | Low (small user base) | Medium | Sunset email; one-time in-app notice; links to archived trip pages for personal reference (behind flag). |
 | R8 | Pivot takes longer than estimated, morale drops | Medium | High | Phases are scoped to ≤1 week each. If a phase slips >2x, re-estimate rather than extend silently. |
@@ -436,15 +460,15 @@ Each phase targets a discrete session (or a nightly build if small). Phases are 
 
 ### Leading indicators (weeks 1–4)
 - % of signed-up users who complete profile + add city within 24h
-- % of users who send ≥1 connection request in first week
-- Connection acceptance rate (target: >60%)
-- Meetup creation rate per connected user per week
+- % of users who send ≥1 Crew request in first week
+- Crew acceptance rate (target: >60%)
+- Meetup creation rate per user-with-Crew per week
 - RSVP conversion rate per meetup invite
 
 ### Core indicators (weeks 4–12)
 - **Confirmed-to-IRL ratio:** % of RSVPs that result in a check-in at the venue within the meetup time window (the true north metric for the tagline)
 - Check-ins per active user per week
-- Connection graph density (avg connections per user)
+- Crew graph density (avg Crew members per user)
 - Push notification → app open rate
 
 ### Anti-metrics (we want these to stay LOW)
@@ -465,15 +489,26 @@ Each phase targets a discrete session (or a nightly build if small). Phases are 
 | # | Question | When needed | Owner |
 |---|----------|-------------|-------|
 | Q1 | Do we preserve existing user trip data (user-facing link to read-only archive), or do a clean slate? | Phase 1 | Product |
-| Q2 | `Connection` one-row-bidirectional vs two-rows-per-direction? | Phase 2 | Engineering |
-| Q3 | Default meetup visibility: PUBLIC, CONNECTIONS, or INVITE_ONLY? | Phase 4 | Product |
-| Q4 | Check-in retention: 24h, 7d, forever? | Phase 5 | Product + Legal |
+| Q2 | `Crew` one-row-bidirectional vs two-rows-per-direction? | Phase 2 | RESOLVED 2026-04-17 |
+| Q3 | Default meetup visibility: PUBLIC, CREW, or INVITE_ONLY? | Phase 4 | RESOLVED 2026-04-17 |
+| Q4 | Check-in retention: short TTL vs historical record? | Phase 5 | RESOLVED 2026-04-17 |
 | Q5 | Do we drop `Trip*` tables in DB now or wait 6+ months? | Phase 2 / Deferred | Engineering |
 | Q6 | Rebrand visual identity (logo, colors) or keep current emerald/teal? | Phase 7 | Product |
 | Q7 | Geographic scope at launch — single city, single country, global? | Phase 8 | Product |
 | Q8 | Monetization model alignment with new vision (previously TBD under trip app) | Post-launch | Business |
 | Q9 | Paid Places API vs free-tier — how much venue data do we actually need? | Phase 4 | Engineering |
 | Q10 | Age minimum for signup (impacts location/privacy/legal posture) | Phase 8 | Legal |
+
+### Resolved Answers
+
+**Q2 — Crew is a single-row bidirectional relationship (resolved 2026-04-17).**
+One row per user pair with the `userAId < userBId` convention (lexicographic ordering of the two user IDs), plus a `requestedById String` field to track who initiated the request. A SQL-level CHECK constraint `CHECK (userAId < userBId)` is included in the migration to enforce invariant at the DB layer. Rationale: single-row design halves row count, eliminates sync bugs when status changes (no need to update two mirrored rows), and gives one source of truth for the relationship state. Queries for "crew of user X" filter `WHERE userAId = X OR userBId = X`.
+
+**Q3 — Default meetup visibility is `CREW` (resolved 2026-04-17).**
+The `Meetup.visibility` enum is `PUBLIC | CREW | INVITE_ONLY | PRIVATE`. New meetups default to `CREW`. Rationale: launch-phase safety beats reach. `PUBLIC` (city-wide feed) is an opt-in choice, not the default — users should consciously choose to broadcast to strangers. `CREW` matches the trusted-friends mental model the rest of the product is built around. `INVITE_ONLY` covers small gatherings where even Crew shouldn't see the whole list. `PRIVATE` is for drafts the host is still working on.
+
+**Q4 — Check-in retention uses two-tier `activeUntil` (resolved 2026-04-17).**
+New `CheckIn.activeUntil DateTime` field with DB default `now() + interval '6 hours'` (via `@default(dbgenerated(...))`). Feed and presence queries filter `WHERE activeUntil > now()`, so expired check-ins drop out of the live loop. The row itself is never auto-deleted — it persists for attendance history, personal stats, and meetup retrospectives. Rationale: a short active window is the first line of defense against R5 (stalker vector) because it bounds how long location broadcasts are visible, while full-row retention keeps "how often did Alex actually make it to things" answerable for product analytics and for the user's own check-in log. Users may optionally override the default per check-in (bounds TBD in Phase 5, likely 30m–12h).
 
 ---
 
@@ -485,8 +520,8 @@ Each phase targets a discrete session (or a nightly build if small). Phases are 
 | S2 | Phase 1 (part A) | Archive code layer | 1 session |
 | S3 | Phase 1 (part B) | Archive tests + docs, navigation cleanup | 1 session |
 | S4 | Phase 2 | Prisma schema + migration + mocks | 1 session |
-| S5 | Phase 3 (part A) | Connection API + tests | 1 session |
-| S6 | Phase 3 (part B) | Connection UI + email + notifications | 1 session |
+| S5 | Phase 3 (part A) | Crew API + tests | 1 session |
+| S6 | Phase 3 (part B) | Crew UI + email + notifications | 1 session |
 | S7 | Phase 4 (part A) | Meetup API + venue search | 1 session |
 | S8 | Phase 4 (part B) | Meetup UI + RSVP | 1 session |
 | S9 | Phase 4 (part C) | Pusher real-time attendance | 1 session |

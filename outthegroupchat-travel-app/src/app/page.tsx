@@ -10,69 +10,40 @@ const features = [
   {
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
       </svg>
     ),
-    title: 'Smart Surveys',
-    description: 'Collect preferences from your group with smart surveys that find the perfect trip for everyone.',
+    title: 'Connect',
+    description: 'Build your network of people who actually want to meet IRL.',
     color: 'emerald',
   },
   {
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
       </svg>
     ),
-    title: 'AI Recommendations',
-    description: 'Get personalized trip recommendations based on your group\'s interests and budget.',
+    title: 'Meetup',
+    description: 'Post a meetup anywhere — coffee, drinks, a run, whatever.',
     color: 'amber',
   },
   {
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
       </svg>
     ),
-    title: 'Group Coordination',
-    description: 'Vote on destinations, coordinate budgets, and keep everyone in sync effortlessly.',
+    title: 'Show Up',
+    description: 'One-tap RSVP, see who\'s coming, meet in person.',
     color: 'pink',
-  },
-  {
-    icon: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
-    title: 'Budget Tracking',
-    description: 'Individual and group budgets calculated automatically based on preferences.',
-    color: 'cyan',
-  },
-  {
-    icon: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-      </svg>
-    ),
-    title: 'Discover Events',
-    description: 'Find concerts, sports games, and local experiences at your destination.',
-    color: 'violet',
-  },
-  {
-    icon: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-      </svg>
-    ),
-    title: 'Social Sharing',
-    description: 'Share activities and connect with other groups at the same destination.',
-    color: 'rose',
   },
 ];
 
 const stats = [
-  { value: '10K+', label: 'Trips Planned' },
-  { value: '50K+', label: 'Happy Travelers' },
-  { value: '100+', label: 'Destinations' },
+  { value: '10K+', label: 'Meetups Posted' },
+  { value: '50K+', label: 'People Connected' },
+  { value: '100+', label: 'Cities' },
   { value: '4.9', label: 'Rating' },
 ];
 
@@ -91,7 +62,7 @@ export default function Home() {
       });
 
       if (result?.ok) {
-        window.location.href = '/trips';
+        window.location.href = '/discover';
       } else {
         // If demo user doesn't exist, try to create it first
         await fetch('/api/auth/demo', { method: 'POST' });
@@ -102,7 +73,7 @@ export default function Home() {
           redirect: false,
         });
         if (retryResult?.ok) {
-          window.location.href = '/trips';
+          window.location.href = '/discover';
         }
       }
     } catch (error) {
@@ -141,25 +112,25 @@ export default function Home() {
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-sm font-medium mb-6"
               >
                 <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                From group chat to reality
+                From group chat to real life
               </motion.div>
 
               <h1 className="text-5xl sm:text-6xl lg:text-7xl font-display font-bold leading-tight mb-6">
-                <span className="text-gradient">Plan Epic Trips</span>
+                <span className="text-gradient">The social app that</span>
                 <br />
-                <span className="text-slate-800 dark:text-white">Together</span>
+                <span className="text-slate-800 dark:text-white">gets you off your phone</span>
               </h1>
 
               <p className="text-xl text-slate-600 dark:text-slate-300 mb-8 max-w-xl mx-auto lg:mx-0">
-                Stop letting trip ideas die in the group chat. OutTheGroupchat helps you coordinate, plan, and book unforgettable adventures with your crew.
+                Connect with people near you. Post a meetup. Show up.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                 <Link
-                  href={status === 'authenticated' ? '/trips/new' : '/auth/signup'}
+                  href={status === 'authenticated' ? '/discover' : '/auth/signup'}
                   className="btn btn-primary text-lg px-8 py-4"
                 >
-                  Start Planning Free
+                  Find People Near You
                   <svg className="w-5 h-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
@@ -228,13 +199,13 @@ export default function Home() {
                   <div className="flex items-center gap-3 mb-3">
                     <div className="avatar avatar-md">JD</div>
                     <div>
-                      <div className="font-semibold text-sm">Nashville Trip</div>
-                      <div className="text-xs text-slate-500">July 4-8, 2025</div>
+                      <div className="font-semibold text-sm">Coffee at Blank Street</div>
+                      <div className="text-xs text-slate-500">Saturday 10am · Williamsburg</div>
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <span className="badge badge-primary">Golf</span>
-                    <span className="badge badge-secondary">Bars</span>
+                    <span className="badge badge-primary">Coffee</span>
+                    <span className="badge badge-secondary">Casual</span>
                   </div>
                 </motion.div>
 
@@ -243,12 +214,12 @@ export default function Home() {
                   transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
                   className="absolute bottom-20 left-0 w-56 card p-4 shadow-xl"
                 >
-                  <div className="text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">Group Budget</div>
-                  <div className="text-2xl font-bold text-gradient mb-2">$2,450</div>
+                  <div className="text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">Who&apos;s Coming</div>
+                  <div className="text-2xl font-bold text-gradient mb-2">8 RSVPs</div>
                   <div className="progress">
-                    <div className="progress-bar" style={{ width: '65%' }} />
+                    <div className="progress-bar" style={{ width: '80%' }} />
                   </div>
-                  <div className="text-xs text-slate-500 mt-1">65% of members confirmed</div>
+                  <div className="text-xs text-slate-500 mt-1">2 spots left</div>
                 </motion.div>
 
                 <motion.div
@@ -260,7 +231,7 @@ export default function Home() {
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    <span className="font-medium text-sm">4 votes for Nashville!</span>
+                    <span className="font-medium text-sm">You&apos;re in — see you there!</span>
                   </div>
                 </motion.div>
 
@@ -284,10 +255,10 @@ export default function Home() {
             <h2 className="text-4xl sm:text-5xl font-display font-bold mb-4">
               Everything You Need to
               <br />
-              <span className="text-gradient">Plan Together</span>
+              <span className="text-gradient">Meet IRL</span>
             </h2>
             <p className="text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
-              From idea to itinerary, we&apos;ve got you covered with powerful tools designed for group travel.
+              Stop making plans in the group chat that never happen. OutTheGroupchat makes showing up easy.
             </p>
           </motion.div>
 
@@ -328,16 +299,16 @@ export default function Home() {
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-amber-500/10" />
             <div className="relative">
               <h2 className="text-4xl font-display font-bold mb-4">
-                Ready to Start Planning?
+                Ready to Meet Someone?
               </h2>
               <p className="text-xl text-slate-600 dark:text-slate-300 mb-8 max-w-xl mx-auto">
-                Create your first trip in minutes and invite your friends. It&apos;s free to get started!
+                Post your first meetup in minutes and see who shows up. It&apos;s free to get started!
               </p>
               <Link
-                href={status === 'authenticated' ? '/trips/new' : '/auth/signup'}
+                href={status === 'authenticated' ? '/discover' : '/auth/signup'}
                 className="btn btn-primary text-lg px-10 py-4"
               >
-                Plan Your First Trip
+                Get Started
                 <svg className="w-5 h-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>

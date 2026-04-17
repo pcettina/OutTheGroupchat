@@ -1,8 +1,10 @@
 # OutTheGroupchat — Full Codemap
 
-> Auto-generated 2026-03-10. Last updated 2026-04-16. Comprehensive reference for agents and developers.
+> Auto-generated 2026-03-10. Last updated 2026-04-17. Comprehensive reference for agents and developers.
 >
 > **🔀 Pivot in progress:** See `docs/REFACTOR_PLAN.md`. Trip-planning surface archived under `_archive/` directories as of Phase 1 (2026-04-16). See [Archived surface (Phase 1)](#archived-surface-phase-1) section below and `src/_archive/README.md` for the preservation scheme.
+>
+> **Naming locked 2026-04-17:** Relationship entity is `Crew` (not `Connection`). Nightly build scaffolded as `Connection`; Phase 2 PR on `refactor/phase-2-crew-domain` renames to `Crew`. User-facing term defaults to "Crew" but is personalizable via `User.crewLabel String? @db.VarChar(20)` (1–20 chars). See REFACTOR_PLAN §3.5.
 
 ## Table of Contents
 
@@ -31,8 +33,8 @@ Full-stack Next.js 14 collaborative travel planning app. Groups plan trips toget
 
 **App root:** `outthegroupchat-travel-app/`
 **Source:** `outthegroupchat-travel-app/src/`
-**Stats (post-archive, 2026-04-16):** ~35 live API routes (14 archived) | live component groups: auth, feed, social, discover, notifications, profile, search, settings, onboarding, ai, ui, accessibility + Navigation | live services: survey (repurpose-pending) | live pages: /, /auth/*, /profile, /feed, /discover, /inspiration, /notifications, /search, /settings, /onboarding, /privacy, /terms
-**Test Health (2026-04-16):** ~46 live test files post-archive (Wave 3 to confirm exact count) | 0 TSC errors | Sentry 19/48 routes on pre-archive branch
+**Stats (post-archive, 2026-04-17):** 35 live API routes (13 archived in Phase 1) | 15 social domain routes planned for Phase 3+ under `/api/crew/*`, `/api/meetups/*`, `/api/checkins/*`, `/api/venues/*` | live component groups: auth, feed, social, discover, notifications, profile, search, settings, onboarding, ai, ui, accessibility + Navigation | live services: survey (repurpose-pending) | live pages: /, /auth/*, /profile, /feed, /discover, /inspiration, /notifications, /search, /settings, /onboarding, /privacy, /terms
+**Test Health (2026-04-17):** 43 live test files | 841 tests passing | 0 TSC errors | Phase 2: src/types/social.ts, src/lib/validations/social.ts, prisma/seed/generators/socialDomain.ts added
 
 ---
 
@@ -344,9 +346,26 @@ db:seed        → npx tsx prisma/seed/index.ts
 
 | Model | Key Fields | Relations | Notes |
 |-------|-----------|-----------|-------|
-| **User** | id, email (unique), password?, name?, image?, bio?, city?, preferences (Json), betaSignupDate?, newsletterSubscribed, passwordInitialized | accounts[], sessions[], ownedTrips[], tripMemberships[], invitations[], surveyResponses[], followers[], following[], savedActivities[], notifications[] | Indexed on email |
-| **Follow** | id, followerId, followingId | User (follower), User (following) | Unique on [followerId, followingId] |
+| **User** | id, email (unique), password?, name?, image?, bio?, city?, preferences (Json), betaSignupDate?, newsletterSubscribed, passwordInitialized, **crewLabel? (VarChar(20), 1–20 chars alphanumeric + spaces — Phase 2, 2026-04-17)** | accounts[], sessions[], ownedTrips[], tripMemberships[], invitations[], surveyResponses[], followers[], following[], savedActivities[], notifications[], crewA[], crewB[] (Phase 2) | Indexed on email |
+| **Follow** | id, followerId, followingId | User (follower), User (following) | Unique on [followerId, followingId]. Legacy (retained until Phase 6). |
 | **Notification** | id, userId, type (enum), title, message, data (Json), read | User | Indexed on [userId, read] |
+
+#### Social Domain (Phase 2, added on `refactor/phase-2-crew-domain` 2026-04-17)
+
+> Schema extended with 10 new models + 8 enums. Nightly build scaffolded under `Connection`; Phase 2 PR renames to `Crew`. Zod validation in `src/lib/validations/social.ts`. TypeScript composites in `src/types/social.ts`. Seed data in `prisma/seed/generators/socialDomain.ts`.
+
+| Model | Key Fields | Notes |
+|-------|-----------|-------|
+| **Crew** (renames `Connection`) | id, userAId, userBId, status (PENDING/ACCEPTED/DECLINED/BLOCKED), requestedById, createdAt, updatedAt | **Single-row bidirectional** with `userAId < userBId` convention + DB CHECK constraint (Q2 resolved 2026-04-17). `requestedById` tracks initiator. Unique on [userAId, userBId]. Replaces/extends `Follow`. |
+| **Meetup** | id, hostId, venueId, title, description?, startsAt, endsAt?, capacity?, visibility (PUBLIC/CREW/INVITE_ONLY/PRIVATE — **default `CREW`**, Q3 resolved 2026-04-17) | Replaces `Trip`. Visibility-scoped feed queries. |
+| **MeetupAttendee** | id, meetupId, userId, status (GOING/MAYBE/DECLINED), rsvpedAt, checkedInAt? | RSVP record; unique on [meetupId, userId] |
+| **MeetupInvite** | id, meetupId, inviterId, inviteeId, status, expiresAt | Explicit invite; separate from Crew request |
+| **Venue** | id, name, address, latitude, longitude, cityId, category, externalSource?, externalId? | Places API + geocoding |
+| **City** | id, name, country, latitude, longitude, timezone | Geographic grouping |
+| **CheckIn** | id, userId, venueId, visibility, note?, createdAt, **activeUntil DateTime @default(dbgenerated("now() + interval '6 hours'"))** (Q4 resolved 2026-04-17) | Feed/presence queries filter `WHERE activeUntil > now()`. Row persists indefinitely for attendance history. |
+| **Poll** | id, meetupId?, hostId, type (SURVEY/VOTE/RSVP_POLL), question, options (Json), closesAt? | Generalizes `TripSurvey` + `VotingSession` |
+| **PollResponse** | id, pollId, userId, choice, rank? | Unique on [pollId, userId]; merges `SurveyResponse` + `Vote` |
+| **Post** | id, authorId, content, mediaUrls[], meetupId?, checkInId? | Generalized feed entry (to be adopted in Phase 6) |
 
 #### Trip Domain
 
@@ -755,7 +774,7 @@ db:seed        → npx tsx prisma/seed/index.ts
 
 ## Tests
 
-**Total: 1346 tests across 63 Vitest unit/integration test files** (0 TSC errors in production code, 0 in test files as of 2026-04-16; Sentry 19/48 routes instrumented)
+**Total: 841 tests across 43 Vitest unit/integration test files** (post-archive baseline 2026-04-17; 20 test files + ~505 tests moved to `src/__tests__/_archive/` in Phase 1; 0 TSC errors)
 
 | File | Lines | Tests | Coverage |
 |------|-------|-------|----------|
