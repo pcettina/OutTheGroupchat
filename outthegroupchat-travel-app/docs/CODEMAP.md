@@ -1,6 +1,6 @@
 # OutTheGroupchat — Full Codemap
 
-> Auto-generated 2026-03-10. Last updated 2026-04-16. Comprehensive reference for agents and developers.
+> Auto-generated 2026-03-10. Last updated 2026-04-17. Comprehensive reference for agents and developers.
 >
 > **🔀 Pivot in progress:** See `docs/REFACTOR_PLAN.md`. Trip-planning surface archived under `_archive/` directories as of Phase 1 (2026-04-16). See [Archived surface (Phase 1)](#archived-surface-phase-1) section below and `src/_archive/README.md` for the preservation scheme.
 
@@ -31,8 +31,8 @@ Full-stack Next.js 14 collaborative travel planning app. Groups plan trips toget
 
 **App root:** `outthegroupchat-travel-app/`
 **Source:** `outthegroupchat-travel-app/src/`
-**Stats (post-archive, 2026-04-16):** ~35 live API routes (14 archived) | live component groups: auth, feed, social, discover, notifications, profile, search, settings, onboarding, ai, ui, accessibility + Navigation | live services: survey (repurpose-pending) | live pages: /, /auth/*, /profile, /feed, /discover, /inspiration, /notifications, /search, /settings, /onboarding, /privacy, /terms
-**Test Health (2026-04-16):** ~46 live test files post-archive (Wave 3 to confirm exact count) | 0 TSC errors | Sentry 19/48 routes on pre-archive branch
+**Stats (post-archive, 2026-04-17):** 35 live API routes (13 archived in Phase 1) | 15 social domain routes planned (Phase 3+) | live component groups: auth, feed, social, discover, notifications, profile, search, settings, onboarding, ai, ui, accessibility + Navigation | live services: survey (repurpose-pending) | live pages: /, /auth/*, /profile, /feed, /discover, /inspiration, /notifications, /search, /settings, /onboarding, /privacy, /terms
+**Test Health (2026-04-17):** 43 live test files | 841 tests passing | 0 TSC errors | Phase 2: src/types/social.ts, src/lib/validations/social.ts, prisma/seed/generators/socialDomain.ts added
 
 ---
 
@@ -755,7 +755,7 @@ db:seed        → npx tsx prisma/seed/index.ts
 
 ## Tests
 
-**Total: 1346 tests across 63 Vitest unit/integration test files** (0 TSC errors in production code, 0 in test files as of 2026-04-16; Sentry 19/48 routes instrumented)
+**Total: 841 tests across 43 Vitest unit/integration test files** (post-archive baseline 2026-04-17; 20 test files + ~505 tests moved to `src/__tests__/_archive/` in Phase 1; 0 TSC errors)
 
 | File | Lines | Tests | Coverage |
 |------|-------|-------|----------|

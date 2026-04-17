@@ -1,18 +1,20 @@
-# OutTheGroupchat
+# OutTheGroupchat — Social Meetup Network
 
-**The easiest way to plan group trips together.**
+**The social app that wants to get you off your phone.**
 
-A modern web application that helps groups coordinate trip planning through surveys, voting, AI-powered recommendations, and real-time collaboration.
+A LinkedIn-style social network built for in-person meetups, not trip planning. Connect with people, create and RSVP to local meetups, check in live when you're out, and see who else is around — all designed to turn online connections into real-world moments.
 
 ## Features
 
-- **Trip Planning** - Create trips, invite members, set budgets and dates
-- **Group Surveys** - Gather preferences from all group members
-- **Democratic Voting** - Vote on destinations, activities, and decisions
-- **AI-Powered Itineraries** - Generate personalized day-by-day plans
-- **Real-time Updates** - Live voting results and collaboration
-- **Activity Discovery** - Find and save activities from other travelers
-- **Social Features** - Activity feed, comments, and ratings
+- **Connections** - Send and accept connection requests to build your network
+- **Meetups** - Create events and RSVP; discover what's happening near you
+- **Check-ins** - Broadcast live presence so your network knows you're out
+- **Feed** - See who's out, what's happening, and activity from your connections
+- **Real-time** - Pusher-powered live updates for check-ins, RSVPs, and notifications
+
+## Pivot Status
+
+> **Active refactor: Phase 2 of 8.** Trip-planning code archived in `src/_archive/` (see `docs/REFACTOR_PLAN.md`). All infrastructure — auth, database, real-time, API layer — is 100% reused. No data loss; schema migrations are additive.
 
 ## Tech Stack
 
@@ -70,22 +72,24 @@ A modern web application that helps groups coordinate trip planning through surv
 ```
 src/
 ├── app/                    # Next.js App Router pages
-│   ├── api/               # API routes (48 routes)
-│   │   ├── ai/           # AI endpoints
-│   │   ├── trips/        # Trip CRUD
+│   ├── api/               # API routes (35 active routes)
+│   │   ├── meetups/      # Meetup CRUD + RSVP
+│   │   ├── connections/  # Connection requests
+│   │   ├── checkins/     # Live presence
+│   │   ├── feed/         # Social feed
+│   │   ├── users/        # User profiles
 │   │   └── ...
-│   ├── trips/            # Trip pages
-│   ├── discover/         # Discovery page
+│   ├── meetups/          # Meetup pages
+│   ├── connections/      # Connections pages
 │   └── feed/             # Social feed
+├── _archive/              # Archived trip-planning code (Phase 1)
 ├── components/            # React components
 │   ├── ui/               # Base UI components
-│   ├── trips/            # Trip-specific components
-│   ├── surveys/          # Survey components
-│   ├── voting/           # Voting components
-│   └── social/           # Social components
+│   ├── meetups/          # Meetup components
+│   ├── connections/      # Connection components
+│   └── social/           # Feed + social components
 ├── hooks/                 # Custom React hooks
 ├── lib/                   # Utilities and clients
-│   ├── ai/               # AI configuration
 │   ├── prisma.ts         # Database client
 │   └── pusher.ts         # Real-time client
 ├── services/              # Business logic
@@ -156,15 +160,15 @@ The project includes:
 
 ### Core Endpoints
 
-- `GET/POST /api/trips` - List and create trips
-- `GET/PATCH/DELETE /api/trips/[tripId]` - Trip CRUD
-- `GET/POST /api/trips/[tripId]/survey` - Survey management
-- `GET/POST /api/trips/[tripId]/voting` - Voting sessions
-- `GET/POST /api/ai/generate-itinerary` - AI itinerary
-- `POST /api/ai/chat` - AI chat (streaming)
-- `POST /api/ai/suggest-activities` - AI suggestions
+- `GET/POST /api/meetups` - List and create meetups
+- `GET/PATCH/DELETE /api/meetups/[meetupId]` - Meetup CRUD
+- `POST /api/meetups/[meetupId]/rsvp` - RSVP to a meetup
+- `GET/POST /api/connections` - List and send connection requests
+- `PATCH /api/connections/[connectionId]` - Accept or decline a request
+- `GET/POST /api/checkins` - List and broadcast check-ins
+- `GET /api/feed` - Social feed (connections' activity)
+- `GET /api/users/[userId]` - Public profile
 - `GET /api/notifications` - User notifications
-- `GET /api/feed` - Activity feed
 - `GET /api/search` - Global search
 
 ## Demo Accounts
@@ -197,7 +201,8 @@ Built with ❤️ by the OutTheGroupchat Team
 
 ## Recent Updates
 
-- **2026-04-16:** Sentry error monitoring expanded to 19/48 API routes (trips, activities, search, inspiration, users, profile, discover, AI endpoints); beta/status migrated to Redis rate limiting; dead components removed (DestinationCard, CategoryFilter, TrendingSection, TravelBadges); 112 new tests added (1,346+ total across 65 test files)
+- **2026-04-16 (tonight):** Product pivot to social meetup network initiated. Phase 1 complete: trip-planning surface archived to `src/_archive/` (routes, pages, components, services). README and docs updated to reflect new vision. 841 tests passing post-archive across 35 active API routes.
+- **2026-04-16:** Sentry error monitoring expanded to 19/48 API routes; beta/status migrated to Redis rate limiting; dead components removed (DestinationCard, CategoryFilter, TrendingSection, TravelBadges); 112 new tests added (1,346+ total pre-archive)
 - **2026-04-15:** Sentry instrumented on 13 routes; beta/status Redis migration; JSDoc additions across lib/api modules
 - **2026-04-14:** Zod validation added to flights, suggestions, cron routes; Sentry expanded to 18 routes on branch
 - **2026-04-13:** Sentry installed on auth and AI routes; addBreadcrumb wrapper exported from lib/sentry; structured logging complete
@@ -206,4 +211,4 @@ Built with ❤️ by the OutTheGroupchat Team
 
 ---
 
-*Last Updated: 2026-04-16 | 1234+ tests passing (main) | 59 test files | 48 API routes | 0 any types | 0 console.* | Build: PASS*
+*Last Updated: 2026-04-16 | 841 tests passing | 35 active API routes | 0 any types | 0 console.* | Build: PASS | Pivot: Phase 2 of 8*
