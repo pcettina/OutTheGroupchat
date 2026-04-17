@@ -33,8 +33,8 @@ Full-stack Next.js 14 collaborative travel planning app. Groups plan trips toget
 
 **App root:** `outthegroupchat-travel-app/`
 **Source:** `outthegroupchat-travel-app/src/`
-**Stats (post-archive, 2026-04-17):** 35 live API routes (13 archived in Phase 1) | 15 social domain routes planned for Phase 3+ under `/api/crew/*`, `/api/meetups/*`, `/api/checkins/*`, `/api/venues/*` | live component groups: auth, feed, social, discover, notifications, profile, search, settings, onboarding, ai, ui, accessibility + Navigation | live services: survey (repurpose-pending) | live pages: /, /auth/*, /profile, /feed, /discover, /inspiration, /notifications, /search, /settings, /onboarding, /privacy, /terms
-**Test Health (2026-04-17):** 43 live test files | 841 tests passing | 0 TSC errors | Phase 2: src/types/social.ts, src/lib/validations/social.ts, prisma/seed/generators/socialDomain.ts added
+**Stats (post-Phase-3-part-A, 2026-04-18):** 41 live API routes (35 base + 6 new Crew routes; 13 archived in Phase 1) | 9 social domain routes still planned (meetups, checkins, venues) | live component groups: auth, feed, social (incl. `CrewButton`, `CrewRequestCard`, `CrewList`), discover, notifications, profile, search, settings, onboarding, ai, ui, accessibility + Navigation | live services: survey (repurpose-pending) | live pages: /, /auth/*, /profile, /feed, /discover, /inspiration, /notifications, /search, /settings, /onboarding, /privacy, /terms, `/crew`, `/crew/requests`
+**Test Health (2026-04-18):** 44 live test files | 873 tests passing (32 new in crew.test.ts) | 0 TSC errors | Phase 3: `/api/crew/*` routes, DB CHECK constraint on Crew, email templates for CREW_REQUEST and CREW_ACCEPTED
 
 ---
 

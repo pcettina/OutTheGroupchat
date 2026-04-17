@@ -336,17 +336,25 @@ EMAIL_FROM=             # Email sender (onboarding@resend.dev) ✅
 
 ---
 
-## 🚧 Social Domain Routes (Phase 3–5, Planned)
+## 🚧 Social Domain Routes (Phase 3–5)
 
-> Schema in progress (Phase 2, 2026-04-17 branch `refactor/phase-2-crew-domain`). Routes to be implemented in Phase 3–5. Zod schemas pre-built in `src/lib/validations/social.ts`. Relationship entity named `Crew` (not `Connection` — nightly build scaffolded as `Connection`, renamed in Phase 2 PR per REFACTOR_PLAN §3.5). Default `Meetup.visibility=CREW` (Q3). Check-ins use `activeUntil` for feed filtering (Q4).
+> Phase 2 merged 2026-04-17. Phase 3 (Crew) landing on `refactor/phase-3-crew-api` — all Crew routes implemented, Zod-validated, rate-limited, Sentry-instrumented, and covered by 32 unit tests. Phase 4 (Meetups) and Phase 5 (Check-ins) still planned. Default `Meetup.visibility=CREW` (Q3). Check-ins use `activeUntil` for feed filtering (Q4).
+
+### Phase 3 — Crew (✅ implemented)
+
+| Endpoint | Method | Status | Notes |
+|----------|--------|--------|-------|
+| `/api/crew/request` | POST | ✅ | Send Crew request; sorts `(userAId, userBId)` before insert, fires `CREW_REQUEST` notification + email; reopens `DECLINED` rows |
+| `/api/crew/[id]` | PATCH | ✅ | `action: accept \| decline \| block`; accept emits `CREW_ACCEPTED` notification + email; requester cannot accept own request |
+| `/api/crew/[id]` | DELETE | ✅ | Remove Crew row (cancel/remove/unblock) — either participant may delete |
+| `/api/crew` | GET | ✅ | List accepted Crew members (paginated); returns userA/userB/requestedBy previews incl. `crewLabel` |
+| `/api/crew/requests` | GET | ✅ | Pending requests split into `incoming` + `sent` based on `requestedById` |
+| `/api/crew/status/[userId]` | GET | ✅ | Lookup helper for `<CrewButton>` (returns `SELF / NOT_IN_CREW / PENDING / ACCEPTED / DECLINED / BLOCKED` + `iAmRequester`) |
+
+### Phase 4–5 — Planned
 
 | Endpoint | Method | Phase | Notes |
 |----------|--------|-------|-------|
-| `/api/crew/request` | POST | 3 | Send Crew request (creates row with `userAId < userBId`, `requestedById`=caller, status=PENDING) |
-| `/api/crew/[id]` | PATCH | 3 | Accept / decline / block |
-| `/api/crew/[id]` | DELETE | 3 | Remove Crew row |
-| `/api/crew` | GET | 3 | List accepted Crew members |
-| `/api/crew/requests` | GET | 3 | Pending inbox + sent |
 | `/api/meetups` | POST | 4 | Create meetup (default visibility=`CREW`) |
 | `/api/meetups` | GET | 4 | List meetups (city, visibility-scoped to caller's Crew) |
 | `/api/meetups/[id]` | GET / PATCH / DELETE | 4 | Meetup detail / edit / cancel |
