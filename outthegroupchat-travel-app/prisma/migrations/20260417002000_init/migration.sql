@@ -1,16 +1,5 @@
-/*
-  Warnings:
-
-  - You are about to drop the column `location` on the `Trip` table. All the data in the column will be lost.
-  - The `budget` column on the `Trip` table would be dropped and recreated. This will lead to data loss if there is data in the column.
-  - You are about to drop the `Event` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `_TripMembers` table. If the table is not empty, all the data it contains will be lost.
-  - Added the required column `destination` to the `Trip` table without a default value. This is not possible if the table is not empty.
-  - Made the column `email` on table `User` required. This step will fail if there are existing NULL values in that column.
-
-*/
 -- CreateEnum
-CREATE TYPE "NotificationType" AS ENUM ('TRIP_INVITATION', 'TRIP_UPDATE', 'TRIP_COMMENT', 'TRIP_LIKE', 'ACTIVITY_COMMENT', 'ACTIVITY_RATING', 'SURVEY_REMINDER', 'VOTE_REMINDER', 'FOLLOW', 'SYSTEM');
+CREATE TYPE "NotificationType" AS ENUM ('TRIP_INVITATION', 'TRIP_UPDATE', 'TRIP_COMMENT', 'TRIP_LIKE', 'ACTIVITY_COMMENT', 'ACTIVITY_RATING', 'SURVEY_REMINDER', 'VOTE_REMINDER', 'FOLLOW', 'SYSTEM', 'CREW_REQUEST', 'CREW_ACCEPTED', 'MEETUP_INVITED', 'MEETUP_RSVP', 'MEETUP_STARTING_SOON', 'CHECK_IN_NEARBY');
 
 -- CreateEnum
 CREATE TYPE "TripStatus" AS ENUM ('PLANNING', 'INVITING', 'SURVEYING', 'VOTING', 'BOOKED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED');
@@ -45,45 +34,88 @@ CREATE TYPE "BookingStatus" AS ENUM ('NOT_NEEDED', 'RECOMMENDED', 'REQUIRED', 'B
 -- CreateEnum
 CREATE TYPE "ExternalSource" AS ENUM ('OPENTRIPMAP', 'FOURSQUARE', 'OPENSTREETMAP', 'WIKIVOYAGE', 'GOOGLE_PLACES', 'YELP', 'TRIPADVISOR', 'MANUAL');
 
--- DropForeignKey
-ALTER TABLE "Event" DROP CONSTRAINT "Event_tripId_fkey";
+-- CreateEnum
+CREATE TYPE "CrewStatus" AS ENUM ('PENDING', 'ACCEPTED', 'DECLINED', 'BLOCKED');
 
--- DropForeignKey
-ALTER TABLE "_TripMembers" DROP CONSTRAINT "_TripMembers_A_fkey";
+-- CreateEnum
+CREATE TYPE "MeetupVisibility" AS ENUM ('PUBLIC', 'CREW', 'INVITE_ONLY', 'PRIVATE');
 
--- DropForeignKey
-ALTER TABLE "_TripMembers" DROP CONSTRAINT "_TripMembers_B_fkey";
+-- CreateEnum
+CREATE TYPE "AttendeeStatus" AS ENUM ('GOING', 'MAYBE', 'DECLINED');
 
--- AlterTable
-ALTER TABLE "Trip" DROP COLUMN "location",
-ADD COLUMN     "destination" JSONB NOT NULL,
-ADD COLUMN     "isPublic" BOOLEAN NOT NULL DEFAULT false,
-ADD COLUMN     "status" "TripStatus" NOT NULL DEFAULT 'PLANNING',
-ADD COLUMN     "viewCount" INTEGER NOT NULL DEFAULT 0,
-DROP COLUMN "budget",
-ADD COLUMN     "budget" JSONB;
+-- CreateEnum
+CREATE TYPE "InviteStatus" AS ENUM ('PENDING', 'ACCEPTED', 'DECLINED', 'EXPIRED');
 
--- AlterTable
-ALTER TABLE "User" ADD COLUMN     "betaLaunchEmailSent" BOOLEAN NOT NULL DEFAULT false,
-ADD COLUMN     "betaSignupDate" TIMESTAMP(3),
-ADD COLUMN     "lastActive" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-ADD COLUMN     "newsletterSubscribed" BOOLEAN NOT NULL DEFAULT false,
-ADD COLUMN     "newsletterSubscribedAt" TIMESTAMP(3),
-ADD COLUMN     "passwordInitialized" BOOLEAN NOT NULL DEFAULT false,
-ADD COLUMN     "phone" TEXT,
-ALTER COLUMN "email" SET NOT NULL;
+-- CreateEnum
+CREATE TYPE "VenueCategory" AS ENUM ('BAR', 'COFFEE', 'RESTAURANT', 'PARK', 'GYM', 'COWORKING', 'OTHER');
 
--- DropTable
-DROP TABLE "Event";
+-- CreateEnum
+CREATE TYPE "CheckInVisibility" AS ENUM ('PUBLIC', 'CREW', 'PRIVATE');
 
--- DropTable
-DROP TABLE "_TripMembers";
+-- CreateEnum
+CREATE TYPE "PollType" AS ENUM ('SURVEY', 'VOTE', 'RSVP_POLL');
+
+-- CreateEnum
+CREATE TYPE "PostType" AS ENUM ('CHECK_IN', 'MEETUP_CREATED', 'MEETUP_ATTENDED', 'CREW_MADE', 'TEXT_POST');
+
+-- CreateTable
+CREATE TABLE "Account" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "type" TEXT NOT NULL,
+    "provider" TEXT NOT NULL,
+    "providerAccountId" TEXT NOT NULL,
+    "refresh_token" TEXT,
+    "access_token" TEXT,
+    "expires_at" INTEGER,
+    "token_type" TEXT,
+    "scope" TEXT,
+    "id_token" TEXT,
+    "session_state" TEXT,
+
+    CONSTRAINT "Account_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Session" (
+    "id" TEXT NOT NULL,
+    "sessionToken" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "expires" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Session_pkey" PRIMARY KEY ("id")
+);
 
 -- CreateTable
 CREATE TABLE "VerificationToken" (
     "identifier" TEXT NOT NULL,
     "token" TEXT NOT NULL,
     "expires" TIMESTAMP(3) NOT NULL
+);
+
+-- CreateTable
+CREATE TABLE "users" (
+    "id" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "emailVerified" TIMESTAMP(3),
+    "password" TEXT,
+    "name" TEXT,
+    "image" TEXT,
+    "bio" TEXT,
+    "city" TEXT,
+    "crewLabel" VARCHAR(20),
+    "phone" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "lastActive" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "betaSignupDate" TIMESTAMP(3),
+    "newsletterSubscribed" BOOLEAN NOT NULL DEFAULT false,
+    "newsletterSubscribedAt" TIMESTAMP(3),
+    "passwordInitialized" BOOLEAN NOT NULL DEFAULT false,
+    "betaLaunchEmailSent" BOOLEAN NOT NULL DEFAULT false,
+    "preferences" JSONB,
+
+    CONSTRAINT "users_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -130,6 +162,26 @@ CREATE TABLE "TripLike" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "TripLike_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Trip" (
+    "id" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "description" TEXT,
+    "status" "TripStatus" NOT NULL DEFAULT 'PLANNING',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "destination" JSONB NOT NULL,
+    "startDate" TIMESTAMP(3) NOT NULL,
+    "endDate" TIMESTAMP(3) NOT NULL,
+    "budget" JSONB,
+    "ownerId" TEXT NOT NULL,
+    "coverImage" TEXT,
+    "isPublic" BOOLEAN NOT NULL DEFAULT false,
+    "viewCount" INTEGER NOT NULL DEFAULT 0,
+
+    CONSTRAINT "Trip_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -362,11 +414,175 @@ CREATE TABLE "DestinationCache" (
     CONSTRAINT "DestinationCache_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "City" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "state" TEXT,
+    "country" TEXT NOT NULL,
+    "timezone" TEXT,
+    "latitude" DOUBLE PRECISION NOT NULL,
+    "longitude" DOUBLE PRECISION NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "City_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Venue" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "address" TEXT,
+    "city" TEXT NOT NULL,
+    "country" TEXT NOT NULL,
+    "latitude" DOUBLE PRECISION,
+    "longitude" DOUBLE PRECISION,
+    "category" "VenueCategory" NOT NULL DEFAULT 'OTHER',
+    "source" TEXT,
+    "externalId" TEXT,
+    "imageUrl" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "cityId" TEXT,
+
+    CONSTRAINT "Venue_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Crew" (
+    "id" TEXT NOT NULL,
+    "userAId" TEXT NOT NULL,
+    "userBId" TEXT NOT NULL,
+    "status" "CrewStatus" NOT NULL DEFAULT 'PENDING',
+    "requestedById" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Crew_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Meetup" (
+    "id" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "description" TEXT,
+    "hostId" TEXT NOT NULL,
+    "venueId" TEXT,
+    "venueName" TEXT,
+    "cityId" TEXT,
+    "scheduledAt" TIMESTAMP(3) NOT NULL,
+    "endsAt" TIMESTAMP(3),
+    "visibility" "MeetupVisibility" NOT NULL DEFAULT 'CREW',
+    "capacity" INTEGER,
+    "cancelled" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Meetup_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "MeetupAttendee" (
+    "id" TEXT NOT NULL,
+    "meetupId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "status" "AttendeeStatus" NOT NULL DEFAULT 'GOING',
+    "checkedInAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "MeetupAttendee_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "MeetupInvite" (
+    "id" TEXT NOT NULL,
+    "meetupId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "invitedBy" TEXT NOT NULL,
+    "status" "InviteStatus" NOT NULL DEFAULT 'PENDING',
+    "expiresAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "MeetupInvite_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "CheckIn" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "venueId" TEXT,
+    "venueName" TEXT,
+    "cityId" TEXT,
+    "note" TEXT,
+    "visibility" "CheckInVisibility" NOT NULL DEFAULT 'CREW',
+    "activeUntil" TIMESTAMP(3) NOT NULL DEFAULT (now() + interval '6 hours'),
+    "latitude" DOUBLE PRECISION,
+    "longitude" DOUBLE PRECISION,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "CheckIn_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Poll" (
+    "id" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "type" "PollType" NOT NULL,
+    "options" JSONB NOT NULL,
+    "meetupId" TEXT,
+    "createdBy" TEXT NOT NULL,
+    "expiresAt" TIMESTAMP(3),
+    "closed" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Poll_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "PollResponse" (
+    "id" TEXT NOT NULL,
+    "pollId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "answers" JSONB NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "PollResponse_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Post" (
+    "id" TEXT NOT NULL,
+    "authorId" TEXT NOT NULL,
+    "type" "PostType" NOT NULL,
+    "content" TEXT,
+    "data" JSONB,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Post_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Account_provider_providerAccountId_key" ON "Account"("provider", "providerAccountId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Session_sessionToken_key" ON "Session"("sessionToken");
+
 -- CreateIndex
 CREATE UNIQUE INDEX "VerificationToken_token_key" ON "VerificationToken"("token");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "VerificationToken_identifier_token_key" ON "VerificationToken"("identifier", "token");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
+
+-- CreateIndex
+CREATE INDEX "users_email_idx" ON "users"("email");
 
 -- CreateIndex
 CREATE INDEX "Follow_followerId_idx" ON "Follow"("followerId");
@@ -391,6 +607,15 @@ CREATE INDEX "TripLike_tripId_idx" ON "TripLike"("tripId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "TripLike_userId_tripId_key" ON "TripLike"("userId", "tripId");
+
+-- CreateIndex
+CREATE INDEX "Trip_ownerId_idx" ON "Trip"("ownerId");
+
+-- CreateIndex
+CREATE INDEX "Trip_status_idx" ON "Trip"("status");
+
+-- CreateIndex
+CREATE INDEX "Trip_startDate_idx" ON "Trip"("startDate");
 
 -- CreateIndex
 CREATE INDEX "TripMember_tripId_idx" ON "TripMember"("tripId");
@@ -489,55 +714,136 @@ CREATE INDEX "DestinationCache_country_idx" ON "DestinationCache"("country");
 CREATE UNIQUE INDEX "DestinationCache_city_country_key" ON "DestinationCache"("city", "country");
 
 -- CreateIndex
-CREATE INDEX "Trip_ownerId_idx" ON "Trip"("ownerId");
+CREATE INDEX "City_country_idx" ON "City"("country");
 
 -- CreateIndex
-CREATE INDEX "Trip_status_idx" ON "Trip"("status");
+CREATE UNIQUE INDEX "City_name_country_key" ON "City"("name", "country");
 
 -- CreateIndex
-CREATE INDEX "Trip_startDate_idx" ON "Trip"("startDate");
+CREATE INDEX "Venue_city_category_idx" ON "Venue"("city", "category");
 
 -- CreateIndex
-CREATE INDEX "User_email_idx" ON "User"("email");
+CREATE INDEX "Venue_latitude_longitude_idx" ON "Venue"("latitude", "longitude");
+
+-- CreateIndex
+CREATE INDEX "Crew_userAId_status_idx" ON "Crew"("userAId", "status");
+
+-- CreateIndex
+CREATE INDEX "Crew_userBId_status_idx" ON "Crew"("userBId", "status");
+
+-- CreateIndex
+CREATE INDEX "Crew_requestedById_idx" ON "Crew"("requestedById");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Crew_userAId_userBId_key" ON "Crew"("userAId", "userBId");
+
+-- CreateIndex
+CREATE INDEX "Meetup_hostId_idx" ON "Meetup"("hostId");
+
+-- CreateIndex
+CREATE INDEX "Meetup_scheduledAt_idx" ON "Meetup"("scheduledAt");
+
+-- CreateIndex
+CREATE INDEX "Meetup_cityId_scheduledAt_idx" ON "Meetup"("cityId", "scheduledAt");
+
+-- CreateIndex
+CREATE INDEX "MeetupAttendee_meetupId_idx" ON "MeetupAttendee"("meetupId");
+
+-- CreateIndex
+CREATE INDEX "MeetupAttendee_userId_idx" ON "MeetupAttendee"("userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "MeetupAttendee_meetupId_userId_key" ON "MeetupAttendee"("meetupId", "userId");
+
+-- CreateIndex
+CREATE INDEX "MeetupInvite_meetupId_idx" ON "MeetupInvite"("meetupId");
+
+-- CreateIndex
+CREATE INDEX "MeetupInvite_userId_status_idx" ON "MeetupInvite"("userId", "status");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "MeetupInvite_meetupId_userId_key" ON "MeetupInvite"("meetupId", "userId");
+
+-- CreateIndex
+CREATE INDEX "CheckIn_userId_idx" ON "CheckIn"("userId");
+
+-- CreateIndex
+CREATE INDEX "CheckIn_cityId_createdAt_idx" ON "CheckIn"("cityId", "createdAt");
+
+-- CreateIndex
+CREATE INDEX "CheckIn_createdAt_idx" ON "CheckIn"("createdAt");
+
+-- CreateIndex
+CREATE INDEX "CheckIn_activeUntil_idx" ON "CheckIn"("activeUntil");
+
+-- CreateIndex
+CREATE INDEX "Poll_meetupId_idx" ON "Poll"("meetupId");
+
+-- CreateIndex
+CREATE INDEX "Poll_createdBy_idx" ON "Poll"("createdBy");
+
+-- CreateIndex
+CREATE INDEX "Poll_expiresAt_idx" ON "Poll"("expiresAt");
+
+-- CreateIndex
+CREATE INDEX "PollResponse_pollId_idx" ON "PollResponse"("pollId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "PollResponse_pollId_userId_key" ON "PollResponse"("pollId", "userId");
+
+-- CreateIndex
+CREATE INDEX "Post_authorId_createdAt_idx" ON "Post"("authorId", "createdAt");
+
+-- CreateIndex
+CREATE INDEX "Post_createdAt_idx" ON "Post"("createdAt");
 
 -- AddForeignKey
-ALTER TABLE "Follow" ADD CONSTRAINT "Follow_followerId_fkey" FOREIGN KEY ("followerId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Account" ADD CONSTRAINT "Account_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Follow" ADD CONSTRAINT "Follow_followingId_fkey" FOREIGN KEY ("followingId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Session" ADD CONSTRAINT "Session_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Notification" ADD CONSTRAINT "Notification_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Follow" ADD CONSTRAINT "Follow_followerId_fkey" FOREIGN KEY ("followerId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Follow" ADD CONSTRAINT "Follow_followingId_fkey" FOREIGN KEY ("followingId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Notification" ADD CONSTRAINT "Notification_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "TripComment" ADD CONSTRAINT "TripComment_tripId_fkey" FOREIGN KEY ("tripId") REFERENCES "Trip"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "TripComment" ADD CONSTRAINT "TripComment_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "TripComment" ADD CONSTRAINT "TripComment_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "TripLike" ADD CONSTRAINT "TripLike_tripId_fkey" FOREIGN KEY ("tripId") REFERENCES "Trip"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "TripLike" ADD CONSTRAINT "TripLike_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "TripLike" ADD CONSTRAINT "TripLike_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Trip" ADD CONSTRAINT "Trip_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "TripMember" ADD CONSTRAINT "TripMember_tripId_fkey" FOREIGN KEY ("tripId") REFERENCES "Trip"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "TripMember" ADD CONSTRAINT "TripMember_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "TripMember" ADD CONSTRAINT "TripMember_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "TripInvitation" ADD CONSTRAINT "TripInvitation_tripId_fkey" FOREIGN KEY ("tripId") REFERENCES "Trip"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "TripInvitation" ADD CONSTRAINT "TripInvitation_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "TripInvitation" ADD CONSTRAINT "TripInvitation_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "PendingInvitation" ADD CONSTRAINT "PendingInvitation_tripId_fkey" FOREIGN KEY ("tripId") REFERENCES "Trip"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "PendingInvitation" ADD CONSTRAINT "PendingInvitation_invitedBy_fkey" FOREIGN KEY ("invitedBy") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "PendingInvitation" ADD CONSTRAINT "PendingInvitation_invitedBy_fkey" FOREIGN KEY ("invitedBy") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "TripSurvey" ADD CONSTRAINT "TripSurvey_tripId_fkey" FOREIGN KEY ("tripId") REFERENCES "Trip"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -546,7 +852,7 @@ ALTER TABLE "TripSurvey" ADD CONSTRAINT "TripSurvey_tripId_fkey" FOREIGN KEY ("t
 ALTER TABLE "SurveyResponse" ADD CONSTRAINT "SurveyResponse_surveyId_fkey" FOREIGN KEY ("surveyId") REFERENCES "TripSurvey"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "SurveyResponse" ADD CONSTRAINT "SurveyResponse_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "SurveyResponse" ADD CONSTRAINT "SurveyResponse_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "VotingSession" ADD CONSTRAINT "VotingSession_tripId_fkey" FOREIGN KEY ("tripId") REFERENCES "Trip"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -558,7 +864,7 @@ ALTER TABLE "Vote" ADD CONSTRAINT "Vote_sessionId_fkey" FOREIGN KEY ("sessionId"
 ALTER TABLE "Activity" ADD CONSTRAINT "Activity_tripId_fkey" FOREIGN KEY ("tripId") REFERENCES "Trip"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "SavedActivity" ADD CONSTRAINT "SavedActivity_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "SavedActivity" ADD CONSTRAINT "SavedActivity_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "SavedActivity" ADD CONSTRAINT "SavedActivity_activityId_fkey" FOREIGN KEY ("activityId") REFERENCES "Activity"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -567,13 +873,13 @@ ALTER TABLE "SavedActivity" ADD CONSTRAINT "SavedActivity_activityId_fkey" FOREI
 ALTER TABLE "ActivityComment" ADD CONSTRAINT "ActivityComment_activityId_fkey" FOREIGN KEY ("activityId") REFERENCES "Activity"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ActivityComment" ADD CONSTRAINT "ActivityComment_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "ActivityComment" ADD CONSTRAINT "ActivityComment_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "ActivityRating" ADD CONSTRAINT "ActivityRating_activityId_fkey" FOREIGN KEY ("activityId") REFERENCES "Activity"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ActivityRating" ADD CONSTRAINT "ActivityRating_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "ActivityRating" ADD CONSTRAINT "ActivityRating_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "ItineraryDay" ADD CONSTRAINT "ItineraryDay_tripId_fkey" FOREIGN KEY ("tripId") REFERENCES "Trip"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -583,3 +889,68 @@ ALTER TABLE "ItineraryItem" ADD CONSTRAINT "ItineraryItem_itineraryDayId_fkey" F
 
 -- AddForeignKey
 ALTER TABLE "ItineraryItem" ADD CONSTRAINT "ItineraryItem_activityId_fkey" FOREIGN KEY ("activityId") REFERENCES "Activity"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Venue" ADD CONSTRAINT "Venue_cityId_fkey" FOREIGN KEY ("cityId") REFERENCES "City"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Crew" ADD CONSTRAINT "Crew_userAId_fkey" FOREIGN KEY ("userAId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Crew" ADD CONSTRAINT "Crew_userBId_fkey" FOREIGN KEY ("userBId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Crew" ADD CONSTRAINT "Crew_requestedById_fkey" FOREIGN KEY ("requestedById") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Meetup" ADD CONSTRAINT "Meetup_hostId_fkey" FOREIGN KEY ("hostId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Meetup" ADD CONSTRAINT "Meetup_venueId_fkey" FOREIGN KEY ("venueId") REFERENCES "Venue"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Meetup" ADD CONSTRAINT "Meetup_cityId_fkey" FOREIGN KEY ("cityId") REFERENCES "City"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "MeetupAttendee" ADD CONSTRAINT "MeetupAttendee_meetupId_fkey" FOREIGN KEY ("meetupId") REFERENCES "Meetup"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "MeetupAttendee" ADD CONSTRAINT "MeetupAttendee_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "MeetupInvite" ADD CONSTRAINT "MeetupInvite_meetupId_fkey" FOREIGN KEY ("meetupId") REFERENCES "Meetup"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "MeetupInvite" ADD CONSTRAINT "MeetupInvite_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "MeetupInvite" ADD CONSTRAINT "MeetupInvite_invitedBy_fkey" FOREIGN KEY ("invitedBy") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "CheckIn" ADD CONSTRAINT "CheckIn_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "CheckIn" ADD CONSTRAINT "CheckIn_venueId_fkey" FOREIGN KEY ("venueId") REFERENCES "Venue"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "CheckIn" ADD CONSTRAINT "CheckIn_cityId_fkey" FOREIGN KEY ("cityId") REFERENCES "City"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Poll" ADD CONSTRAINT "Poll_meetupId_fkey" FOREIGN KEY ("meetupId") REFERENCES "Meetup"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Poll" ADD CONSTRAINT "Poll_createdBy_fkey" FOREIGN KEY ("createdBy") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "PollResponse" ADD CONSTRAINT "PollResponse_pollId_fkey" FOREIGN KEY ("pollId") REFERENCES "Poll"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "PollResponse" ADD CONSTRAINT "PollResponse_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Post" ADD CONSTRAINT "Post_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+
+-- CheckConstraint (Q2 resolution — single-row bidirectional Crew)
+-- Enforces canonical ordering of user pairs AND prevents self-crew.
+ALTER TABLE "Crew" ADD CONSTRAINT "Crew_user_order_check" CHECK ("userAId" < "userBId");

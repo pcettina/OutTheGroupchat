@@ -5,7 +5,7 @@ Full-stack Next.js travel planning application with real-time collaboration, AI-
 
 ## Tech Stack
 - **Frontend:** Next.js 14, React 18, TypeScript, Tailwind CSS, Framer Motion
-- **Backend:** Next.js API Routes, Prisma ORM, PostgreSQL (Supabase)
+- **Backend:** Next.js API Routes, Prisma ORM, PostgreSQL (Neon via Vercel Marketplace — migrated from Supabase 2026-04-17)
 - **Auth:** NextAuth.js with Prisma adapter
 - **Real-time:** Pusher
 - **AI:** Vercel AI SDK + OpenAI

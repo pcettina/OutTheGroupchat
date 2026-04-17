@@ -6,10 +6,12 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-  // Note: directUrl removed - using pooler for all connections
-  // For migrations, temporarily set DATABASE_URL to direct connection in Supabase
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+  // Neon via Vercel Marketplace (migrated from Supabase 2026-04-17).
+  // DATABASE_URL = pooler (pgbouncer=true) for runtime.
+  // DIRECT_URL  = direct connection for migrations.
 }
 
 // ============================================
