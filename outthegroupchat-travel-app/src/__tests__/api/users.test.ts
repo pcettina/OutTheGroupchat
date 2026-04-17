@@ -2,14 +2,13 @@
  * Unit tests for the Users API route handlers.
  *
  * Routes:
- *  - GET  /api/users/[userId]   — fetch public user profile
- *  - POST /api/users/[userId]   — follow / unfollow user
- *  - GET  /api/health           — health check endpoint
+ *  - GET   /api/users/[userId]   — fetch public user profile (with crewCount)
+ *  - PATCH /api/users/[userId]   — owner updates name / bio / city / crewLabel
+ *  - GET   /api/health           — health check endpoint
  *
- * Strategy
- * --------
- * - All external dependencies (Prisma, NextAuth, logger) are mocked.
- * - Handlers are invoked directly with a minimal Request object.
+ * The POST follow/unfollow branch was removed in Phase 3 Part B —
+ * Crew requests now happen via /api/crew/request and are wired through
+ * <CrewButton>. isFollowing / publicTrips are no longer returned by GET.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -19,7 +18,7 @@ import * as healthRoute from '@/app/api/health/route';
 import * as usersRoute from '@/app/api/users/[userId]/route';
 
 // ---------------------------------------------------------------------------
-// Mock: @/lib/prisma — extend global setup
+// Prisma mock extension (crew.count needed for the new GET response shape).
 // ---------------------------------------------------------------------------
 vi.mock('@/lib/prisma', async (importOriginal) => {
   const original = await importOriginal<typeof import('@/lib/prisma')>();
@@ -31,42 +30,29 @@ vi.mock('@/lib/prisma', async (importOriginal) => {
         findUnique: vi.fn(),
         findFirst: vi.fn(),
         findMany: vi.fn(),
+        update: vi.fn(),
       },
-      follow: {
-        findFirst: vi.fn(),
-        create: vi.fn(),
-        delete: vi.fn(),
-      },
-      trip: {
-        findMany: vi.fn(),
-        findFirst: vi.fn(),
-        findUnique: vi.fn(),
-      },
-      notification: {
-        create: vi.fn(),
+      crew: {
+        count: vi.fn(),
       },
       $queryRaw: vi.fn(),
     },
   };
 });
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
 function makeGetRequest(userId: string): Request {
-  return new Request(`http://localhost/api/users/${userId}`, { method: 'GET' });
+  return new Request(`http://localhost/api/users/${userId}`);
 }
 
-function makePostRequest(userId: string): Request {
+function makePatchRequest(userId: string, body: unknown): Request {
   return new Request(`http://localhost/api/users/${userId}`, {
-    method: 'POST',
+    method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({}),
+    body: JSON.stringify(body),
   });
 }
 
 const mockSession = { user: { id: 'user-1', name: 'Tester', email: 'test@test.com' } };
-const otherSession = { user: { id: 'user-2', name: 'Other', email: 'other@test.com' } };
 
 const mockUser = {
   id: 'user-2',
@@ -77,6 +63,7 @@ const mockUser = {
   image: null,
   bio: 'I love travel',
   city: 'New York',
+  crewLabel: null as string | null,
   phone: null,
   preferences: null,
   createdAt: new Date('2025-01-01'),
@@ -87,7 +74,7 @@ const mockUser = {
   newsletterSubscribedAt: null,
   passwordInitialized: false,
   betaLaunchEmailSent: false,
-  _count: { followers: 5, following: 3, ownedTrips: 10 },
+  _count: { ownedTrips: 10 },
 };
 
 // ---------------------------------------------------------------------------
@@ -110,63 +97,62 @@ describe('GET /api/users/[userId]', () => {
     expect(json.success).toBe(false);
   });
 
-  it('returns 200 with user data when found (unauthenticated)', async () => {
+  it('returns 200 with user data and crewCount when found (unauthenticated)', async () => {
     vi.mocked(getServerSession).mockResolvedValue(null);
-    vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>);
-    vi.mocked(prisma.trip.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(
+      mockUser as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>
+    );
+    vi.mocked(prisma.crew.count).mockResolvedValue(4);
 
     const res = await GET(makeGetRequest('user-2'), { params: { userId: 'user-2' } });
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.success).toBe(true);
     expect(json.data.name).toBe('Target User');
+    expect(json.data.crewCount).toBe(4);
   });
 
-  it('returns isFollowing: false when not following', async () => {
-    vi.mocked(getServerSession).mockResolvedValue(mockSession);
-    vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>);
-    vi.mocked(prisma.follow.findFirst).mockResolvedValue(null);
-    vi.mocked(prisma.trip.findMany).mockResolvedValue([]);
-
-    const res = await GET(makeGetRequest('user-2'), { params: { userId: 'user-2' } });
-    const json = await res.json();
-    expect(json.data.isFollowing).toBe(false);
-  });
-
-  it('returns isFollowing: true when following', async () => {
-    vi.mocked(getServerSession).mockResolvedValue(mockSession);
-    vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>);
-    vi.mocked(prisma.follow.findFirst).mockResolvedValue({ id: 'follow-1', followerId: 'user-1', followingId: 'user-2', createdAt: new Date() } as Awaited<ReturnType<typeof prisma.follow.findFirst>>);
-    vi.mocked(prisma.trip.findMany).mockResolvedValue([]);
-
-    const res = await GET(makeGetRequest('user-2'), { params: { userId: 'user-2' } });
-    const json = await res.json();
-    expect(json.data.isFollowing).toBe(true);
-  });
-
-  it('hides isFollowing check when viewing own profile', async () => {
-    vi.mocked(getServerSession).mockResolvedValue(mockSession);
-    const ownUser = { ...mockUser, id: 'user-1' };
-    vi.mocked(prisma.user.findUnique).mockResolvedValue(ownUser as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>);
-    vi.mocked(prisma.trip.findMany).mockResolvedValue([]);
-
-    const res = await GET(makeGetRequest('user-1'), { params: { userId: 'user-1' } });
-    expect(res.status).toBe(200);
-    const json = await res.json();
-    // follow check is skipped for own profile — isFollowing should be false
-    expect(json.data.isFollowing).toBe(false);
-  });
-
-  it('includes public trips in response', async () => {
+  it('crew.count filters by ACCEPTED status and either side of the pair', async () => {
     vi.mocked(getServerSession).mockResolvedValue(null);
-    vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>);
-    vi.mocked(prisma.trip.findMany).mockResolvedValue([
-      { id: 'trip-1', title: 'Paris Trip', destination: { city: 'Paris', country: 'France' }, startDate: new Date(), endDate: new Date(), status: 'PLANNING', _count: { members: 3, activities: 5 } },
-    ] as unknown as Awaited<ReturnType<typeof prisma.trip.findMany>>);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(
+      mockUser as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>
+    );
+    vi.mocked(prisma.crew.count).mockResolvedValue(0);
+
+    await GET(makeGetRequest('user-2'), { params: { userId: 'user-2' } });
+
+    expect(prisma.crew.count).toHaveBeenCalledWith({
+      where: {
+        status: 'ACCEPTED',
+        OR: [{ userAId: 'user-2' }, { userBId: 'user-2' }],
+      },
+    });
+  });
+
+  it('does not include isFollowing field on the response (removed in Phase 3 Part B)', async () => {
+    vi.mocked(getServerSession).mockResolvedValue(mockSession);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(
+      mockUser as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>
+    );
+    vi.mocked(prisma.crew.count).mockResolvedValue(0);
 
     const res = await GET(makeGetRequest('user-2'), { params: { userId: 'user-2' } });
     const json = await res.json();
-    expect(json.data.publicTrips).toHaveLength(1);
+    expect(json.data.isFollowing).toBeUndefined();
+    expect(json.data.publicTrips).toBeUndefined();
+  });
+
+  it('exposes crewLabel field on the response', async () => {
+    vi.mocked(getServerSession).mockResolvedValue(null);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      ...mockUser,
+      crewLabel: 'Squad',
+    } as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>);
+    vi.mocked(prisma.crew.count).mockResolvedValue(2);
+
+    const res = await GET(makeGetRequest('user-2'), { params: { userId: 'user-2' } });
+    const json = await res.json();
+    expect(json.data.crewLabel).toBe('Squad');
   });
 
   it('returns 500 on database error', async () => {
@@ -179,10 +165,10 @@ describe('GET /api/users/[userId]', () => {
 });
 
 // ---------------------------------------------------------------------------
-// POST /api/users/[userId] — follow / unfollow
+// PATCH /api/users/[userId]
 // ---------------------------------------------------------------------------
-describe('POST /api/users/[userId] (follow/unfollow)', () => {
-  const POST = usersRoute.POST;
+describe('PATCH /api/users/[userId]', () => {
+  const PATCH = usersRoute.PATCH;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -190,76 +176,45 @@ describe('POST /api/users/[userId] (follow/unfollow)', () => {
 
   it('returns 401 when unauthenticated', async () => {
     vi.mocked(getServerSession).mockResolvedValue(null);
-    const res = await POST(makePostRequest('user-2'), { params: { userId: 'user-2' } });
+    const res = await PATCH(makePatchRequest('user-2', { name: 'New' }), {
+      params: { userId: 'user-2' },
+    });
     expect(res.status).toBe(401);
   });
 
-  it('returns 400 when trying to follow yourself', async () => {
+  it('returns 403 when updating someone else', async () => {
     vi.mocked(getServerSession).mockResolvedValue(mockSession);
-    const res = await POST(makePostRequest('user-1'), { params: { userId: 'user-1' } });
+    const res = await PATCH(makePatchRequest('user-2', { name: 'New' }), {
+      params: { userId: 'user-2' },
+    });
+    expect(res.status).toBe(403);
+  });
+
+  it('returns 400 for an invalid crewLabel (symbols)', async () => {
+    vi.mocked(getServerSession).mockResolvedValue(mockSession);
+    const res = await PATCH(makePatchRequest('user-1', { crewLabel: 'Squad!!' }), {
+      params: { userId: 'user-1' },
+    });
     expect(res.status).toBe(400);
-    const json = await res.json();
-    expect(json.error).toMatch(/yourself/i);
   });
 
-  it('returns 404 when target user does not exist', async () => {
+  it('accepts a valid crewLabel and returns updated row', async () => {
     vi.mocked(getServerSession).mockResolvedValue(mockSession);
-    vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.user.update).mockResolvedValue({
+      id: 'user-1',
+      name: 'Tester',
+      image: null,
+      bio: null,
+      city: null,
+      crewLabel: 'Squad',
+    } as unknown as Awaited<ReturnType<typeof prisma.user.update>>);
 
-    const res = await POST(makePostRequest('nonexistent'), { params: { userId: 'nonexistent' } });
-    expect(res.status).toBe(404);
-  });
-
-  it('follows a user when not already following', async () => {
-    vi.mocked(getServerSession).mockResolvedValue(mockSession);
-    vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>);
-    vi.mocked(prisma.follow.findFirst).mockResolvedValue(null);
-    vi.mocked(prisma.follow.create).mockResolvedValue({ id: 'follow-1', followerId: 'user-1', followingId: 'user-2', createdAt: new Date() });
-    vi.mocked(prisma.notification.create).mockResolvedValue({} as Awaited<ReturnType<typeof prisma.notification.create>>);
-
-    const res = await POST(makePostRequest('user-2'), { params: { userId: 'user-2' } });
+    const res = await PATCH(makePatchRequest('user-1', { crewLabel: 'Squad' }), {
+      params: { userId: 'user-1' },
+    });
     expect(res.status).toBe(200);
     const json = await res.json();
-    expect(json.success).toBe(true);
-    expect(json.isFollowing).toBe(true);
-    expect(json.message).toBe('Following');
-  });
-
-  it('unfollows a user when already following', async () => {
-    vi.mocked(getServerSession).mockResolvedValue(otherSession);
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({ ...mockUser, id: 'user-1' } as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>);
-    vi.mocked(prisma.follow.findFirst).mockResolvedValue({ id: 'follow-1', followerId: 'user-2', followingId: 'user-1', createdAt: new Date() } as Awaited<ReturnType<typeof prisma.follow.findFirst>>);
-    vi.mocked(prisma.follow.delete).mockResolvedValue({ id: 'follow-1', followerId: 'user-2', followingId: 'user-1', createdAt: new Date() });
-
-    const res = await POST(makePostRequest('user-1'), { params: { userId: 'user-1' } });
-    expect(res.status).toBe(200);
-    const json = await res.json();
-    expect(json.isFollowing).toBe(false);
-    expect(json.message).toBe('Unfollowed');
-  });
-
-  it('creates a FOLLOW notification when following', async () => {
-    vi.mocked(getServerSession).mockResolvedValue(mockSession);
-    vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>);
-    vi.mocked(prisma.follow.findFirst).mockResolvedValue(null);
-    vi.mocked(prisma.follow.create).mockResolvedValue({ id: 'follow-1', followerId: 'user-1', followingId: 'user-2', createdAt: new Date() });
-    vi.mocked(prisma.notification.create).mockResolvedValue({} as Awaited<ReturnType<typeof prisma.notification.create>>);
-
-    await POST(makePostRequest('user-2'), { params: { userId: 'user-2' } });
-
-    expect(prisma.notification.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({ type: 'FOLLOW', userId: 'user-2' }),
-      })
-    );
-  });
-
-  it('returns 500 on database error', async () => {
-    vi.mocked(getServerSession).mockResolvedValue(mockSession);
-    vi.mocked(prisma.user.findUnique).mockRejectedValue(new Error('DB error'));
-
-    const res = await POST(makePostRequest('user-2'), { params: { userId: 'user-2' } });
-    expect(res.status).toBe(500);
+    expect(json.data.crewLabel).toBe('Squad');
   });
 });
 
@@ -307,7 +262,6 @@ describe('GET /api/health', () => {
 
     const res = await GET();
     const json = await res.json();
-    // Health route intentionally omits NODE_ENV/version to reduce info exposure
     expect(json.environment).toBeUndefined();
     expect(json.checks).toBeUndefined();
     expect(json.database).toBeDefined();

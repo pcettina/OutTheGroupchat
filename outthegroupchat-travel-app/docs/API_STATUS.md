@@ -148,8 +148,9 @@ COMPLETED ✅ Dec 17:
 |----------|--------|--------|-------------------|-------|
 | `/api/profile` | GET | ✅ | 🔶 | Get current user |
 | `/api/profile` | PUT | ✅ | 🔶 | Update profile; Zod validation added 2026-03-13 |
-| `/api/users/[userId]` | GET | ✅ | ⏳ | Get user profile |
-| `/api/users/[userId]/follow` | POST | ✅ | ⏳ | Follow/unfollow implemented in /api/users/[userId] POST ✅ |
+| `/api/users/[userId]` | GET | ✅ | ✅ | Public user profile — returns `crewCount`, `crewLabel`; `isFollowing` and `publicTrips` removed in Phase 3 Part B; wired to `/profile/[userId]` page |
+| `/api/users/[userId]` | PATCH | ✅ | ✅ | Update own profile — Phase 3 Part B added `crewLabel` field (1–20 chars, alphanumeric + spaces) |
+| ~~`/api/users/[userId]/follow`~~ | ~~POST~~ | 🗑️ | — | **Removed Phase 3 Part B (2026-04-18).** Follow/unfollow replaced by Crew request flow (`POST /api/crew/request`) |
 
 ---
 
