@@ -66,8 +66,12 @@ jobs:
 
       - name: Run Prisma migrate deploy against PR Neon branch
         working-directory: outthegroupchat-travel-app
+        # neondatabase/create-branch-action@v6 emits `db_url` (direct); the
+        # `db_url_with_pooler` output is not populated by v6, so we use the
+        # direct connection for both DATABASE_URL and DIRECT_URL here. For a
+        # one-off `migrate deploy` a pooled connection is unnecessary.
         env:
-          DATABASE_URL: "${{ steps.create_neon_branch.outputs.db_url_with_pooler }}"
+          DATABASE_URL: "${{ steps.create_neon_branch.outputs.db_url }}"
           DIRECT_URL: "${{ steps.create_neon_branch.outputs.db_url }}"
         run: npx prisma migrate deploy
 
