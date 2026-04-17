@@ -304,6 +304,9 @@ Each phase targets a discrete session (or a nightly build if small). Phases are 
 ---
 
 ### Phase 3 — Crew system (2–3 sessions)
+
+> 🟡 **Part A IN PROGRESS as of 2026-04-18** — branch `refactor/phase-3-crew-api`. API (6 routes), DB CHECK migration, `CrewButton`/`CrewRequestCard`/`CrewList`, `/crew` + `/crew/requests` pages, email templates, 32 passing tests all landing in one PR. Part B (profile integration, Playwright E2E, legacy `Follow` retirement) split to a follow-up session.
+
 **Objective:** Users can send, accept, decline Crew requests with first-class UX.
 **Actions:**
 1. API routes (Zod-validated, rate-limited, Sentry-instrumented):

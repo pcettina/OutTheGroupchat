@@ -174,6 +174,121 @@ export async function sendNotificationEmail(params: {
   }
 }
 
+/**
+ * Send a Crew request email to the recipient.
+ * The body honors the sender's own `crewLabel` for phrasing
+ * ("Squad request from Alex") when provided; falls back to "Crew" otherwise.
+ */
+export async function sendCrewRequestEmail(params: {
+  to: string;
+  recipientName: string | null;
+  senderName: string;
+  senderCrewLabel: string | null;
+  crewId: string;
+}): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  const { to, recipientName, senderName, senderCrewLabel, crewId } = params;
+
+  if (!resend) {
+    return { success: false, error: 'Email service not configured' };
+  }
+
+  const label = senderCrewLabel && senderCrewLabel.trim().length > 0 ? senderCrewLabel : 'Crew';
+  const actionUrl = `${APP_URL}/crew/requests`;
+  const subject = `${senderName} wants to add you to their ${label}`;
+  const title = `New ${label} request`;
+  const message = `${senderName} wants to add you to their ${label} on OutTheGroupchat. Open your requests to accept or decline.`;
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: DEFAULT_FROM,
+      to: [to],
+      subject,
+      html: generateNotificationEmailHtml({
+        title,
+        message: recipientName ? `Hi ${recipientName} — ${message}` : message,
+        actionUrl,
+        actionText: 'View request',
+      }),
+      text: generateNotificationEmailText({
+        title,
+        message,
+        actionUrl,
+        actionText: 'View request',
+      }),
+    });
+
+    if (error) {
+      logError('EMAIL_CREW_REQUEST', error, { to, crewId });
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, messageId: data?.id };
+  } catch (error) {
+    logError('EMAIL_CREW_REQUEST', error, { to, crewId });
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to send email',
+    };
+  }
+}
+
+/**
+ * Send a Crew-accepted email to the original requester.
+ * Uses the acceptor's `crewLabel` when phrasing ("Alex joined your Crew").
+ */
+export async function sendCrewAcceptedEmail(params: {
+  to: string;
+  requesterName: string | null;
+  accepterName: string;
+  accepterCrewLabel: string | null;
+  crewId: string;
+}): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  const { to, requesterName, accepterName, accepterCrewLabel, crewId } = params;
+
+  if (!resend) {
+    return { success: false, error: 'Email service not configured' };
+  }
+
+  const label = accepterCrewLabel && accepterCrewLabel.trim().length > 0 ? accepterCrewLabel : 'Crew';
+  const actionUrl = `${APP_URL}/crew`;
+  const subject = `${accepterName} accepted your ${label} request`;
+  const title = `You're in the ${label}`;
+  const message = `${accepterName} accepted your request. You're now part of each other's ${label} on OutTheGroupchat.`;
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: DEFAULT_FROM,
+      to: [to],
+      subject,
+      html: generateNotificationEmailHtml({
+        title,
+        message: requesterName ? `Hi ${requesterName} — ${message}` : message,
+        actionUrl,
+        actionText: 'View your Crew',
+      }),
+      text: generateNotificationEmailText({
+        title,
+        message,
+        actionUrl,
+        actionText: 'View your Crew',
+      }),
+    });
+
+    if (error) {
+      logError('EMAIL_CREW_ACCEPTED', error, { to, crewId });
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, messageId: data?.id };
+  } catch (error) {
+    logError('EMAIL_CREW_ACCEPTED', error, { to, crewId });
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to send email',
+    };
+  }
+}
+
 // =============================================================================
 // Email HTML Templates
 // =============================================================================

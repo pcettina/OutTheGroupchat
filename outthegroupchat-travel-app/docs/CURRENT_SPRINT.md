@@ -1,4 +1,31 @@
-## Phase 2 — Crew Domain Models (In Progress, 2026-04-17)
+## Phase 3 — Crew System (In Progress, 2026-04-18)
+
+> **Branch:** `refactor/phase-3-crew-api`
+> **Status:** API + UI + tests landing. Phase 2 merged cleanly (PR #43); Neon DB live; branch-per-PR workflow now runs `prisma migrate deploy` + posts schema-diff on every PR.
+> **Scope this PR (Part A):** Crew API routes, DB CHECK constraint migration, React UI components (`CrewButton`, `CrewRequestCard`, `CrewList`), `/crew` + `/crew/requests` pages, email templates, 32-test suite. Phase 4 (Meetups) begins next session.
+
+### Delivered on `refactor/phase-3-crew-api`
+- [x] **Migration:** `20260418120000_crew_check_constraint` adds `CHECK ("userAId" < "userBId")` on the `Crew` table (enforces the single-row bidirectional invariant at the DB layer — see REFACTOR_PLAN §3.5 / §9 Q2)
+- [x] **Neon workflow:** uncommented `prisma migrate deploy` + schema-diff step in `.github/workflows/neon-pr-branch.yml` so every PR gets a Neon branch with migrations applied and a schema-diff comment posted
+- [x] **API routes (6):** `POST /api/crew/request`, `GET /api/crew`, `GET /api/crew/requests`, `PATCH /api/crew/[id]`, `DELETE /api/crew/[id]`, `GET /api/crew/status/[userId]` — all Zod-validated, rate-limited (`apiRateLimiter`), Sentry-instrumented
+- [x] **Notifications:** `CREW_REQUEST` fires on request (also on re-request of a previously DECLINED row); `CREW_ACCEPTED` fires on accept
+- [x] **Email templates:** `sendCrewRequestEmail` + `sendCrewAcceptedEmail` in `src/lib/email.ts`, honor sender's `crewLabel` in subject/body copy
+- [x] **UI components:** `CrewButton` (replaces legacy `FollowButton`, handles SELF/NOT_IN_CREW/PENDING/ACCEPTED/DECLINED/BLOCKED states with optimistic updates), `CrewRequestCard` (incoming + sent variants), `CrewList` (grid with remove action)
+- [x] **Pages:** `/crew` (with pending-count badge linking to requests), `/crew/requests` (tabs for incoming vs sent) — both use tanstack react-query
+- [x] **Tests:** `src/__tests__/api/crew.test.ts` — 32 tests covering auth, validation, ID-sort correctness, duplicate handling, notification + email side-effects, participant checks, accept/decline/block, delete, and status lookup
+- [x] **Docs:** API_STATUS Phase 3 section flipped from planned → ✅; this file updated
+
+### Open for a follow-up session (Phase 3 Part B / polish)
+- [ ] Wire `CrewButton` into `/profile/[userId]` page (currently only rendered via component import — profile integration pending)
+- [ ] Add a Playwright smoke flow: signup → Crew request → accept → both see each other in `/crew`
+- [ ] Remove `Follow` model + legacy `/api/users/[userId]` follow POST branch once Crew is the canonical relationship (REFACTOR_PLAN §6)
+- [ ] Retire `FollowButton` from `src/components/_archive/` if still present
+
+**Next: Phase 4 — Meetups core** (`POST /api/meetups`, RSVP, real-time attendance, meetup UI)
+
+---
+
+## Phase 2 — Crew Domain Models (Completed, merged 2026-04-17)
 
 > **Branch:** `refactor/phase-2-crew-domain`
 > **Status:** Nightly scaffolded under `Connection`; Phase 2 PR renames to `Crew` and adds `User.crewLabel` + `CheckIn.activeUntil`. Q2/Q3/Q4 all resolved 2026-04-17 (see REFACTOR_PLAN §9 Resolved Answers).
