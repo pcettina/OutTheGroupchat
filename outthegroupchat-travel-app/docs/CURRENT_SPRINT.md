@@ -15,11 +15,16 @@
 - [x] **Tests:** `src/__tests__/api/crew.test.ts` — 32 tests covering auth, validation, ID-sort correctness, duplicate handling, notification + email side-effects, participant checks, accept/decline/block, delete, and status lookup
 - [x] **Docs:** API_STATUS Phase 3 section flipped from planned → ✅; this file updated
 
-### Open for a follow-up session (Phase 3 Part B / polish)
-- [ ] Wire `CrewButton` into `/profile/[userId]` page (currently only rendered via component import — profile integration pending)
-- [ ] Add a Playwright smoke flow: signup → Crew request → accept → both see each other in `/crew`
-- [ ] Remove `Follow` model + legacy `/api/users/[userId]` follow POST branch once Crew is the canonical relationship (REFACTOR_PLAN §6)
-- [ ] Retire `FollowButton` from `src/components/_archive/` if still present
+### Phase 3 Part B delivered on `refactor/phase-3-crew-polish` (2026-04-18)
+- [x] **New page `/profile/[userId]`** — renders public profile with avatar, bio, city, and an embedded `<CrewButton>` for logged-in viewers of someone else's profile. Pre-fetches `/api/crew/status/[userId]` to avoid a loading flicker on first paint. Self-view shows "Edit profile" instead.
+- [x] **Legacy follow POST branch removed from `/api/users/[userId]`** — Crew requests now flow through `POST /api/crew/request`. GET response shape simplified: `isFollowing` and `publicTrips` dropped; `crewCount` and `crewLabel` added. PATCH now accepts `crewLabel` with regex validation (1–20 chars, alphanumeric + spaces).
+- [x] **Middleware** — `/crew/:path*` added to the matcher so `/crew` and `/crew/requests` redirect unauthenticated users to sign-in, matching `/profile`.
+- [x] **Tests:** `users-follow.test.ts` deleted; `users.test.ts` rewritten for the new GET + PATCH response shape (15 tests incl. crewLabel validation). All 845 tests pass.
+- [x] **Playwright smoke** — `e2e/crew.spec.ts` asserts the auth boundary: `/crew`, `/crew/requests`, `/profile/[userId]` redirect unauthenticated; all 6 `/api/crew/*` routes return 401 unauthenticated. A full two-user end-to-end flow (signup → request → accept → visible in both crews) is deferred — it needs email verification bypass or DEMO_MODE auth, which is out of scope for this polish pass.
+
+### Deferred to Phase 6 (feed + AI rescope)
+- [ ] Retire the `Follow` Prisma model once the feed stops reading `prisma.follow.findMany` for `feedType='following'` (REFACTOR_PLAN §6)
+- [ ] Drop `_count.followers` / `_count.following` from `/api/users/me` and `/api/search` once feed and profile surfaces no longer reference them
 
 **Next: Phase 4 — Meetups core** (`POST /api/meetups`, RSVP, real-time attendance, meetup UI)
 

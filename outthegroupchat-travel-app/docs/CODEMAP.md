@@ -33,8 +33,8 @@ Full-stack Next.js 14 collaborative travel planning app. Groups plan trips toget
 
 **App root:** `outthegroupchat-travel-app/`
 **Source:** `outthegroupchat-travel-app/src/`
-**Stats (post-Phase-3-part-A, 2026-04-18):** 41 live API routes (35 base + 6 new Crew routes; 13 archived in Phase 1) | 9 social domain routes still planned (meetups, checkins, venues) | live component groups: auth, feed, social (incl. `CrewButton`, `CrewRequestCard`, `CrewList`), discover, notifications, profile, search, settings, onboarding, ai, ui, accessibility + Navigation | live services: survey (repurpose-pending) | live pages: /, /auth/*, /profile, /feed, /discover, /inspiration, /notifications, /search, /settings, /onboarding, /privacy, /terms, `/crew`, `/crew/requests`
-**Test Health (2026-04-18):** 44 live test files | 873 tests passing (32 new in crew.test.ts) | 0 TSC errors | Phase 3: `/api/crew/*` routes, DB CHECK constraint on Crew, email templates for CREW_REQUEST and CREW_ACCEPTED
+**Stats (post-Phase-3-part-B, 2026-04-18):** 41 live API routes (35 base + 6 new Crew routes; 13 archived in Phase 1; legacy `POST /api/users/[userId]` follow branch removed) | 9 social domain routes still planned (meetups, checkins, venues) | live component groups: auth, feed, social (incl. `CrewButton`, `CrewRequestCard`, `CrewList`), discover, notifications, profile, search, settings, onboarding, ai, ui, accessibility + Navigation | live pages: /, /auth/*, /profile, `/profile/[userId]`, /feed, /discover, /inspiration, /notifications, /search, /settings, /onboarding, /privacy, /terms, `/crew`, `/crew/requests` | middleware: auth-protects `/profile/:path*`, `/crew/:path*`, plus select `/api/*` paths
+**Test Health (2026-04-18):** 43 live test files | 845 tests passing (32 new in crew.test.ts; users-follow.test.ts deleted, users.test.ts rewritten) | 0 TSC errors | Phase 3 Part B: `/profile/[userId]` page, legacy follow POST removed, Playwright crew smoke added
 
 ---
 
