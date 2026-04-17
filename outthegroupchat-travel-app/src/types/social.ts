@@ -4,7 +4,7 @@
  * Used by API routes, components, and services in Phase 3+.
  */
 import type {
-  Connection,
+  Crew,
   User,
   Meetup,
   MeetupAttendee,
@@ -15,7 +15,7 @@ import type {
   Poll,
   PollResponse,
   Post,
-  ConnectionStatus,
+  CrewStatus,
   MeetupVisibility,
   AttendeeStatus,
   CheckInVisibility,
@@ -26,7 +26,7 @@ import type {
 
 // Re-export enums for convenience
 export type {
-  ConnectionStatus,
+  CrewStatus,
   MeetupVisibility,
   AttendeeStatus,
   CheckInVisibility,
@@ -38,14 +38,14 @@ export type {
 // ─── User Preview (minimal user info for social displays) ──────────────
 export type UserPreview = Pick<User, 'id' | 'name' | 'image' | 'city'>;
 
-// ─── Connections ────────────────────────────────────────────────────────
-export type ConnectionWithUsers = Connection & {
+// ─── Crew ───────────────────────────────────────────────────────────────
+export type CrewWithUsers = Crew & {
   userA: UserPreview;
   userB: UserPreview;
   requestedBy: UserPreview;
 };
 
-export type ConnectionStatus_Extended = ConnectionStatus | 'NOT_CONNECTED';
+export type CrewStatus_Extended = CrewStatus | 'NOT_IN_CREW';
 
 // ─── Meetups ────────────────────────────────────────────────────────────
 export type MeetupWithHost = Meetup & {
@@ -106,8 +106,8 @@ export type PaginatedResponse<T> = {
   hasMore: boolean;
 };
 
-export type ConnectionFeedResponse = {
-  connections: ConnectionWithUsers[];
-  pendingIncoming: ConnectionWithUsers[];
-  pendingSent: ConnectionWithUsers[];
+export type CrewFeedResponse = {
+  crews: CrewWithUsers[];
+  pendingIncoming: CrewWithUsers[];
+  pendingSent: CrewWithUsers[];
 };

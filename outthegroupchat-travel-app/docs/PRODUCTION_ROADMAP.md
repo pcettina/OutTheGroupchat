@@ -11,7 +11,7 @@
 - **Phases complete:** Phase 0 (PR backlog merged), Phase 1 (trip-planning archived)
 - **Phases remaining:** Phase 2–8 (see docs/REFACTOR_PLAN.md)
 - **Pre-pivot tag:** v1.0-trip-planning (git tag, recoverable)
-- **Next milestone:** Phase 2 complete — Connection/Meetup/Venue models in Prisma, mocks in setup.ts
+- **Next milestone:** Phase 2 complete — Crew/Meetup/Venue models in Prisma (renamed from `Connection` 2026-04-17), `User.crewLabel` added, `CheckIn.activeUntil` added, mocks in setup.ts. Branch: `refactor/phase-2-crew-domain`. Q2/Q3/Q4 resolved (see REFACTOR_PLAN §9).
 
 ---
 

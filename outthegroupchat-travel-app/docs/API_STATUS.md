@@ -4,6 +4,8 @@
 >
 > **Archival:** trip/activity routes moved to `src/app/api/_archive/` as of 2026-04-16 Phase 1. See REFACTOR_PLAN.md. Sections below that reference `/api/trips/*` and `/api/activities/*` reflect the pre-archive state for historical context; authoritative status for these routes is the "📦 Archived Routes" section near the bottom of this file.
 >
+> **Phase 2 in progress (2026-04-17):** branch `refactor/phase-2-crew-domain` renames scaffolded `Connection` → `Crew`, adds `User.crewLabel`, adds `CheckIn.activeUntil`. Social-domain routes will live under `/api/crew/*` (not `/api/connections/*`). See REFACTOR_PLAN §3.5 for naming rationale.
+>
 > **Last Audit:** April 2026
 > **Live API routes (post-archive):** 35
 > **Archived API routes (Phase 1):** 13
@@ -51,8 +53,8 @@
 
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
-| `/api/invitations` | GET | ✅ | ⏳ | List all invitations for current user; auto-marks expired PENDING invitations (will be retargeted to connection invites in Phase 3) |
-| `/api/invitations/[invitationId]` | GET | ✅ | ⏳ | Get invitation details; retained — Phase 3 will rescope for connection requests |
+| `/api/invitations` | GET | ✅ | ⏳ | List all invitations for current user; auto-marks expired PENDING invitations (will be retargeted to Crew invites in Phase 3) |
+| `/api/invitations/[invitationId]` | GET | ✅ | ⏳ | Get invitation details; retained — Phase 3 will rescope for Crew requests |
 | `/api/invitations/[invitationId]` | POST | ✅ | ⏳ | Accept/decline invitation; retained — Phase 3 will rescope |
 
 ---
@@ -188,7 +190,7 @@ BLOCKED - Need Environment Variables:
 
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
-| `/api/invitations` | GET | ✅ | 🔶 | List user's pending invitations; Phase 3 will retarget for connection requests |
+| `/api/invitations` | GET | ✅ | 🔶 | List user's pending invitations; Phase 3 will retarget for Crew requests |
 | `/api/invitations/[invitationId]` | GET | ✅ | 🔶 | Get invitation detail |
 | `/api/invitations/[invitationId]` | POST | ✅ | 🔶 | Respond to invitation (accept/decline) |
 
@@ -336,22 +338,22 @@ EMAIL_FROM=             # Email sender (onboarding@resend.dev) ✅
 
 ## 🚧 Social Domain Routes (Phase 3–5, Planned)
 
-> Schema complete (Phase 2, 2026-04-17). Routes to be implemented in Phase 3–5. Zod schemas pre-built in `src/lib/validations/social.ts`.
+> Schema in progress (Phase 2, 2026-04-17 branch `refactor/phase-2-crew-domain`). Routes to be implemented in Phase 3–5. Zod schemas pre-built in `src/lib/validations/social.ts`. Relationship entity named `Crew` (not `Connection` — nightly build scaffolded as `Connection`, renamed in Phase 2 PR per REFACTOR_PLAN §3.5). Default `Meetup.visibility=CREW` (Q3). Check-ins use `activeUntil` for feed filtering (Q4).
 
 | Endpoint | Method | Phase | Notes |
 |----------|--------|-------|-------|
-| `/api/connections/request` | POST | 3 | Send connection request |
-| `/api/connections/[id]` | PATCH | 3 | Accept / decline / block |
-| `/api/connections/[id]` | DELETE | 3 | Remove connection |
-| `/api/connections` | GET | 3 | List accepted connections |
-| `/api/connections/requests` | GET | 3 | Pending inbox + sent |
-| `/api/meetups` | POST | 4 | Create meetup |
-| `/api/meetups` | GET | 4 | List meetups (city, visibility) |
+| `/api/crew/request` | POST | 3 | Send Crew request (creates row with `userAId < userBId`, `requestedById`=caller, status=PENDING) |
+| `/api/crew/[id]` | PATCH | 3 | Accept / decline / block |
+| `/api/crew/[id]` | DELETE | 3 | Remove Crew row |
+| `/api/crew` | GET | 3 | List accepted Crew members |
+| `/api/crew/requests` | GET | 3 | Pending inbox + sent |
+| `/api/meetups` | POST | 4 | Create meetup (default visibility=`CREW`) |
+| `/api/meetups` | GET | 4 | List meetups (city, visibility-scoped to caller's Crew) |
 | `/api/meetups/[id]` | GET / PATCH / DELETE | 4 | Meetup detail / edit / cancel |
 | `/api/meetups/[id]/rsvp` | POST | 4 | GOING / MAYBE / DECLINED |
-| `/api/meetups/[id]/invite` | POST | 4 | Invite connections |
-| `/api/checkins` | POST | 5 | Create check-in |
-| `/api/checkins/feed` | GET | 5 | Connections' recent check-ins |
+| `/api/meetups/[id]/invite` | POST | 4 | Invite Crew members |
+| `/api/checkins` | POST | 5 | Create check-in (`activeUntil` defaults to now+6h) |
+| `/api/checkins/feed` | GET | 5 | Crew's recent check-ins (`WHERE activeUntil > now()`) |
 | `/api/checkins/[id]` | DELETE | 5 | Cancel check-in |
 | `/api/venues/search` | GET | 4 | Venue search (repurposes Places API) |
 

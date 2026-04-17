@@ -1,19 +1,35 @@
-## Phase 2 — Domain Models (Nightly 2026-04-17, In Progress)
+## Phase 2 — Crew Domain Models (In Progress, 2026-04-17)
 
-- [x] prisma/schema.prisma: 10 new models + 8 enums added (Connection, Meetup, MeetupAttendee, MeetupInvite, Venue, City, CheckIn, Poll, PollResponse, Post)
+> **Branch:** `refactor/phase-2-crew-domain`
+> **Status:** Nightly scaffolded under `Connection`; Phase 2 PR renames to `Crew` and adds `User.crewLabel` + `CheckIn.activeUntil`. Q2/Q3/Q4 all resolved 2026-04-17 (see REFACTOR_PLAN §9 Resolved Answers).
+> **Naming:** System term = `Crew`. User-facing term defaults to "Crew" but personalizable via `User.crewLabel String? @db.VarChar(20)`. Owner's label wins cross-user. See REFACTOR_PLAN §3.5.
+
+### Completed (nightly scaffold 2026-04-17)
+- [x] prisma/schema.prisma: 10 new models + 8 enums added (scaffolded as `Connection`, Meetup, MeetupAttendee, MeetupInvite, Venue, City, CheckIn, Poll, PollResponse, Post)
 - [x] prisma generate: Prisma Client v5.22.0 regenerated, TypeScript types available
 - [x] src/types/social.ts: composite TypeScript interfaces (UserPreview, MeetupWithHost, CheckInWithVenue, etc.)
-- [x] src/lib/validations/social.ts: Zod schemas for connections, meetups, check-ins, polls, venues
-- [x] prisma/seed/generators/socialDomain.ts: seed data (NYC/LA cities, 3 venues, meetup, connection, check-in)
+- [x] src/lib/validations/social.ts: Zod schemas for meetups, check-ins, polls, venues (Crew rename pending)
+- [x] prisma/seed/generators/socialDomain.ts: seed data (NYC/LA cities, 3 venues, meetup, check-in)
 - [x] setup.ts: mocks for all 10 new social models confirmed
-- [x] Navigation.tsx: /trips → /connections, /saved → /meetups (Phase 3 placeholders)
 - [x] middleware.ts: trip route matchers removed
 - [x] src/app/page.tsx: social pivot landing copy
 - [x] README.md: rewritten as social meetup network (841 tests, 35 routes)
 - [x] Archive docs: CURRENT_SPRINT, UPGRADE_PLAN, FUTURE_IMPLEMENTATION snapshots added
-- [ ] DB migration (manual: `npx prisma migrate dev --name add_social_domain` against Supabase)
 
-**Next: Phase 3 — Connections system** (`POST /api/connections/request`, accept/decline, UI)
+### In progress on `refactor/phase-2-crew-domain` (PR landing 2026-04-17)
+- [ ] **Rename `Connection` → `Crew`** across schema, types, validations, seed, setup.ts mocks, Navigation.tsx
+- [ ] **Add `User.crewLabel String? @db.VarChar(20)`** (1–20 chars, alphanumeric + spaces)
+- [ ] **Add `CheckIn.activeUntil DateTime`** with `@default(dbgenerated("now() + interval '6 hours'"))`
+- [ ] **Add DB CHECK constraint** `CHECK (userAId < userBId)` on Crew table
+- [ ] **Update Navigation.tsx**: `/connections` → `/crew`, `/saved` → `/meetups` (Phase 3 placeholders)
+- [ ] DB migration (manual: `npx prisma migrate dev --name add_crew_domain` against Supabase)
+
+### Open question resolutions (applied in Phase 2 PR)
+- **Q2 ✅** Single-row bidirectional `Crew` with `userAId < userBId` + DB CHECK + `requestedById`
+- **Q3 ✅** `Meetup.visibility` enum `PUBLIC | CREW | INVITE_ONLY | PRIVATE`, defaults to `CREW`
+- **Q4 ✅** `CheckIn.activeUntil` two-tier retention: feed hides after window, row persists for history
+
+**Next: Phase 3 — Crew system** (`POST /api/crew/request`, accept/decline, `CrewButton`/`CrewList` UI)
 
 ---
 
@@ -26,7 +42,7 @@
 
 ## Objective
 
-Move every byte of trip-planning code out of the live surface into `_archive/` directories so the codebase is ready to grow a new social-meetup domain (Connections, Meetups, Venues, Check-ins) without interference. Preserve trip code for potential future reactivation rather than delete it.
+Move every byte of trip-planning code out of the live surface into `_archive/` directories so the codebase is ready to grow a new social-meetup domain (Crew, Meetups, Venues, Check-ins) without interference. Preserve trip code for potential future reactivation rather than delete it.
 
 ## Actions completed today (Phase 1)
 
@@ -58,18 +74,18 @@ Move every byte of trip-planning code out of the live surface into `_archive/` d
 ## Next sprint: Refactor Phase 2 — New domain models
 
 Per `docs/REFACTOR_PLAN.md` §5 Phase 2:
-- Add Prisma models: `Connection`, `Meetup`, `MeetupAttendee`, `MeetupInvite`, `Venue`, `City`, `CheckIn`, `Poll`, `PollResponse`, `Post` (if diverging from feed)
-- Write `npx prisma migrate dev --name add_social_domain`
+- Add Prisma models: `Crew`, `Meetup`, `MeetupAttendee`, `MeetupInvite`, `Venue`, `City`, `CheckIn`, `Poll`, `PollResponse`, `Post` (if diverging from feed)
+- Write `npx prisma migrate dev --name add_crew_domain`
 - Update `src/__tests__/setup.ts` mocks for every new model
 - Regenerate Prisma client
-- Extend seed script for dev data (cities, venues, sample connections)
+- Extend seed script for dev data (cities, venues, sample Crew pairs)
 
-## Key decisions carried into Phase 2 (open questions)
+## Key decisions carried into Phase 2 (resolved 2026-04-17)
 
-- Connection schema: one bidirectional row (`userAId < userBId`) or two directional rows?
-- Meetup visibility enum: `PUBLIC | CONNECTIONS | INVITE_ONLY | PRIVATE`?
-- Check-in retention: short TTL vs historical record?
-- `Poll.type`: enum (`SURVEY | VOTE | RSVP_POLL`) or polymorphic?
+- ✅ **Q2** Crew schema: single bidirectional row with `userAId < userBId` + DB CHECK + `requestedById`
+- ✅ **Q3** Meetup visibility enum: `PUBLIC | CREW | INVITE_ONLY | PRIVATE`, default `CREW`
+- ✅ **Q4** Check-in retention: two-tier `activeUntil` (default now+6h) — feed hides after window, row persists for history
+- ⏳ **Q5** `Poll.type`: enum (`SURVEY | VOTE | RSVP_POLL`) or polymorphic? (deferred)
 
 ---
 

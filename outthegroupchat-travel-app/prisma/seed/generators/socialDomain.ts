@@ -1,12 +1,12 @@
 import { PrismaClient } from '@prisma/client';
 
 /**
- * Seeds social domain data: cities, venues, connections, meetups, and check-ins.
+ * Seeds social domain data: cities, venues, crews, meetups, and check-ins.
  * Designed to run after core user seed data is available.
  * Gracefully no-ops if insufficient users exist.
  */
 export async function seedSocialDomain(prisma: PrismaClient): Promise<void> {
-  console.log('\n📦 Phase 3: Social Domain (Cities, Venues, Connections, Meetups, Check-ins)\n');
+  console.log('\n📦 Phase 3: Social Domain (Cities, Venues, Crews, Meetups, Check-ins)\n');
 
   // ── 1. Cities ────────────────────────────────────────────────────────
   console.log('🌆 Creating cities...');
@@ -82,13 +82,13 @@ export async function seedSocialDomain(prisma: PrismaClient): Promise<void> {
     `   ✅ Created venues: ${blankStreet.name}, ${juliusBar.name}, ${washingtonSquare.name}`
   );
 
-  // ── 3. Connection (between first two seeded users) ───────────────────
-  console.log('🤝 Creating connection...');
+  // ── 3. Crew (between first two seeded users) ─────────────────────────
+  console.log('🤝 Creating crew relationship...');
 
   const users = await prisma.user.findMany({ take: 2, select: { id: true } });
 
   if (users.length < 2) {
-    console.log('   ⚠️  Fewer than 2 users found — skipping connection, meetup, and check-in seed');
+    console.log('   ⚠️  Fewer than 2 users found — skipping crew, meetup, and check-in seed');
     return;
   }
 
@@ -96,7 +96,7 @@ export async function seedSocialDomain(prisma: PrismaClient): Promise<void> {
 
   // Use upsert-like pattern: try create, skip if unique constraint hit
   try {
-    await prisma.connection.create({
+    await prisma.crew.create({
       data: {
         userAId: userA.id,
         userBId: userB.id,
@@ -104,9 +104,16 @@ export async function seedSocialDomain(prisma: PrismaClient): Promise<void> {
         requestedById: userA.id,
       },
     });
-    console.log('   ✅ Created connection between first two users');
+    console.log('   ✅ Created crew between first two users');
+
+    // Demo: userA personalizes their crew label to "Squad"
+    await prisma.user.update({
+      where: { id: userA.id },
+      data: { crewLabel: 'Squad' },
+    });
+    console.log('   ✅ Set userA.crewLabel = "Squad" (demo of personalization)');
   } catch {
-    console.log('   ℹ️  Connection already exists — skipping');
+    console.log('   ℹ️  Crew already exists — skipping');
   }
 
   // ── 4. Meetup ────────────────────────────────────────────────────────
@@ -119,7 +126,7 @@ export async function seedSocialDomain(prisma: PrismaClient): Promise<void> {
       venueId: blankStreet.id,
       cityId: nyc.id,
       scheduledAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      visibility: 'CONNECTIONS',
+      visibility: 'CREW',
       capacity: 10,
     },
   });
@@ -135,7 +142,7 @@ export async function seedSocialDomain(prisma: PrismaClient): Promise<void> {
       venueId: blankStreet.id,
       cityId: nyc.id,
       note: 'Working remotely today!',
-      visibility: 'CONNECTIONS',
+      visibility: 'CREW',
     },
   });
 

@@ -1,16 +1,16 @@
 /**
  * @module social-validations
- * Zod schemas for the social domain — connections, meetups, check-ins, polls, venues.
+ * Zod schemas for the social domain — crews, meetups, check-ins, polls, venues.
  * Used by Phase 3–5 API routes for request validation.
  */
 import { z } from 'zod'
 
-// ─── Connections ────────────────────────────────────────────
-export const ConnectionRequestSchema = z.object({
+// ─── Crew ───────────────────────────────────────────────────
+export const CrewRequestSchema = z.object({
   targetUserId: z.string().cuid(),
 })
 
-export const ConnectionStatusUpdateSchema = z.object({
+export const CrewStatusUpdateSchema = z.object({
   action: z.enum(['accept', 'decline', 'block']),
 })
 
@@ -22,7 +22,7 @@ export const MeetupCreateSchema = z.object({
   venueName: z.string().max(120).optional(),
   scheduledAt: z.string().datetime(),
   endsAt: z.string().datetime().optional(),
-  visibility: z.enum(['PUBLIC', 'CONNECTIONS', 'INVITE_ONLY', 'PRIVATE']).default('CONNECTIONS'),
+  visibility: z.enum(['PUBLIC', 'CREW', 'INVITE_ONLY', 'PRIVATE']).default('CREW'),
   capacity: z.number().int().min(2).max(500).optional(),
 })
 
@@ -41,7 +41,7 @@ export const CheckInCreateSchema = z.object({
   venueId: z.string().cuid().optional(),
   venueName: z.string().max(120).optional(),
   note: z.string().max(280).optional(),
-  visibility: z.enum(['PUBLIC', 'CONNECTIONS', 'PRIVATE']).default('CONNECTIONS'),
+  visibility: z.enum(['PUBLIC', 'CREW', 'PRIVATE']).default('CREW'),
   latitude: z.number().optional(),
   longitude: z.number().optional(),
 })
@@ -77,10 +77,21 @@ export const ProfileUpdateSchema = z.object({
   image: z.string().url().optional(),
 })
 
+// ─── Crew label (user customization) ─────────────────────────
+export const CrewLabelUpdateSchema = z.object({
+  label: z
+    .string()
+    .min(1)
+    .max(20)
+    .regex(/^[A-Za-z0-9 ]+$/, 'Letters, numbers, and spaces only')
+    .nullable(),
+})
+
 // ─── Inferred types ─────────────────────────────────────────
-export type ConnectionRequest = z.infer<typeof ConnectionRequestSchema>
+export type CrewRequest = z.infer<typeof CrewRequestSchema>
 export type MeetupCreate = z.infer<typeof MeetupCreateSchema>
 export type MeetupRsvp = z.infer<typeof MeetupRsvpSchema>
 export type CheckInCreate = z.infer<typeof CheckInCreateSchema>
 export type PollCreate = z.infer<typeof PollCreateSchema>
 export type VenueSearch = z.infer<typeof VenueSearchSchema>
+export type CrewLabelUpdate = z.infer<typeof CrewLabelUpdateSchema>

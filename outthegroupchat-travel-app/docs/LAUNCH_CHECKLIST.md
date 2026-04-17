@@ -3,8 +3,8 @@
 ## Pivot Progress (see docs/REFACTOR_PLAN.md)
 - [x] Phase 0: PR backlog merged, `v1.0-trip-planning` tagged
 - [x] Phase 1: Trip code archived to `src/_archive/`, tests excluded, Navigation cleaned
-- [~] Phase 2: Schema ✅ | Generate ✅ | setup.ts mocks ✅ | DB migration ⏳ (manual step)
-- [ ] Phase 3: Connections system (routes + UI)
+- [~] Phase 2: Schema ✅ | Generate ✅ | setup.ts mocks ✅ | Crew rename + `crewLabel` + `activeUntil` on branch `refactor/phase-2-crew-domain` (2026-04-17) | DB migration ⏳ (manual step)
+- [ ] Phase 3: Crew system (routes + UI) — `/api/crew/*`, `CrewButton`, `CrewList`
 - [ ] Phase 4: Meetups core
 - [ ] Phase 5: Check-ins + presence
 - [ ] Phase 6: Feed/AI/notifications rescope

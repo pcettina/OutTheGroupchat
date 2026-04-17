@@ -181,7 +181,7 @@ vi.mock('@/lib/prisma', () => ({
       update: vi.fn(),
       upsert: vi.fn(),
     },
-    connection: {
+    crew: {
       findFirst: vi.fn(),
       findMany: vi.fn(),
       create: vi.fn(),

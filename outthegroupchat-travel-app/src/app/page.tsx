@@ -62,7 +62,7 @@ export default function Home() {
       });
 
       if (result?.ok) {
-        window.location.href = '/trips';
+        window.location.href = '/discover';
       } else {
         // If demo user doesn't exist, try to create it first
         await fetch('/api/auth/demo', { method: 'POST' });
@@ -73,7 +73,7 @@ export default function Home() {
           redirect: false,
         });
         if (retryResult?.ok) {
-          window.location.href = '/trips';
+          window.location.href = '/discover';
         }
       }
     } catch (error) {
