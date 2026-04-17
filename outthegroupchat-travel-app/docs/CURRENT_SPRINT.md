@@ -1,4 +1,30 @@
-## Phase 3 — Crew System (In Progress, 2026-04-18)
+# 🎯 Up Next — Phase 4: Meetups core
+
+> **Status:** Ready to start. Phase 3 (both parts) merged to main. Branch off `main` with `refactor/phase-4-meetups-api` (or split further by part).
+>
+> **Scope (3–4 sessions per REFACTOR_PLAN.md §Phase 4):**
+> - API: `POST/GET /api/meetups`, `GET/PATCH/DELETE /api/meetups/[id]`, `POST /api/meetups/[id]/rsvp`, `POST /api/meetups/[id]/invite`
+> - Venue search: `GET /api/venues/search` (reuses Places API + geocoding)
+> - Pages: `/meetups`, `/meetups/new`, `/meetups/[meetupId]`
+> - Components: `CreateMeetupModal`, `MeetupCard`, `MeetupDetail`, `RSVPButton`, `VenuePicker`, `AttendeeList`, `MeetupInviteModal`
+> - Pusher real-time: RSVP count updates, attendee presence
+> - Notifications: `MEETUP_INVITED`, `MEETUP_STARTING_SOON`, `ATTENDEE_RSVPED`
+>
+> **Foundation already in place:** Prisma models `Meetup`, `MeetupAttendee`, `MeetupInvite`, `Venue`, `City` + enums (`MeetupVisibility`, `AttendeeStatus`, `InviteStatus`, `VenueCategory`) all shipped in Phase 2. `src/types/social.ts` has `MeetupWithHost`, `MeetupWithAttendees`, `MeetupListItem`. `src/lib/validations/social.ts` has Zod schemas (may need Crew→`CREW` visibility alignment check). Notification enum already includes `MEETUP_INVITED`, `MEETUP_RSVP`, `MEETUP_STARTING_SOON`. `/meetups` nav link in Navigation.tsx is stubbed.
+>
+> **Key design decisions (already resolved, REFACTOR_PLAN §9):**
+> - Default `Meetup.visibility` = `CREW` (Q3) — list queries must scope to caller's Crew unless visibility is `PUBLIC`.
+> - RSVP statuses: `GOING | MAYBE | DECLINED`.
+> - Meetup invites are separate from Crew requests (they go to a specific meetup, not a relationship).
+>
+> **Open questions to resolve during Phase 4:**
+> - Q9: Paid Places API vs free-tier — how much venue data do we actually need at launch?
+> - Capacity handling (block RSVP when full, or allow waitlist?)
+> - Cancelled meetups — soft flag (`cancelled: true` column exists) vs hide from feeds?
+
+---
+
+## Phase 3 — Crew System (✅ Completed 2026-04-18)
 
 > **Branch:** `refactor/phase-3-crew-api`
 > **Status:** API + UI + tests landing. Phase 2 merged cleanly (PR #43); Neon DB live; branch-per-PR workflow now runs `prisma migrate deploy` + posts schema-diff on every PR.
