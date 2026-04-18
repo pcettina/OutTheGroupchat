@@ -4,8 +4,8 @@
 - [x] Phase 0: PR backlog merged, `v1.0-trip-planning` tagged
 - [x] Phase 1: Trip code archived to `src/_archive/`, tests excluded, Navigation cleaned
 - [~] Phase 2: Schema ✅ | Generate ✅ | setup.ts mocks ✅ | Crew rename + `crewLabel` + `activeUntil` on branch `refactor/phase-2-crew-domain` (2026-04-17) | DB migration ⏳ (manual step)
-- [ ] Phase 3: Crew system (routes + UI) — `/api/crew/*`, `CrewButton`, `CrewList`
-- [ ] Phase 4: Meetups core
+- [x] Phase 3: Crew system (routes + UI) — `/api/crew/*`, `CrewButton`, `CrewList` ✅ 2026-04-18 (PR #46 + #47)
+- [~] Phase 4: Meetups core — Session 1 of ~3 complete (2026-04-18): core API routes ✅ | venue search ✅ | meetup UI pages ✅ | RSVP ✅ | invite ✅ | Pusher real-time ⏳ | MeetupDetail page ⏳
 - [ ] Phase 5: Check-ins + presence
 - [ ] Phase 6: Feed/AI/notifications rescope
 - [ ] Phase 7: Marketing surface
@@ -17,7 +17,7 @@
 >
 > **Target Launch:** Q2 2026 (Beta) — to be re-baselined post-pivot
 > **Current Status:** Refactoring (Phase 2 in progress — domain models added, DB migration pending)
-> **Last Updated:** 2026-04-17
+> **Last Updated:** 2026-04-18
 
 ---
 

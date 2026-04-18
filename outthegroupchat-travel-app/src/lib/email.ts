@@ -505,3 +505,72 @@ ${actionUrl ? `${actionText || 'View'}: ${actionUrl}` : ''}
   `.trim();
 }
 
+// =============================================================================
+// Meetup Email Functions
+// =============================================================================
+
+/** Send a meetup invite email. Gracefully degrades — logs but does not throw. */
+export async function sendMeetupInviteEmail(params: {
+  to: string; inviteeName: string; hostName: string; meetupTitle: string;
+  meetupDate: string; meetupVenueName: string; meetupId: string;
+}): Promise<void> {
+  const { to, inviteeName, hostName, meetupTitle, meetupDate, meetupVenueName, meetupId } = params;
+  if (!resend) { logError('EMAIL_MEETUP_INVITE', new Error('Email service not configured'), { to, meetupId }); return; }
+  const meetupUrl = `${APP_URL}/meetups/${meetupId}`;
+  const details = `When: ${meetupDate}\nWhere: ${meetupVenueName}`;
+  const detailsHtml = `<strong>When:</strong> ${meetupDate}<br><strong>Where:</strong> ${meetupVenueName}`;
+  try {
+    const { error } = await resend.emails.send({
+      from: DEFAULT_FROM, to: [to],
+      subject: `${hostName} invited you to ${meetupTitle}`,
+      html: generateNotificationEmailHtml({
+        title: `You're invited to ${meetupTitle}`,
+        message: `Hi ${inviteeName} — ${hostName} has invited you to a meetup.<br><br>${detailsHtml}`,
+        actionUrl: meetupUrl, actionText: 'View Meetup',
+      }),
+      text: generateNotificationEmailText({
+        title: `You're invited to ${meetupTitle}`,
+        message: `Hi ${inviteeName} — ${hostName} has invited you to a meetup.\n\n${details}`,
+        actionUrl: meetupUrl, actionText: 'View Meetup',
+      }),
+    });
+    if (error) logError('EMAIL_MEETUP_INVITE', error, { to, meetupId });
+  } catch (err) {
+    logError('EMAIL_MEETUP_INVITE', err, { to, meetupId });
+  }
+}
+
+/** Send an RSVP confirmation email. Gracefully degrades — logs but does not throw. */
+export async function sendMeetupRSVPConfirmationEmail(params: {
+  to: string; attendeeName: string; meetupTitle: string; meetupDate: string;
+  meetupVenueName: string; status: 'GOING' | 'MAYBE' | 'DECLINED'; meetupId: string;
+}): Promise<void> {
+  const { to, attendeeName, meetupTitle, meetupDate, meetupVenueName, status, meetupId } = params;
+  if (!resend) { logError('EMAIL_MEETUP_RSVP', new Error('Email service not configured'), { to, meetupId }); return; }
+  const meetupUrl = `${APP_URL}/meetups/${meetupId}`;
+  const statusLabel = status === 'GOING' ? 'Going' : status === 'MAYBE' ? 'Maybe' : 'Declined';
+  const statusNote = status === 'GOING' ? `You're confirmed as attending.`
+    : status === 'MAYBE' ? `You've indicated you might attend.` : `You've declined this meetup.`;
+  const details = `When: ${meetupDate}\nWhere: ${meetupVenueName}`;
+  const detailsHtml = `<strong>When:</strong> ${meetupDate}<br><strong>Where:</strong> ${meetupVenueName}`;
+  try {
+    const { error } = await resend.emails.send({
+      from: DEFAULT_FROM, to: [to],
+      subject: `Your RSVP for ${meetupTitle}`,
+      html: generateNotificationEmailHtml({
+        title: `RSVP confirmed: ${meetupTitle}`,
+        message: `Hi ${attendeeName} — your RSVP status is <strong>${statusLabel}</strong>. ${statusNote}<br><br>${detailsHtml}`,
+        actionUrl: meetupUrl, actionText: 'View Meetup',
+      }),
+      text: generateNotificationEmailText({
+        title: `RSVP confirmed: ${meetupTitle}`,
+        message: `Hi ${attendeeName} — your RSVP status is ${statusLabel}. ${statusNote}\n\n${details}`,
+        actionUrl: meetupUrl, actionText: 'View Meetup',
+      }),
+    });
+    if (error) logError('EMAIL_MEETUP_RSVP', error, { to, meetupId, status });
+  } catch (err) {
+    logError('EMAIL_MEETUP_RSVP', err, { to, meetupId, status });
+  }
+}
+

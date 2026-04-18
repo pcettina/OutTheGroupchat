@@ -1,6 +1,6 @@
 # OutTheGroupchat — Full Codemap
 
-> Auto-generated 2026-03-10. Last updated 2026-04-17. Comprehensive reference for agents and developers.
+> Auto-generated 2026-03-10. Last updated 2026-04-18. Comprehensive reference for agents and developers.
 >
 > **🔀 Pivot in progress:** See `docs/REFACTOR_PLAN.md`. Trip-planning surface archived under `_archive/` directories as of Phase 1 (2026-04-16). See [Archived surface (Phase 1)](#archived-surface-phase-1) section below and `src/_archive/README.md` for the preservation scheme.
 >
@@ -33,8 +33,8 @@ Full-stack Next.js 14 collaborative travel planning app. Groups plan trips toget
 
 **App root:** `outthegroupchat-travel-app/`
 **Source:** `outthegroupchat-travel-app/src/`
-**Stats (post-Phase-3-part-B, 2026-04-18):** 41 live API routes (35 base + 6 new Crew routes; 13 archived in Phase 1; legacy `POST /api/users/[userId]` follow branch removed) | 9 social domain routes still planned (meetups, checkins, venues) | live component groups: auth, feed, social (incl. `CrewButton`, `CrewRequestCard`, `CrewList`), discover, notifications, profile, search, settings, onboarding, ai, ui, accessibility + Navigation | live pages: /, /auth/*, /profile, `/profile/[userId]`, /feed, /discover, /inspiration, /notifications, /search, /settings, /onboarding, /privacy, /terms, `/crew`, `/crew/requests` | middleware: auth-protects `/profile/:path*`, `/crew/:path*`, plus select `/api/*` paths
-**Test Health (2026-04-18):** 43 live test files | 845 tests passing (32 new in crew.test.ts; users-follow.test.ts deleted, users.test.ts rewritten) | 0 TSC errors | Phase 3 Part B: `/profile/[userId]` page, legacy follow POST removed, Playwright crew smoke added
+**Stats (post-Phase-4-session-1, 2026-04-18):** 49 live API routes (35 base + 6 Crew routes + 8 new Phase 4 meetup/venue routes; 13 archived in Phase 1) | live component groups: auth, feed, social (incl. `CrewButton`, `CrewRequestCard`, `CrewList`), meetups (incl. `MeetupCard`, `MeetupList`, `CreateMeetupModal`, `RSVPButton`, `VenuePicker`), discover, notifications, profile, search, settings, onboarding, ai, ui, accessibility + Navigation | live pages: /, /auth/*, /profile, `/profile/[userId]`, /feed, /discover, /inspiration, /notifications, /search, /settings, /onboarding, /privacy, /terms, `/crew`, `/crew/requests`, `/meetups`, `/meetups/new` | middleware: auth-protects `/profile/:path*`, `/crew/:path*`, `/meetups/:path*`, plus select `/api/*` paths
+**Test Health (2026-04-18):** 46 live test files | 888 tests passing (+43 new: meetups.test.ts 11, meetups-id.test.ts 14, meetups-rsvp-invite.test.ts 18) | 0 TSC errors | Phase 4 Session 1: core meetup API routes, venue search, meetup UI pages, RSVP + invite complete
 
 ---
 
@@ -83,7 +83,7 @@ outthegroupchat-travel-app/
 │   │   ├── inspiration/page.tsx
 │   │   ├── notifications/page.tsx
 │   │   ├── profile/page.tsx
-│   │   └── api/                   # 49 API route files (see API Routes section)
+│   │   └── api/                   # 57 API route files (see API Routes section)
 │   ├── components/                # 92 files across 16 feature directories
 │   │   ├── accessibility/         # FocusTrap, SkipLinks, VisuallyHidden, LiveRegion
 │   │   ├── ai/                    # TripChat (360L), ChatMessage, ChatLoadingIndicator, ChatQuickPrompts, chat-types.ts
@@ -498,6 +498,19 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `/api/ai/search` | GET, POST | Yes | Yes | Semantic search with embeddings |
 | `/api/ai/generate-itinerary` | POST | Yes | Yes | AI itinerary generation (Prisma tx) |
 
+### Meetups & Venues (Phase 4, 2026-04-18)
+
+| Endpoint | Methods | Auth | Zod | Purpose |
+|----------|---------|------|-----|---------|
+| `/api/meetups` | POST | Yes | Yes | Create meetup (default visibility=`CREW`) |
+| `/api/meetups` | GET | Yes | Yes | List meetups (city filter, visibility-scoped to caller's Crew, paginated) |
+| `/api/meetups/[id]` | GET | Yes | Yes | Meetup detail |
+| `/api/meetups/[id]` | PATCH | Yes | Yes | Edit meetup (host only) |
+| `/api/meetups/[id]` | DELETE | Yes | Yes | Cancel meetup (host only) |
+| `/api/meetups/[id]/rsvp` | POST | Yes | Yes | RSVP — GOING / MAYBE / DECLINED |
+| `/api/meetups/[id]/invite` | POST | Yes | Yes | Invite Crew members to meetup |
+| `/api/venues/search` | GET | Yes | Yes | Venue search (DB; Places API wiring deferred) |
+
 ### Infrastructure
 
 | Endpoint | Methods | Auth | Zod | Purpose |
@@ -619,6 +632,16 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `PrivacySettings` | — | settings?, onSave? | Profile visibility, trip privacy |
 | `ProfileSettings` | — | user?, onSave? | Name, bio, avatar, email |
 | `SecuritySettings` | 279 | user?, onPasswordChange? | Password, 2FA, sessions |
+
+### Meetups (`components/meetups/`) — Phase 4, 2026-04-18
+
+| Component | Lines | Props | Purpose |
+|-----------|-------|-------|---------|
+| `MeetupCard` | — | meetup, onRSVP?, onShare? | Meetup summary card with RSVP count + host |
+| `MeetupList` | — | meetups, loading?, onRSVP? | Grid/list of MeetupCards with empty state |
+| `CreateMeetupModal` | — | open, onOpenChange, onSuccess? | Modal form to create a new meetup with VenuePicker |
+| `RSVPButton` | — | meetupId, currentStatus?, onStatusChange? | GOING / MAYBE / DECLINED toggle |
+| `VenuePicker` | — | onSelect, cityId? | Searchable venue selector wired to /api/venues/search |
 
 ### Social (`components/social/`)
 
@@ -774,10 +797,13 @@ db:seed        → npx tsx prisma/seed/index.ts
 
 ## Tests
 
-**Total: 841 tests across 43 Vitest unit/integration test files** (post-archive baseline 2026-04-17; 20 test files + ~505 tests moved to `src/__tests__/_archive/` in Phase 1; 0 TSC errors)
+**Total: 888 tests across 46 Vitest unit/integration test files** (Phase 4 Session 1, 2026-04-18; +43 tests, +3 test files; 0 TSC errors)
 
 | File | Lines | Tests | Coverage |
 |------|-------|-------|----------|
+| `src/__tests__/api/meetups.test.ts` | — | 11 | POST/GET /api/meetups — auth, validation, create, list, visibility scoping ✅ 2026-04-18 |
+| `src/__tests__/api/meetups-id.test.ts` | — | 14 | GET/PATCH/DELETE /api/meetups/[id] — auth, host-only edit, cancel ✅ 2026-04-18 |
+| `src/__tests__/api/meetups-rsvp-invite.test.ts` | — | 18 | RSVP + invite routes — auth, status transitions, Crew member invite ✅ 2026-04-18 |
 | `src/__tests__/api/feed-extended.test.ts` | — | 42 | Feed API edge cases: pagination, empty following, multiple activity types, DB errors, feedType params, POST errors ✅ 2026-04-16 |
 | `src/__tests__/api/notifications-extended.test.ts` | — | 33 | Notifications lifecycle edge cases ✅ 2026-04-16 |
 | `src/__tests__/api/health.test.ts` | — | 14 | GET /api/health — healthy/degraded paths, content-type, $queryRaw invocation ✅ 2026-04-16 |

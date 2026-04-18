@@ -1,13 +1,13 @@
 # 📡 API & Integration Status
 
-> **Last Updated: 2026-04-17**
+> **Last Updated: 2026-04-18**
 >
 > **Archival:** trip/activity routes moved to `src/app/api/_archive/` as of 2026-04-16 Phase 1. See REFACTOR_PLAN.md. Sections below that reference `/api/trips/*` and `/api/activities/*` reflect the pre-archive state for historical context; authoritative status for these routes is the "📦 Archived Routes" section near the bottom of this file.
 >
 > **Phase 2 in progress (2026-04-17):** branch `refactor/phase-2-crew-domain` renames scaffolded `Connection` → `Crew`, adds `User.crewLabel`, adds `CheckIn.activeUntil`. Social-domain routes will live under `/api/crew/*` (not `/api/connections/*`). See REFACTOR_PLAN §3.5 for naming rationale.
 >
 > **Last Audit:** April 2026
-> **Live API routes (post-archive):** 35
+> **Live API routes (post-archive):** 49 (35 base + 6 Crew + 8 new Phase 4 meetup/venue routes)
 > **Archived API routes (Phase 1):** 13
 > **Target:** 100% for Beta Launch (re-baselined in Phase 8)
 > **Sentry Coverage:** 19/48 routes instrumented on pre-archive branch; coverage on new live surface re-computed after Phase 2
@@ -352,19 +352,32 @@ EMAIL_FROM=             # Email sender (onboarding@resend.dev) ✅
 | `/api/crew/requests` | GET | ✅ | Pending requests split into `incoming` + `sent` based on `requestedById` |
 | `/api/crew/status/[userId]` | GET | ✅ | Lookup helper for `<CrewButton>` (returns `SELF / NOT_IN_CREW / PENDING / ACCEPTED / DECLINED / BLOCKED` + `iAmRequester`) |
 
-### Phase 4–5 — Planned
+### Phase 4 — Meetups (🟡 Session 1 of ~3 complete, 2026-04-18)
+
+| Endpoint | Method | Status | Notes |
+|----------|--------|--------|-------|
+| `/api/meetups` | POST | ✅ | Create meetup (default visibility=`CREW`); Implemented Phase 4, 2026-04-18 |
+| `/api/meetups` | GET | ✅ | List meetups (city, visibility-scoped to caller's Crew); Implemented Phase 4, 2026-04-18 |
+| `/api/meetups/[id]` | GET | ✅ | Meetup detail; Implemented Phase 4, 2026-04-18 |
+| `/api/meetups/[id]` | PATCH | ✅ | Edit meetup (host only); Implemented Phase 4, 2026-04-18 |
+| `/api/meetups/[id]` | DELETE | ✅ | Cancel meetup; Implemented Phase 4, 2026-04-18 |
+| `/api/meetups/[id]/rsvp` | POST | ✅ | GOING / MAYBE / DECLINED; Implemented Phase 4, 2026-04-18 |
+| `/api/meetups/[id]/invite` | POST | ✅ | Invite Crew members; Implemented Phase 4, 2026-04-18 |
+| `/api/venues/search` | GET | ✅ | Venue search (DB search; Places API not yet wired); Implemented Phase 4, 2026-04-18 |
+
+### Phase 4 — Remaining (Sessions 2–3)
 
 | Endpoint | Method | Phase | Notes |
 |----------|--------|-------|-------|
-| `/api/meetups` | POST | 4 | Create meetup (default visibility=`CREW`) |
-| `/api/meetups` | GET | 4 | List meetups (city, visibility-scoped to caller's Crew) |
-| `/api/meetups/[id]` | GET / PATCH / DELETE | 4 | Meetup detail / edit / cancel |
-| `/api/meetups/[id]/rsvp` | POST | 4 | GOING / MAYBE / DECLINED |
-| `/api/meetups/[id]/invite` | POST | 4 | Invite Crew members |
+| `/api/meetups/[id]` | Pusher | 4 | Real-time RSVP count updates, attendee presence |
+
+### Phase 5 — Planned
+
+| Endpoint | Method | Phase | Notes |
+|----------|--------|-------|-------|
 | `/api/checkins` | POST | 5 | Create check-in (`activeUntil` defaults to now+6h) |
 | `/api/checkins/feed` | GET | 5 | Crew's recent check-ins (`WHERE activeUntil > now()`) |
 | `/api/checkins/[id]` | DELETE | 5 | Cancel check-in |
-| `/api/venues/search` | GET | 4 | Venue search (repurposes Places API) |
 
 ---
 
