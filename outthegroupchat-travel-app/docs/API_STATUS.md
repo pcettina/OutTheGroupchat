@@ -352,7 +352,7 @@ EMAIL_FROM=             # Email sender (onboarding@resend.dev) ✅
 | `/api/crew/requests` | GET | ✅ | Pending requests split into `incoming` + `sent` based on `requestedById` |
 | `/api/crew/status/[userId]` | GET | ✅ | Lookup helper for `<CrewButton>` (returns `SELF / NOT_IN_CREW / PENDING / ACCEPTED / DECLINED / BLOCKED` + `iAmRequester`) |
 
-### Phase 4 — Meetups (🟡 Session 2 of ~3 complete, 2026-04-18 — detail page + Pusher + email)
+### Phase 4 — Meetups (🟢 All 3 sessions complete, 2026-04-18 — core API + detail + Pusher + email + cron + Places)
 
 | Endpoint | Method | Status | Notes |
 |----------|--------|--------|-------|
@@ -363,7 +363,8 @@ EMAIL_FROM=             # Email sender (onboarding@resend.dev) ✅
 | `/api/meetups/[id]` | DELETE | ✅ | Cancel meetup; broadcasts `meetup:cancelled` (Session 2, 2026-04-18) |
 | `/api/meetups/[id]/rsvp` | POST | ✅ | GOING / MAYBE / DECLINED; broadcasts `attendee:joined`/`attendee:left` + host notification; sends RSVP confirmation email on GOING. Response shape: `{success, data, message}` (Session 2, 2026-04-18) |
 | `/api/meetups/[id]/invite` | POST | ✅ | Invite Crew members; dispatches invite emails + broadcasts `meetup:updated` + per-user notification (Session 2, 2026-04-18) |
-| `/api/venues/search` | GET | ✅ | Venue search (DB search; Places API not yet wired); Implemented Phase 4, 2026-04-18 |
+| `/api/venues/search` | GET | ✅ | Venue search — DB-first with Google Places API fallback + auto-caching when `GOOGLE_PLACES_API_KEY` set; Session 3, 2026-04-18 |
+| `/api/cron/meetup-starting-soon` | GET | ✅ | Cron — `MEETUP_STARTING_SOON` reminder dispatch (email + notification + Pusher) for GOING attendees within T-55–65min; idempotent; Session 3, 2026-04-18 |
 
 ### Phase 4 — Pusher Channels & Events (Live 2026-04-18)
 
@@ -375,12 +376,9 @@ EMAIL_FROM=             # Email sender (onboarding@resend.dev) ✅
 | `meetup-{id}` | `meetup:cancelled` | `{ meetupId }` | DELETE [id] |
 | `user-{id}` | `notification` | `{ type: 'MEETUP_RSVP'/'MEETUP_INVITED', ... }` | rsvp (host), invite (invitee) |
 
-### Phase 4 — Remaining (Session 3)
+### Phase 4 — All sessions complete (2026-04-18)
 
-| Endpoint | Method | Phase | Notes |
-|----------|--------|-------|-------|
-| `/api/cron/meetup-reminders` | GET | 4 | `MEETUP_STARTING_SOON` notification dispatch (T-60min) |
-| `/api/venues/search` | GET | 4 | Full Google Places API wiring (currently DB-only) |
+Phase 4 closed with Session 3. Next: Phase 5 (Check-ins & live presence).
 
 ### Phase 5 — Planned
 
