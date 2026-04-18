@@ -574,3 +574,46 @@ export async function sendMeetupRSVPConfirmationEmail(params: {
   }
 }
 
+/** Send a meetup starting-soon reminder email. Gracefully degrades — logs but does not throw. */
+export async function sendMeetupStartingSoonEmail(params: {
+  to: string;
+  attendeeName: string;
+  hostName: string;
+  meetupTitle: string;
+  meetupDate: string;
+  meetupVenueName: string;
+  minutesUntil: number;
+  meetupId: string;
+}): Promise<void> {
+  const { to, attendeeName, hostName, meetupTitle, meetupDate, meetupVenueName, minutesUntil, meetupId } = params;
+  if (!resend) {
+    logError('EMAIL_MEETUP_STARTING_SOON', new Error('Email service not configured'), { to, meetupId });
+    return;
+  }
+  const meetupUrl = `${APP_URL}/meetups/${meetupId}`;
+  const details = `When: ${meetupDate}\nWhere: ${meetupVenueName}`;
+  const detailsHtml = `<strong>When:</strong> ${meetupDate}<br><strong>Where:</strong> ${meetupVenueName}`;
+  try {
+    const { error } = await resend.emails.send({
+      from: DEFAULT_FROM,
+      to: [to],
+      subject: `${meetupTitle} is starting in ~${minutesUntil} minutes`,
+      html: generateNotificationEmailHtml({
+        title: `Starting soon: ${meetupTitle}`,
+        message: `Hi ${attendeeName} — heads up, ${hostName}'s meetup is kicking off in ~${minutesUntil} minutes.<br><br>${detailsHtml}`,
+        actionUrl: meetupUrl,
+        actionText: 'View Meetup',
+      }),
+      text: generateNotificationEmailText({
+        title: `Starting soon: ${meetupTitle}`,
+        message: `Hi ${attendeeName} — heads up, ${hostName}'s meetup is kicking off in ~${minutesUntil} minutes.\n\n${details}`,
+        actionUrl: meetupUrl,
+        actionText: 'View Meetup',
+      }),
+    });
+    if (error) logError('EMAIL_MEETUP_STARTING_SOON', error, { to, meetupId });
+  } catch (err) {
+    logError('EMAIL_MEETUP_STARTING_SOON', err, { to, meetupId });
+  }
+}
+

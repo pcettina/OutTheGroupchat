@@ -7,6 +7,10 @@
     {
       "path": "/api/cron",
       "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/meetup-starting-soon",
+      "schedule": "*/5 * * * *"
     }
   ],
   "headers": [
@@ -26,6 +30,9 @@
     },
     "app/api/cron/route.ts": {
       "maxDuration": 300
+    },
+    "app/api/cron/meetup-starting-soon/route.ts": {
+      "maxDuration": 60
     }
   }
 }

@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { logger } from '@/lib/logger';
+import { VenueCategory, type VenueSearchResult } from '@/types/meetup';
 
 const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY;
 const GOOGLE_PLACES_BASE_URL = 'https://maps.googleapis.com/maps/api/place';
@@ -111,4 +112,101 @@ export function getPriceEstimate(priceLevel: number | undefined): string {
     default:
       return 'Price not available';
   }
-} 
+}
+
+/**
+ * @description Infers a project VenueCategory from Google Places `types` array.
+ * Falls through to OTHER when no type matches (Google has no "coworking" type).
+ * @param {string[]} types - The types array from a PlaceDetails result.
+ * @returns {VenueCategory} The inferred project VenueCategory enum value.
+ */
+export function inferVenueCategory(types: string[]): VenueCategory {
+  if (types.includes('bar') || types.includes('night_club')) return VenueCategory.BAR;
+  if (types.includes('cafe') || types.includes('coffee_shop')) return VenueCategory.COFFEE;
+  if (types.includes('restaurant') || types.includes('food')) return VenueCategory.RESTAURANT;
+  if (types.includes('park')) return VenueCategory.PARK;
+  if (types.includes('gym')) return VenueCategory.GYM;
+  return VenueCategory.OTHER;
+}
+
+/**
+ * @description Best-effort extraction of city and country from a Google Places
+ * `formatted_address` string. Returns `{ city, country }` with `'Unknown'` fallbacks.
+ * Strategy: split on commas, take the last segment as country and the second-to-last
+ * segment as city (stripping trailing postal codes / state abbreviations).
+ * @param {string} address - The `formatted_address` value from PlaceDetails.
+ * @returns {{ city: string; country: string }} Parsed locale hints.
+ */
+export function parseAddressLocale(address: string): { city: string; country: string } {
+  if (!address) return { city: 'Unknown', country: 'Unknown' };
+
+  const parts = address
+    .split(',')
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+
+  if (parts.length === 0) return { city: 'Unknown', country: 'Unknown' };
+  if (parts.length === 1) return { city: 'Unknown', country: parts[0] };
+
+  const country = parts[parts.length - 1];
+  // Second-to-last segment: may be "City" or "City 12345" or "State 12345".
+  // Strip a trailing postal code token if present.
+  const rawCity = parts[parts.length - 2];
+  const city = rawCity.replace(/\s+\d{3,}.*$/, '').trim() || 'Unknown';
+
+  return { city: city.length > 0 ? city : 'Unknown', country };
+}
+
+/**
+ * @description Builds a Google Places Photo URL from a photo_reference, or null
+ * when no photo exists or the API key is not configured.
+ * @param {string | undefined} photoReference - The first photo_reference from a PlaceDetails result.
+ * @param {number} [maxWidth=400] - Max width in pixels for the served image.
+ * @returns {string | null} The Places Photo endpoint URL, or null.
+ */
+export function buildPlacePhotoUrl(
+  photoReference: string | undefined,
+  maxWidth = 400
+): string | null {
+  if (!photoReference || !GOOGLE_PLACES_API_KEY) return null;
+  return `${GOOGLE_PLACES_BASE_URL}/photo?maxwidth=${maxWidth}&photo_reference=${encodeURIComponent(
+    photoReference
+  )}&key=${GOOGLE_PLACES_API_KEY}`;
+}
+
+/**
+ * @description Maps a Google PlaceDetails object to the project's Venue search
+ * result shape. The caller can pass a `cityHint` (e.g. a user-supplied `?city=`
+ * filter) which takes precedence over address parsing when present.
+ * @param {PlaceDetails} place - A Google Places Text Search result entry.
+ * @param {{ cityHint?: string }} [options] - Optional overrides (city hint).
+ * @returns {VenueSearchResult & { source: string; externalId: string }} The
+ * mapped venue with extra `source` / `externalId` fields for DB upsert.
+ */
+export function mapPlaceToVenue(
+  place: PlaceDetails,
+  options: { cityHint?: string } = {}
+): VenueSearchResult & { source: string; externalId: string } {
+  const { city: parsedCity, country } = parseAddressLocale(place.formatted_address);
+  const city = options.cityHint && options.cityHint.trim().length > 0
+    ? options.cityHint.trim()
+    : parsedCity;
+
+  const imageUrl = buildPlacePhotoUrl(place.photos?.[0]?.photo_reference);
+
+  return {
+    // `id` will be replaced with the DB id after upsert. Until then we surface
+    // the Google place_id prefixed so callers can still distinguish results.
+    id: `gp_${place.place_id}`,
+    name: place.name,
+    address: place.formatted_address || null,
+    city,
+    country,
+    category: inferVenueCategory(place.types ?? []),
+    latitude: place.geometry?.location?.lat ?? null,
+    longitude: place.geometry?.location?.lng ?? null,
+    imageUrl,
+    source: 'google_places',
+    externalId: place.place_id,
+  };
+}
