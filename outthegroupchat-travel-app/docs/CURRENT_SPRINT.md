@@ -1,7 +1,37 @@
-# 🟡 Active — Phase 4: Meetups (Session 2 of ~3 complete — detail page, Pusher real-time, email dispatch)
+# 🟢 Complete — Phase 4: Meetups (All 3 sessions delivered)
 
-> **Status:** Phase 4 Session 2 delivered. MeetupDetail page, AttendeeList, MeetupInviteModal, Pusher meetup channels (attendee:joined/left, meetup:updated/cancelled) + live RSVP/host notification broadcast, invite + RSVP email dispatch wired. Session 3 remaining: `MEETUP_STARTING_SOON` cron + full Places API venue search.
-> **Test count:** 894 tests passing (888 + 6 net new); 46 test files (same 46 — extended existing files)
+> **Status:** Phase 4 complete. Session 3 shipped `MEETUP_STARTING_SOON` reminder cron (T-55–65min window, idempotent, every 5 min) + Google Places API integration for `/api/venues/search` (DB-first with Places fallback + auto-caching). Ready for Phase 5 (Check-ins & live presence).
+> **Test count:** 930 tests passing (894 + 36 net new); 48 test files (+2 new: `venues-search-places.test.ts`, `cron-meetup-starting-soon.test.ts`)
+
+---
+
+## 🟢 Completed 2026-04-18 (Phase 4 Session 3 — cron reminders + Places API)
+
+### Wave 1 — Features
+- Created `src/app/api/cron/meetup-starting-soon/route.ts` (135 lines) — Bearer-secured cron. Queries `Meetup.findMany` where `scheduledAt` in `[now+55min, now+65min]` and `cancelled=false`. For each `GOING` attendee: idempotency-checks via `Notification.findFirst` (JSON path filter `data.meetupId`), creates notification, sends email, broadcasts via Pusher. Returns metrics: `meetupsProcessed`, `notificationsSent`, `emailsSent`, `broadcastsSent`, `skippedAlreadyNotified`.
+- Modified `src/lib/email.ts` (+44 lines) — added `sendMeetupStartingSoonEmail` helper matching signature of sibling RSVP/invite emails. Gracefully degrades when `resend` unconfigured.
+- Modified `vercel.json` — registered `/api/cron/meetup-starting-soon` with `*/5 * * * *` schedule + 60s `maxDuration`.
+- Modified `src/app/api/venues/search/route.ts` (114 → 228 lines) — parallel DB + Google Places path. Triggers Places call when `GOOGLE_PLACES_API_KEY` set AND `q.length >= 3` AND DB has fewer than `limit` matches. Filters Places by `category` param, upserts new results via `findFirst({ source: 'google_places', externalId })` + `create()`, dedupes vs DB by `(name, city)` lowercase with DB winning, caps merged result at `limit`. Response shape unchanged.
+- Modified `src/lib/api/places.ts` (114 → 212 lines) — added `inferVenueCategory`, `parseAddressLocale`, `buildPlacePhotoUrl`, `mapPlaceToVenue` helpers.
+
+### Wave 2 — Tests
+- Created `src/__tests__/api/venues-search-places.test.ts` (474 lines, 18 tests) — auth/validation (4), DB-only path w/ missing key / short q / full-DB short-circuit (4), Places API path w/ query shape / mapping / upsert / dedupe / category filter (8), graceful degradation (2).
+- Created `src/__tests__/api/cron-meetup-starting-soon.test.ts` (477 lines, 18 tests) — auth (4), query shape (4), dispatch (5), idempotency (3), graceful degradation (2).
+
+### Wave 3 — Shared files
+- Modified `src/__tests__/setup.ts` — added `prisma.notification.findFirst: vi.fn()` mock (needed for idempotency tests).
+
+### Metrics
+- Tests: 894 → 930 (+36: 18 per new file)
+- Test files: 46 → 48 (+2)
+- API routes: 49 → 50 (+1: `/api/cron/meetup-starting-soon`)
+- Env vars added to checklist: `GOOGLE_PLACES_API_KEY` (already in `.env.example`)
+
+### Phase 4 complete — next: Phase 5 (Check-ins & live presence)
+
+---
+
+## 🟢 Completed 2026-04-18 (Phase 4 Session 2 — MeetupDetail + Pusher + email dispatch)
 
 ---
 

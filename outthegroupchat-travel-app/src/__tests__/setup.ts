@@ -90,6 +90,7 @@ vi.mock('@/lib/prisma', () => ({
     },
     notification: {
       create: vi.fn(),
+      findFirst: vi.fn(),
       findMany: vi.fn(),
       findUnique: vi.fn(),
       update: vi.fn(),
