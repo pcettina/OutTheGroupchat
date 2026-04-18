@@ -6,6 +6,8 @@ import { authOptions } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 import { captureException } from '@/lib/sentry';
 import { apiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
+import { broadcastToMeetup, broadcastToUser, events } from '@/lib/pusher';
+import { sendMeetupRSVPConfirmationEmail } from '@/lib/email';
 
 const rsvpSchema = z.object({
   status: z.enum(['GOING', 'MAYBE', 'DECLINED']),
@@ -23,13 +25,13 @@ export async function POST(
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     const rl = await checkRateLimit(apiRateLimiter, `meetup-rsvp:${session.user.id}`);
     if (!rl.success) {
       return NextResponse.json(
-        { error: 'Rate limit exceeded' },
+        { success: false, error: 'Rate limit exceeded' },
         { status: 429, headers: getRateLimitHeaders(rl) }
       );
     }
@@ -38,7 +40,7 @@ export async function POST(
     const parsed = rsvpSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Validation failed', details: parsed.error.flatten() },
+        { success: false, error: 'Validation failed', details: parsed.error.flatten() },
         { status: 400 }
       );
     }
@@ -55,15 +57,17 @@ export async function POST(
         hostId: true,
         capacity: true,
         cancelled: true,
+        scheduledAt: true,
+        venueName: true,
       },
     });
 
     if (!meetup) {
-      return NextResponse.json({ error: 'Meetup not found' }, { status: 404 });
+      return NextResponse.json({ success: false, error: 'Meetup not found' }, { status: 404 });
     }
 
     if (meetup.cancelled) {
-      return NextResponse.json({ error: 'Meetup is cancelled' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'Meetup is cancelled' }, { status: 400 });
     }
 
     if (status === 'GOING' && meetup.capacity !== null) {
@@ -71,7 +75,7 @@ export async function POST(
         where: { meetupId, status: 'GOING' },
       });
       if (goingCount >= meetup.capacity) {
-        return NextResponse.json({ error: 'Meetup is at capacity' }, { status: 409 });
+        return NextResponse.json({ success: false, error: 'Meetup is at capacity' }, { status: 409 });
       }
     }
 
@@ -95,10 +99,56 @@ export async function POST(
       logger.info({ meetupId, userId, status }, '[MEETUP_RSVP] Notification sent to host');
     }
 
-    return NextResponse.json({ attendee, message: 'RSVP updated' }, { status: 200 });
+    // Broadcast attendee change to the meetup channel + notify host inbox.
+    // broadcastToMeetup / broadcastToUser swallow internal errors; awaiting is safe.
+    if (status === 'GOING') {
+      await broadcastToMeetup(meetupId, events.ATTENDEE_JOINED, {
+        userId,
+        status,
+        user: {
+          id: userId,
+          name: session.user.name,
+          image: session.user.image,
+        },
+      });
+    } else if (status === 'DECLINED') {
+      await broadcastToMeetup(meetupId, events.ATTENDEE_LEFT, { userId });
+    }
+
+    await broadcastToUser(meetup.hostId, events.NOTIFICATION, {
+      type: 'MEETUP_RSVP',
+      meetupId,
+      attendeeUserId: userId,
+      status,
+    });
+
+    // Fire-and-forget RSVP confirmation email — failure must not fail the route.
+    if (status === 'GOING' && session.user.email) {
+      try {
+        await sendMeetupRSVPConfirmationEmail({
+          to: session.user.email,
+          attendeeName: session.user.name ?? 'there',
+          meetupTitle: meetup.title,
+          meetupDate: meetup.scheduledAt.toISOString(),
+          meetupVenueName: meetup.venueName ?? 'TBD',
+          status,
+          meetupId,
+        });
+      } catch (emailErr) {
+        logger.warn(
+          { err: emailErr, meetupId, userId },
+          '[MEETUP_RSVP] RSVP confirmation email failed'
+        );
+      }
+    }
+
+    return NextResponse.json(
+      { success: true, data: attendee, message: 'RSVP updated' },
+      { status: 200 }
+    );
   } catch (error) {
     captureException(error);
     logger.error({ error }, '[MEETUP_RSVP_POST] Failed to process RSVP');
-    return NextResponse.json({ error: 'Failed to process RSVP' }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'Failed to process RSVP' }, { status: 500 });
   }
 }

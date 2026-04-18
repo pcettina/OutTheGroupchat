@@ -352,24 +352,35 @@ EMAIL_FROM=             # Email sender (onboarding@resend.dev) ✅
 | `/api/crew/requests` | GET | ✅ | Pending requests split into `incoming` + `sent` based on `requestedById` |
 | `/api/crew/status/[userId]` | GET | ✅ | Lookup helper for `<CrewButton>` (returns `SELF / NOT_IN_CREW / PENDING / ACCEPTED / DECLINED / BLOCKED` + `iAmRequester`) |
 
-### Phase 4 — Meetups (🟡 Session 1 of ~3 complete, 2026-04-18)
+### Phase 4 — Meetups (🟡 Session 2 of ~3 complete, 2026-04-18 — detail page + Pusher + email)
 
 | Endpoint | Method | Status | Notes |
 |----------|--------|--------|-------|
 | `/api/meetups` | POST | ✅ | Create meetup (default visibility=`CREW`); Implemented Phase 4, 2026-04-18 |
 | `/api/meetups` | GET | ✅ | List meetups (city, visibility-scoped to caller's Crew); Implemented Phase 4, 2026-04-18 |
 | `/api/meetups/[id]` | GET | ✅ | Meetup detail; Implemented Phase 4, 2026-04-18 |
-| `/api/meetups/[id]` | PATCH | ✅ | Edit meetup (host only); Implemented Phase 4, 2026-04-18 |
-| `/api/meetups/[id]` | DELETE | ✅ | Cancel meetup; Implemented Phase 4, 2026-04-18 |
-| `/api/meetups/[id]/rsvp` | POST | ✅ | GOING / MAYBE / DECLINED; Implemented Phase 4, 2026-04-18 |
-| `/api/meetups/[id]/invite` | POST | ✅ | Invite Crew members; Implemented Phase 4, 2026-04-18 |
+| `/api/meetups/[id]` | PATCH | ✅ | Edit meetup (host only); broadcasts `meetup:updated` on Pusher `meetup-{id}` channel (Session 2, 2026-04-18) |
+| `/api/meetups/[id]` | DELETE | ✅ | Cancel meetup; broadcasts `meetup:cancelled` (Session 2, 2026-04-18) |
+| `/api/meetups/[id]/rsvp` | POST | ✅ | GOING / MAYBE / DECLINED; broadcasts `attendee:joined`/`attendee:left` + host notification; sends RSVP confirmation email on GOING. Response shape: `{success, data, message}` (Session 2, 2026-04-18) |
+| `/api/meetups/[id]/invite` | POST | ✅ | Invite Crew members; dispatches invite emails + broadcasts `meetup:updated` + per-user notification (Session 2, 2026-04-18) |
 | `/api/venues/search` | GET | ✅ | Venue search (DB search; Places API not yet wired); Implemented Phase 4, 2026-04-18 |
 
-### Phase 4 — Remaining (Sessions 2–3)
+### Phase 4 — Pusher Channels & Events (Live 2026-04-18)
+
+| Channel | Event | Payload | Triggered By |
+|---------|-------|---------|--------------|
+| `meetup-{id}` | `attendee:joined` | `{ userId, status, user }` | POST rsvp (status=GOING) |
+| `meetup-{id}` | `attendee:left` | `{ userId }` | POST rsvp (status=DECLINED) |
+| `meetup-{id}` | `meetup:updated` | updated meetup | PATCH [id], POST invite |
+| `meetup-{id}` | `meetup:cancelled` | `{ meetupId }` | DELETE [id] |
+| `user-{id}` | `notification` | `{ type: 'MEETUP_RSVP'/'MEETUP_INVITED', ... }` | rsvp (host), invite (invitee) |
+
+### Phase 4 — Remaining (Session 3)
 
 | Endpoint | Method | Phase | Notes |
 |----------|--------|-------|-------|
-| `/api/meetups/[id]` | Pusher | 4 | Real-time RSVP count updates, attendee presence |
+| `/api/cron/meetup-reminders` | GET | 4 | `MEETUP_STARTING_SOON` notification dispatch (T-60min) |
+| `/api/venues/search` | GET | 4 | Full Google Places API wiring (currently DB-only) |
 
 ### Phase 5 — Planned
 

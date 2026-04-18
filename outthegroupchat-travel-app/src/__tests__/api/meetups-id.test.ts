@@ -26,11 +26,47 @@ vi.mock('@/lib/rate-limit', () => ({
   getRateLimitHeaders: vi.fn().mockReturnValue({}),
 }));
 
+vi.mock('@/lib/pusher', () => ({
+  channels: {
+    trip: (id: string) => `trip-${id}`,
+    user: (id: string) => `user-${id}`,
+    voting: (id: string) => `voting-${id}`,
+    meetup: (id: string) => `meetup-${id}`,
+  },
+  events: {
+    TRIP_UPDATED: 'trip:updated',
+    MEMBER_JOINED: 'member:joined',
+    MEMBER_LEFT: 'member:left',
+    ACTIVITY_ADDED: 'activity:added',
+    ACTIVITY_UPDATED: 'activity:updated',
+    ITINERARY_UPDATED: 'itinerary:updated',
+    SURVEY_CREATED: 'survey:created',
+    SURVEY_RESPONSE: 'survey:response',
+    SURVEY_CLOSED: 'survey:closed',
+    VOTE_CAST: 'vote:cast',
+    VOTING_CLOSED: 'voting:closed',
+    VOTING_RESULTS: 'voting:results',
+    NOTIFICATION: 'notification',
+    INVITATION: 'invitation',
+    MEETUP_UPDATED: 'meetup:updated',
+    MEETUP_CANCELLED: 'meetup:cancelled',
+    ATTENDEE_JOINED: 'attendee:joined',
+    ATTENDEE_LEFT: 'attendee:left',
+  },
+  getPusherServer: vi.fn(() => null),
+  getPusherClient: vi.fn(() => null),
+  broadcastToTrip: vi.fn().mockResolvedValue(undefined),
+  broadcastToUser: vi.fn().mockResolvedValue(undefined),
+  broadcastToMeetup: vi.fn().mockResolvedValue(undefined),
+}));
+
 import { GET, PATCH, DELETE } from '@/app/api/meetups/[id]/route';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { broadcastToMeetup } from '@/lib/pusher';
 
 const mockGetServerSession = vi.mocked(getServerSession);
 const mockCheckRateLimit = vi.mocked(checkRateLimit);
+const mockBroadcastToMeetup = vi.mocked(broadcastToMeetup);
 
 const mockPrismaMeetup = prisma.meetup as unknown as {
   findUnique: ReturnType<typeof vi.fn>;
@@ -111,6 +147,8 @@ beforeEach(() => {
     remaining: 99,
     reset: 0,
   });
+  // Re-arm the pusher broadcast mock so default behavior is a resolved promise.
+  mockBroadcastToMeetup.mockResolvedValue(undefined);
 });
 
 // ===========================================================================
@@ -252,6 +290,12 @@ describe('PATCH /api/meetups/[id]', () => {
     const updateArg = mockPrismaMeetup.update.mock.calls[0]?.[0];
     expect(updateArg?.where).toEqual({ id: MEETUP_ID });
     expect(updateArg?.data).toMatchObject({ title: 'New Title' });
+    // Verify the meetup channel is notified of the update
+    expect(mockBroadcastToMeetup).toHaveBeenCalledWith(
+      MEETUP_ID,
+      'meetup:updated',
+      expect.any(Object)
+    );
   });
 
   it('returns 400 when body fails validation', async () => {
@@ -308,6 +352,12 @@ describe('DELETE /api/meetups/[id]', () => {
     expect(updateArg?.data).toEqual({ cancelled: true });
     // Verify hard delete was NOT called
     expect(mockPrismaMeetup.delete).not.toHaveBeenCalled();
+    // Verify the meetup channel is notified of the cancellation
+    expect(mockBroadcastToMeetup).toHaveBeenCalledWith(
+      MEETUP_ID,
+      'meetup:cancelled',
+      expect.objectContaining({ meetupId: MEETUP_ID })
+    );
   });
 
   it('returns 404 when meetup not found', async () => {
@@ -317,5 +367,43 @@ describe('DELETE /api/meetups/[id]', () => {
     expect(res.status).toBe(404);
     const body = await res.json();
     expect(body.error).toBe('Meetup not found');
+  });
+});
+
+// ===========================================================================
+// Pusher broadcast guards — should NOT broadcast on error/forbidden paths
+// ===========================================================================
+describe('Pusher broadcast guards', () => {
+  const makePatchReq = (body: unknown) =>
+    new NextRequest(`http://localhost/api/meetups/${MEETUP_ID}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+  const makeDeleteReq = () =>
+    new NextRequest(`http://localhost/api/meetups/${MEETUP_ID}`, { method: 'DELETE' });
+  const params = { params: { id: MEETUP_ID } };
+
+  it('PATCH does not broadcast if user is not host (403 path)', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor(OTHER_ID));
+    mockPrismaMeetup.findUnique.mockResolvedValueOnce(buildMeetupSimple());
+
+    const res = await PATCH(makePatchReq({ title: 'Hijack' }), params);
+    expect(res.status).toBe(403);
+    // Critical: no real-time event should leak to subscribers when the
+    // request was rejected. Update was never executed; broadcast must not fire.
+    expect(mockBroadcastToMeetup).not.toHaveBeenCalled();
+    expect(mockPrismaMeetup.update).not.toHaveBeenCalled();
+  });
+
+  it('DELETE does not broadcast if meetup not found (404 path)', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor(HOST_ID));
+    mockPrismaMeetup.findUnique.mockResolvedValueOnce(null);
+
+    const res = await DELETE(makeDeleteReq(), params);
+    expect(res.status).toBe(404);
+    // No cancellation event should fire for a meetup that does not exist.
+    expect(mockBroadcastToMeetup).not.toHaveBeenCalled();
+    expect(mockPrismaMeetup.update).not.toHaveBeenCalled();
   });
 });

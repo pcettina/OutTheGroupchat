@@ -6,6 +6,8 @@ import { authOptions } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 import { captureException } from '@/lib/sentry';
 import { apiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
+import { broadcastToMeetup, broadcastToUser, events } from '@/lib/pusher';
+import { sendMeetupInviteEmail } from '@/lib/email';
 
 const inviteSchema = z.object({
   userIds: z.array(z.string().cuid()).min(1).max(20),
@@ -50,7 +52,13 @@ export async function POST(
 
     const meetup = await prisma.meetup.findUnique({
       where: { id: meetupId },
-      select: { id: true, title: true, hostId: true },
+      select: {
+        id: true,
+        title: true,
+        hostId: true,
+        scheduledAt: true,
+        venueName: true,
+      },
     });
 
     if (!meetup) {
@@ -95,6 +103,51 @@ export async function POST(
       logger.info(
         { meetupId, hostId, invited: newUserIds.length, skipped: skippedCount },
         '[MEETUP_INVITE] Invites and notifications created'
+      );
+
+      // Send invite emails fire-and-forget. Failure to fetch users or send any
+      // email must not fail the route.
+      try {
+        const invitedUsers = await prisma.user.findMany({
+          where: { id: { in: newUserIds } },
+          select: { id: true, email: true, name: true },
+        });
+        const meetupDateStr = meetup.scheduledAt.toISOString();
+        const venueLabel = meetup.venueName ?? 'TBD';
+        await Promise.allSettled(
+          invitedUsers
+            .filter((u) => !!u.email)
+            .map((u) =>
+              sendMeetupInviteEmail({
+                to: u.email as string,
+                inviteeName: u.name ?? 'there',
+                hostName,
+                meetupTitle: meetup.title,
+                meetupDate: meetupDateStr,
+                meetupVenueName: venueLabel,
+                meetupId,
+              })
+            )
+        );
+      } catch (emailErr) {
+        logger.warn(
+          { err: emailErr, meetupId },
+          '[MEETUP_INVITE] One or more invite emails failed to dispatch'
+        );
+      }
+
+      // Broadcast meetup-channel update + per-user notification.
+      // broadcast helpers swallow errors internally; awaiting is safe.
+      await broadcastToMeetup(meetupId, events.MEETUP_UPDATED, {
+        invitesAdded: newUserIds.length,
+      });
+      await Promise.all(
+        newUserIds.map((uid) =>
+          broadcastToUser(uid, events.NOTIFICATION, {
+            type: 'MEETUP_INVITED',
+            meetupId,
+          })
+        )
       );
     }
 

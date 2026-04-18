@@ -68,12 +68,13 @@ export function getPusherClient() {
 
 /**
  * @description Channel name factory functions for Pusher subscriptions.
- * Provides consistent, typed channel name strings for trip, user, and voting channels.
+ * Provides consistent, typed channel name strings for trip, user, voting, and meetup channels.
  */
 export const channels = {
   trip: (tripId: string) => `trip-${tripId}`,
   user: (userId: string) => `user-${userId}`,
   voting: (tripId: string) => `voting-${tripId}`,
+  meetup: (meetupId: string) => `meetup-${meetupId}`,
 } as const;
 
 /**
@@ -102,6 +103,12 @@ export const events = {
   // User events
   NOTIFICATION: 'notification',
   INVITATION: 'invitation',
+
+  // Meetup events
+  MEETUP_UPDATED: 'meetup:updated',
+  MEETUP_CANCELLED: 'meetup:cancelled',
+  ATTENDEE_JOINED: 'attendee:joined',
+  ATTENDEE_LEFT: 'attendee:left',
 } as const;
 
 /**
@@ -137,6 +144,25 @@ export async function broadcastToUser(userId: string, event: string, data: unkno
 
   try {
     await pusher.trigger(channels.user(userId), event, data);
+  } catch {
+    // Broadcast failures are non-fatal
+  }
+}
+
+/**
+ * @description Broadcasts a Pusher event to the channel associated with a specific meetup.
+ * Silently skips if the server instance is unavailable; broadcast failures are non-fatal.
+ * @param {string} meetupId - The ID of the meetup whose channel should receive the event.
+ * @param {string} event - The Pusher event name to trigger.
+ * @param {unknown} data - The payload to send with the event.
+ * @returns {Promise<void>}
+ */
+export async function broadcastToMeetup(meetupId: string, event: string, data: unknown) {
+  const pusher = getPusherServer();
+  if (!pusher) return;
+
+  try {
+    await pusher.trigger(channels.meetup(meetupId), event, data);
   } catch {
     // Broadcast failures are non-fatal
   }
