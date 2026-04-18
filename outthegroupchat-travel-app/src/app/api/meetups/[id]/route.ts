@@ -6,6 +6,7 @@ import { authOptions } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 import { captureException } from '@/lib/sentry';
 import { apiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
+import { broadcastToMeetup, events } from '@/lib/pusher';
 
 const patchSchema = z.object({
   title: z.string().min(1).max(200).optional(),
@@ -197,6 +198,9 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
       },
     });
 
+    // Broadcast updated meetup to subscribers. Helper swallows errors internally.
+    await broadcastToMeetup(id, events.MEETUP_UPDATED, updated);
+
     return NextResponse.json({ success: true, data: updated });
   } catch (error) {
     captureException(error);
@@ -244,6 +248,9 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
       where: { id },
       data: { cancelled: true },
     });
+
+    // Broadcast cancellation to subscribers. Helper swallows errors internally.
+    await broadcastToMeetup(id, events.MEETUP_CANCELLED, { meetupId: id });
 
     return NextResponse.json({ success: true, message: 'Meetup cancelled' });
   } catch (error) {

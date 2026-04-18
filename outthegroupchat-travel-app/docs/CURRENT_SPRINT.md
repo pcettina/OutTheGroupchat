@@ -1,7 +1,40 @@
-# 🟡 Active — Phase 4: Meetups core (Session 1 of ~3 in progress)
+# 🟡 Active — Phase 4: Meetups (Session 2 of ~3 complete — detail page, Pusher real-time, email dispatch)
 
-> **Status:** Phase 4 in progress (session 1 of 3-4). Core API routes + venue search + meetup UI pages + RSVP + invite complete. Pusher real-time, MeetupDetail page, and AttendeeList remain for sessions 2–3.
-> **Test count:** 888 tests passing (845 + 43 new), 46 test files (43 + 3 new)
+> **Status:** Phase 4 Session 2 delivered. MeetupDetail page, AttendeeList, MeetupInviteModal, Pusher meetup channels (attendee:joined/left, meetup:updated/cancelled) + live RSVP/host notification broadcast, invite + RSVP email dispatch wired. Session 3 remaining: `MEETUP_STARTING_SOON` cron + full Places API venue search.
+> **Test count:** 894 tests passing (888 + 6 net new); 46 test files (same 46 — extended existing files)
+
+---
+
+## 🟢 Completed 2026-04-18 (Phase 4 Session 2 — MeetupDetail + Pusher + email dispatch)
+
+### Wave 1 — Features (UI + real-time + email wiring)
+- Created `src/app/meetups/[id]/page.tsx` (377 lines) — MeetupDetail client page: fetches `/api/meetups/[id]`, renders host/venue/visibility/attendees, host-only "Invite Crew" + "Cancel Meetup" buttons, Pusher subscription on `meetup-${id}` channel (attendee:joined/left, meetup:updated/cancelled) with refetch-on-event, full loading/error/404/401 states, cancelled banner.
+- Created `src/components/meetups/AttendeeList.tsx` (153 lines) — attendee grouping by GOING/MAYBE/DECLINED with count badges, host crown, checked-in indicator, empty state.
+- Created `src/components/meetups/MeetupInviteModal.tsx` (335 lines) — Framer Motion modal matching `CreateMeetupModal` pattern; fetches `/api/crew?pageSize=100`, multi-select checkboxes (cap 20), submits to `/api/meetups/[id]/invite`, loading/empty/error states.
+- Modified `src/lib/pusher.ts` — added `channels.meetup(id)`, `events.MEETUP_UPDATED`/`MEETUP_CANCELLED`/`ATTENDEE_JOINED`/`ATTENDEE_LEFT`, `broadcastToMeetup()` helper (defensive try/catch like `broadcastToTrip`).
+- Modified `src/app/api/meetups/[id]/rsvp/route.ts` — wired `broadcastToMeetup` (attendee:joined on GOING, attendee:left on DECLINED), `broadcastToUser` to host inbox channel, `sendMeetupRSVPConfirmationEmail` on GOING (fire-and-forget). **Response shape changed** to `{ success, data, message }` / `{ success, error }` to match RSVPButton contract.
+- Modified `src/app/api/meetups/[id]/invite/route.ts` — added `prisma.user.findMany` to fetch invitee emails, parallel `sendMeetupInviteEmail` dispatch via `Promise.allSettled`, `broadcastToMeetup` (meetup:updated) + per-user `broadcastToUser` (notification).
+- Modified `src/app/api/meetups/[id]/route.ts` — PATCH broadcasts `meetup:updated` with updated payload; DELETE broadcasts `meetup:cancelled` with `{ meetupId }`.
+
+### Wave 2 — Tests
+- Updated `src/__tests__/api/meetups-rsvp-invite.test.ts` (360 → 462 lines; 18 → 22 tests) — new response shape assertions, local `vi.mock('@/lib/pusher')` + `vi.mock('@/lib/email')`, asserts `broadcastToMeetup`/`broadcastToUser` + `sendMeetupRSVPEmail`/`sendMeetupInviteEmail` fire on success paths, graceful-degradation tests when email throws, skip-email when user has no email.
+- Updated `src/__tests__/api/meetups-id.test.ts` (existing → 409 lines; 14 → 16 tests) — PATCH asserts `meetup:updated` broadcast, DELETE asserts `meetup:cancelled`, plus guards: PATCH-403-no-broadcast + DELETE-404-no-broadcast.
+
+### Wave 3 — Shared files
+- Updated `src/components/meetups/index.ts` — barrel now re-exports `RSVPButton`, `CreateMeetupModal`, `VenuePicker`, `AttendeeList`, `MeetupInviteModal`.
+- `src/__tests__/setup.ts` unchanged — Pusher/email mocks applied locally per test file.
+
+### Metrics
+- Tests: 888 → 894 passing (+6 net: +4 in rsvp-invite, +2 in meetups-id)
+- Test files: 46 (same — extended existing)
+- API routes: 49 (no new routes — existing routes extended with Pusher + email side-effects)
+- New pages: `/meetups/[id]`
+- New components: `AttendeeList`, `MeetupInviteModal`
+- Pusher channel added: `meetup-{id}` with 4 events
+
+### Remaining for Phase 4 Session 3
+- `MEETUP_STARTING_SOON` notification cron (T-60min reminder to GOING attendees)
+- Full Google Places API venue search wiring (currently DB-only via `/api/venues/search`)
 
 ---
 
