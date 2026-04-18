@@ -97,9 +97,13 @@ export const config = {
   matcher: [
     '/profile/:path*',
     '/crew/:path*',
+    '/meetups',
+    '/meetups/:path*',
     '/api/profile/:path*',
     '/api/ai/:path*',
     '/api/notifications/:path*',
     '/api/invitations/:path*',
+    '/api/meetups/:path*',
+    '/api/venues/:path*',
   ],
 }; 

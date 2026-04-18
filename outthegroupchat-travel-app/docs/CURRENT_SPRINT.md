@@ -1,6 +1,50 @@
-# 🎯 Up Next — Phase 4: Meetups core
+# 🟡 Active — Phase 4: Meetups core (Session 1 of ~3 in progress)
 
-> **Status:** Ready to start. Phase 3 (both parts) merged to main. Branch off `main` with `refactor/phase-4-meetups-api` (or split further by part).
+> **Status:** Phase 4 in progress (session 1 of 3-4). Core API routes + venue search + meetup UI pages + RSVP + invite complete. Pusher real-time, MeetupDetail page, and AttendeeList remain for sessions 2–3.
+> **Test count:** 888 tests passing (845 + 43 new), 46 test files (43 + 3 new)
+
+---
+
+## 🟢 Completed 2026-04-18 (Nightly Build — Phase 4 Session 1)
+
+### Wave 2 — Features (Phase 4 core API + UI)
+- [L1] Created `src/app/api/meetups/route.ts` — POST create + GET list (visibility-scoped to caller's Crew, city filter, pagination)
+- [L2] Created `src/app/api/meetups/[id]/route.ts` — GET detail + PATCH edit (host only) + DELETE cancel
+- [L3] Created `src/app/api/meetups/[id]/rsvp/route.ts` + `src/app/api/meetups/[id]/invite/route.ts` — RSVP (GOING/MAYBE/DECLINED) + Crew member invite
+- [L4] Created `src/app/api/venues/search/route.ts` (DB venue search; Places API integration deferred) + `src/components/meetups/VenuePicker.tsx` + `src/types/meetup.ts`
+- [M1] Created `src/components/meetups/MeetupCard.tsx` + `MeetupList.tsx` + `index.ts` + `src/app/meetups/page.tsx`
+- [M2] Created `src/components/meetups/CreateMeetupModal.tsx` + `RSVPButton.tsx`
+- [M3] Modified `src/lib/email.ts` — added `sendMeetupInviteEmail` + `sendMeetupRSVPConfirmationEmail`
+- [S1] Modified `src/middleware.ts` — added `/meetups/*` and `/api/meetups/*`, `/api/venues/*` to auth matcher
+- [S2] Created `src/app/meetups/new/page.tsx`
+
+### Wave 1 — Tests
+- [L5] Created `src/__tests__/api/meetups.test.ts` — 11 tests: POST/GET /api/meetups (auth, validation, create, list, visibility scoping)
+- [M4] Created `src/__tests__/api/meetups-id.test.ts` — 14 tests: GET/PATCH/DELETE /api/meetups/[id] (auth, host-only edit, cancel)
+- [M5] Created `src/__tests__/api/meetups-rsvp-invite.test.ts` — 18 tests: RSVP + invite routes
+
+### Wave 3 — Shared Files
+- Added `prisma.meetupInvite.createMany` mock to `src/__tests__/setup.ts`
+- Updated `docs/API_STATUS.md`, `docs/CURRENT_SPRINT.md`, `docs/CODEMAP.md`, `docs/LAUNCH_CHECKLIST.md`, `docs/REFACTOR_PLAN.md`
+
+### Metrics
+- Tests: 845 → 888 passing (+43 new tests)
+- Test files: 43 → 46 (+3 new: meetups.test.ts, meetups-id.test.ts, meetups-rsvp-invite.test.ts)
+- API routes: 41 → 49 (+8: meetups POST/GET, [id] GET/PATCH/DELETE, rsvp, invite, venues/search)
+- New components: MeetupCard, MeetupList, CreateMeetupModal, RSVPButton, VenuePicker
+- New pages: /meetups, /meetups/new
+
+### Remaining for Phase 4 Sessions 2–3
+- Pusher real-time RSVP count updates + attendee presence
+- `/meetups/[meetupId]` detail page (MeetupDetail component, AttendeeList, MeetupInviteModal)
+- Full Google Places API venue search wiring (currently DB-only)
+- `MEETUP_STARTING_SOON` + `ATTENDEE_RSVPED` notification email dispatch
+
+---
+
+# 🎯 Up Next (Phase 4 Session 2) — MeetupDetail page + Pusher
+
+> **Status:** Phase 4 session 1 complete. Branch off `main` with `refactor/phase-4-meetups-api` (or split further by part).
 >
 > **Scope (3–4 sessions per REFACTOR_PLAN.md §Phase 4):**
 > - API: `POST/GET /api/meetups`, `GET/PATCH/DELETE /api/meetups/[id]`, `POST /api/meetups/[id]/rsvp`, `POST /api/meetups/[id]/invite`

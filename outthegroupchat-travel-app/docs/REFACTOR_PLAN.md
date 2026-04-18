@@ -1,7 +1,7 @@
 # OutTheGroupchat — Scope Pivot & Refactor Plan
 
-> **Status:** Active — Phase 2 in progress (2026-04-17)
-> **Created:** 2026-04-16 | **Last updated:** 2026-04-17
+> **Status:** Active — Phase 4 in progress (session 1 of ~3, 2026-04-18)
+> **Created:** 2026-04-16 | **Last updated:** 2026-04-18
 > **Purpose:** Canonical planning doc for the pivot from group-trip-planning app → meetup-focused social network with a persistent `Crew` graph. All future refactor sessions reference this document.
 > **Decision:** Refactor in place (not rebuild). Trip-planning infrastructure is archived but preserved for potential future reactivation.
 
@@ -329,22 +329,25 @@ Each phase targets a discrete session (or a nightly build if small). Phases are 
 ---
 
 ### Phase 4 — Meetups core (3–4 sessions)
+
+> 🟡 **IN PROGRESS — Session 1 of ~3 complete (2026-04-18, nightly/2026-04-18).** Core API routes + venue search + meetup UI pages + RSVP + invite complete. Pusher real-time, full notification email dispatch, and MeetupDetail page remain.
+
 **Objective:** Users can create a meetup, invite Crew, RSVP, see real-time attendance.
 **Actions:**
 1. API routes:
-   - `POST /api/meetups` — create (with venue, time, visibility — default `CREW`)
-   - `GET /api/meetups` — list (filter by city, time range, visibility-scoped to caller's Crew)
-   - `GET /api/meetups/[id]` — detail
-   - `PATCH /api/meetups/[id]` — edit (host only)
-   - `DELETE /api/meetups/[id]` — cancel
-   - `POST /api/meetups/[id]/rsvp` — going/maybe/declined
-   - `POST /api/meetups/[id]/invite` — invite Crew members
-2. Venue search: `GET /api/venues/search` (geocoding + Places API repurposed)
-3. Pages: `/meetups`, `/meetups/new`, `/meetups/[meetupId]`
-4. Components: `CreateMeetupModal`, `MeetupCard`, `MeetupDetail`, `RSVPButton`, `VenuePicker`, `AttendeeList`, `MeetupInviteModal`
-5. Pusher real-time: RSVP count updates, attendee presence
-6. Notifications: `MEETUP_INVITED`, `MEETUP_STARTING_SOON`, `ATTENDEE_RSVPED`
-7. Tests + docs
+   - ✅ `POST /api/meetups` — create (with venue, time, visibility — default `CREW`)
+   - ✅ `GET /api/meetups` — list (filter by city, time range, visibility-scoped to caller's Crew)
+   - ✅ `GET /api/meetups/[id]` — detail
+   - ✅ `PATCH /api/meetups/[id]` — edit (host only)
+   - ✅ `DELETE /api/meetups/[id]` — cancel
+   - ✅ `POST /api/meetups/[id]/rsvp` — going/maybe/declined
+   - ✅ `POST /api/meetups/[id]/invite` — invite Crew members
+2. ✅ Venue search: `GET /api/venues/search` (DB search complete; Places API wiring deferred to session 2)
+3. ✅ Pages: `/meetups`, `/meetups/new` | 🟡 `/meetups/[meetupId]` (MeetupDetail — session 2)
+4. ✅ Components: `CreateMeetupModal`, `MeetupCard`, `MeetupList`, `RSVPButton`, `VenuePicker` | 🟡 `MeetupDetail`, `AttendeeList`, `MeetupInviteModal` (session 2)
+5. 🟡 Pusher real-time: RSVP count updates, attendee presence (session 2–3)
+6. 🟡 Notifications: `MEETUP_INVITED` ✅ (email stub added) | `MEETUP_STARTING_SOON`, `ATTENDEE_RSVPED` (session 2)
+7. ✅ Tests: 43 tests across 3 new test files | ✅ Docs updated
 
 **Exit criteria:** Host creates meetup (default visibility=`CREW`) → Crew members see it in feed → RSVP → live count updates → meetup detail page shows confirmed attendees. Visibility enum enforces `PUBLIC | CREW | INVITE_ONLY | PRIVATE`.
 
