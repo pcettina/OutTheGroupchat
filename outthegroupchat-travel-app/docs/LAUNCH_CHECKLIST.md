@@ -5,8 +5,8 @@
 - [x] Phase 1: Trip code archived to `src/_archive/`, tests excluded, Navigation cleaned
 - [~] Phase 2: Schema ✅ | Generate ✅ | setup.ts mocks ✅ | Crew rename + `crewLabel` + `activeUntil` on branch `refactor/phase-2-crew-domain` (2026-04-17) | DB migration ⏳ (manual step)
 - [x] Phase 3: Crew system (routes + UI) — `/api/crew/*`, `CrewButton`, `CrewList` ✅ 2026-04-18 (PR #46 + #47)
-- [~] Phase 4: Meetups core — Session 1 of ~3 complete (2026-04-18): core API routes ✅ | venue search ✅ | meetup UI pages ✅ | RSVP ✅ | invite ✅ | Pusher real-time ⏳ | MeetupDetail page ⏳
-- [ ] Phase 5: Check-ins + presence
+- [x] Phase 4: Meetups core — All 3 sessions complete (2026-04-18): API routes ✅ | venue search (Places API) ✅ | meetup UI (MeetupDetail, AttendeeList, MeetupInviteModal) ✅ | RSVP ✅ | invite ✅ | Pusher real-time ✅ | MEETUP_STARTING_SOON cron ✅ (PRs #48, #49, #51)
+- [~] Phase 5: Check-ins + presence — Session 1 complete (2026-04-18): POST /api/checkins ✅ | GET /api/checkins/feed ✅ | DELETE /api/checkins/[id] ✅ | CheckInButton ✅ | LiveActivityCard ✅ | NearbyCrewList ✅ | /checkins page ✅ | Privacy settings page ⏳ | "Join me" full wiring ⏳
 - [ ] Phase 6: Feed/AI/notifications rescope
 - [ ] Phase 7: Marketing surface
 - [ ] Phase 8: Launch-readiness re-audit
@@ -17,7 +17,7 @@
 >
 > **Target Launch:** Q2 2026 (Beta) — to be re-baselined post-pivot
 > **Current Status:** Refactoring (Phase 2 in progress — domain models added, DB migration pending)
-> **Last Updated:** 2026-04-18
+> **Last Updated:** 2026-04-18 (Phase 5 Session 1 complete)
 
 ---
 

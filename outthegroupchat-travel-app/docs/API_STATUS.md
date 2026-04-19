@@ -4,10 +4,10 @@
 >
 > **Archival:** trip/activity routes moved to `src/app/api/_archive/` as of 2026-04-16 Phase 1. See REFACTOR_PLAN.md. Sections below that reference `/api/trips/*` and `/api/activities/*` reflect the pre-archive state for historical context; authoritative status for these routes is the "📦 Archived Routes" section near the bottom of this file.
 >
-> **Phase 2 in progress (2026-04-17):** branch `refactor/phase-2-crew-domain` renames scaffolded `Connection` → `Crew`, adds `User.crewLabel`, adds `CheckIn.activeUntil`. Social-domain routes will live under `/api/crew/*` (not `/api/connections/*`). See REFACTOR_PLAN §3.5 for naming rationale.
+> **Phase 5 Session 1 complete (2026-04-18, nightly/2026-04-19):** Check-in routes live — `POST /api/checkins`, `GET /api/checkins/feed`, `DELETE /api/checkins/[id]`. `CREW_CHECKED_IN_NEARBY` notification type added to schema. City-channel Pusher helper added. Components: `CheckInButton`, `LiveActivityCard`, `NearbyCrewList`. `/checkins` page added.
 >
 > **Last Audit:** April 2026
-> **Live API routes (post-archive):** 49 (35 base + 6 Crew + 8 new Phase 4 meetup/venue routes)
+> **Live API routes (post-archive):** 52 (35 base + 6 Crew + 8 Phase 4 meetup/venue routes + 1 Phase 4 cron + 3 new Phase 5 check-in routes)
 > **Archived API routes (Phase 1):** 13
 > **Target:** 100% for Beta Launch (re-baselined in Phase 8)
 > **Sentry Coverage:** 19/48 routes instrumented on pre-archive branch; coverage on new live surface re-computed after Phase 2
@@ -380,13 +380,13 @@ EMAIL_FROM=             # Email sender (onboarding@resend.dev) ✅
 
 Phase 4 closed with Session 3. Next: Phase 5 (Check-ins & live presence).
 
-### Phase 5 — Planned
+### Phase 5 — Check-ins (Session 1 complete, 2026-04-18)
 
-| Endpoint | Method | Phase | Notes |
-|----------|--------|-------|-------|
-| `/api/checkins` | POST | 5 | Create check-in (`activeUntil` defaults to now+6h) |
-| `/api/checkins/feed` | GET | 5 | Crew's recent check-ins (`WHERE activeUntil > now()`) |
-| `/api/checkins/[id]` | DELETE | 5 | Cancel check-in |
+| Endpoint | Method | Status | Notes |
+|----------|--------|--------|-------|
+| `/api/checkins` | POST | ✅ new | Create check-in (`activeUntil` defaults to now+6h); `CREW_CHECKED_IN_NEARBY` notification dispatched |
+| `/api/checkins/feed` | GET | ✅ new | Crew's recent check-ins (`WHERE activeUntil > now()`), visibility-scoped |
+| `/api/checkins/[id]` | DELETE | ✅ new | Cancel own check-in (soft: sets `activeUntil = now()`) |
 
 ---
 

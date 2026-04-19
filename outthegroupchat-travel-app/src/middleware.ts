@@ -105,5 +105,7 @@ export const config = {
     '/api/invitations/:path*',
     '/api/meetups/:path*',
     '/api/venues/:path*',
+    '/checkins/:path*',
+    '/api/checkins/:path*',
   ],
 }; 

@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useSession, signOut } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Search, Newspaper, Bell, User, Users, Calendar, Mail, LogOut, Menu, X, ChevronDown } from 'lucide-react';
+import { Sparkles, Search, Newspaper, Bell, User, Users, Calendar, Mail, LogOut, Menu, X, ChevronDown, MapPin } from 'lucide-react';
 
 export function Navigation() {
   const { data: session, status } = useSession();
@@ -35,6 +35,7 @@ export function Navigation() {
   const navLinks = [
     { href: '/inspiration', label: 'Inspiration', icon: <Sparkles className="w-4 h-4" /> },
     { href: '/discover', label: 'Discover', icon: <Search className="w-4 h-4" /> },
+    { href: '/checkins', label: 'Check-ins', icon: <MapPin className="w-4 h-4" /> },
     { href: '/feed', label: 'Feed', icon: <Newspaper className="w-4 h-4" /> },
   ];
 
@@ -151,6 +152,14 @@ export function Navigation() {
                             >
                               <Calendar className="w-4 h-4" />
                               Meetups
+                            </Link>
+                            <Link
+                              href="/checkins"
+                              className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                              onClick={() => setIsProfileOpen(false)}
+                            >
+                              <MapPin className="w-4 h-4" />
+                              Check-ins
                             </Link>
                             <Link
                               href="/invitations"

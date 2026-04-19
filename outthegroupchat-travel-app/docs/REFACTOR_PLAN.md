@@ -1,6 +1,6 @@
 # OutTheGroupchat — Scope Pivot & Refactor Plan
 
-> **Status:** Active — Phase 4 in progress (session 1 of ~3, 2026-04-18)
+> **Status:** Active — Phase 5 in progress (session 1, 2026-04-18)
 > **Created:** 2026-04-16 | **Last updated:** 2026-04-18
 > **Purpose:** Canonical planning doc for the pivot from group-trip-planning app → meetup-focused social network with a persistent `Crew` graph. All future refactor sessions reference this document.
 > **Decision:** Refactor in place (not rebuild). Trip-planning infrastructure is archived but preserved for potential future reactivation.
@@ -307,7 +307,7 @@ Each phase targets a discrete session (or a nightly build if small). Phases are 
 
 > ✅ **Part A COMPLETE 2026-04-18** (PR #46 merged) — API (6 routes), DB CHECK migration, `CrewButton`/`CrewRequestCard`/`CrewList`, `/crew` + `/crew/requests` pages, email templates, 32 passing tests.
 >
-> 🟡 **Part B IN PROGRESS 2026-04-18** — branch `refactor/phase-3-crew-polish`. `/profile/[userId]` page with CrewButton, legacy follow POST branch removed from `/api/users/[userId]`, `/crew/:path*` added to middleware matcher, Playwright smoke added. Full `Follow` model retirement deferred to Phase 6 (feed rescope).
+> ✅ **Part B COMPLETE 2026-04-18** (PR #47) — `/profile/[userId]` page with CrewButton, legacy follow POST branch removed from `/api/users/[userId]`, `/crew/:path*` added to middleware matcher, Playwright smoke added. Full `Follow` model retirement deferred to Phase 6 (feed rescope).
 
 **Objective:** Users can send, accept, decline Crew requests with first-class UX.
 **Actions:**
@@ -330,7 +330,7 @@ Each phase targets a discrete session (or a nightly build if small). Phases are 
 
 ### Phase 4 — Meetups core (3–4 sessions)
 
-> 🟡 **IN PROGRESS — Session 1 of ~3 complete (2026-04-18, nightly/2026-04-18).** Core API routes + venue search + meetup UI pages + RSVP + invite complete. Pusher real-time, full notification email dispatch, and MeetupDetail page remain.
+> ✅ **COMPLETE — 3 sessions, 2026-04-16 to 2026-04-18** (PRs #48, #49, #51) — All API routes, venue search (Places API), meetup UI pages (MeetupDetail, AttendeeList, MeetupInviteModal), RSVP, invite, Pusher real-time, MEETUP_STARTING_SOON cron complete.
 
 **Objective:** Users can create a meetup, invite Crew, RSVP, see real-time attendance.
 **Actions:**
@@ -342,28 +342,31 @@ Each phase targets a discrete session (or a nightly build if small). Phases are 
    - ✅ `DELETE /api/meetups/[id]` — cancel
    - ✅ `POST /api/meetups/[id]/rsvp` — going/maybe/declined
    - ✅ `POST /api/meetups/[id]/invite` — invite Crew members
-2. ✅ Venue search: `GET /api/venues/search` (DB search complete; Places API wiring deferred to session 2)
-3. ✅ Pages: `/meetups`, `/meetups/new` | 🟡 `/meetups/[meetupId]` (MeetupDetail — session 2)
-4. ✅ Components: `CreateMeetupModal`, `MeetupCard`, `MeetupList`, `RSVPButton`, `VenuePicker` | 🟡 `MeetupDetail`, `AttendeeList`, `MeetupInviteModal` (session 2)
-5. 🟡 Pusher real-time: RSVP count updates, attendee presence (session 2–3)
-6. 🟡 Notifications: `MEETUP_INVITED` ✅ (email stub added) | `MEETUP_STARTING_SOON`, `ATTENDEE_RSVPED` (session 2)
-7. ✅ Tests: 43 tests across 3 new test files | ✅ Docs updated
+2. ✅ Venue search: `GET /api/venues/search` — DB-first with Google Places API fallback + auto-caching (`GOOGLE_PLACES_API_KEY`)
+3. ✅ Pages: `/meetups`, `/meetups/new`, `/meetups/[id]` (MeetupDetail — Session 2)
+4. ✅ Components: `CreateMeetupModal`, `MeetupCard`, `MeetupList`, `RSVPButton`, `VenuePicker`, `AttendeeList`, `MeetupInviteModal` (all complete)
+5. ✅ Pusher real-time: RSVP count updates (`attendee:joined`/`attendee:left`), meetup updates, cancelled broadcast (Session 2)
+6. ✅ Notifications: `MEETUP_INVITED` ✅ | `MEETUP_STARTING_SOON` cron ✅ (Session 3 — T-55–65min idempotent dispatch); `ATTENDEE_RSVPED` in-app notification wired via `broadcastToUser`
+7. ✅ Tests: 67 tests across 5 test files (3 in Session 1 + 2 in Session 3) | ✅ Docs updated
 
 **Exit criteria:** Host creates meetup (default visibility=`CREW`) → Crew members see it in feed → RSVP → live count updates → meetup detail page shows confirmed attendees. Visibility enum enforces `PUBLIC | CREW | INVITE_ONLY | PRIVATE`.
 
 ---
 
 ### Phase 5 — Check-ins & live presence (2–3 sessions)
+
+> 🟡 **IN PROGRESS — Session 1 of ~3 complete (2026-04-18, nightly/2026-04-19).** Core API routes (POST, GET feed, DELETE), CheckInButton, LiveActivityCard, NearbyCrewList, /checkins page, CREW_CHECKED_IN_NEARBY notification type, city-channel Pusher helper. Remaining: Privacy settings page, 'Join me' full wiring, location permission flow.
+
 **Objective:** The "who's out tonight" loop. Users broadcast they're somewhere; Crew sees it; one-tap "join me." Short `activeUntil` window prevents stalker vector (R5) while preserving history.
 **Actions:**
-1. API: `POST /api/checkins`, `GET /api/checkins/feed` (Crew's recent check-ins, filtered `WHERE activeUntil > now()`), `DELETE /api/checkins/[id]` (cancel)
-2. Pusher channel per city for presence
-3. Components: `CheckInButton`, `LiveActivityCard`, `NearbyCrewList`
-4. Optional: location permission flow (browser geolocation API, progressive)
-5. "Join me" CTA on check-in cards → creates impromptu meetup or joins existing
-6. Notifications: `CREW_CHECKED_IN_NEARBY` (with privacy controls; only fires within `activeUntil` window)
-7. Privacy settings page: who can see my check-ins (Crew / close Crew / public)
-8. Optional feature: allow user to override default 6h `activeUntil` per check-in (min 30m, max 12h)
+1. ✅ API: `POST /api/checkins`, `GET /api/checkins/feed` (Crew's recent check-ins, filtered `WHERE activeUntil > now()`), `DELETE /api/checkins/[id]` (cancel)
+2. ✅ Pusher city-channel helper: `triggerCheckinEvent` + `getCityCheckinChannel` added to `src/lib/pusher.ts` (full city-channel broadcast wiring deferred to session 2)
+3. ✅ Components: `CheckInButton`, `LiveActivityCard`, `NearbyCrewList`
+4. 🟡 Optional: location permission flow (browser geolocation API, progressive)
+5. ✅ "Join me" CTA on check-in cards — `LiveActivityCard` renders CTA button linking to `/meetups/new?venueId=...`; full meetup-creation wiring (impromptu meetup from check-in) deferred to session 2
+6. ✅ Notifications: `CREW_CHECKED_IN_NEARBY` added to `NotificationType` enum in schema (dispatch wiring in POST route deferred to session 2)
+7. 🟡 Privacy settings page: who can see my check-ins (Crew / close Crew / public)
+8. 🟡 Optional feature: allow user to override default 6h `activeUntil` per check-in (min 30m, max 12h)
 
 **Exit criteria:** Check-in broadcasts to Crew feed within 5 seconds. Feed queries filter expired check-ins via `activeUntil > now()`. Rows persist for attendance history (hidden from feed after window). Privacy controls enforced. "Join me" creates a valid meetup or attaches a user to an existing one.
 

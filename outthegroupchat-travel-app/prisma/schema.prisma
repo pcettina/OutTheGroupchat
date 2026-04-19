@@ -179,6 +179,7 @@ enum NotificationType {
   MEETUP_RSVP
   MEETUP_STARTING_SOON
   CHECK_IN_NEARBY
+  CREW_CHECKED_IN_NEARBY
 }
 
 // ============================================

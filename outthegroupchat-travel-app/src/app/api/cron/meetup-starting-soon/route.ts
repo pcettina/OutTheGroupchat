@@ -1,14 +1,34 @@
+/**
+ * @module cron/meetup-starting-soon
+ * @description Cron endpoint that runs every 5 minutes to send MEETUP_STARTING_SOON
+ * notifications to confirmed attendees of meetups starting within the next ~55–65 minutes.
+ * Called by Vercel Cron (see vercel.json). Protected by CRON_SECRET bearer token.
+ *
+ * Notification logic:
+ * - Queries non-cancelled meetups with scheduledAt between T+55 min and T+65 min
+ * - For each meetup, finds attendees with RSVP status GOING
+ * - Creates a MEETUP_STARTING_SOON in-app notification for each attendee
+ * - Sends a reminder email via Resend (if user has an email address)
+ * - Broadcasts a Pusher event to the user's personal channel for real-time UI updates
+ * - Idempotency: skips users who already have a MEETUP_STARTING_SOON notification
+ *   for the same meetupId (JSON path filter on Notification.data.meetupId)
+ */
 // Protected by CRON_SECRET bearer token — set CRON_SECRET env var before deploying
-// Runs every 5 minutes; notifies attendees of meetups starting in ~55–65 minutes.
-// Idempotency via Notification.data.meetupId JSON path filter prevents duplicates.
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { apiLogger } from '@/lib/logger';
+import { captureException } from '@/lib/sentry';
 import { broadcastToUser, events } from '@/lib/pusher';
 import { sendMeetupStartingSoonEmail } from '@/lib/email';
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * Handles the MEETUP_STARTING_SOON cron trigger.
+ * @param req - Incoming Request with Authorization: Bearer {CRON_SECRET} header
+ * @returns JSON response with counts of meetups processed and notifications/emails/broadcasts
+ *          sent, or an error status (401 Unauthorized, 500 on config/runtime failure)
+ */
 export async function GET(req: Request) {
   try {
     const cronSecret = process.env.CRON_SECRET;
@@ -129,6 +149,7 @@ export async function GET(req: Request) {
       skippedAlreadyNotified,
     });
   } catch (error) {
+    captureException(error);
     apiLogger.error({ context: 'CRON_MEETUP_STARTING_SOON', error }, 'Cron failed');
     return NextResponse.json({ error: 'Cron failed' }, { status: 500 });
   }
