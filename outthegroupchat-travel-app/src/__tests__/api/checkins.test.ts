@@ -409,8 +409,11 @@ describe('GET /api/checkins/feed', () => {
     await GET_FEED(makeFeedReq());
 
     const whereArg = mockPrismaCheckIn.findMany.mock.calls[0]?.[0]?.where;
-    // Should only include crew partner IDs, not the caller
-    expect(whereArg?.userId?.in).toEqual(['user-5']);
+    // Visibility-scoped query uses OR clause — verify crew partner appears in at least one OR branch
+    const orClauses = whereArg?.OR ?? [];
+    const crewIds = orClauses
+      .flatMap((c: { userId?: { in?: string[] } }) => c.userId?.in ?? []);
+    expect(crewIds).toContain('user-5');
     // Should filter for active check-ins (activeUntil > now)
     expect(whereArg?.activeUntil?.gt).toBeInstanceOf(Date);
   });

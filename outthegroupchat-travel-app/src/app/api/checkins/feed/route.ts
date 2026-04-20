@@ -67,10 +67,18 @@ export async function GET(request: NextRequest) {
 
     const now = new Date();
 
+    // Include: PUBLIC check-ins from anyone in crew, CREW check-ins (already scoped to crew), own PRIVATE
     const checkIns = await prisma.checkIn.findMany({
       where: {
-        userId: { in: crewPartnerIds },
         activeUntil: { gt: now },
+        OR: [
+          // Own check-ins (any visibility)
+          { userId: callerId },
+          // Crew member PUBLIC check-ins
+          { userId: { in: crewPartnerIds }, visibility: 'PUBLIC' },
+          // Crew member CREW check-ins (caller is a Crew member of poster by construction)
+          { userId: { in: crewPartnerIds }, visibility: 'CREW' },
+        ],
       },
       include: {
         user: { select: userSelect },

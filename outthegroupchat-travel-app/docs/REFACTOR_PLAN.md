@@ -1,7 +1,7 @@
 # OutTheGroupchat — Scope Pivot & Refactor Plan
 
-> **Status:** Active — Phase 5 in progress (session 1, 2026-04-18)
-> **Created:** 2026-04-16 | **Last updated:** 2026-04-18
+> **Status:** Active — Phase 5 COMPLETE (2026-04-20, PR #53); Phase 6 is next (Feed/AI/notifications rescope)
+> **Created:** 2026-04-16 | **Last updated:** 2026-04-20
 > **Purpose:** Canonical planning doc for the pivot from group-trip-planning app → meetup-focused social network with a persistent `Crew` graph. All future refactor sessions reference this document.
 > **Decision:** Refactor in place (not rebuild). Trip-planning infrastructure is archived but preserved for potential future reactivation.
 
@@ -355,20 +355,20 @@ Each phase targets a discrete session (or a nightly build if small). Phases are 
 
 ### Phase 5 — Check-ins & live presence (2–3 sessions)
 
-> 🟡 **IN PROGRESS — Session 1 of ~3 complete (2026-04-18, nightly/2026-04-19).** Core API routes (POST, GET feed, DELETE), CheckInButton, LiveActivityCard, NearbyCrewList, /checkins page, CREW_CHECKED_IN_NEARBY notification type, city-channel Pusher helper. Remaining: Privacy settings page, 'Join me' full wiring, location permission flow.
+> ✅ **COMPLETE as of 2026-04-20 (PR #53)** — All exit criteria met across Sessions 1 (2026-04-19) and 2 (2026-04-20).
 
 **Objective:** The "who's out tonight" loop. Users broadcast they're somewhere; Crew sees it; one-tap "join me." Short `activeUntil` window prevents stalker vector (R5) while preserving history.
 **Actions:**
-1. ✅ API: `POST /api/checkins`, `GET /api/checkins/feed` (Crew's recent check-ins, filtered `WHERE activeUntil > now()`), `DELETE /api/checkins/[id]` (cancel)
-2. ✅ Pusher city-channel helper: `triggerCheckinEvent` + `getCityCheckinChannel` added to `src/lib/pusher.ts` (full city-channel broadcast wiring deferred to session 2)
-3. ✅ Components: `CheckInButton`, `LiveActivityCard`, `NearbyCrewList`
-4. 🟡 Optional: location permission flow (browser geolocation API, progressive)
-5. ✅ "Join me" CTA on check-in cards — `LiveActivityCard` renders CTA button linking to `/meetups/new?venueId=...`; full meetup-creation wiring (impromptu meetup from check-in) deferred to session 2
-6. ✅ Notifications: `CREW_CHECKED_IN_NEARBY` added to `NotificationType` enum in schema (dispatch wiring in POST route deferred to session 2)
-7. 🟡 Privacy settings page: who can see my check-ins (Crew / close Crew / public)
-8. 🟡 Optional feature: allow user to override default 6h `activeUntil` per check-in (min 30m, max 12h)
+1. ✅ API: `POST /api/checkins` (with `activeUntilMinutes` duration picker 30–720min), `GET /api/checkins/feed` (Crew's recent check-ins, filtered `WHERE activeUntil > now()`), `GET /api/checkins/[id]` (detail), `DELETE /api/checkins/[id]` (cancel)
+2. ✅ Pusher city-channel: `triggerCheckinEvent` + `getCityCheckinChannel` wired in POST `/api/checkins`; broadcasts `checkin:new` to `city-checkins-{citySlug}` channel on PUBLIC/CREW visibility check-ins
+3. ✅ Components: `CheckInButton` (with duration picker 30min/1h/2h/6h/12h), `LiveActivityCard` (onJoinMe prop), `NearbyCrewList` (threads onJoinMe)
+4. 🟡 Optional: location permission flow (browser geolocation API, progressive — deferred)
+5. ✅ "Join me" CTA wired to `CreateMeetupModal` with `defaultVenue` prop (creates meetup pre-filled with check-in venue)
+6. ✅ Notifications: `CREW_CHECKED_IN_NEARBY` type dispatched in POST route; bulk-creates notifications for all accepted Crew members
+7. ✅ Privacy settings page: `/settings/privacy` + `PrivacySettingsForm` + `/api/users/privacy` route (PUBLIC/CREW/PRIVATE visibility controls)
+8. ✅ Per-check-in `activeUntil` override: `activeUntilMinutes` param in POST (min 30m=1800s, max 12h=43200s, default 360=6h)
 
-**Exit criteria:** Check-in broadcasts to Crew feed within 5 seconds. Feed queries filter expired check-ins via `activeUntil > now()`. Rows persist for attendance history (hidden from feed after window). Privacy controls enforced. "Join me" creates a valid meetup or attaches a user to an existing one.
+**Exit criteria:** Check-in broadcasts to Crew feed within 5 seconds ✅. Feed queries filter expired check-ins via `activeUntil > now()` ✅. Rows persist for attendance history (hidden from feed after window) ✅. Privacy controls enforced ✅. "Join me" creates a valid meetup or attaches a user to an existing one ✅.
 
 ---
 

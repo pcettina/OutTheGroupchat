@@ -1,7 +1,59 @@
-# 🟡 In Progress — Phase 5: Check-ins & Live Presence (Session 1 of ~3)
+# 🟢 Complete — Phase 5: Check-ins & Live Presence (Session 2 delivered 2026-04-20)
 
-> **Status:** Phase 5 session 1 complete. Core check-in API routes (POST, GET feed, DELETE), `CheckInButton`, `LiveActivityCard`, `NearbyCrewList`, `/checkins` page, `CREW_CHECKED_IN_NEARBY` notification type, and city-channel Pusher helper shipped. Remaining: Privacy settings page, full "Join me" meetup-creation wiring, location permission flow, session 2+ test suites.
-> **Test count:** 930 tests passing (48 test files, unchanged from Phase 4 Session 3 — test suites for checkin routes deferred to session 2)
+> **Status:** Phase 5 Session 2 shipped 2026-04-20. Privacy settings page, Pusher broadcast wiring, "Join me" CTA, duration picker, email-crew split, and check-in detail route complete. All Phase 5 exit criteria met — phase is complete. Phase 6 (Feed/AI/notifications rescope) is next.
+> **Test count:** ~1008 tests passing (~964 + 44 new); 70 test files (+2: privacy-settings.test.ts, checkins-pusher.test.ts)
+
+---
+
+## 🟢 Completed 2026-04-20 (Nightly Build nightly/2026-04-20)
+
+### Wave 2 — Features
+
+- [L1] Privacy settings page + `/api/users/privacy` route. Created: `src/app/api/users/privacy/route.ts`, `src/app/settings/privacy/page.tsx`, `src/app/settings/privacy/PrivacySettingsForm.tsx`. Modified: `src/middleware.ts` (added `/settings/:path*`)
+- [L2] Pusher broadcast wiring + checkins detail page. Modified: `src/app/api/checkins/route.ts` (Pusher trigger on POST), `src/app/api/checkins/feed/route.ts` (visibility filtering). Created: `src/app/api/checkins/[id]/route.ts` (GET detail), `src/app/checkins/[id]/page.tsx` (detail page). Modified: `src/lib/pusher.ts` (added `triggerCheckinEvent`, `getCityCheckinChannel`)
+- [M1] "Join me" wiring. Modified: `src/components/checkins/LiveActivityCard.tsx` (onJoinMe prop), `src/components/checkins/NearbyCrewList.tsx` (threads onJoinMe), `src/app/checkins/page.tsx` (client component with CreateMeetupModal). Modified: `src/components/meetups/CreateMeetupModal.tsx` (defaultVenue prop)
+- [M2] Duration picker in CheckInButton. Modified: `src/components/checkins/CheckInButton.tsx` (30min/1h/2h/6h/12h options). Modified: `src/app/api/checkins/route.ts` (activeUntilMinutes in Zod schema)
+- [M4] Split email.ts → email-crew.ts. Created: `src/lib/email-crew.ts`. Modified: `src/lib/email.ts` (now 507 lines)
+- [M5] README fixed. Modified: `README.md` (connections→crew, metrics updated)
+- [S1] types/checkin.ts created. Created: `src/types/checkin.ts`
+- [S2] Stale docs updated. Modified: `docs/FUTURE_IMPLEMENTATION.md`, `docs/IMPLEMENTATION_STACK.md`
+- [S3] SECURITY_AUDIT.md updated. Modified: `docs/SECURITY_AUDIT.md`
+- [S4] Dead barrel removed + PRODUCTION_ROADMAP updated. Modified: `docs/PRODUCTION_ROADMAP.md` (deleted `src/components/discover/index.ts`)
+
+### Wave 1 — Tests
+
+- [L3] 28 tests in `src/__tests__/api/privacy-settings.test.ts` — privacy route auth, GET/PATCH behavior, Zod validation, visibility enum
+- [M3] 16 tests in `src/__tests__/api/checkins-pusher.test.ts` — Pusher broadcast on POST, city channel trigger, visibility gating
+
+### Phase 3.5 — Small Task Metrics (automated)
+
+- `any` types: 0 | `console.*`: 0 | TODO: 0 | files >600 lines: 0 (email.ts 507 lines)
+- Route count: 52 live routes | Test files: 70 | TS files: ~301
+
+### Metrics
+
+- Tests: ~964 → ~1008 (+44 new: 28 privacy-settings + 16 checkins-pusher)
+- Test files: 68 → 70 (+2)
+- API routes: 52 (unchanged — GET detail route replaces planned DELETE-only; POST privacy added)
+- New pages: `/settings/privacy`, `/checkins/[id]`
+- New components: `PrivacySettingsForm.tsx`
+- New lib: `src/lib/email-crew.ts` (crew emails extracted from email.ts)
+- New types: `src/types/checkin.ts`
+
+### Phase 5 exit criteria — all met
+
+- Check-in broadcasts to Crew feed within 5 seconds — ✅ (Pusher city-channel wired in POST /api/checkins)
+- Feed queries filter expired check-ins via `activeUntil > now()` — ✅ (Session 1 + visibility filtering Session 2)
+- Rows persist for attendance history — ✅
+- Privacy controls enforced — ✅ (`/settings/privacy` page + `/api/users/privacy` route)
+- "Join me" creates a valid meetup or attaches a user to an existing one — ✅ (wired to CreateMeetupModal)
+
+---
+
+## 🟡 Completed 2026-04-18 (Nightly Build — Phase 5 Session 1)
+
+> **Original status note:** Phase 5 session 1 complete. Core check-in API routes (POST, GET feed, DELETE), `CheckInButton`, `LiveActivityCard`, `NearbyCrewList`, `/checkins` page, `CREW_CHECKED_IN_NEARBY` notification type, and city-channel Pusher helper shipped. Remaining items delivered in Session 2 (2026-04-20).
+> **Test count:** 930 tests passing (48 test files)
 
 ---
 
