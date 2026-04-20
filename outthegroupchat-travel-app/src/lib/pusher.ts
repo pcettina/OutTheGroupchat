@@ -168,3 +168,35 @@ export async function broadcastToMeetup(meetupId: string, event: string, data: u
   }
 }
 
+/**
+ * Returns the Pusher channel name for a city's check-in presence feed.
+ * @param cityId - The city identifier
+ * @returns Channel name string
+ */
+export function getCityCheckinChannel(cityId: string): string {
+  return `city-${cityId}-checkins`;
+}
+
+/**
+ * Triggers a check-in event on the city presence channel.
+ * Channel format: `city-{cityId}-checkins`
+ * Used to broadcast new check-ins to all clients subscribed to a city's check-in feed.
+ * @param cityId - The city identifier (used in channel name)
+ * @param event - Event name (e.g., 'new-checkin', 'checkin-expired')
+ * @param data - Event payload (serializable object)
+ * @returns Promise from Pusher trigger
+ */
+export async function triggerCheckinEvent(
+  cityId: string,
+  event: string,
+  data: unknown
+): Promise<void> {
+  const pusher = getPusherServer();
+  if (!pusher) return;
+
+  try {
+    await pusher.trigger(getCityCheckinChannel(cityId), event, data);
+  } catch {
+    // Broadcast failures are non-fatal
+  }
+}

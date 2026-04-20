@@ -14,7 +14,7 @@ A LinkedIn-style social network built for in-person meetups, not trip planning. 
 
 ## Pivot Status
 
-> **Active refactor: Phase 2 of 8.** Trip-planning code archived in `src/_archive/` (see `docs/REFACTOR_PLAN.md`). All infrastructure — auth, database, real-time, API layer — is 100% reused. No data loss; schema migrations are additive.
+> **Active refactor: Phase 5 of 8.** Phase 4 (Meetups) complete — PRs #48, #49, #51. Phase 5 (Check-ins & live presence) now starting. Trip-planning code archived in `src/_archive/` (see `docs/REFACTOR_PLAN.md`). All infrastructure — auth, database, real-time, API layer — is 100% reused. No data loss; schema migrations are additive.
 
 ## Tech Stack
 
@@ -72,7 +72,7 @@ A LinkedIn-style social network built for in-person meetups, not trip planning. 
 ```
 src/
 ├── app/                    # Next.js App Router pages
-│   ├── api/               # API routes (35 active routes)
+│   ├── api/               # API routes (46 active routes)
 │   │   ├── meetups/      # Meetup CRUD + RSVP
 │   │   ├── connections/  # Connection requests
 │   │   ├── checkins/     # Live presence
@@ -201,7 +201,8 @@ Built with ❤️ by the OutTheGroupchat Team
 
 ## Recent Updates
 
-- **2026-04-16 (tonight):** Product pivot to social meetup network initiated. Phase 1 complete: trip-planning surface archived to `src/_archive/` (routes, pages, components, services). README and docs updated to reflect new vision. 841 tests passing post-archive across 35 active API routes.
+- **2026-04-18:** Phase 4 (Meetups) complete across 3 sessions (PRs #48, #49, #51). MeetupDetail page, AttendeeList, MeetupInviteModal, Pusher real-time, email dispatch, and MEETUP_STARTING_SOON cron all shipped. 888 tests passing across 46 active API routes. Current focus: Phase 5 — Check-ins & live presence.
+- **2026-04-16:** Product pivot to social meetup network initiated. Phase 1 complete: trip-planning surface archived to `src/_archive/` (routes, pages, components, services). README and docs updated to reflect new vision. 841 tests passing post-archive across 35 active API routes.
 - **2026-04-16:** Sentry error monitoring expanded to 19/48 API routes; beta/status migrated to Redis rate limiting; dead components removed (DestinationCard, CategoryFilter, TrendingSection, TravelBadges); 112 new tests added (1,346+ total pre-archive)
 - **2026-04-15:** Sentry instrumented on 13 routes; beta/status Redis migration; JSDoc additions across lib/api modules
 - **2026-04-14:** Zod validation added to flights, suggestions, cron routes; Sentry expanded to 18 routes on branch
@@ -211,4 +212,4 @@ Built with ❤️ by the OutTheGroupchat Team
 
 ---
 
-*Last Updated: 2026-04-16 | 841 tests passing | 35 active API routes | 0 any types | 0 console.* | Build: PASS | Pivot: Phase 2 of 8*
+*Last Updated: 2026-04-18 | 888 tests passing | 46 active API routes | 0 any types | 0 console.* | Build: PASS | Pivot: Phase 5 of 8*

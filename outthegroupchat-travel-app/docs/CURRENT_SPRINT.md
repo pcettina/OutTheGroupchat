@@ -1,3 +1,59 @@
+# 🟡 In Progress — Phase 5: Check-ins & Live Presence (Session 1 of ~3)
+
+> **Status:** Phase 5 session 1 complete. Core check-in API routes (POST, GET feed, DELETE), `CheckInButton`, `LiveActivityCard`, `NearbyCrewList`, `/checkins` page, `CREW_CHECKED_IN_NEARBY` notification type, and city-channel Pusher helper shipped. Remaining: Privacy settings page, full "Join me" meetup-creation wiring, location permission flow, session 2+ test suites.
+> **Test count:** 930 tests passing (48 test files, unchanged from Phase 4 Session 3 — test suites for checkin routes deferred to session 2)
+
+---
+
+## 🟡 Completed 2026-04-18 (Nightly Build — Phase 5 Session 1)
+
+### Wave 2 — Features
+
+- [L1] Created `src/app/api/checkins/route.ts` (POST + GET), `src/app/api/checkins/feed/route.ts`. Modified `prisma/schema.prisma` (added `CREW_CHECKED_IN_NEARBY` to `NotificationType` enum). Modified `src/middleware.ts` (added `/api/checkins/*` and `/checkins/*` to matcher).
+- [L2] Created `src/app/api/checkins/[id]/route.ts` (DELETE). Created `src/components/checkins/CheckInButton.tsx`, `LiveActivityCard.tsx`, `index.ts`.
+- [M1] Created `src/components/checkins/NearbyCrewList.tsx`, `src/app/checkins/page.tsx`.
+- [M2] Meetup routes already had Sentry — no changes made.
+- [M3] Created `src/lib/email-meetup.ts`, modified `src/lib/email.ts` (split meetup email helpers into dedicated module, 513 lines down from 619).
+- [M4] Modified `src/app/api/cron/meetup-starting-soon/route.ts` (JSDoc + Sentry added).
+
+### Wave 2 — Small Tasks
+
+- [S1] Modified `src/lib/pusher.ts` (added `triggerCheckinEvent` + `getCityCheckinChannel` helpers).
+- [S2] Created `src/types/checkin.ts` (`CheckInVisibility = PUBLIC | CREW | PRIVATE`).
+- [S3] Modified `src/components/Navigation.tsx` (added Check-ins link with MapPin icon).
+- [S4] Modified `README.md` (updated test count 841→888, routes 35→46, Phase 4 complete, Phase 5 active).
+
+### Wave 3 — Shared files (this session)
+
+- Fixed `NearbyCrewList.tsx` — uncommented `LiveActivityCard` import and replaced TODO div with `<LiveActivityCard checkIn={checkIn} />`.
+- `src/__tests__/setup.ts` — all required `checkIn.*` mocks already present (`create`, `findMany`, `findUnique`, `delete`); `notification.createMany` already present. No changes needed.
+- Updated `docs/API_STATUS.md` — Phase 5 session 1 note, 3 new checkin routes marked ✅ new, route count updated to 52.
+- Updated `docs/CURRENT_SPRINT.md` (this entry).
+- Updated `docs/CODEMAP.md` — date, route count, test count, new files.
+- Updated `docs/LAUNCH_CHECKLIST.md` — Phase 5 progress noted.
+- Updated `docs/REFACTOR_PLAN.md` — Phase 3 Part B marked complete, Phase 4 marked complete (all 3 sessions), Phase 5 session 1 progress noted.
+
+### Metrics
+
+- Tests: 930 (unchanged — test suites for check-in routes deferred to session 2)
+- Test files: 48 (unchanged)
+- API routes: 50 → 52 (+3 checkin routes: POST /api/checkins, GET /api/checkins/feed, DELETE /api/checkins/[id]; cron route was already counted)
+- New components: `CheckInButton`, `LiveActivityCard`, `NearbyCrewList` (all in `src/components/checkins/`)
+- New pages: `/checkins`
+- New types: `src/types/checkin.ts`
+- New lib: `src/lib/email-meetup.ts` (meetup email helpers split from email.ts)
+
+### Remaining for Phase 5 Sessions 2–3
+
+- Test suites for `/api/checkins` (POST, GET feed, DELETE)
+- Privacy settings page (check-in visibility controls)
+- Full "Join me" meetup-creation wiring (LiveActivityCard has CTA, creation flow deferred)
+- Location permission flow (browser geolocation, progressive)
+- CREW_CHECKED_IN_NEARBY notification dispatch wiring in the POST route
+- Optional: per-check-in `activeUntil` override (min 30m, max 12h)
+
+---
+
 # 🟢 Complete — Phase 4: Meetups (All 3 sessions delivered)
 
 > **Status:** Phase 4 complete. Session 3 shipped `MEETUP_STARTING_SOON` reminder cron (T-55–65min window, idempotent, every 5 min) + Google Places API integration for `/api/venues/search` (DB-first with Places fallback + auto-caching). Ready for Phase 5 (Check-ins & live presence).

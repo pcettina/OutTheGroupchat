@@ -1,6 +1,6 @@
 # OutTheGroupchat — Full Codemap
 
-> Auto-generated 2026-03-10. Last updated 2026-04-18. Comprehensive reference for agents and developers.
+> Auto-generated 2026-03-10. Last updated 2026-04-18 (Phase 5 Session 1). Comprehensive reference for agents and developers.
 >
 > **🔀 Pivot in progress:** See `docs/REFACTOR_PLAN.md`. Trip-planning surface archived under `_archive/` directories as of Phase 1 (2026-04-16). See [Archived surface (Phase 1)](#archived-surface-phase-1) section below and `src/_archive/README.md` for the preservation scheme.
 >
@@ -33,8 +33,8 @@ Full-stack Next.js 14 collaborative travel planning app. Groups plan trips toget
 
 **App root:** `outthegroupchat-travel-app/`
 **Source:** `outthegroupchat-travel-app/src/`
-**Stats (post-Phase-4-session-1, 2026-04-18):** 49 live API routes (35 base + 6 Crew routes + 8 new Phase 4 meetup/venue routes; 13 archived in Phase 1) | live component groups: auth, feed, social (incl. `CrewButton`, `CrewRequestCard`, `CrewList`), meetups (incl. `MeetupCard`, `MeetupList`, `CreateMeetupModal`, `RSVPButton`, `VenuePicker`), discover, notifications, profile, search, settings, onboarding, ai, ui, accessibility + Navigation | live pages: /, /auth/*, /profile, `/profile/[userId]`, /feed, /discover, /inspiration, /notifications, /search, /settings, /onboarding, /privacy, /terms, `/crew`, `/crew/requests`, `/meetups`, `/meetups/new` | middleware: auth-protects `/profile/:path*`, `/crew/:path*`, `/meetups/:path*`, plus select `/api/*` paths
-**Test Health (2026-04-18):** 46 live test files | 888 tests passing (+43 new: meetups.test.ts 11, meetups-id.test.ts 14, meetups-rsvp-invite.test.ts 18) | 0 TSC errors | Phase 4 Session 1: core meetup API routes, venue search, meetup UI pages, RSVP + invite complete
+**Stats (post-Phase-5-session-1, 2026-04-18):** 52 live API routes (35 base + 6 Crew routes + 9 Phase 4 meetup/venue/cron routes + 3 new Phase 5 check-in routes; 13 archived in Phase 1) | live component groups: auth, feed, social (incl. `CrewButton`, `CrewRequestCard`, `CrewList`), meetups (incl. `MeetupCard`, `MeetupList`, `CreateMeetupModal`, `RSVPButton`, `VenuePicker`, `AttendeeList`, `MeetupInviteModal`), checkins (incl. `CheckInButton`, `LiveActivityCard`, `NearbyCrewList`), discover, notifications, profile, search, settings, onboarding, ai, ui, accessibility + Navigation | live pages: /, /auth/*, /profile, `/profile/[userId]`, /feed, /discover, /inspiration, /notifications, /search, /settings, /onboarding, /privacy, /terms, `/crew`, `/crew/requests`, `/meetups`, `/meetups/new`, `/meetups/[id]`, `/checkins` | middleware: auth-protects `/profile/:path*`, `/crew/:path*`, `/meetups/:path*`, `/checkins/:path*`, `/api/checkins/*`, plus select `/api/*` paths
+**Test Health (2026-04-18):** 48 live test files | 930 tests passing (+36 from Phase 4 Session 3: venues-search-places.test.ts 18, cron-meetup-starting-soon.test.ts 18) | 0 TSC errors | Phase 5 Session 1: check-in API routes, CheckInButton, LiveActivityCard, NearbyCrewList, /checkins page, CREW_CHECKED_IN_NEARBY notification type, city-channel Pusher helper
 
 ---
 
@@ -509,7 +509,16 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `/api/meetups/[id]` | DELETE | Yes | Yes | Cancel meetup (host only) |
 | `/api/meetups/[id]/rsvp` | POST | Yes | Yes | RSVP — GOING / MAYBE / DECLINED |
 | `/api/meetups/[id]/invite` | POST | Yes | Yes | Invite Crew members to meetup |
-| `/api/venues/search` | GET | Yes | Yes | Venue search (DB; Places API wiring deferred) |
+| `/api/venues/search` | GET | Yes | Yes | Venue search — DB-first with Google Places API fallback + auto-caching |
+| `/api/cron/meetup-starting-soon` | GET | Bearer | Yes | Cron: MEETUP_STARTING_SOON reminder dispatch (T-55–65min, idempotent) |
+
+### Check-ins (Phase 5, 2026-04-18)
+
+| Endpoint | Methods | Auth | Zod | Purpose |
+|----------|---------|------|-----|---------|
+| `/api/checkins` | POST | Yes | Yes | Create check-in (`activeUntil` defaults to now+6h); dispatches `CREW_CHECKED_IN_NEARBY` |
+| `/api/checkins/feed` | GET | Yes | Yes | Crew's recent check-ins (`WHERE activeUntil > now()`), visibility-scoped |
+| `/api/checkins/[id]` | DELETE | Yes | Yes | Cancel own check-in (soft: sets `activeUntil = now()`) |
 
 ### Infrastructure
 
@@ -642,6 +651,16 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `CreateMeetupModal` | — | open, onOpenChange, onSuccess? | Modal form to create a new meetup with VenuePicker |
 | `RSVPButton` | — | meetupId, currentStatus?, onStatusChange? | GOING / MAYBE / DECLINED toggle |
 | `VenuePicker` | — | onSelect, cityId? | Searchable venue selector wired to /api/venues/search |
+| `AttendeeList` | 153 | attendees, hostId? | Attendee grouping by GOING/MAYBE/DECLINED with count badges |
+| `MeetupInviteModal` | 335 | open, onOpenChange, meetupId | Framer Motion modal; multi-select Crew member invite |
+
+### Check-ins (`components/checkins/`) — Phase 5, 2026-04-18
+
+| Component | Lines | Props | Purpose |
+|-----------|-------|-------|---------|
+| `CheckInButton` | — | onSuccess? | Post a check-in with optional venue + note |
+| `LiveActivityCard` | 175 | checkIn, onJoinMe?, className? | Check-in card with active timer, venue, note, and "Join me" CTA |
+| `NearbyCrewList` | 110 | className? | Polls `/api/checkins/feed` every 60s, renders `LiveActivityCard` list |
 
 ### Social (`components/social/`)
 
@@ -780,7 +799,7 @@ db:seed        → npx tsx prisma/seed/index.ts
 
 ## Types
 
-**File:** `src/types/index.ts` (449 lines)
+**Files:** `src/types/index.ts` (449 lines) | `src/types/social.ts` (Phase 2, social domain composites) | `src/types/meetup.ts` (Phase 4, meetup/venue/attendee types) | `src/types/checkin.ts` (Phase 5, CheckIn types + `CheckInVisibility` enum)
 
 ### Key Type Categories
 
@@ -797,13 +816,15 @@ db:seed        → npx tsx prisma/seed/index.ts
 
 ## Tests
 
-**Total: 888 tests across 46 Vitest unit/integration test files** (Phase 4 Session 1, 2026-04-18; +43 tests, +3 test files; 0 TSC errors)
+**Total: 930 tests across 48 Vitest unit/integration test files** (Phase 4 Session 3, 2026-04-18; +36 tests from Session 3; 0 TSC errors; Phase 5 Session 1 test suites deferred to next session)
 
 | File | Lines | Tests | Coverage |
 |------|-------|-------|----------|
+| `src/__tests__/api/venues-search-places.test.ts` | 474 | 18 | GET /api/venues/search — auth, DB-only path, Places API path, upsert, dedupe, category filter ✅ 2026-04-18 Phase 4 S3 |
+| `src/__tests__/api/cron-meetup-starting-soon.test.ts` | 477 | 18 | GET /api/cron/meetup-starting-soon — auth, query shape, dispatch, idempotency, graceful degradation ✅ 2026-04-18 Phase 4 S3 |
 | `src/__tests__/api/meetups.test.ts` | — | 11 | POST/GET /api/meetups — auth, validation, create, list, visibility scoping ✅ 2026-04-18 |
-| `src/__tests__/api/meetups-id.test.ts` | — | 14 | GET/PATCH/DELETE /api/meetups/[id] — auth, host-only edit, cancel ✅ 2026-04-18 |
-| `src/__tests__/api/meetups-rsvp-invite.test.ts` | — | 18 | RSVP + invite routes — auth, status transitions, Crew member invite ✅ 2026-04-18 |
+| `src/__tests__/api/meetups-id.test.ts` | — | 16 | GET/PATCH/DELETE /api/meetups/[id] — auth, host-only edit, Pusher broadcast, cancel ✅ 2026-04-18 |
+| `src/__tests__/api/meetups-rsvp-invite.test.ts` | — | 22 | RSVP + invite routes — auth, status transitions, Pusher/email wiring, graceful degradation ✅ 2026-04-18 |
 | `src/__tests__/api/feed-extended.test.ts` | — | 42 | Feed API edge cases: pagination, empty following, multiple activity types, DB errors, feedType params, POST errors ✅ 2026-04-16 |
 | `src/__tests__/api/notifications-extended.test.ts` | — | 33 | Notifications lifecycle edge cases ✅ 2026-04-16 |
 | `src/__tests__/api/health.test.ts` | — | 14 | GET /api/health — healthy/degraded paths, content-type, $queryRaw invocation ✅ 2026-04-16 |
@@ -905,12 +926,13 @@ db:seed        → npx tsx prisma/seed/index.ts
 | Lint warnings | 0 |
 | `any` types | 0 ✅ |
 | `console.*` | 0 ✅ |
-| TSC errors (prod + test) | 0 ✅ (post-archive; Wave 3 re-verifies) |
-| Vitest tests | Live suite reduced post-archive (Wave 3 confirms count); archived tests runnable on demand via `npm run test:archive` |
+| TSC errors (prod + test) | 0 ✅ |
+| Vitest tests | 930 passing, 48 test files (Phase 5 Session 1, 2026-04-18); archived tests runnable on demand via `npm run test:archive` |
 | E2E tests | 11 Playwright smoke tests (4 suites) — trip-specific specs archived |
 | Error monitoring | Sentry — 19/48 coverage on pre-archive branch; coverage recomputed on new live surface in Phase 2 |
-| Files >400 lines | — (all largest files were in archived trip surface) |
-| Production env gaps | OPENAI_API_KEY, Pusher vars, Sentry DSN, Resend domain |
+| Live API routes | 52 (35 base + 6 Crew + 9 Phase 4 meetup/venue/cron + 3 Phase 5 check-in) |
+| Files >400 lines | Under review (email.ts split in M3; email-meetup.ts created) |
+| Production env gaps | OPENAI_API_KEY, Pusher vars, Sentry DSN, Resend domain, GOOGLE_PLACES_API_KEY |
 
 ---
 
