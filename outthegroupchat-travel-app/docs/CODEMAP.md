@@ -1,6 +1,6 @@
 # OutTheGroupchat — Full Codemap
 
-> Auto-generated 2026-03-10. Last updated 2026-04-18 (Phase 5 Session 1). Comprehensive reference for agents and developers.
+> Auto-generated 2026-03-10. Last updated 2026-04-20 (Phase 5 Session 2 — complete). Comprehensive reference for agents and developers.
 >
 > **🔀 Pivot in progress:** See `docs/REFACTOR_PLAN.md`. Trip-planning surface archived under `_archive/` directories as of Phase 1 (2026-04-16). See [Archived surface (Phase 1)](#archived-surface-phase-1) section below and `src/_archive/README.md` for the preservation scheme.
 >
@@ -33,8 +33,8 @@ Full-stack Next.js 14 collaborative travel planning app. Groups plan trips toget
 
 **App root:** `outthegroupchat-travel-app/`
 **Source:** `outthegroupchat-travel-app/src/`
-**Stats (post-Phase-5-session-1, 2026-04-18):** 52 live API routes (35 base + 6 Crew routes + 9 Phase 4 meetup/venue/cron routes + 3 new Phase 5 check-in routes; 13 archived in Phase 1) | live component groups: auth, feed, social (incl. `CrewButton`, `CrewRequestCard`, `CrewList`), meetups (incl. `MeetupCard`, `MeetupList`, `CreateMeetupModal`, `RSVPButton`, `VenuePicker`, `AttendeeList`, `MeetupInviteModal`), checkins (incl. `CheckInButton`, `LiveActivityCard`, `NearbyCrewList`), discover, notifications, profile, search, settings, onboarding, ai, ui, accessibility + Navigation | live pages: /, /auth/*, /profile, `/profile/[userId]`, /feed, /discover, /inspiration, /notifications, /search, /settings, /onboarding, /privacy, /terms, `/crew`, `/crew/requests`, `/meetups`, `/meetups/new`, `/meetups/[id]`, `/checkins` | middleware: auth-protects `/profile/:path*`, `/crew/:path*`, `/meetups/:path*`, `/checkins/:path*`, `/api/checkins/*`, plus select `/api/*` paths
-**Test Health (2026-04-18):** 48 live test files | 930 tests passing (+36 from Phase 4 Session 3: venues-search-places.test.ts 18, cron-meetup-starting-soon.test.ts 18) | 0 TSC errors | Phase 5 Session 1: check-in API routes, CheckInButton, LiveActivityCard, NearbyCrewList, /checkins page, CREW_CHECKED_IN_NEARBY notification type, city-channel Pusher helper
+**Stats (post-Phase-5-session-2, 2026-04-20):** 52 live API routes (35 base + 6 Crew routes + 9 Phase 4 meetup/venue/cron routes + 3 Phase 5 check-in routes + privacy route; 13 archived in Phase 1) | live component groups: auth, feed, social (incl. `CrewButton`, `CrewRequestCard`, `CrewList`), meetups (incl. `MeetupCard`, `MeetupList`, `CreateMeetupModal`, `RSVPButton`, `VenuePicker`, `AttendeeList`, `MeetupInviteModal`), checkins (incl. `CheckInButton`, `LiveActivityCard`, `NearbyCrewList`), discover, notifications, profile, search, settings (incl. `PrivacySettingsForm`), onboarding, ai, ui, accessibility + Navigation | live pages: /, /auth/*, /profile, `/profile/[userId]`, /feed, /discover, /inspiration, /notifications, /search, /settings, `/settings/privacy`, /onboarding, /privacy, /terms, `/crew`, `/crew/requests`, `/meetups`, `/meetups/new`, `/meetups/[id]`, `/checkins`, `/checkins/[id]` | middleware: auth-protects `/profile/:path*`, `/crew/:path*`, `/meetups/:path*`, `/checkins/:path*`, `/settings/:path*`, `/api/checkins/*`, plus select `/api/*` paths
+**Test Health (2026-04-20):** 70 live test files | ~1008 tests passing (+44 new: privacy-settings.test.ts 28, checkins-pusher.test.ts 16) | 0 TSC errors | Phase 5 Session 2 complete: privacy settings page + route, Pusher broadcast wiring, "Join me" CTA, duration picker, checkin detail route — Phase 5 exit criteria all met
 
 ---
 
@@ -512,13 +512,16 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `/api/venues/search` | GET | Yes | Yes | Venue search — DB-first with Google Places API fallback + auto-caching |
 | `/api/cron/meetup-starting-soon` | GET | Bearer | Yes | Cron: MEETUP_STARTING_SOON reminder dispatch (T-55–65min, idempotent) |
 
-### Check-ins (Phase 5, 2026-04-18)
+### Check-ins (Phase 5, 2026-04-19/2026-04-20)
 
 | Endpoint | Methods | Auth | Zod | Purpose |
 |----------|---------|------|-----|---------|
-| `/api/checkins` | POST | Yes | Yes | Create check-in (`activeUntil` defaults to now+6h); dispatches `CREW_CHECKED_IN_NEARBY` |
+| `/api/checkins` | POST | Yes | Yes | Create check-in (`activeUntilMinutes` override 30–720; default 360=6h); triggers `CREW_CHECKED_IN_NEARBY` notifications + Pusher city-channel broadcast; Phase 5 S1+S2 |
+| `/api/checkins` | GET | Yes | Yes | Get own check-ins |
 | `/api/checkins/feed` | GET | Yes | Yes | Crew's recent check-ins (`WHERE activeUntil > now()`), visibility-scoped |
-| `/api/checkins/[id]` | DELETE | Yes | Yes | Cancel own check-in (soft: sets `activeUntil = now()`) |
+| `/api/checkins/[id]` | GET | Yes | Yes | Check-in detail; Phase 5 Session 2, 2026-04-20 |
+| `/api/checkins/[id]` | DELETE | Yes | Yes | Cancel own check-in |
+| `/api/users/privacy` | POST, PATCH | Yes | Yes | Check-in privacy settings (PUBLIC/CREW/PRIVATE); Phase 5 Session 2, 2026-04-20 |
 
 ### Infrastructure
 
@@ -551,6 +554,9 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `/feed` | `app/feed/page.tsx` | Client | Required | Social activity feed |
 | `/notifications` | `app/notifications/page.tsx` | Client | Required | Notification inbox |
 | `/profile` | `app/profile/page.tsx` | Client | Required | User profile, badges, trip history |
+| `/settings/privacy` | `app/settings/privacy/page.tsx` | Client | Required | Check-in privacy settings — visibility controls; Phase 5 Session 2, 2026-04-20 |
+| `/checkins` | `app/checkins/page.tsx` | Client | Required | "Who's Out Tonight?" feed — NearbyCrewList + CheckInButton; Phase 5 Session 1 |
+| `/checkins/[id]` | `app/checkins/[id]/page.tsx` | Client | Required | Check-in detail page; Phase 5 Session 2, 2026-04-20 |
 
 **Utility pages:** `error.tsx` (route error boundary), `global-error.tsx` (root error boundary + Sentry), `not-found.tsx` (404), `loading.tsx` (skeleton)
 
@@ -639,6 +645,7 @@ db:seed        → npx tsx prisma/seed/index.ts
 |-----------|-------|-------|---------|
 | `NotificationSettings` | 237 | preferences?, onSave? | Email/push/in-app toggles |
 | `PrivacySettings` | — | settings?, onSave? | Profile visibility, trip privacy |
+| `PrivacySettingsForm` | — | initialVisibility?, onSave? | Check-in visibility controls (PUBLIC/CREW/PRIVATE); wires to `/api/users/privacy`; Phase 5 Session 2, 2026-04-20 |
 | `ProfileSettings` | — | user?, onSave? | Name, bio, avatar, email |
 | `SecuritySettings` | 279 | user?, onPasswordChange? | Password, 2FA, sessions |
 
@@ -816,10 +823,12 @@ db:seed        → npx tsx prisma/seed/index.ts
 
 ## Tests
 
-**Total: 930 tests across 48 Vitest unit/integration test files** (Phase 4 Session 3, 2026-04-18; +36 tests from Session 3; 0 TSC errors; Phase 5 Session 1 test suites deferred to next session)
+**Total: ~1008 tests across 70 Vitest unit/integration test files** (Phase 5 Session 2, 2026-04-20; +44 tests, +2 test files; 0 TSC errors)
 
 | File | Lines | Tests | Coverage |
 |------|-------|-------|----------|
+| `src/__tests__/api/privacy-settings.test.ts` | — | 28 | GET/PATCH /api/users/privacy — auth, visibility enum validation, Zod errors, update flow ✅ 2026-04-20 Phase 5 S2 |
+| `src/__tests__/api/checkins-pusher.test.ts` | — | 16 | Pusher broadcast on POST /api/checkins — city channel trigger, visibility gating, graceful degradation ✅ 2026-04-20 Phase 5 S2 |
 | `src/__tests__/api/venues-search-places.test.ts` | 474 | 18 | GET /api/venues/search — auth, DB-only path, Places API path, upsert, dedupe, category filter ✅ 2026-04-18 Phase 4 S3 |
 | `src/__tests__/api/cron-meetup-starting-soon.test.ts` | 477 | 18 | GET /api/cron/meetup-starting-soon — auth, query shape, dispatch, idempotency, graceful degradation ✅ 2026-04-18 Phase 4 S3 |
 | `src/__tests__/api/meetups.test.ts` | — | 11 | POST/GET /api/meetups — auth, validation, create, list, visibility scoping ✅ 2026-04-18 |
@@ -927,11 +936,11 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `any` types | 0 ✅ |
 | `console.*` | 0 ✅ |
 | TSC errors (prod + test) | 0 ✅ |
-| Vitest tests | 930 passing, 48 test files (Phase 5 Session 1, 2026-04-18); archived tests runnable on demand via `npm run test:archive` |
+| Vitest tests | ~1008 passing, 70 test files (Phase 5 Session 2, 2026-04-20); archived tests runnable on demand via `npm run test:archive` |
 | E2E tests | 11 Playwright smoke tests (4 suites) — trip-specific specs archived |
 | Error monitoring | Sentry — 19/48 coverage on pre-archive branch; coverage recomputed on new live surface in Phase 2 |
-| Live API routes | 52 (35 base + 6 Crew + 9 Phase 4 meetup/venue/cron + 3 Phase 5 check-in) |
-| Files >400 lines | Under review (email.ts split in M3; email-meetup.ts created) |
+| Live API routes | 52 (35 base + 6 Crew + 9 Phase 4 meetup/venue/cron + 3 Phase 5 check-in + privacy) |
+| Files >400 lines | 0 in prod (email.ts 507 lines, email-crew.ts extracted) |
 | Production env gaps | OPENAI_API_KEY, Pusher vars, Sentry DSN, Resend domain, GOOGLE_PLACES_API_KEY |
 
 ---

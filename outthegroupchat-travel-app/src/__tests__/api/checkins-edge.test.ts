@@ -287,11 +287,12 @@ describe('GET /api/checkins/feed — edge cases', () => {
     expect(res.status).toBe(200);
     expect(json.success).toBe(true);
 
-    // Verify findMany was called with the partner ID in the `in` clause
-    const findManyCall = mockCheckIn.findMany.mock.calls[0][0] as {
-      where: { userId: { in: string[] } };
+    // Visibility-scoped query uses OR clause — verify partner ID appears in at least one OR branch
+    const whereArg = mockCheckIn.findMany.mock.calls[0][0].where as {
+      OR?: Array<{ userId?: { in?: string[] } }>;
     };
-    expect(findManyCall.where.userId.in).toContain('user-partner');
+    const crewIds = (whereArg.OR ?? []).flatMap((c) => c.userId?.in ?? []);
+    expect(crewIds).toContain('user-partner');
   });
 
   it('resolves crew partner IDs correctly when caller is userAId', async () => {
@@ -306,10 +307,11 @@ describe('GET /api/checkins/feed — edge cases', () => {
     const json = await res.json();
 
     expect(res.status).toBe(200);
-    const findManyCall = mockCheckIn.findMany.mock.calls[0][0] as {
-      where: { userId: { in: string[] } };
+    const whereArg2 = mockCheckIn.findMany.mock.calls[0][0].where as {
+      OR?: Array<{ userId?: { in?: string[] } }>;
     };
-    expect(findManyCall.where.userId.in).toContain('user-partner-b');
+    const crewIds2 = (whereArg2.OR ?? []).flatMap((c) => c.userId?.in ?? []);
+    expect(crewIds2).toContain('user-partner-b');
   });
 
   it('orders results newest first (route passes orderBy: { createdAt: desc })', async () => {

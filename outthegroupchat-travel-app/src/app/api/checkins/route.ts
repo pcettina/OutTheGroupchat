@@ -6,6 +6,7 @@ import { authOptions } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 import { captureException } from '@/lib/sentry';
 import { apiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
+import { triggerCheckinEvent } from '@/lib/pusher';
 
 // ============================================
 // CONSTANTS
@@ -158,6 +159,21 @@ export async function POST(request: NextRequest) {
         { checkInId: checkIn.id, notifiedCount: crewPartnerIds.length },
         '[CHECKIN_POST] Crew notified'
       );
+    }
+
+    // Broadcast to city Pusher channel (non-fatal)
+    if (checkIn.cityId) {
+      try {
+        await triggerCheckinEvent(checkIn.cityId, 'checkin:new', {
+          checkInId: checkIn.id,
+          userId: callerId,
+          userName: session.user.name ?? null,
+          venueName: checkIn.venue?.name ?? null,
+          activeUntil: checkIn.activeUntil.toISOString(),
+        });
+      } catch {
+        // Pusher failure is non-fatal
+      }
     }
 
     logger.info({ checkInId: checkIn.id, userId: callerId }, '[CHECKIN_POST] Check-in created');
