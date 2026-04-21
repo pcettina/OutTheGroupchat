@@ -138,7 +138,7 @@ export async function processInvitations({
         await prisma.notification.create({
           data: {
             userId: user.id,
-            type: 'TRIP_INVITATION',
+            type: 'SYSTEM',
             title: 'Trip Invitation',
             message: `You've been invited to join "${tripTitle}"!`,
             data: { tripId, invitationId: invitation.id },

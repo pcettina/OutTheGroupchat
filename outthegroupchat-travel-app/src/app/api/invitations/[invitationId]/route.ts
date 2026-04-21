@@ -100,7 +100,7 @@ export async function POST(
       await prisma.notification.create({
         data: {
           userId: invitation.trip.ownerId,
-          type: 'TRIP_UPDATE',
+          type: 'SYSTEM',
           title: 'Invitation Accepted',
           message: `Someone has accepted your trip invitation!`,
           data: { tripId: invitation.tripId },

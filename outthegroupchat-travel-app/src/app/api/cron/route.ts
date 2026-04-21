@@ -72,7 +72,7 @@ export async function GET(req: Request) {
         await prisma.notification.create({
           data: {
             userId: trip.ownerId,
-            type: 'SURVEY_REMINDER',
+            type: 'SYSTEM',
             title: 'Survey Closed',
             message: `The survey for "${trip.title}" has been automatically closed.`,
             data: { tripId: survey.tripId, surveyId: survey.id },
@@ -106,7 +106,7 @@ export async function GET(req: Request) {
       await prisma.notification.createMany({
         data: members.map(m => ({
           userId: m.userId,
-          type: 'VOTE_REMINDER' as const,
+          type: 'SYSTEM' as const,
           title: 'Voting Closed',
           message: `Voting for "${session.title}" has ended.`,
           data: { tripId: session.tripId, votingSessionId: session.id },
@@ -149,7 +149,7 @@ export async function GET(req: Request) {
         const existingReminder = await prisma.notification.findFirst({
           where: {
             userId: member.userId,
-            type: 'SURVEY_REMINDER',
+            type: 'SYSTEM',
             data: {
               path: ['surveyId'],
               equals: survey.id,
@@ -164,7 +164,7 @@ export async function GET(req: Request) {
           await prisma.notification.create({
             data: {
               userId: member.userId,
-              type: 'SURVEY_REMINDER',
+              type: 'SYSTEM',
               title: 'Survey Expiring Soon',
               message: `Don't forget to complete the survey for "${survey.trip.title}"!`,
               data: { tripId: survey.tripId, surveyId: survey.id },

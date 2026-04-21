@@ -1,4 +1,54 @@
-# 🟡 In Progress — Phase 6: Feed/AI/Notifications Rescope (Session 1 delivered 2026-04-21)
+# 🟢 Complete — Phase 6: Feed/AI/Notifications Rescope (all sessions delivered)
+
+> **Status:** Phase 6 COMPLETE as of 2026-04-22 (nightly/2026-04-22 PR #55). All 4 Phase 6 actions done: feed rescoped, AI routes added, notification types migrated, search rescoped people-first. Phase 7 (Marketing surface) is next.
+> **Test count:** ~1050 tests passing; 58 test files (+3 new: feed.test.ts, feed-extended.test.ts, notifications-rescoped.test.ts)
+
+---
+
+## 🟢 Completed 2026-04-22 (Nightly Build nightly/2026-04-22)
+
+### Wave 1 — Tests
+
+- [M1] 21 tests in `src/__tests__/api/search.test.ts` — rewrote from 13 trips-focused tests to 21 people-first tests covering the new users→meetups→venues ordering, `type=` enum validation, and empty result paths
+- [M2] 18 tests in `src/__tests__/api/notifications-rescoped.test.ts` — covers social notification types (CREW_REQUEST, CREW_ACCEPTED, MEETUP_INVITED, MEETUP_RSVP, MEETUP_STARTING_SOON, CREW_CHECKED_IN_NEARBY, SYSTEM)
+- [M3] Feed test verification — 37 tests pass (12 feed.test.ts + 25 feed-extended.test.ts), no fixes needed
+
+### Wave 2 — Features
+
+- [L1] `src/app/api/feed/route.ts` fully rescoped — meetup/checkin item types, feed.test.ts (12 tests) + feed-extended.test.ts (25 tests) created
+- [L2] `src/app/api/search/route.ts` people-first — users→meetups→venues ordering; Zod enum updated to `['all','people','meetups','venues']`
+- [L3] Notification type migration — 9 old trip `NotificationType` values removed from `prisma/schema.prisma`; `Follow` marked `@deprecated`; TSC fixes applied in feed/comments, feed/engagement, feed/share, auth/signup, beta/initialize-password, cron, invitations routes; `npx prisma generate` ran successfully
+- [M4] JSDoc added to `src/lib/email-meetup.ts` and `src/lib/email-crew.ts`
+- [M5] Stale docs updated — `docs/FUTURE_IMPLEMENTATION.md` and `docs/IMPLEMENTATION_STACK.md` updated to 2026-04-22
+- [M6] `src/types/index.ts` cleanup — 19 dead trip-domain types removed, re-exports added for meetup/checkin types; file reduced 450→264 lines
+
+### Wave 2 — Small Tasks
+
+- [S1] `src/app/feed/page.tsx` tabs updated — 'Meetups', 'Check-ins', 'Crews'; CTA updated to `/meetups/new`
+- [S2] `docs/README.md` footer fixed — Last Updated updated, metrics updated (987 tests, 50 routes)
+- [S3] `src/lib/rate-limit.ts` JSDoc — `@module` block and function-level JSDoc added
+
+### Phase 3.5 — Small Task Metrics (automated)
+
+- `any` types: 0 | `console.*`: 0 | TODO/FIXME: 2 | files >600 lines (production): 0
+
+### Metrics
+
+- Tests: ~1041 → ~1050 (+37 new feed tests + 8 net search update + 18 new notifications; -53 archived feed/feed-extended from nightly/2026-04-21 replaced by new feed tests)
+- Test files: 55 → 58 (+3 new: feed.test.ts, feed-extended.test.ts, notifications-rescoped.test.ts)
+- API routes: 50 (unchanged — feed POST now returns 410 rather than being a live route)
+- Phase 6 exit criteria: all 4 actions complete ✅
+
+### Phase 6 complete — all exit criteria met
+
+- Feed shows only meetup/checkin content types ✅
+- AI suggestions reference meetup + Crew context, not trip context ✅
+- Search surfaces people first (users→meetups→venues ordering) ✅
+- Notification enum cleaned: 9 trip types removed, social types retained ✅
+
+---
+
+# 🟡 Previously In Progress — Phase 6: Feed/AI/Notifications Rescope (Session 1 delivered 2026-04-21)
 
 > **Status:** Phase 6 Session 1 shipped 2026-04-21. Feed rescoped (meetup/checkin types, trip/activity queries removed). `POST /api/ai/suggest-meetups` and `POST /api/ai/icebreakers` created. "Join me" fully wired, activeUntil duration picker, check-ins on profile, Pusher subscription on /checkins page, Navigation privacy link all complete. Phase 5 is fully closed.
 > **Test count:** ~1041 tests passing (+47 new: discover-recommendations 26, suggest-meetups 11, icebreakers 10); 55 test files (+3)

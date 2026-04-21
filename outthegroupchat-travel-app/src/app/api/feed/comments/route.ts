@@ -162,7 +162,7 @@ export async function POST(req: Request) {
         await prisma.notification.create({
           data: {
             userId: notificationData.ownerId,
-            type: 'ACTIVITY_COMMENT',
+            type: 'SYSTEM',
             title: 'New Comment',
             message: `${session.user.name || 'Someone'} commented on an activity in "${notificationData.title}"`,
             data: {
@@ -211,7 +211,7 @@ export async function POST(req: Request) {
         await prisma.notification.create({
           data: {
             userId: trip.ownerId,
-            type: 'TRIP_COMMENT',
+            type: 'SYSTEM',
             title: 'New Comment',
             message: `${session.user.name || 'Someone'} commented on your trip "${trip.title}"`,
             data: {

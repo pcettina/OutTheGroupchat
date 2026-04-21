@@ -1,17 +1,53 @@
 // OutTheGroupchat - TypeScript Types
 // These types extend Prisma-generated types with additional app-specific types
+//
+// Phase 6 cleanup (2026-04-21): trip-domain types that have no external callers
+// were removed. Types still imported by active code are marked @deprecated.
+// New-domain types (Meetup, CheckIn) are re-exported from their dedicated modules.
 
-import type { 
-  User, 
-  Trip, 
-  TripMember, 
-  Activity, 
+import type {
+  User,
+  Trip,
+  TripMember,
+  Activity,
   TripSurvey,
   SurveyResponse,
   VotingSession,
   ItineraryDay,
   Notification
 } from '@prisma/client';
+
+// Suppress unused-import warning: these Prisma types are referenced only by
+// @deprecated interfaces below; they remain to avoid breaking the import graph
+// until those interfaces are fully retired.
+type _KeepPrismaImports = Trip | TripMember | Activity | TripSurvey | SurveyResponse | VotingSession | ItineraryDay | Notification;
+
+// ============================================
+// RE-EXPORTS — new domain type modules
+// ============================================
+
+export type {
+  MeetupVisibility,
+  AttendeeStatus,
+  VenueCategory,
+  VenueSearchResult,
+  UserPreview,
+  AttendeeResponse,
+  MeetupResponse,
+  MeetupListItem,
+  CreateMeetupInput,
+  UpdateMeetupInput,
+} from './meetup';
+
+export type {
+  CheckInVisibility,
+  CheckInUserPreview,
+  CheckInVenuePreview,
+  CheckInResponse,
+  CheckInFeedItem,
+  CreateCheckInInput,
+  CheckInFeedResponse,
+} from './checkin';
 
 // ============================================
 // USER TYPES
@@ -30,6 +66,11 @@ export interface UserPreferences {
   timezone?: string;
 }
 
+/**
+ * @deprecated Trip domain is being retired (Phase 6). Use Crew/Meetup/CheckIn
+ * domain types from src/types/social.ts and src/types/meetup.ts instead.
+ * Still used by: src/components/profile/ProfileHeader.tsx
+ */
 export interface UserWithRelations extends User {
   ownedTrips?: Trip[];
   tripMemberships?: TripMember[];
@@ -41,9 +82,10 @@ export interface UserWithRelations extends User {
 }
 
 // ============================================
-// TRIP TYPES
+// SHARED LOCATION TYPE
 // ============================================
 
+/** City/country shape used by geocoding, profile pages, and AI prompts. */
 export interface Destination {
   city: string;
   country: string;
@@ -54,31 +96,15 @@ export interface Destination {
   timezone?: string;
 }
 
-export interface TripBudget {
-  total: number;
-  currency: string;
-  breakdown?: {
-    accommodation: number;
-    food: number;
-    activities: number;
-    transport: number;
-  };
-}
+// ============================================
+// TRIP TYPES
+// ============================================
 
-export interface MemberBudgetRange {
-  min: number;
-  max: number;
-  currency: string;
-}
-
-export interface FlightDetails {
-  estimatedCost: number;
-  airline?: string;
-  confirmation?: string;
-  departureAirport?: string;
-  arrivalAirport?: string;
-}
-
+/**
+ * @deprecated Trip domain is being retired (Phase 6). Crew-based planning
+ * replaces group trip management.
+ * Still used by: src/hooks/useTrips.ts
+ */
 export interface TripWithRelations extends Trip {
   owner?: User;
   members?: (TripMember & { user: User })[];
@@ -95,13 +121,15 @@ export interface TripWithRelations extends Trip {
 // SURVEY TYPES
 // ============================================
 
-export type QuestionType = 
-  | 'single_choice' 
-  | 'multiple_choice' 
-  | 'ranking' 
-  | 'scale' 
-  | 'text' 
-  | 'date_range' 
+// Still actively used by: src/services/survey.service.ts, src/lib/ai/prompts/itinerary.ts
+
+export type QuestionType =
+  | 'single_choice'
+  | 'multiple_choice'
+  | 'ranking'
+  | 'scale'
+  | 'text'
+  | 'date_range'
   | 'budget';
 
 export interface SurveyQuestion {
@@ -144,133 +172,6 @@ export interface SurveyAnalysis {
 }
 
 // ============================================
-// ACTIVITY TYPES
-// ============================================
-
-export interface ActivityLocation {
-  address: string;
-  coordinates?: {
-    lat: number;
-    lng: number;
-  };
-  placeId?: string;
-  nearestTransit?: {
-    type: 'train' | 'bus' | 'subway';
-    name: string;
-    distance: number;
-    directions?: string;
-  }[];
-}
-
-export interface ActivityCostDetails {
-  basePrice: number;
-  currency: string;
-  includedItems?: string[];
-  additionalCosts?: {
-    item: string;
-    cost: number;
-  }[];
-}
-
-export interface ActivityRequirements {
-  minimumAge?: number;
-  physicalLevel?: 'easy' | 'moderate' | 'challenging';
-  requiredItems?: string[];
-  recommendedItems?: string[];
-  accessibility?: {
-    wheelchairAccessible: boolean;
-    familyFriendly: boolean;
-    petFriendly: boolean;
-  };
-}
-
-export interface ActivityExternalLinks {
-  websiteUrl?: string;
-  bookingUrl?: string;
-  ticketmasterUrl?: string;
-  googleMapsUrl?: string;
-}
-
-export interface ActivityWithEngagement extends Activity {
-  savedBy?: { userId: string }[];
-  comments?: { id: string; text: string; user: User; createdAt: Date }[];
-  ratings?: { score: number }[];
-  _count?: {
-    savedBy: number;
-    comments: number;
-    ratings: number;
-  };
-  averageRating?: number;
-}
-
-// ============================================
-// VOTING TYPES
-// ============================================
-
-export interface VotingOption {
-  id: string;
-  title: string;
-  description?: string;
-  imageUrl?: string;
-  metadata?: Record<string, unknown>;
-}
-
-export interface VotingResults {
-  sessionId: string;
-  totalVotes: number;
-  results: {
-    optionId: string;
-    votes: number;
-    percentage: number;
-    averageRank?: number;
-  }[];
-  winner?: VotingOption;
-}
-
-// ============================================
-// ITINERARY TYPES
-// ============================================
-
-export interface ItineraryItemData {
-  id: string;
-  order: number;
-  startTime?: string;
-  endTime?: string;
-  activity?: Activity;
-  customTitle?: string;
-  notes?: string;
-}
-
-export interface ItineraryDayData {
-  id: string;
-  dayNumber: number;
-  date: Date;
-  notes?: string;
-  items: ItineraryItemData[];
-}
-
-// ============================================
-// TRIP RECOMMENDATION TYPES
-// ============================================
-
-export interface TripRecommendation {
-  id: string;
-  destination: Destination;
-  matchScore: number;
-  estimatedBudget: TripBudget;
-  suggestedDates: { start: Date; end: Date };
-  suggestedActivities: Activity[];
-  itinerary: ItineraryDayData[];
-  individualCosts: {
-    memberId: string;
-    memberName: string;
-    flightCost: number;
-    localCost: number;
-    totalCost: number;
-  }[];
-}
-
-// ============================================
 // API RESPONSE TYPES
 // ============================================
 
@@ -292,74 +193,10 @@ export interface PaginatedResponse<T> {
 }
 
 // ============================================
-// EXTERNAL API TYPES
-// ============================================
-
-export interface FlightSearchParams {
-  originCode: string;
-  destinationCode: string;
-  departureDate: string;
-  returnDate?: string;
-  adults: number;
-  nonStop?: boolean;
-}
-
-export interface FlightOffer {
-  id: string;
-  price: {
-    total: string;
-    currency: string;
-  };
-  itineraries: {
-    duration: string;
-    segments: {
-      departure: {
-        iataCode: string;
-        at: string;
-      };
-      arrival: {
-        iataCode: string;
-        at: string;
-      };
-      carrierCode: string;
-      number: string;
-      duration: string;
-    }[];
-  }[];
-}
-
-export interface EventSearchResult {
-  id: string;
-  name: string;
-  type: 'ticketmaster' | 'eventbrite' | 'seatgeek';
-  date: string;
-  venue: string;
-  priceRange?: {
-    min: number;
-    max: number;
-  };
-  url: string;
-  imageUrl?: string;
-}
-
-export interface PlaceDetails {
-  placeId: string;
-  name: string;
-  address: string;
-  rating?: number;
-  priceLevel?: number;
-  types: string[];
-  coordinates: {
-    lat: number;
-    lng: number;
-  };
-  photos?: string[];
-  openingHours?: string[];
-}
-
-// ============================================
 // AI/ML TYPES
 // ============================================
+
+// Still actively used by: src/app/api/ai/generate-itinerary, src/lib/ai/prompts/itinerary.ts
 
 export interface TripPreferences {
   travelStyle?: 'adventure' | 'relaxation' | 'cultural' | 'family' | 'solo';
@@ -374,6 +211,7 @@ export interface TripPreferences {
   dining?: 'budget' | 'local' | 'upscale' | 'mixed';
 }
 
+// Still used by: src/app/api/ai/generate-itinerary/route.ts
 export interface AIGeneratedItinerary {
   overview: string;
   days: {
@@ -409,6 +247,7 @@ export interface AIGeneratedItinerary {
   localTips: string[];
 }
 
+// Still used by: src/app/api/ai/suggest-activities/route.ts
 export interface AIActivityRecommendation {
   name: string;
   category: 'food' | 'entertainment' | 'outdoors' | 'culture' | 'nightlife' | 'sports';
@@ -423,27 +262,3 @@ export interface AIActivityRecommendation {
   goodFor: string[];
   tips?: string;
 }
-
-export interface AIDestinationMatch {
-  city: string;
-  country: string;
-  matchScore: number;
-  whyItWorks: string;
-  bestFor: string[];
-  estimatedBudget: { min: number; max: number; currency: string };
-  bestTimeToVisit: string;
-  potentialConcerns: string[];
-}
-
-export interface ChatMessage {
-  id: string;
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-  timestamp: Date;
-  metadata?: {
-    tripId?: string;
-    action?: string;
-    data?: Record<string, unknown>;
-  };
-}
-

@@ -419,7 +419,7 @@ describe('POST /api/beta/initialize-password — extended edge cases', () => {
       expect.objectContaining({
         data: expect.objectContaining({
           userId: updatedUser.id,
-          type: 'TRIP_INVITATION',
+          type: 'SYSTEM',
         }),
       }),
     );

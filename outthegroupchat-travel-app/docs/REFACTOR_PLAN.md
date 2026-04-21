@@ -1,7 +1,7 @@
 # OutTheGroupchat — Scope Pivot & Refactor Plan
 
-> **Status:** Active — Phase 5 COMPLETE (2026-04-20, PR #53); Phase 6 IN PROGRESS — Session 1 complete (2026-04-21, PR #54): feed rescoped, suggest-meetups + icebreakers added. Actions #4 (notification migration) and #5 (search people-first) remain.
-> **Created:** 2026-04-16 | **Last updated:** 2026-04-21
+> **Status:** Active — Phase 5 COMPLETE (2026-04-20, PR #53); Phase 6 ✅ COMPLETE (2026-04-22, PR #55): all 4 actions done — feed rescoped, AI routes added, notification types migrated, search people-first. Phase 7 (Marketing surface) is next.
+> **Created:** 2026-04-16 | **Last updated:** 2026-04-22
 > **Purpose:** Canonical planning doc for the pivot from group-trip-planning app → meetup-focused social network with a persistent `Crew` graph. All future refactor sessions reference this document.
 > **Decision:** Refactor in place (not rebuild). Trip-planning infrastructure is archived but preserved for potential future reactivation.
 
@@ -375,18 +375,20 @@ Each phase targets a discrete session (or a nightly build if small). Phases are 
 ---
 
 ### Phase 6 — Rescope feed, AI, notifications (2 sessions)
+
+> ✅ **COMPLETE as of 2026-04-22 (PR #55)** — All 4 actions complete across Sessions 1 (2026-04-21, PR #54) and 2 (2026-04-22, PR #55).
+
 **Objective:** Retarget cross-cutting surfaces for the new vision.
 **Actions:**
 1. ✅ **Feed rescope:** remove trip-related feed item types, add `crew_formed`, `meetup_created`, `check_in_posted`, `meetup_attended`, `post_created`. POST returns 410 Gone. **Complete as of 2026-04-21 (nightly/2026-04-21 PR #54).**
 2. ✅ **AI routes repurpose:**
    - ✅ `/api/ai/suggest-meetups` — given user's city, Crew, past check-ins, suggest meetup ideas. **Complete as of 2026-04-21.**
    - ✅ `/api/ai/icebreakers` — meeting a new Crew member for the first time, suggest conversation starters. **Complete as of 2026-04-21.**
-   - Archive or rewrite: `/api/ai/chat` (retain as generic assistant), `/api/ai/recommend` (retarget to venues) — deferred
-3. ✅ **Search rescope (partial):** `search/route.ts` expanded to support `type=meetups`, `type=venues`, `type=people`. **Complete as of 2026-04-21.** People-first ordering and full trip/activity query removal remain.
-4. **Notification types:** finalize the new enum (`CREW_REQUEST`, `CREW_ACCEPTED`, `MEETUP_INVITED`, etc.), write migration to map or drop old types — ⏳ pending
-5. **Search rescope (full people-first ordering):** drop remaining trip/activity search paths, enforce people-first ranking — ⏳ pending
+   - Archive or rewrite: `/api/ai/chat` (retain as generic assistant), `/api/ai/recommend` (retarget to venues) — deferred to Phase 7
+3. ✅ **Search rescope (people-first):** `search/route.ts` rewritten with users→meetups→venues ordering; Zod enum updated to `['all','people','meetups','venues']`; trip/activity query paths removed. **Complete as of 2026-04-22 (nightly/2026-04-22 PR #55).**
+4. ✅ **Notification types:** 9 old trip `NotificationType` values removed from `prisma/schema.prisma` (`TRIP_INVITATION`, `TRIP_UPDATE`, `TRIP_COMMENT`, `TRIP_LIKE`, `ACTIVITY_COMMENT`, `ACTIVITY_RATING`, `SURVEY_REMINDER`, `VOTE_REMINDER`, `FOLLOW`). `Follow` model marked `@deprecated`. TSC fixes applied across 7 routes. `npx prisma generate` ran successfully. **Complete as of 2026-04-22 (nightly/2026-04-22 PR #55).**
 
-**Exit criteria:** Feed shows only new content types ✅. AI suggestions reference meetup + Crew context, not trip context ✅. Search surfaces people first (partial ✅ — full ordering pending).
+**Exit criteria:** Feed shows only new content types ✅. AI suggestions reference meetup + Crew context, not trip context ✅. Search surfaces people first ✅. Notification enum cleaned to social-only types ✅.
 
 ---
 

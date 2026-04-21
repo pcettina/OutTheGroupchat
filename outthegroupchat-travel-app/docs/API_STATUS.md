@@ -1,15 +1,15 @@
 # 📡 API & Integration Status
 
-> **Last Updated: 2026-04-21**
+> **Last Updated: 2026-04-22**
 >
 > **Archival:** trip/activity routes moved to `src/app/api/_archive/` as of 2026-04-16 Phase 1. See REFACTOR_PLAN.md. Sections below that reference `/api/trips/*` and `/api/activities/*` reflect the pre-archive state for historical context; authoritative status for these routes is the "📦 Archived Routes" section near the bottom of this file.
 >
 > **Phase 5 COMPLETE (2026-04-20, nightly/2026-04-20 PR #53):** Privacy settings page, Pusher broadcast wiring, "Join me" CTA, duration picker, checkin detail route — all Phase 5 exit criteria met.
 >
-> **Phase 6 Session 1 complete (2026-04-21, nightly/2026-04-21 PR #54):** Feed rescoped (meetup/checkin types), `POST /api/ai/suggest-meetups` and `POST /api/ai/icebreakers` added. Search route expanded to support meetups/venues/people types.
+> **Phase 6 COMPLETE (2026-04-22, nightly/2026-04-22 PR #55):** Feed rescoped (meetup/checkin types, POST→410), search people-first (users→meetups→venues), notification type migration (9 old trip types removed from schema), AI routes (suggest-meetups + icebreakers). All 4 Phase 6 actions complete.
 >
 > **Last Audit:** April 2026
-> **Live API routes (post-archive):** 53 (35 base + 6 Crew + 9 Phase 4 meetup/venue/cron routes + 3 Phase 5 check-in routes + privacy route + 2 new Phase 6 AI routes: suggest-meetups, icebreakers)
+> **Live API routes (post-archive):** 50 (35 base + 6 Crew + 9 Phase 4 meetup/venue/cron routes + 3 Phase 5 check-in routes + privacy route + 2 new Phase 6 AI routes: suggest-meetups, icebreakers; note: feed POST now returns 410)
 > **Archived API routes (Phase 1):** 13
 > **Target:** 100% for Beta Launch (re-baselined in Phase 8)
 > **Sentry Coverage:** 19/48 routes instrumented on pre-archive branch; coverage on new live surface re-computed after Phase 2
@@ -65,7 +65,7 @@
 
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
-| `/api/feed` | GET | ✅ | ✅ | Main feed; **rescoped 2026-04-21 (nightly/2026-04-21)** — item types now: `meetup_created`, `check_in_posted`, `crew_formed`, `meetup_attended`, `post_created`. Trip/activity queries removed. Zod validation added 2026-03-21; **Sentry added 2026-04-16** |
+| `/api/feed` | GET | ✅ | ✅ | Main feed; **rescoped 2026-04-21 (nightly/2026-04-21) — Phase 6 complete** — item types now: `meetup_created`, `check_in_posted`, `crew_formed`, `meetup_attended`, `post_created`. Trip/activity queries removed. Zod validation added 2026-03-21; **Sentry added 2026-04-16** |
 | `/api/feed` | POST | ⛔ | — | Returns **410 Gone** as of 2026-04-21 — feed items are now generated from meetup/checkin events, not direct POST |
 | `/api/feed/comments` | GET | ✅ | ✅ | **Sentry added 2026-04-16** |
 | `/api/feed/comments` | POST | ✅ | ✅ | **Sentry added 2026-04-16** |
@@ -97,6 +97,14 @@ COMPLETED ✅ Dec 17:
 VERIFIED ✅ Dec 17:
 Frontend correctly accesses: data?.data?.notifications
 No fix needed - code was already correct
+
+COMPLETED ✅ 2026-04-22 (Phase 6 — nightly/2026-04-22):
+9 old trip NotificationTypes removed from schema.prisma:
+  TRIP_INVITATION, TRIP_UPDATE, TRIP_COMMENT, TRIP_LIKE,
+  ACTIVITY_COMMENT, ACTIVITY_RATING, SURVEY_REMINDER, VOTE_REMINDER, FOLLOW
+Remaining active types: SYSTEM, CREW_REQUEST, CREW_ACCEPTED, MEETUP_INVITED,
+  MEETUP_RSVP, MEETUP_STARTING_SOON, CREW_CHECKED_IN_NEARBY
+Follow model marked @deprecated (retirement deferred to Phase 7)
 ```
 
 ---
@@ -110,7 +118,7 @@ No fix needed - code was already correct
 | `/api/discover/search` | GET | ✅ | 🔶 | Auth guard added 2026-03-24 (was unauthenticated — security improvement); rate limiting, Zod validation ✅ |
 | `/api/discover/recommendations` | GET | ✅ | 🔶 | Auth guard added 2026-03-24; category filter, rate limiting, pino logging ✅ |
 | `/api/discover/import` | POST | ✅ | ⏳ | Rate limiting + auth guard ✅ 2026-03-24; pino logging, typed helpers, fixed empty catch blocks |
-| `/api/search` | GET | ✅ | 🔶 | Email removed from select projection (privacy fix) ✅ 2026-03-20; **expanded 2026-04-21** — now supports `type=meetups`, `type=venues`, `type=people` in addition to existing queries |
+| `/api/search` | GET | ✅ | 🔶 | Email removed from select projection (privacy fix) ✅ 2026-03-20; **rescoped 2026-04-22 (Phase 6)** — people-first ordering (users→meetups→venues), Zod enum updated to `['all','people','meetups','venues']`, trip/activity search paths removed |
 | `/api/geocoding` | GET | ✅ | 🔶 | Geocoding for destination search via Nominatim; Zod validation added 2026-03-21 |
 | `/api/inspiration` | GET | ✅ | 🔶 | Auth guard added 2026-03-08; Zod coerce.number on query params + POST body schema added 2026-03-22 |
 | `/api/images/search` | GET | ✅ | 🔶 | Image search via Unsplash API; requires UNSPLASH_ACCESS_KEY |
