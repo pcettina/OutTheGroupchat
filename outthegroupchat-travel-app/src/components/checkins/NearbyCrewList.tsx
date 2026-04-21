@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { MapPin, RefreshCw } from 'lucide-react';
 import LiveActivityCard from './LiveActivityCard';
+import { getPusherClient, getCityCheckinChannel } from '@/lib/pusher';
 
 type CheckInFeedItem = {
   id: string;
@@ -17,6 +18,7 @@ type CheckInFeedItem = {
 
 interface NearbyCrewListProps {
   className?: string;
+  cityId?: string;
 }
 
 function SkeletonCard() {
@@ -33,7 +35,7 @@ function SkeletonCard() {
   );
 }
 
-export default function NearbyCrewList({ className }: NearbyCrewListProps) {
+export default function NearbyCrewList({ className, cityId }: NearbyCrewListProps) {
   const [checkIns, setCheckIns] = useState<CheckInFeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -57,6 +59,32 @@ export default function NearbyCrewList({ className }: NearbyCrewListProps) {
     const interval = setInterval(fetchFeed, 60_000);
     return () => clearInterval(interval);
   }, [fetchFeed]);
+
+  // Pusher real-time subscription — only when cityId is provided and we're in the browser
+  useEffect(() => {
+    if (!cityId) return;
+
+    const pusher = getPusherClient();
+    if (!pusher) return;
+
+    const channelName = getCityCheckinChannel(cityId);
+    const channel = pusher.subscribe(channelName);
+
+    const handleNewCheckIn = (data: CheckInFeedItem) => {
+      setCheckIns((prev) => {
+        // Avoid duplicates if the polling fetch also picked up this check-in
+        if (prev.some((item) => item.id === data.id)) return prev;
+        return [data, ...prev];
+      });
+    };
+
+    channel.bind('checkin:new', handleNewCheckIn);
+
+    return () => {
+      channel.unbind('checkin:new', handleNewCheckIn);
+      pusher.unsubscribe(channelName);
+    };
+  }, [cityId]);
 
   if (loading) {
     return (

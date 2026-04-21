@@ -12,6 +12,7 @@ interface LiveActivityCardCheckIn {
     image: string | null;
   };
   venue?: { id: string; name: string } | null;
+  venueId?: string | null;
   note?: string | null;
   latitude?: number | null;
   longitude?: number | null;
@@ -21,6 +22,8 @@ interface LiveActivityCardCheckIn {
 
 interface LiveActivityCardProps {
   checkIn: LiveActivityCardCheckIn;
+  /** The current user's id — used to hide "Join me" on the user's own check-in. */
+  currentUserId?: string | null;
   onJoinMe?: () => void;
   className?: string;
 }
@@ -58,7 +61,7 @@ function remainingActiveTime(isoString: string): string {
   return `Active for ${remainingMin}m`;
 }
 
-export function LiveActivityCard({ checkIn, onJoinMe, className = '' }: LiveActivityCardProps) {
+export function LiveActivityCard({ checkIn, currentUserId, onJoinMe, className = '' }: LiveActivityCardProps) {
   const { user, venue, note, activeUntil, createdAt } = checkIn;
 
   const initials = user.name
@@ -73,10 +76,21 @@ export function LiveActivityCard({ checkIn, onJoinMe, className = '' }: LiveActi
   const activeStatus = remainingActiveTime(activeUntil);
   const isExpired = activeStatus === 'Expired';
 
-  // Build "Join me" href: link to /meetups/new, prefilling venueId if available
-  const joinHref = venue?.id
-    ? `/meetups/new?venueId=${encodeURIComponent(venue.id)}&venueName=${encodeURIComponent(venue.name)}`
-    : '/meetups/new';
+  // Hide "Join me" if this is the current user's own check-in.
+  const isOwn = currentUserId != null && currentUserId === user.id;
+
+  // Build "Join me" href: /meetups/new pre-filled with venueId, checkInId, and title.
+  const venueId = checkIn.venueId ?? venue?.id ?? '';
+  const meetupTitle = encodeURIComponent(
+    (user.name ?? 'Someone') +
+      "'s meetup" +
+      (venue?.name ? ' at ' + venue.name : ''),
+  );
+  const joinHref =
+    `/meetups/new` +
+    `?checkInId=${encodeURIComponent(checkIn.id)}` +
+    `&venueId=${encodeURIComponent(venueId)}` +
+    `&title=${meetupTitle}`;
 
   const handleJoinMe = () => {
     if (onJoinMe) {
@@ -147,8 +161,8 @@ export function LiveActivityCard({ checkIn, onJoinMe, className = '' }: LiveActi
         </p>
       )}
 
-      {/* Join me CTA */}
-      {!isExpired && (
+      {/* Join me CTA — hidden when expired or viewing own check-in */}
+      {!isExpired && !isOwn && (
         <div className="pt-1">
           {onJoinMe ? (
             <button

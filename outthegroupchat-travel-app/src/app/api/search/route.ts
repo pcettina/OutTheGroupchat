@@ -11,11 +11,11 @@ export const dynamic = 'force-dynamic';
 
 const searchQuerySchema = z.object({
   q: z.string().max(200).default(''),
-  type: z.enum(['all', 'trips', 'activities', 'users']).default('all'),
+  type: z.enum(['all', 'trips', 'activities', 'users', 'meetups', 'venues', 'people']).default('all'),
   limit: z.coerce.number().int().min(1).max(50).default(10),
 });
 
-// Global search across trips, activities, and users
+// Global search across trips, activities, users, meetups, and venues
 export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -44,7 +44,7 @@ export async function GET(req: Request) {
     if (!query || query.length < 2) {
       return NextResponse.json({
         success: true,
-        data: { trips: [], activities: [], users: [] },
+        data: { trips: [], activities: [], users: [], meetups: [], venues: [] },
       });
     }
 
@@ -82,10 +82,27 @@ export async function GET(req: Request) {
       _count: { followers: number; ownedTrips: number };
     };
 
+    type MeetupResult = {
+      id: string;
+      title: string;
+      scheduledAt: Date;
+      venue: { name: string } | null;
+    };
+
+    type VenueResult = {
+      id: string;
+      name: string;
+      address: string | null;
+      city: string;
+      category: string;
+    };
+
     const results: {
       trips?: TripResult[];
       activities?: ActivityResult[];
       users?: UserResult[];
+      meetups?: MeetupResult[];
+      venues?: VenueResult[];
     } = {};
 
     // Search trips
@@ -160,7 +177,8 @@ export async function GET(req: Request) {
     }
 
     // Search users - email removed for privacy (prevents user enumeration attacks)
-    if (type === 'all' || type === 'users') {
+    // 'people' is an alias for 'users' with people-first ordering in 'all' results
+    if (type === 'all' || type === 'users' || type === 'people') {
       const users = await prisma.user.findMany({
         where: {
           OR: [
@@ -183,6 +201,61 @@ export async function GET(req: Request) {
       results.users = users;
     }
 
+    // Search meetups
+    if (type === 'all' || type === 'meetups') {
+      const meetups = await prisma.meetup.findMany({
+        where: {
+          title: { contains: query, mode: 'insensitive' },
+        },
+        select: {
+          id: true,
+          title: true,
+          scheduledAt: true,
+          venue: {
+            select: { name: true },
+          },
+        },
+        take: limit,
+      });
+      results.meetups = meetups;
+    }
+
+    // Search venues
+    if (type === 'all' || type === 'venues') {
+      const venues = await prisma.venue.findMany({
+        where: {
+          name: { contains: query, mode: 'insensitive' },
+        },
+        select: {
+          id: true,
+          name: true,
+          address: true,
+          city: true,
+          category: true,
+        },
+        take: limit,
+      });
+      results.venues = venues;
+    }
+
+    // For 'all' type, order results: people first, then meetups, then venues, then trips (deprioritized)
+    if (type === 'all') {
+      const ordered: {
+        users?: UserResult[];
+        meetups?: MeetupResult[];
+        venues?: VenueResult[];
+        trips?: TripResult[];
+        activities?: ActivityResult[];
+      } = {
+        users: results.users,
+        meetups: results.meetups,
+        venues: results.venues,
+        trips: results.trips,
+        activities: results.activities,
+      };
+      return NextResponse.json({ success: true, data: ordered });
+    }
+
     return NextResponse.json({ success: true, data: results });
   } catch (error) {
     logError('SEARCH_GET', error);
@@ -192,4 +265,3 @@ export async function GET(req: Request) {
     );
   }
 }
-

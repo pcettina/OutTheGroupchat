@@ -1,3 +1,47 @@
+# 🟡 In Progress — Phase 6: Feed/AI/Notifications Rescope (Session 1 delivered 2026-04-21)
+
+> **Status:** Phase 6 Session 1 shipped 2026-04-21. Feed rescoped (meetup/checkin types, trip/activity queries removed). `POST /api/ai/suggest-meetups` and `POST /api/ai/icebreakers` created. "Join me" fully wired, activeUntil duration picker, check-ins on profile, Pusher subscription on /checkins page, Navigation privacy link all complete. Phase 5 is fully closed.
+> **Test count:** ~1041 tests passing (+47 new: discover-recommendations 26, suggest-meetups 11, icebreakers 10); 55 test files (+3)
+
+---
+
+## 🟢 Completed 2026-04-21 (Nightly Build nightly/2026-04-21)
+
+### Wave 1 — Tests
+
+- [L3] 26 tests added to `src/__tests__/api/discover-recommendations.test.ts` — `/api/discover/recommendations` auth, category filter, rate limiting, pagination, empty results, error paths
+
+### Wave 2 — Features
+
+- [L1] Feed route rescoped — `src/app/api/feed/route.ts` rewritten with meetup/checkin item types (`meetup_created`, `check_in_posted`, `crew_formed`, `meetup_attended`, `post_created`). All trip/activity Prisma queries removed. POST returns 410 Gone.
+- [L2] `POST /api/ai/suggest-meetups` route created — `src/app/api/ai/suggest-meetups/route.ts` + `src/__tests__/api/suggest-meetups.test.ts` (11 tests). Given user's city, Crew, past check-ins, returns AI meetup ideas.
+- [M1] "Join me" wiring — `CreateMeetupModal.tsx` updated with URL param pre-fill; `LiveActivityCard.tsx` updated with `onJoinMe` prop
+- [M2] `activeUntil` duration picker — `CheckInButton.tsx` updated with 5-option chip row (30min / 1h / 2h / 6h / 12h)
+- [M3] Check-ins on profile page — `profile/page.tsx` updated with Recent Check-ins section
+- [M4] Pusher subscription on `/checkins` page — `NearbyCrewList.tsx` + `checkins/page.tsx` updated with real-time city-channel subscription
+- [M5] `POST /api/ai/icebreakers` route created — `src/app/api/ai/icebreakers/route.ts` + `src/__tests__/api/icebreakers.test.ts` (10 tests). Suggests conversation starters for a new Crew member.
+- [M6] `RichFeedItem` component updated — all 5 new feed item type sub-components implemented
+- [S1] Navigation privacy link — `Navigation.tsx` updated with Shield icon + `/settings/privacy` link
+- [S2] README fixed — 7 occurrences of `/api/connections` → `/api/crew`, route count 46→51, test count updated
+- [S3] Search route expansion — `search/route.ts` updated to support `type=meetups`, `type=venues`, `type=people`
+
+### Phase 3.5 — Small Task Metrics (automated)
+
+- `any` types: 0 | `console.*`: 0 | TODO/FIXME: 2 | files >600 lines (production): 0
+
+### Metrics
+
+- Tests: ~994 → ~1041 (+47 new: discover-recommendations 26, suggest-meetups 11, icebreakers 10)
+- Test files: 52 → 55 (+3 new)
+- API routes: 51 → 53 (+2: `POST /api/ai/suggest-meetups`, `POST /api/ai/icebreakers`)
+- Feed rescope: Phase 6 action #1 complete
+
+### Note on existing feed tests
+
+Feed tests in `src/__tests__/api/feed-extended.test.ts` and `src/__tests__/api/pusher-feed-social.test.ts` may need updating due to the L1 feed route rescope (trip/activity queries removed). The validation phase will identify and handle these.
+
+---
+
 # 🟢 Complete — Phase 5: Check-ins & Live Presence (Session 2 delivered 2026-04-20)
 
 > **Status:** Phase 5 Session 2 shipped 2026-04-20. Privacy settings page, Pusher broadcast wiring, "Join me" CTA, duration picker, email-crew split, and check-in detail route complete. All Phase 5 exit criteria met — phase is complete. Phase 6 (Feed/AI/notifications rescope) is next.

@@ -164,7 +164,7 @@ describe('GET /api/search — short query handling', () => {
 
     expect(res.status).toBe(200);
     expect(body.success).toBe(true);
-    expect(body.data).toEqual({ trips: [], activities: [], users: [] });
+    expect(body.data).toEqual({ trips: [], activities: [], users: [], meetups: [], venues: [] });
     expect(mockPrismaTrip.findMany).not.toHaveBeenCalled();
   });
 
@@ -173,7 +173,7 @@ describe('GET /api/search — short query handling', () => {
     const body = await parseJson(res);
 
     expect(res.status).toBe(200);
-    expect(body.data).toEqual({ trips: [], activities: [], users: [] });
+    expect(body.data).toEqual({ trips: [], activities: [], users: [], meetups: [], venues: [] });
     expect(mockPrismaTrip.findMany).not.toHaveBeenCalled();
   });
 

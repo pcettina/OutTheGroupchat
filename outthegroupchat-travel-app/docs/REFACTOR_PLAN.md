@@ -1,7 +1,7 @@
 # OutTheGroupchat — Scope Pivot & Refactor Plan
 
-> **Status:** Active — Phase 5 COMPLETE (2026-04-20, PR #53); Phase 6 is next (Feed/AI/notifications rescope)
-> **Created:** 2026-04-16 | **Last updated:** 2026-04-20
+> **Status:** Active — Phase 5 COMPLETE (2026-04-20, PR #53); Phase 6 IN PROGRESS — Session 1 complete (2026-04-21, PR #54): feed rescoped, suggest-meetups + icebreakers added. Actions #4 (notification migration) and #5 (search people-first) remain.
+> **Created:** 2026-04-16 | **Last updated:** 2026-04-21
 > **Purpose:** Canonical planning doc for the pivot from group-trip-planning app → meetup-focused social network with a persistent `Crew` graph. All future refactor sessions reference this document.
 > **Decision:** Refactor in place (not rebuild). Trip-planning infrastructure is archived but preserved for potential future reactivation.
 
@@ -360,13 +360,15 @@ Each phase targets a discrete session (or a nightly build if small). Phases are 
 **Objective:** The "who's out tonight" loop. Users broadcast they're somewhere; Crew sees it; one-tap "join me." Short `activeUntil` window prevents stalker vector (R5) while preserving history.
 **Actions:**
 1. ✅ API: `POST /api/checkins` (with `activeUntilMinutes` duration picker 30–720min), `GET /api/checkins/feed` (Crew's recent check-ins, filtered `WHERE activeUntil > now()`), `GET /api/checkins/[id]` (detail), `DELETE /api/checkins/[id]` (cancel)
-2. ✅ Pusher city-channel: `triggerCheckinEvent` + `getCityCheckinChannel` wired in POST `/api/checkins`; broadcasts `checkin:new` to `city-checkins-{citySlug}` channel on PUBLIC/CREW visibility check-ins
+2. ✅ Pusher city-channel: `triggerCheckinEvent` + `getCityCheckinChannel` wired in POST `/api/checkins`; broadcasts `checkin:new` to `city-checkins-{citySlug}` channel on PUBLIC/CREW visibility check-ins; Pusher subscription on `/checkins` page ✅ 2026-04-21
 3. ✅ Components: `CheckInButton` (with duration picker 30min/1h/2h/6h/12h), `LiveActivityCard` (onJoinMe prop), `NearbyCrewList` (threads onJoinMe)
 4. 🟡 Optional: location permission flow (browser geolocation API, progressive — deferred)
-5. ✅ "Join me" CTA wired to `CreateMeetupModal` with `defaultVenue` prop (creates meetup pre-filled with check-in venue)
+5. ✅ "Join me" CTA wired to `CreateMeetupModal` with `defaultVenue` prop (creates meetup pre-filled with check-in venue) ✅ fully wired 2026-04-21
 6. ✅ Notifications: `CREW_CHECKED_IN_NEARBY` type dispatched in POST route; bulk-creates notifications for all accepted Crew members
 7. ✅ Privacy settings page: `/settings/privacy` + `PrivacySettingsForm` + `/api/users/privacy` route (PUBLIC/CREW/PRIVATE visibility controls)
 8. ✅ Per-check-in `activeUntil` override: `activeUntilMinutes` param in POST (min 30m=1800s, max 12h=43200s, default 360=6h)
+9. ✅ Check-ins on profile page: Recent Check-ins section added to `profile/page.tsx` — 2026-04-21
+10. ✅ Navigation privacy link: Shield icon + `/settings/privacy` link added to `Navigation.tsx` — 2026-04-21
 
 **Exit criteria:** Check-in broadcasts to Crew feed within 5 seconds ✅. Feed queries filter expired check-ins via `activeUntil > now()` ✅. Rows persist for attendance history (hidden from feed after window) ✅. Privacy controls enforced ✅. "Join me" creates a valid meetup or attaches a user to an existing one ✅.
 
@@ -375,15 +377,16 @@ Each phase targets a discrete session (or a nightly build if small). Phases are 
 ### Phase 6 — Rescope feed, AI, notifications (2 sessions)
 **Objective:** Retarget cross-cutting surfaces for the new vision.
 **Actions:**
-1. **Feed rescope:** remove trip-related feed item types, add `CREW_FORMED`, `MEETUP_CREATED`, `CHECK_IN_POSTED`, `MEETUP_ATTENDED`, `POST_CREATED`
-2. **AI routes repurpose:**
-   - `/api/ai/suggest-meetups` — given user's city, Crew, past check-ins, suggest meetup ideas
-   - `/api/ai/icebreakers` — meeting a new Crew member for the first time, suggest conversation starters
-   - Archive or rewrite: `/api/ai/chat` (retain as generic assistant), `/api/ai/recommend` (retarget to venues)
-3. **Notification types:** finalize the new enum (`CREW_REQUEST`, `CREW_ACCEPTED`, `MEETUP_INVITED`, etc.), write migration to map or drop old types
-4. **Search rescope:** people-first, then meetups, then venues; drop trip and activity search
+1. ✅ **Feed rescope:** remove trip-related feed item types, add `crew_formed`, `meetup_created`, `check_in_posted`, `meetup_attended`, `post_created`. POST returns 410 Gone. **Complete as of 2026-04-21 (nightly/2026-04-21 PR #54).**
+2. ✅ **AI routes repurpose:**
+   - ✅ `/api/ai/suggest-meetups` — given user's city, Crew, past check-ins, suggest meetup ideas. **Complete as of 2026-04-21.**
+   - ✅ `/api/ai/icebreakers` — meeting a new Crew member for the first time, suggest conversation starters. **Complete as of 2026-04-21.**
+   - Archive or rewrite: `/api/ai/chat` (retain as generic assistant), `/api/ai/recommend` (retarget to venues) — deferred
+3. ✅ **Search rescope (partial):** `search/route.ts` expanded to support `type=meetups`, `type=venues`, `type=people`. **Complete as of 2026-04-21.** People-first ordering and full trip/activity query removal remain.
+4. **Notification types:** finalize the new enum (`CREW_REQUEST`, `CREW_ACCEPTED`, `MEETUP_INVITED`, etc.), write migration to map or drop old types — ⏳ pending
+5. **Search rescope (full people-first ordering):** drop remaining trip/activity search paths, enforce people-first ranking — ⏳ pending
 
-**Exit criteria:** Feed shows only new content types. AI suggestions reference meetup + Crew context, not trip context. Search surfaces people first.
+**Exit criteria:** Feed shows only new content types ✅. AI suggestions reference meetup + Crew context, not trip context ✅. Search surfaces people first (partial ✅ — full ordering pending).
 
 ---
 

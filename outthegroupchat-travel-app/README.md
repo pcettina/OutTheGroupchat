@@ -6,7 +6,7 @@ A LinkedIn-style social network built for in-person meetups, not trip planning. 
 
 ## Features
 
-- **Connections** - Send and accept connection requests to build your network
+- **Crew** - Send and accept crew requests to build your network
 - **Meetups** - Create events and RSVP; discover what's happening near you
 - **Check-ins** - Broadcast live presence so your network knows you're out
 - **Feed** - See who's out, what's happening, and activity from your connections
@@ -72,21 +72,21 @@ A LinkedIn-style social network built for in-person meetups, not trip planning. 
 ```
 src/
 ├── app/                    # Next.js App Router pages
-│   ├── api/               # API routes (46 active routes)
+│   ├── api/               # API routes (51 active routes)
 │   │   ├── meetups/      # Meetup CRUD + RSVP
-│   │   ├── connections/  # Connection requests
+│   │   ├── crew/         # Crew requests
 │   │   ├── checkins/     # Live presence
 │   │   ├── feed/         # Social feed
 │   │   ├── users/        # User profiles
 │   │   └── ...
 │   ├── meetups/          # Meetup pages
-│   ├── connections/      # Connections pages
+│   ├── crew/             # Crew pages
 │   └── feed/             # Social feed
 ├── _archive/              # Archived trip-planning code (Phase 1)
 ├── components/            # React components
 │   ├── ui/               # Base UI components
 │   ├── meetups/          # Meetup components
-│   ├── connections/      # Connection components
+│   ├── crew/             # Crew components
 │   └── social/           # Feed + social components
 ├── hooks/                 # Custom React hooks
 ├── lib/                   # Utilities and clients
@@ -163,8 +163,8 @@ The project includes:
 - `GET/POST /api/meetups` - List and create meetups
 - `GET/PATCH/DELETE /api/meetups/[meetupId]` - Meetup CRUD
 - `POST /api/meetups/[meetupId]/rsvp` - RSVP to a meetup
-- `GET/POST /api/connections` - List and send connection requests
-- `PATCH /api/connections/[connectionId]` - Accept or decline a request
+- `GET/POST /api/crew` - List and send crew requests
+- `PATCH /api/crew/[id]` - Accept or decline a request
 - `GET/POST /api/checkins` - List and broadcast check-ins
 - `GET /api/feed` - Social feed (connections' activity)
 - `GET /api/users/[userId]` - Public profile
@@ -201,7 +201,7 @@ Built with ❤️ by the OutTheGroupchat Team
 
 ## Recent Updates
 
-- **2026-04-18:** Phase 4 (Meetups) complete across 3 sessions (PRs #48, #49, #51). MeetupDetail page, AttendeeList, MeetupInviteModal, Pusher real-time, email dispatch, and MEETUP_STARTING_SOON cron all shipped. 888 tests passing across 46 active API routes. Current focus: Phase 5 — Check-ins & live presence.
+- **2026-04-20:** Phase 5 session 2 complete (PR #53). Privacy settings (GET/PATCH /api/users/privacy), Pusher city broadcast on check-in, GET /api/checkins/[id] visibility gate, /checkins/[id] detail page, feed visibility filter. 994 tests passing across 51 active API routes.
 - **2026-04-16:** Product pivot to social meetup network initiated. Phase 1 complete: trip-planning surface archived to `src/_archive/` (routes, pages, components, services). README and docs updated to reflect new vision. 841 tests passing post-archive across 35 active API routes.
 - **2026-04-16:** Sentry error monitoring expanded to 19/48 API routes; beta/status migrated to Redis rate limiting; dead components removed (DestinationCard, CategoryFilter, TrendingSection, TravelBadges); 112 new tests added (1,346+ total pre-archive)
 - **2026-04-15:** Sentry instrumented on 13 routes; beta/status Redis migration; JSDoc additions across lib/api modules
@@ -212,4 +212,4 @@ Built with ❤️ by the OutTheGroupchat Team
 
 ---
 
-*Last Updated: 2026-04-18 | 888 tests passing | 46 active API routes | 0 any types | 0 console.* | Build: PASS | Pivot: Phase 5 of 8*
+*Last Updated: 2026-04-20 | 994+ tests passing | 51 active API routes | 0 any types | 0 console.* | Build: PASS | Pivot: Phase 5 of 8*
