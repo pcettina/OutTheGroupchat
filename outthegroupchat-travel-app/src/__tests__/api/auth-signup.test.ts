@@ -58,12 +58,13 @@ vi.mock('bcryptjs', () => ({
 // Mock @/lib/email so Resend is never called in tests.
 vi.mock('@/lib/email', () => ({
   sendNotificationEmail: vi.fn(),
+  sendAuthVerificationEmail: vi.fn().mockResolvedValue({ success: true, messageId: 'test-msg-id' }),
   sendInvitationEmail: vi.fn(),
   isEmailConfigured: vi.fn().mockReturnValue(true),
 }));
 
 import { prisma } from '@/lib/prisma';
-import { sendNotificationEmail } from '@/lib/email';
+import { sendNotificationEmail, sendAuthVerificationEmail } from '@/lib/email';
 import { POST } from '@/app/api/auth/signup/route';
 
 // ---------------------------------------------------------------------------
@@ -93,6 +94,9 @@ const mockPendingInvitation = () =>
 
 const mockSendNotificationEmail = () =>
   vi.mocked(sendNotificationEmail);
+
+const mockSendAuthVerificationEmail = () =>
+  vi.mocked(sendAuthVerificationEmail);
 
 // ---------------------------------------------------------------------------
 // Test data helpers
@@ -138,6 +142,8 @@ describe('POST /api/auth/signup', () => {
     });
     // Default: sendNotificationEmail returns success
     mockSendNotificationEmail().mockResolvedValueOnce({ success: true, messageId: 'msg-id-001' });
+    // Default: sendAuthVerificationEmail returns success
+    mockSendAuthVerificationEmail().mockResolvedValueOnce({ success: true, messageId: 'msg-id-002' });
   });
 
   // -------------------------------------------------------------------------
@@ -256,18 +262,18 @@ describe('POST /api/auth/signup', () => {
   });
 
   // -------------------------------------------------------------------------
-  // 9. Success → sendNotificationEmail called (fire-and-forget)
+  // 9. Success → sendAuthVerificationEmail called (fire-and-forget)
   // -------------------------------------------------------------------------
-  it('calls sendNotificationEmail after a successful signup', async () => {
+  it('calls sendAuthVerificationEmail after a successful signup', async () => {
     mockUser().findUnique.mockResolvedValueOnce(null);
     mockUser().create.mockResolvedValueOnce(CREATED_USER);
 
     await POST(makeRequest(VALID_BODY));
 
-    expect(mockSendNotificationEmail()).toHaveBeenCalledOnce();
-    const callArg = mockSendNotificationEmail().mock.calls[0][0] as { to: string; subject: string };
+    expect(mockSendAuthVerificationEmail()).toHaveBeenCalledOnce();
+    const callArg = mockSendAuthVerificationEmail().mock.calls[0][0] as { to: string; verifyUrl: string };
     expect(callArg.to).toBe(VALID_BODY.email);
-    expect(callArg.subject).toMatch(/verify/i);
+    expect(callArg.verifyUrl).toMatch(/verify-email/i);
   });
 
   // -------------------------------------------------------------------------
@@ -312,10 +318,10 @@ describe('POST /api/auth/signup', () => {
   });
 
   // -------------------------------------------------------------------------
-  // 13. sendNotificationEmail failure does NOT affect signup success
+  // 13. sendAuthVerificationEmail failure does NOT affect signup success
   // -------------------------------------------------------------------------
-  it('returns 200 even when sendNotificationEmail fails (fire-and-forget)', async () => {
-    // Override default sendNotificationEmail mock to simulate failure
+  it('returns 200 even when sendAuthVerificationEmail fails (fire-and-forget)', async () => {
+    // Override default sendAuthVerificationEmail mock to simulate failure
     vi.clearAllMocks();
     mockPendingInvitation().findMany.mockResolvedValueOnce([]);
     mockVerificationToken().create.mockResolvedValueOnce({
@@ -323,7 +329,7 @@ describe('POST /api/auth/signup', () => {
       token: 'some-token',
       expires: new Date(Date.now() + 86400000),
     });
-    mockSendNotificationEmail().mockResolvedValueOnce({ success: false, error: 'Resend unavailable' });
+    mockSendAuthVerificationEmail().mockResolvedValueOnce({ success: false, error: 'Resend unavailable' });
 
     mockUser().findUnique.mockResolvedValueOnce(null);
     mockUser().create.mockResolvedValueOnce(CREATED_USER);

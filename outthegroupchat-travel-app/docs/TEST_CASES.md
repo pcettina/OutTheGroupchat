@@ -8,7 +8,7 @@ This document outlines the test cases needed to validate the OutTheGroupchat pla
 
 ## Testing Stack
 
-> **Status (2026-03-24):** Vitest and Playwright are already installed and configured. 865+ tests passing across 45 test files.
+> **Status (2026-04-22):** Vitest and Playwright are installed and configured. **1048 tests passing across 56 test files.** +183 tests since 2026-03-24 (Crew, Meetup, Check-in, Notification, and Feed phases).
 
 ```bash
 # Install testing dependencies (already in package.json — run npm install)
@@ -904,7 +904,7 @@ jobs:
 
 | Category | Target | Current |
 |----------|--------|---------|
-| Unit Tests | 80% | 865+ passing (45 test files) |
+| Unit Tests | 80% | 1048 passing (56 test files) |
 | Integration Tests | 70% | Included in Vitest suite |
 | E2E Tests | Critical paths | e2e/auth-flow.spec.ts (requires `npx playwright install chromium`) |
 
@@ -932,5 +932,175 @@ jobs:
 
 ---
 
-*Last Updated: 2026-03-24*
+## Phase 3–6 Test Patterns (2026-04-22)
+
+These patterns document conventions established during the social-pivot phases (Crew, Meetup, Check-in, Notifications/Feed rescope). Use them as templates when adding new tests.
+
+### Crew Request / Accept / Decline
+
+```typescript
+// Pattern: test the full request lifecycle
+describe('POST /api/crew/request', () => {
+  it('creates a pending crew request', async () => {
+    vi.mocked(prisma.crewRequest.findFirst).mockResolvedValueOnce(null); // no duplicate
+    vi.mocked(prisma.crewRequest.create).mockResolvedValueOnce(mockCrewRequest);
+
+    const req = new NextRequest('http://localhost/api/crew/request', {
+      method: 'POST',
+      body: JSON.stringify({ recipientId: 'user-2' }),
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(201);
+  });
+
+  it('returns 409 for duplicate pending request', async () => {
+    vi.mocked(prisma.crewRequest.findFirst).mockResolvedValueOnce(mockCrewRequest);
+    // ...
+    expect(res.status).toBe(409);
+  });
+});
+
+describe('PATCH /api/crew/[requestId]', () => {
+  it('accepts a crew request and creates bidirectional crew entries', async () => {
+    vi.mocked(prisma.crewRequest.findUnique).mockResolvedValueOnce(mockPendingRequest);
+    vi.mocked(prisma.$transaction).mockResolvedValueOnce([mockCrew1, mockCrew2]);
+    // ...
+    expect(res.status).toBe(200);
+  });
+});
+```
+
+### Meetup RSVP
+
+```typescript
+// Pattern: RSVP state machine (GOING | MAYBE | NOT_GOING)
+describe('POST /api/meetups/[id]/rsvp', () => {
+  it('upserts RSVP status', async () => {
+    vi.mocked(prisma.meetup.findUnique).mockResolvedValueOnce(mockMeetup);
+    vi.mocked(prisma.meetupRSVP.upsert).mockResolvedValueOnce({
+      ...mockRSVP,
+      status: 'GOING',
+    });
+
+    const req = new NextRequest(`http://localhost/api/meetups/${mockMeetup.id}/rsvp`, {
+      method: 'POST',
+      body: JSON.stringify({ status: 'GOING' }),
+    });
+    const res = await POST(req, { params: { id: mockMeetup.id } });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.rsvp.status).toBe('GOING');
+  });
+
+  it('returns 404 when meetup does not exist', async () => {
+    vi.mocked(prisma.meetup.findUnique).mockResolvedValueOnce(null);
+    expect(res.status).toBe(404);
+  });
+});
+```
+
+### Check-in with activeUntil Clamping
+
+```typescript
+// Pattern: verify server-side clamping of activeUntil
+describe('POST /api/checkins', () => {
+  it('defaults activeUntil to now + 6 hours when not provided', async () => {
+    vi.mocked(prisma.checkIn.create).mockResolvedValueOnce(mockCheckIn);
+    const req = new NextRequest('http://localhost/api/checkins', {
+      method: 'POST',
+      body: JSON.stringify({ city: 'Brooklyn', visibility: 'CREW' }),
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(201);
+    // activeUntil is set by server — verify it is within [now+30m, now+12h]
+    const body = await res.json();
+    const activeUntil = new Date(body.checkIn.activeUntil).getTime();
+    const now = Date.now();
+    expect(activeUntil).toBeGreaterThanOrEqual(now + 30 * 60 * 1000 - 1000);
+    expect(activeUntil).toBeLessThanOrEqual(now + 12 * 60 * 60 * 1000 + 1000);
+  });
+
+  it('clamps overridden activeUntil to 12h max', async () => {
+    // supply a value 48 hours out — server must clamp to 12h
+  });
+});
+
+describe('GET /api/checkins/feed', () => {
+  it('filters out expired check-ins (activeUntil <= now)', async () => {
+    // mock returns only records with activeUntil in the future
+    vi.mocked(prisma.checkIn.findMany).mockResolvedValueOnce([activeCheckIn]);
+    // ...
+    expect(body.checkIns).toHaveLength(1);
+  });
+});
+```
+
+### AI Route Mocking (streamText / generateText)
+
+```typescript
+// Pattern: mock Vercel AI SDK for ai/chat and ai/recommend routes
+vi.mock('ai', () => ({
+  streamText: vi.fn().mockReturnValue({
+    toDataStreamResponse: vi.fn().mockReturnValue(
+      new Response('data: [DONE]\n\n', {
+        headers: { 'Content-Type': 'text/event-stream' },
+      })
+    ),
+  }),
+  generateText: vi.fn().mockResolvedValue({
+    text: 'Mock AI response',
+    usage: { promptTokens: 10, completionTokens: 20 },
+  }),
+}));
+
+// Reset between tests — factory-level mocks persist across resetAllMocks
+beforeEach(() => {
+  vi.mocked(streamText).mockReturnValue({ ... });
+});
+```
+
+### Notification Dispatch
+
+```typescript
+// Pattern: verify bulk notification creation after crew events
+describe('Crew check-in notification dispatch', () => {
+  it('bulk-creates CREW_CHECKED_IN_NEARBY for all accepted crew members', async () => {
+    vi.mocked(prisma.crew.findMany).mockResolvedValueOnce(mockCrewMembers);
+    vi.mocked(prisma.notification.createMany).mockResolvedValueOnce({ count: 3 });
+
+    const res = await POST(req);
+    expect(res.status).toBe(201);
+    expect(prisma.notification.createMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.arrayContaining([
+          expect.objectContaining({ type: 'CREW_CHECKED_IN_NEARBY' }),
+        ]),
+      })
+    );
+  });
+
+  it('does not fail check-in if notification dispatch throws', async () => {
+    vi.mocked(prisma.notification.createMany).mockRejectedValueOnce(new Error('DB error'));
+    // check-in should still return 201 — notifications are fire-and-forget
+    expect(res.status).toBe(201);
+  });
+});
+```
+
+---
+
+## Archived / Superseded Patterns
+
+The following patterns applied to trip routes that have been moved to `src/_archive/` as part of the Phase 1 pivot (2026-04-14). They are retained here for historical reference only. Do not write new tests against these patterns.
+
+- **Trip CRUD integration tests** (`/api/trips`, `/api/trips/[tripId]`) — routes archived; DB models deprecated
+- **Survey submission tests** (`/api/trips/[tripId]/survey`) — archived with trip routes
+- **Voting tests** (`/api/trips/[tripId]/voting`) — archived with trip routes
+- **Itinerary generation tests** (`/api/trips/[tripId]/itinerary`) — archived with trip routes
+- **TripCard component tests** — component removed during Phase 1 cleanup
+- **QuestionRenderer component tests** — survey components archived
+
+---
+
+*Last Updated: 2026-04-22*
 

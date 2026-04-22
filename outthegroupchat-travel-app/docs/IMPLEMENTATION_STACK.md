@@ -2,9 +2,9 @@
 
 ## Overview
 
-OutTheGroupchat is a full-stack group travel planning application built with modern web technologies, AI integration, and real-time collaboration features.
+OutTheGroupchat is a full-stack **meetup-centric social network** built with modern web technologies, real-time infrastructure, and AI-powered recommendations. The platform connects friend crews for real-world hangouts — spontaneous check-ins, planned meetups, and social discovery.
 
-*Last Updated: 2026-03-25*
+*Last Updated: 2026-04-22*
 
 ---
 
@@ -29,10 +29,10 @@ OutTheGroupchat is a full-stack group travel planning application built with mod
 |                              API LAYER                                       |
 |  +-----------------------------------------------------------------------+  |
 |  |                  Next.js API Routes (App Router)                       |  |
-|  |  /api/trips    /api/ai    /api/notifications    /api/discover          |  |
-|  |  /api/feed     /api/users /api/search           /api/geocoding         |  |
-|  |  /api/auth     /api/beta  /api/inspiration      /api/images            |  |
-|  |  /api/cron     /api/pusher/auth                                        |  |
+|  |  /api/meetups   /api/checkins  /api/crew        /api/notifications     |  |
+|  |  /api/feed      /api/users     /api/search      /api/venues            |  |
+|  |  /api/auth      /api/beta      /api/ai          /api/cron              |  |
+|  |  /api/pusher/auth              /api/geocoding   /api/images            |  |
 |  +-----------------------------------------------------------------------+  |
 |                                                                              |
 |  +-------------+  +-------------+  +-------------+  +-------------+         |
@@ -50,8 +50,8 @@ OutTheGroupchat is a full-stack group travel planning application built with mod
 +-----------------------------------------------------------------------------+
 |                            SERVICE LAYER                                     |
 |  +---------------+  +---------------+  +---------------+                    |
-|  |    Survey     |  | Recommendation|  |    Events     |                    |
-|  |   Service     |  |    Service    |  |   Service     |                    |
+|  | Recommendation|  |    Events     |  |   Email       |                    |
+|  |    Service    |  |   Service     |  |   Meetup/Crew |                    |
 |  +---------------+  +---------------+  +---------------+                    |
 |                                                                              |
 |  +-----------------------------------------------------------------------+  |
@@ -68,9 +68,9 @@ OutTheGroupchat is a full-stack group travel planning application built with mod
 +-----------------------------------------------------------------------------+
 |                            DATA LAYER                                        |
 |  +-----------------------------------------------------------------------+  |
-|  |                   Supabase PostgreSQL Database                         |  |
-|  |  Users | Trips | Activities | Surveys | Votes | Notifications          |  |
-|  |  TripComments | TripLikes | ItineraryDay | ItineraryItem               |  |
+|  |                   Neon PostgreSQL Database                             |  |
+|  |  Users | Crews | Meetups | CheckIns | Notifications | Feed             |  |
+|  |  MeetupRSVP | MeetupInvite | Venue | ActivityComment                  |  |
 |  |  VerificationToken | PendingInvitation                                 |  |
 |  +-----------------------------------------------------------------------+  |
 |                                                                              |
@@ -84,9 +84,10 @@ OutTheGroupchat is a full-stack group travel planning application built with mod
 +-----------------------------------------------------------------------------+
 |                         EXTERNAL SERVICES                                    |
 |  +-------------+  +-------------+  +-------------+  +-------------+         |
-|  |   Amadeus   |  |Ticketmaster |  |   Google    |  |  Eventbrite |         |
-|  |   Flights   |  |   Events    |  |   Places    |  |   Events    |         |
-|  | [key needed]|  | [key needed]|  | [key needed]|  |             |         |
+|  |   Google    |  |  Ticketmaster|  |   Pusher    |  |  Upstash   |         |
+|  |   Places    |  |   Events    |  |  Real-time  |  |   Redis    |         |
+|  | [configured]|  | [key needed]|  | [env vars   |  |  [active]  |         |
+|  |             |  |             |  |  missing]   |  |            |         |
 |  +-------------+  +-------------+  +-------------+  +-------------+         |
 +-----------------------------------------------------------------------------+
 ```
@@ -114,13 +115,13 @@ OutTheGroupchat is a full-stack group travel planning application built with mod
 
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| **Next.js API Routes** | 14.1.3 | REST API (48 endpoints as of 2026-03-24) |
+| **Next.js API Routes** | 14.1.3 | REST API (52 endpoints as of 2026-04-22) |
 | **Prisma** | 5.22.0 | Database ORM |
-| **PostgreSQL** | 15+ | Relational database via Supabase |
+| **PostgreSQL** | 15+ | Relational database via Neon (migrated from Supabase 2026-04-17) |
 | **NextAuth.js** | 4.24.7 | Authentication (credentials provider) |
 | **bcryptjs** | 3.0.2 | Password hashing |
 | **pino** | 10.1.0 | Structured logging (replaces console.*) |
-| **Resend** | 6.6.0 | Transactional email (verification, invitations) |
+| **Resend** | 6.6.0 | Transactional email (verification, meetup invites, crew emails) |
 | **isomorphic-dompurify** | 2.34.0 | XSS sanitization |
 
 ### Rate Limiting & Caching
@@ -128,7 +129,7 @@ OutTheGroupchat is a full-stack group travel planning application built with mod
 | Technology | Version | Purpose |
 |------------|---------|---------|
 | **@upstash/ratelimit** | 2.0.7 | Redis-based rate limiting |
-| **@upstash/redis** | 1.35.8 | Redis client |
+| **@upstash/redis** | 1.35.8 | Redis client (rate limiting + beta status) |
 
 ### AI & ML
 
@@ -148,7 +149,7 @@ OutTheGroupchat is a full-stack group travel planning application built with mod
 | **Pusher** | 5.2.0 | Server-side WebSocket |
 | **Pusher-js** | 8.4.0 | Client-side WebSocket |
 
-> Note: Pusher is configured but environment variables are missing in Vercel production as of 2026-03-25.
+> Note: Pusher powers meetup real-time updates and city-channel check-in broadcasts. Environment variables are missing in Vercel production as of 2026-04-22.
 
 ### Monitoring & Observability
 
@@ -164,22 +165,30 @@ OutTheGroupchat is a full-stack group travel planning application built with mod
 | **Vitest** | 4.0.18 | Unit/integration test runner |
 | **@playwright/test** | 1.48.0 | E2E testing (browsers need install) |
 
-> As of 2026-03-25: 925+ Vitest tests across 49 test files, 0 failures. Playwright spec exists; browsers need `npx playwright install chromium`.
+> As of 2026-04-22: 1048 Vitest tests across 55+ test files, 0 failures. Playwright spec exists; browsers need `npx playwright install chromium`.
+
+### Database Hosting
+
+| Technology | Purpose | Status |
+|-----------|---------|--------|
+| **Neon PostgreSQL** | Primary database (branch-per-PR workflow) | Active — migrated from Supabase 2026-04-17 |
+
+> Branch-per-PR workflow: every PR automatically gets a Neon branch with `prisma migrate deploy` applied and a schema-diff comment posted.
 
 ### External APIs
 
 | Service | Purpose | Status |
 |---------|---------|--------|
-| **Amadeus** | Flight search | API key not set |
+| **Google Places** | Venue search for meetups | Configured |
 | **Ticketmaster** | Event discovery | API key not set |
-| **Eventbrite** | Event discovery | Not yet integrated |
-| **Google Places** | Location and venue data | API key not set |
+| **Resend** | Transactional email | Active (domain verification pending) |
+| **Upstash Redis** | Rate limiting + beta status | Active |
 
 ---
 
 ## Database Schema
 
-### Core Models (Actual, as of 2026-03-25)
+### Core Models (as of 2026-04-22)
 
 ```prisma
 model User {
@@ -197,113 +206,134 @@ model User {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
-  ownedTrips      Trip[]    @relation("owner")
-  tripMemberships TripMember[]
-  followers       Follow[]  @relation("followers")
-  following       Follow[]  @relation("following")
+  crewsInitiated  Crew[]    @relation("initiator")
+  crewsReceived   Crew[]    @relation("recipient")
   notifications   Notification[]
-  surveyResponses SurveyResponse[]
-  votes           Vote[]
-  savedActivities SavedActivity[]
+  meetupsOrganized Meetup[] @relation("organizer")
+  meetupRSVPs     MeetupRSVP[]
+  meetupInvites   MeetupInvite[]
+  checkIns        CheckIn[]
   activityComments ActivityComment[]
-  activityRatings  ActivityRating[]
-  tripComments    TripComment[]
-  tripLikes       TripLike[]
 }
 
-model Trip {
+model Crew {
   id          String     @id @default(cuid())
-  title       String
-  description String?
-  destination Json       // { city, country, coordinates }
-  startDate   DateTime
-  endDate     DateTime
-  status      TripStatus @default(PLANNING)
-  budget      Json?      // { total, currency, breakdown }
-  isPublic    Boolean    @default(false)
+  initiatorId String
+  recipientId String
+  status      CrewStatus @default(PENDING)
+  label       String?
+  activeUntil DateTime?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
-  ownerId     String
-  owner       User       @relation("owner", fields: [ownerId], references: [id])
+  initiator   User       @relation("initiator", fields: [initiatorId], references: [id])
+  recipient   User       @relation("recipient", fields: [recipientId], references: [id])
+}
 
-  members     TripMember[]
-  invitations TripInvitation[]
-  survey      TripSurvey?
-  activities  Activity[]
-  itinerary   ItineraryDay[]
-  votingSessions VotingSession[]
-  comments    TripComment[]
-  likes       TripLike[]
+model Meetup {
+  id          String       @id @default(cuid())
+  title       String
+  description String?
+  venue       Json?        // Google Places venue data
+  scheduledAt DateTime
+  status      MeetupStatus @default(UPCOMING)
+  isPublic    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  organizerId String
+  organizer   User         @relation("organizer", fields: [organizerId], references: [id])
+  rsvps       MeetupRSVP[]
+  invites     MeetupInvite[]
+}
+
+model CheckIn {
+  id          String            @id @default(cuid())
+  userId      String
+  venue       Json?
+  note        String?
+  visibility  CheckInVisibility @default(PUBLIC)
+  activeUntil DateTime
+  createdAt   DateTime          @default(now())
+
+  user        User              @relation(fields: [userId], references: [id])
 }
 ```
 
-### Additional Models Added Since Initial Setup
-
-- `TripComment` — trip-level comments
-- `TripLike` — trip-level likes/reactions
-- `ItineraryDay` / `ItineraryItem` — structured itinerary (GET/PUT with $transaction atomicity)
-- `VerificationToken` — email verification on signup
-- `PendingInvitation` — prevents placeholder user creation abuse
-
-### Enums
+### Key Enums
 
 ```prisma
-enum TripStatus {
-  PLANNING | SURVEYING | VOTING | BOOKED | IN_PROGRESS | COMPLETED | CANCELLED
+enum CrewStatus {
+  PENDING | ACCEPTED | REJECTED | BLOCKED
 }
 
-enum MemberRole {
-  OWNER | ADMIN | MEMBER
+enum MeetupStatus {
+  UPCOMING | STARTING_SOON | IN_PROGRESS | COMPLETED | CANCELLED
 }
 
-enum ActivityStatus {
-  SUGGESTED | APPROVED | REJECTED | COMPLETED
+enum CheckInVisibility {
+  PUBLIC | CREW | PRIVATE
 }
 
-enum PriceRange {
-  BUDGET | MODERATE | EXPENSIVE | LUXURY
+enum NotificationType {
+  CREW_REQUEST | CREW_ACCEPTED | MEETUP_INVITE | MEETUP_RSVP
+  MEETUP_STARTING_SOON | MEETUP_CANCELLED | CREW_CHECKED_IN_NEARBY
+  COMMENT_ON_POST
 }
 ```
+
+### Deprecated / Archived
+
+The following models were archived when the product pivoted away from trip planning (2026-04-17):
+- `Trip`, `TripMember`, `TripInvitation`, `TripSurvey`, `VotingSession`, `Vote`, `Activity`, `ItineraryDay`, `ItineraryItem`, `TripComment`, `TripLike`, `SavedActivity`, `ActivityRating`
+- Source moved to `src/_archive/`
 
 ---
 
-## API Endpoints (48 total as of 2026-03-24)
+## API Endpoints (52 total as of 2026-04-22)
 
-### Trips
+### Meetups
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/trips` | List user's trips |
-| POST | `/api/trips` | Create new trip |
-| GET | `/api/trips/[tripId]` | Get trip details |
-| PATCH | `/api/trips/[tripId]` | Update trip |
-| DELETE | `/api/trips/[tripId]` | Delete trip |
-| GET/PUT | `/api/trips/[tripId]/itinerary` | Itinerary management (atomic PUT) |
-| POST | `/api/trips/[tripId]/itinerary` | Add itinerary day |
-| GET/POST | `/api/trips/[tripId]/survey` | Survey management |
-| GET/POST/PUT | `/api/trips/[tripId]/voting` | Voting sessions |
-| GET/POST | `/api/trips/[tripId]/activities` | Activities |
-| GET/POST/PATCH/DELETE | `/api/trips/[tripId]/members` | Members |
-| GET/POST | `/api/trips/[tripId]/invitations` | Invitations |
-| GET/POST | `/api/trips/[tripId]/recommendations` | AI recommendations |
-| GET | `/api/trips/[tripId]/suggestions` | Activity suggestions (external APIs) |
-| GET | `/api/trips/[tripId]/flights` | Flight data (Amadeus) |
+| GET/POST | `/api/meetups` | List / create meetups |
+| GET/PATCH/DELETE | `/api/meetups/[id]` | Meetup detail, update, delete |
+| POST | `/api/meetups/[id]/rsvp` | RSVP to a meetup |
+| POST | `/api/meetups/[id]/invite` | Invite crew to meetup |
+| GET | `/api/venues/search` | Google Places venue search |
+
+### Check-ins
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST/GET | `/api/checkins` | Create check-in / get own check-ins |
+| DELETE | `/api/checkins/[id]` | Delete own check-in |
+| GET | `/api/checkins/feed` | Active crew check-in feed (city-filtered) |
+
+### Crew
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET/POST | `/api/crew` | List crew / send crew request |
+| GET/PATCH/DELETE | `/api/crew/[id]` | Crew detail, accept/reject, remove |
+| GET | `/api/crew/[id]/members` | Crew members list |
+| POST | `/api/crew/[id]/label` | Set crew label |
 
 ### AI
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/ai/generate-itinerary` | Generate AI itinerary (503 if no key) |
+| POST | `/api/ai/generate-itinerary` | Generate AI suggestion (503 if no key) |
 | POST | `/api/ai/suggest-activities` | Get activity suggestions (503 if no key) |
-| POST | `/api/ai/chat` | Chat with trip assistant (streaming) |
+| POST | `/api/ai/chat` | Chat with assistant (streaming) |
 | GET/POST | `/api/ai/search` | Semantic search |
+| POST | `/api/ai/recommend` | AI recommendations |
 
 ### Auth
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/auth/signup` | User registration + email verification send |
+| POST | `/api/auth/signup` | User registration + email verification |
 | GET | `/api/auth/verify-email` | Email token verification |
 | POST | `/api/auth/reset-password` | Initiate password reset |
 | PATCH | `/api/auth/reset-password` | Confirm password reset |
@@ -317,121 +347,122 @@ enum PriceRange {
 | GET/PATCH | `/api/users/[userId]` | User profile |
 | GET | `/api/notifications` | User notifications (paginated) |
 | PATCH | `/api/notifications/[id]` | Mark as read |
-| GET | `/api/feed` | Activity feed |
+| GET | `/api/feed` | Activity feed (Meetups / Check-ins / Crews tabs) |
 | GET/POST | `/api/feed/comments` | Feed comments |
 | POST | `/api/feed/engagement` | Likes/reactions |
-| POST | `/api/feed/share` | Share a trip to feed |
-| GET | `/api/search` | Global search (email excluded for privacy) |
+| POST | `/api/feed/share` | Share to feed |
+| GET | `/api/search` | Global search |
 
 ### Discovery
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET/POST | `/api/discover` | Discovery browsing (auth required) |
-| GET | `/api/discover/search` | Destination search (auth required, 2026-03-24) |
-| GET | `/api/discover/recommendations` | AI recommendations (auth required, 2026-03-24) |
-| POST | `/api/discover/import` | Import trip template (rate limited + auth) |
+| GET/POST | `/api/discover` | Discovery browsing |
+| GET | `/api/discover/search` | Search destinations/venues |
+| GET | `/api/discover/recommendations` | AI recommendations |
+| POST | `/api/discover/import` | Import template (rate limited) |
 
 ### System
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/cron` | Background jobs (CRON_SECRET protected) |
+| GET | `/api/cron/meetup-starting-soon` | MEETUP_STARTING_SOON dispatch cron |
 | POST | `/api/pusher/auth` | Pusher channel authentication |
 | GET | `/api/geocoding` | Nominatim geocoding |
 | GET | `/api/images/search` | Unsplash image search |
-| GET/POST | `/api/inspiration` | Trip inspiration content |
+| GET/POST | `/api/inspiration` | Inspiration content |
 | GET/POST | `/api/beta/signup` | Beta program signup |
-| GET | `/api/beta/status` | Beta status check (narrowed response) |
+| GET | `/api/beta/status` | Beta status check |
 | POST | `/api/beta/initialize-password` | Beta password init (N8N_API_KEY protected) |
+| GET | `/api/health` | Health check |
 
 ---
 
-## File Structure (Actual, 2026-03-25)
+## File Structure (as of 2026-04-22)
 
 ```
 src/
 +-- app/                          # Next.js App Router
-|   +-- api/                      # API Routes (48 endpoints)
+|   +-- api/                      # API Routes (52 endpoints)
 |   |   +-- ai/                   # AI endpoints
 |   |   +-- auth/                 # Auth endpoints (signup, verify-email, reset-password, demo)
 |   |   +-- beta/                 # Beta program endpoints
-|   |   +-- cron/route.ts         # Background jobs
+|   |   +-- checkins/             # Check-in CRUD + feed
+|   |   +-- cron/                 # Background jobs + meetup-starting-soon
+|   |   +-- crew/                 # Crew management
 |   |   +-- discover/             # Discovery (all routes auth-guarded)
 |   |   +-- feed/                 # Feed, comments, engagement, share
 |   |   +-- geocoding/route.ts    # Nominatim geocoding
+|   |   +-- health/route.ts       # Health check
 |   |   +-- images/               # Unsplash image search
 |   |   +-- inspiration/          # Inspiration content
-|   |   +-- invitations/          # Invitation management
+|   |   +-- meetups/              # Meetup CRUD, RSVP, invites
 |   |   +-- notifications/        # Notifications
 |   |   +-- pusher/auth/route.ts  # Pusher auth
 |   |   +-- search/route.ts       # Global search
-|   |   +-- trips/                # Trip management (all sub-routes)
 |   |   +-- users/                # User profiles
+|   |   +-- venues/               # Google Places venue search
 |   +-- auth/                     # Auth UI pages
-|   |   +-- reset-password/       # Password reset pages
-|   +-- discover/page.tsx
-|   +-- feed/page.tsx
-|   +-- trips/
-|   |   +-- page.tsx
-|   |   +-- new/page.tsx
-|   |   +-- [tripId]/
-|   |       +-- page.tsx
-|   |       +-- survey/page.tsx
-|   |       +-- vote/page.tsx
+|   +-- checkins/page.tsx         # "Who's Out Tonight?" check-in page
+|   +-- crew/                     # Crew pages
+|   +-- feed/page.tsx             # Social feed (Meetups / Check-ins / Crews)
+|   +-- meetups/                  # Meetup list + detail pages
+|   +-- privacy/page.tsx          # Privacy settings
+|   +-- profile/[userId]/page.tsx # Public user profile
 |   +-- layout.tsx
 |   +-- page.tsx
-|   +-- not-found.tsx             # Custom 404 page
-|   +-- error.tsx                 # Custom error page
-|   +-- global-error.tsx          # Global error boundary
+|   +-- not-found.tsx
+|   +-- error.tsx
+|   +-- global-error.tsx
+|
++-- _archive/                     # Archived trip-planning code (Phase 1 pivot)
 |
 +-- components/
 |   +-- ui/                       # Base components (Button, Card, Input)
-|   +-- trips/                    # TripCard, TripList, InviteMemberModal
-|   +-- surveys/                  # QuestionRenderer
-|   +-- voting/                   # VotingCard, ResultsChart
+|   +-- checkins/                 # CheckInButton, LiveActivityCard, NearbyCrewList
+|   +-- meetups/                  # MeetupCard, MeetupList, CreateMeetupModal, RSVPButton, VenuePicker
 |   +-- social/                   # ActivityCard
 |   +-- profile/                  # ProfileStatsTab
 |   +-- Navigation.tsx
 |
 +-- hooks/
-|   +-- useTrips.ts
 |   +-- usePusher.ts
 |
 +-- lib/
 |   +-- ai/                       # AI client, embeddings, prompts
-|   +-- api/                      # External API integrations (flights, places, ticketmaster, unsplash)
-|   +-- utils/                    # costs.ts, other utilities
+|   +-- api/                      # External API integrations (places, ticketmaster, unsplash)
 |   +-- prisma.ts
-|   +-- pusher.ts
+|   +-- pusher.ts                 # Pusher server + triggerCheckinEvent + getCityCheckinChannel
 |   +-- auth.ts
-|   +-- email.ts                  # Resend email service
-|   +-- geocoding.ts              # Nominatim geocoding
+|   +-- email.ts                  # Resend email service (re-exports meetup + crew functions)
+|   +-- email-meetup.ts           # Meetup-specific email functions
+|   +-- email-crew.ts             # Crew-specific email functions
+|   +-- geocoding.ts
 |   +-- logger.ts                 # pino structured logging
 |   +-- rate-limit.ts             # Upstash Redis rate limiting
 |   +-- sanitize.ts               # DOMPurify wrapper
+|   +-- sentry.ts                 # Sentry wrapper exports
 |   +-- api-config.ts
 |   +-- api-middleware.ts
 |   +-- providers.tsx
 |
 +-- services/
-|   +-- survey.service.ts
-|   +-- recommendation.service.ts (407 lines, split from 568)
+|   +-- recommendation.service.ts
 |   +-- recommendation-data.ts
 |   +-- events.service.ts
 |
-+-- styles/
-|   +-- globals.css
-|
 +-- types/
-|   +-- index.ts
+|   +-- index.ts                  # Core types (264 lines — trimmed from 450, 19 dead trip types removed)
+|   +-- checkin.ts                # CheckInResponse, CheckInFeedItem, CheckInVisibility
+|   +-- meetup.ts                 # MeetupResponse, MeetupListItem, AttendeeResponse
 |
 +-- __tests__/
 |   +-- setup.ts                  # Prisma mocks for all models
-    (49 test files, 925+ tests as of 2026-03-24)
+    (55+ test files, 1048 tests as of 2026-04-22)
 
 e2e/
-+-- auth-flow.spec.ts             # Playwright E2E (browsers need install)
++-- auth-flow.spec.ts
 +-- smoke.spec.ts
 ```
 
@@ -440,7 +471,7 @@ e2e/
 ## Environment Variables
 
 ```bash
-# Database
+# Database (Neon PostgreSQL — migrated from Supabase 2026-04-17)
 DATABASE_URL="postgresql://..."
 
 # Auth
@@ -469,14 +500,11 @@ UPSTASH_REDIS_REST_TOKEN=""       # Set
 # Monitoring
 SENTRY_DSN=""                     # Installed; MISSING real DSN in Vercel
 
-# External APIs (all missing in production)
-AMADEUS_API_KEY=""
-AMADEUS_API_SECRET=""
-TICKETMASTER_API_KEY=""
-EVENTBRITE_API_KEY=""
-GOOGLE_PLACES_API_KEY=""
-GOOGLE_CLIENT_ID=""
-GOOGLE_CLIENT_SECRET=""
+# External APIs
+GOOGLE_PLACES_API_KEY=""          # Set (venue search for meetups)
+TICKETMASTER_API_KEY=""           # Not set
+GOOGLE_CLIENT_ID=""               # OAuth (not yet configured)
+GOOGLE_CLIENT_SECRET=""           # OAuth (not yet configured)
 
 # Cron
 CRON_SECRET=""
@@ -499,7 +527,8 @@ LOG_LEVEL=""                      # pino log level (info, debug, warn, error)
 {
   "framework": "nextjs",
   "crons": [
-    { "path": "/api/cron", "schedule": "0 0 * * *" }
+    { "path": "/api/cron", "schedule": "0 0 * * *" },
+    { "path": "/api/cron/meetup-starting-soon", "schedule": "*/15 * * * *" }
   ],
   "functions": {
     "app/api/ai/**/*.ts": { "maxDuration": 60 },
@@ -511,12 +540,14 @@ LOG_LEVEL=""                      # pino log level (info, debug, warn, error)
 ### Build Commands
 
 ```bash
+npm run dev          # Start dev server
 npm run build        # prisma generate + next build
 npm run db:push      # Push schema to database
 npm run db:migrate   # Create migrations
 npm run db:generate  # Regenerate Prisma client
-npm run test         # Run Vitest test suite (925+ tests)
+npm run test         # Run Vitest test suite (1048 tests)
 npm run test:e2e     # Run Playwright E2E (requires browser install)
+npm run lint         # ESLint
 ```
 
 ---
@@ -524,11 +555,11 @@ npm run test:e2e     # Run Playwright E2E (requires browser install)
 ## Security Measures (Current)
 
 1. **Authentication**: NextAuth.js with session-based auth, bcrypt password hashing
-2. **Authorization**: Role-based access control (OWNER, ADMIN, MEMBER) + auth guards on all protected routes
-3. **Input Validation**: Zod schemas on all major API endpoints
+2. **Authorization**: Role-based guards + `getServerSession()` auth check on all protected routes
+3. **Input Validation**: Zod schemas on all API endpoints
 4. **Rate Limiting**: Upstash Redis-based rate limiting on all high-risk routes
-5. **CORS**: Configured in vercel.json and next.config.js (2026-03-23)
-6. **Security Headers**: HSTS, X-Frame-Options, Content-Security-Policy (2026-03-10)
+5. **CORS**: Configured in vercel.json and next.config.js
+6. **Security Headers**: HSTS, X-Frame-Options, Content-Security-Policy
 7. **Logging**: pino structured logging (0 `console.*` in production code)
 8. **Type Safety**: TypeScript strict mode, 0 `any` types
 9. **XSS**: React + isomorphic-dompurify
@@ -536,7 +567,7 @@ npm run test:e2e     # Run Playwright E2E (requires browser install)
 
 ---
 
-## Code Quality Metrics (2026-03-25)
+## Code Quality Metrics (2026-04-22)
 
 | Metric | Target | Current |
 |--------|--------|---------|
@@ -544,11 +575,10 @@ npm run test:e2e     # Run Playwright E2E (requires browser install)
 | `console.*` in prod | 0 | 0 |
 | Files > 600 lines (prod) | 0 | 0 |
 | TSC errors | 0 | 0 |
-| Test count | 500+ | 925+ |
-| Test files | - | 49 |
-| API routes | - | 48 |
-| TypeScript files | - | 253 |
 | Lint warnings/errors | 0 | 0 |
+| Test count | 500+ | 1048 |
+| Test files | - | 55+ |
+| API routes | - | 52 |
 
 ---
 
@@ -556,12 +586,13 @@ npm run test:e2e     # Run Playwright E2E (requires browser install)
 
 1. **React Query Caching**: 60-second stale time, optimistic updates
 2. **API Route Streaming**: AI chat uses Vercel AI SDK streaming responses
-3. **Database Indexing**: Prisma auto-indexes on relations
-4. **Image Optimization**: Next.js `<Image>` component (0 raw `<img>` tags)
+3. **Database Indexing**: Prisma auto-indexes on relations; Neon connection pooling active
+4. **Image Optimization**: Next.js `<Image>` component
 5. **Code Splitting**: App Router automatic per-route splitting
 6. **Edge Caching**: Vercel edge network
 7. **Structured Logging**: pino for low-overhead production logging
+8. **City-channel Pusher**: Check-in broadcasts scoped to city channels to limit fan-out
 
 ---
 
-*Last Updated: 2026-03-25*
+*Last Updated: 2026-04-22*

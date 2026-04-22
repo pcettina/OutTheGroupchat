@@ -1,6 +1,6 @@
 # OutTheGroupchat — Scope Pivot & Refactor Plan
 
-> **Status:** Active — Phase 5 COMPLETE (2026-04-20, PR #53); Phase 6 ✅ COMPLETE (2026-04-22, PR #55): all 4 actions done — feed rescoped, AI routes added, notification types migrated, search people-first. Phase 7 (Marketing surface) is next.
+> **Status:** Active — Phase 5 COMPLETE (2026-04-20, PR #53); Phase 6 ✅ COMPLETE (2026-04-22, PR #55); Phase 7 ✅ COMPLETE as of 2026-04-22 (nightly/2026-04-23 PR #56) — 6/7 actions done (favicon deferred as optional). Phase 8 (Launch-readiness re-audit) is next.
 > **Created:** 2026-04-16 | **Last updated:** 2026-04-22
 > **Purpose:** Canonical planning doc for the pivot from group-trip-planning app → meetup-focused social network with a persistent `Crew` graph. All future refactor sessions reference this document.
 > **Decision:** Refactor in place (not rebuild). Trip-planning infrastructure is archived but preserved for potential future reactivation.
@@ -392,18 +392,26 @@ Each phase targets a discrete session (or a nightly build if small). Phases are 
 
 ---
 
-### Phase 7 — Marketing & brand surface (1 session)
+### Phase 7 — Marketing & brand surface (1 session) ✅ COMPLETE as of 2026-04-22 (nightly/2026-04-23 PR #56) — 6/7 actions done (favicon deferred as optional)
 **Objective:** External surfaces reflect the new product.
 **Actions:**
-1. New landing page (`src/app/page.tsx` or root route) with tagline and new illustrations
-2. `/about` page explaining the "off your phone" ethos
-3. `metadata.ts` OG tags + Twitter Card updates
-4. README.md full rewrite — new value prop, new feature list
-5. `CLAUDE.md` update — new project scope, remove trip-specific guidance
-6. Email templates (Resend): rewrite signup, verification, reset for new tone
-7. Favicon / logo refresh if desired
+1. ✅ New landing page (`src/app/page.tsx` or root route) with tagline and new illustrations — done in prior PR
+2. ✅ `/about` page explaining the "off your phone" ethos — done tonight (L1)
+3. ✅ `metadata.ts` OG tags + Twitter Card updates — done tonight (L1)
+4. ✅ README.md full rewrite — new value prop, new feature list — done tonight (S7)
+5. ✅ `CLAUDE.md` update — new project scope, remove trip-specific guidance — done tonight (S1)
+6. ✅ Email templates (Resend): rewrite signup, verification, reset for new tone — done tonight (S2, `src/lib/email-auth.ts` created)
+7. Favicon / logo refresh if desired — deferred (optional per plan)
 
 **Exit criteria:** Fresh visitor to the site understands the product as a meetup-centric social network within 10 seconds.
+- Landing page: ✅ updated
+- About page: ✅ created (`/about`)
+- OG tags: ✅ updated (`metadata.ts`)
+- README: ✅ rewritten (meetup-centric value prop)
+- CLAUDE.md: ✅ updated (meetup scope, trip guidance removed)
+- Email templates: ✅ rewritten (`email-auth.ts` — meetup-centric tone)
+- Favicon: deferred but optional
+**Result:** Exit criteria effectively met. All user-facing external surfaces reflect the meetup-centric product.
 
 ---
 
@@ -544,7 +552,7 @@ New `CheckIn.activeUntil DateTime` field with DB default `now() + interval '6 ho
 | S10 | Phase 5 (part A) | Check-in API + privacy | 1 session |
 | S11 | Phase 5 (part B) | Check-in UI + "join me" flow | 1 session |
 | S12 | Phase 6 | Feed + AI + notifications rescope | 1 session |
-| S13 | Phase 7 | Marketing surface + README | 1 session |
+| S13 | ✅ Phase 7 | Marketing surface + README | 1 session — done 2026-04-22 (nightly/2026-04-23) |
 | S14 | Phase 8 | Launch-readiness audit | 1 session |
 
 **Total: ~14 focused sessions** to go from current state to beta-ready under the new vision.

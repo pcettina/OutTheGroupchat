@@ -6,9 +6,20 @@ import { Analytics } from '@vercel/analytics/react';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'OutTheGroupchat - Plan Group Trips Together',
-  description: 'The easiest way to plan trips with friends. Coordinate preferences, vote on activities, and create perfect group travel experiences.',
-  keywords: ['travel', 'group travel', 'trip planning', 'vacation', 'friends'],
+  title: 'OutTheGroupchat — Meet Up IRL',
+  description: 'The social network that wants to get you off your phone. Build your Crew, post a meetup, show up.',
+  keywords: ['meetup', 'social network', 'irl', 'crew', 'friends', 'hang out'],
+  openGraph: {
+    title: 'OutTheGroupchat — Meet Up IRL',
+    description: 'The social network that wants to get you off your phone. Build your Crew, post a meetup, show up.',
+    type: 'website',
+    url: 'https://outthegroupchat.com',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'OutTheGroupchat — Meet Up IRL',
+    description: 'The social network that wants to get you off your phone. Build your Crew, post a meetup, show up.',
+  },
 };
 
 const outfit = Outfit({

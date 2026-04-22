@@ -1,7 +1,9 @@
 # OutTheGroupchat - Project Instructions
 
 ## Project Overview
-Full-stack Next.js travel planning application with real-time collaboration, AI-powered recommendations, and social features. App directory: `outthegroupchat-travel-app/`.
+Full-stack Next.js social network for in-person meetups with real-time collaboration, AI-powered meetup suggestions, and Crew-based social graph. Tagline: "The social media app that wants to get you off your phone." App directory: `outthegroupchat-travel-app/`.
+
+**Pivot status:** Phase 6 COMPLETE (2026-04-22). Trip-planning features archived. Core social primitives: Crews, Meetups, Check-ins, Feed. Phase 7 (marketing surface — landing page, OG tags, README rewrite) is next.
 
 ## Tech Stack
 - **Frontend:** Next.js 14, React 18, TypeScript, Tailwind CSS, Framer Motion
@@ -55,10 +57,10 @@ Runs nightly at 10:00 PM. Uses parallel sub-agents for:
 
 ## Known Issues & Blockers
 - `OPENAI_API_KEY` not set in Vercel production
-- Test coverage at 0% - needs Vitest + Playwright setup
-- No monitoring (Sentry, analytics)
+- Sentry DSN missing in Vercel production
 - Pusher env vars missing in production
 - Email deliverability issues (Resend domain not verified)
+- DEMO_MODE must be set to `true` to enable demo auth flow
 
 ## Key File Paths
 - Prisma schema: `outthegroupchat-travel-app/prisma/schema.prisma`

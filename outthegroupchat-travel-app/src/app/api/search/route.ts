@@ -4,18 +4,17 @@ import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { logError } from '@/lib/logger';
 import { z } from 'zod';
-import type { JsonValue } from '@prisma/client/runtime/library';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
 
 const searchQuerySchema = z.object({
   q: z.string().max(200).default(''),
-  type: z.enum(['all', 'trips', 'activities', 'users', 'meetups', 'venues', 'people']).default('all'),
+  type: z.enum(['all', 'people', 'meetups', 'venues']).default('all'),
   limit: z.coerce.number().int().min(1).max(50).default(10),
 });
 
-// Global search across trips, activities, users, meetups, and venues
+// Global search across people, meetups, and venues (people-first ordering)
 export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -44,34 +43,9 @@ export async function GET(req: Request) {
     if (!query || query.length < 2) {
       return NextResponse.json({
         success: true,
-        data: { trips: [], activities: [], users: [], meetups: [], venues: [] },
+        data: { users: [], meetups: [], venues: [] },
       });
     }
-
-    type TripResult = {
-      id: string;
-      title: string;
-      description: string | null;
-      destination: JsonValue;
-      startDate: Date | null;
-      endDate: Date | null;
-      status: string;
-      isPublic: boolean;
-      owner: { id: string; name: string | null; image: string | null };
-      _count: { members: number };
-    };
-
-    type ActivityResult = {
-      id: string;
-      name: string;
-      description: string | null;
-      category: string;
-      location: JsonValue;
-      cost: number | null;
-      priceRange: string | null;
-      trip: { id: string; title: string; destination: JsonValue };
-      _count: { savedBy: number; ratings: number };
-    };
 
     type UserResult = {
       id: string;
@@ -98,87 +72,14 @@ export async function GET(req: Request) {
     };
 
     const results: {
-      trips?: TripResult[];
-      activities?: ActivityResult[];
       users?: UserResult[];
       meetups?: MeetupResult[];
       venues?: VenueResult[];
     } = {};
 
-    // Search trips
-    if (type === 'all' || type === 'trips') {
-      const trips = await prisma.trip.findMany({
-        where: {
-          OR: [
-            { title: { contains: query, mode: 'insensitive' } },
-            { description: { contains: query, mode: 'insensitive' } },
-          ],
-          AND: {
-            OR: [
-              { isPublic: true },
-              { ownerId: session.user.id },
-              { members: { some: { userId: session.user.id } } },
-            ],
-          },
-        },
-        select: {
-          id: true,
-          title: true,
-          description: true,
-          destination: true,
-          startDate: true,
-          endDate: true,
-          status: true,
-          isPublic: true,
-          owner: {
-            select: { id: true, name: true, image: true },
-          },
-          _count: {
-            select: { members: true },
-          },
-        },
-        take: limit,
-      });
-      results.trips = trips;
-    }
-
-    // Search activities
-    if (type === 'all' || type === 'activities') {
-      const activities = await prisma.activity.findMany({
-        where: {
-          OR: [
-            { name: { contains: query, mode: 'insensitive' } },
-            { description: { contains: query, mode: 'insensitive' } },
-          ],
-          isPublic: true,
-        },
-        select: {
-          id: true,
-          name: true,
-          description: true,
-          category: true,
-          location: true,
-          cost: true,
-          priceRange: true,
-          trip: {
-            select: {
-              id: true,
-              title: true,
-              destination: true,
-            },
-          },
-          _count: {
-            select: { savedBy: true, ratings: true },
-          },
-        },
-        take: limit,
-      });
-      results.activities = activities;
-    }
-
-    // Search users - email removed for privacy (prevents user enumeration attacks)
-    // 'people' is an alias for 'users' with people-first ordering in 'all' results
-    if (type === 'all' || type === 'users' || type === 'people') {
+    // Search users - email excluded for privacy (prevents user enumeration attacks)
+    // 'people' is the canonical type; 'all' also includes users with people-first ordering
+    if (type === 'all' || type === 'people') {
       const users = await prisma.user.findMany({
         where: {
           OR: [
@@ -238,20 +139,16 @@ export async function GET(req: Request) {
       results.venues = venues;
     }
 
-    // For 'all' type, order results: people first, then meetups, then venues, then trips (deprioritized)
+    // For 'all' type, enforce people-first key ordering
     if (type === 'all') {
       const ordered: {
         users?: UserResult[];
         meetups?: MeetupResult[];
         venues?: VenueResult[];
-        trips?: TripResult[];
-        activities?: ActivityResult[];
       } = {
         users: results.users,
         meetups: results.meetups,
         venues: results.venues,
-        trips: results.trips,
-        activities: results.activities,
       };
       return NextResponse.json({ success: true, data: ordered });
     }

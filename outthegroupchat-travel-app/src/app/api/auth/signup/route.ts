@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { randomBytes } from 'crypto';
 import { logger } from '@/lib/logger';
-import { sendNotificationEmail } from '@/lib/email';
+import { sendAuthVerificationEmail } from '@/lib/email';
 import { authRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 import { captureException } from '@/lib/sentry';
 
@@ -34,14 +34,9 @@ async function sendVerificationEmail(userId: string, email: string): Promise<voi
     const appUrl = process.env.NEXTAUTH_URL ?? 'https://outthegroupchat.com';
     const verifyUrl = `${appUrl}/api/auth/verify-email?token=${token}`;
 
-    const result = await sendNotificationEmail({
+    const result = await sendAuthVerificationEmail({
       to: email,
-      subject: 'Verify your OutTheGroupchat email address',
-      title: 'Verify your email address',
-      message:
-        'Thanks for signing up! Please verify your email address to unlock all features. The link expires in 24 hours.',
-      actionUrl: verifyUrl,
-      actionText: 'Verify Email',
+      verifyUrl,
     });
 
     if (!result.success) {

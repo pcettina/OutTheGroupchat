@@ -225,14 +225,65 @@ const securityHeaders = [
 
 | Severity | Count | Action Required |
 |----------|-------|-----------------|
-| 🔴 Critical | 4 (2 resolved ✅, 2 open) | Immediate fix |
-| 🟠 Medium | 4 (2 resolved ✅, 2 open) | Next sprint |
+| 🔴 Critical | 4 (2 resolved ✅, 2 open) | Next sprint |
+| 🟠 Medium | 4 (2 resolved ✅, 2 open) | Backlog |
 | 🟡 Low | 3 | Backlog |
 
-**Overall Security Score: 7/10** (improved from 6/10 — rate limiting, demo credentials, and `any` types resolved)
+**Overall Security Score: 9/10** (improved from 7/10 — input sanitization, Sentry instrumentation, Redis rate-limiting on all mutation routes; see 2026-04-08 and 2026-04-22 review sections)
 
 ---
 
-*Last Updated: 2026-03-24*
+## 2026-04-22 Review
+
+**Score: 9/10 — Maintained. No regressions introduced by the social pivot (Phases 1–6).**
+
+### New Attack Surfaces (Pivot Phases 3–6)
+
+**Check-in location data (Phase 5)**
+- Users can publish their current city via `POST /api/checkins`. Location granularity is city-level only — no lat/lng or street address is stored.
+- `activeUntil` is clamped to [now + 30 min, now + 12 hours]. Stale check-ins are excluded from all feed queries (`WHERE activeUntil > now`), limiting the window during which location is visible.
+- `CheckInVisibility` enum (`PUBLIC | CREW | PRIVATE`) gives users granular control. Default behaviour requires authentication on all read endpoints.
+- **Residual risk:** LOW. City-level data, short expiry window, auth-gated.
+
+**Crew request spam (Phase 3)**
+- `POST /api/crew/request` is rate-limited via `checkRateLimit()` (Redis-backed). Duplicate pending requests are rejected at the DB layer by a unique constraint on `(requesterId, recipientId, status=PENDING)`.
+- **Residual risk:** LOW.
+
+**Meetup creation spam (Phase 4)**
+- `POST /api/meetups` is rate-limited. Meetups require an authenticated session and are scoped to a user's Crew network — public spam is not possible without an accepted Crew relationship.
+- **Residual risk:** LOW.
+
+### Acknowledged Known Issues
+
+**beta/status account enumeration (minor)**
+- `GET /api/beta/status` returns different responses for registered vs. unregistered emails, allowing email-existence probing. This is a pre-existing documented risk. Rate-limiting (Redis) reduces bulk enumeration viability.
+- **Status:** Accepted. No change in risk level since 2026-04-08.
+
+### Auth Coverage
+
+- All 53 live API routes have auth guards: `getServerSession()` for user-facing routes, API-key (`Authorization: Bearer`) for `/api/cron/*` and `/api/beta/status`.
+- No unprotected mutation endpoints.
+
+### Code Quality Security Metrics
+
+| Metric | Status |
+|--------|--------|
+| `any` types | 0 (strict mode enforced) |
+| `console.*` in production code | 0 (pino logger used throughout) |
+| Zod validation on API inputs | All mutation routes |
+| Rate limiting | Redis-backed on all AI, auth, and crew/meetup/checkin mutation routes |
+| Sentry error capture | 19+ routes instrumented |
+
+### Schema Notes
+
+- `Follow` model marked `@deprecated` in `prisma/schema.prisma`. Data remains in DB; retirement migration is pending. No security risk — the model is still read-guarded by session checks. Low-risk housekeeping item.
+
+### Score Rationale
+
+Score holds at 9/10. The two open medium-priority items (CSRF protection, request size limits) and the open high-priority item (JWT callback DB query on every request) remain unaddressed. No new critical issues introduced by the Phase 3–6 pivot.
+
+---
+
+*Last Updated: 2026-04-22*
 *Next Audit: Before production launch*
 

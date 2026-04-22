@@ -81,32 +81,16 @@ export async function POST(req: Request) {
 
       // Attempt to send email (non-blocking — log failure but return 200)
       try {
-        const { isEmailConfigured } = await import('@/lib/email');
-        if (isEmailConfigured()) {
-          const { Resend } = await import('resend');
-          const resend = new Resend(process.env.RESEND_API_KEY);
-          await resend.emails.send({
-            from: process.env.EMAIL_FROM || 'OutTheGroupchat <noreply@outthegroupchat.com>',
-            to: email,
-            subject: 'Reset your OutTheGroupchat password',
-            html: `
-              <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-                <h2>Reset your password</h2>
-                <p>Hi ${user.name || 'there'},</p>
-                <p>We received a request to reset your OutTheGroupchat password.</p>
-                <p>
-                  <a href="${resetUrl}" style="display: inline-block; padding: 12px 24px; background: #10b981; color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">
-                    Reset Password
-                  </a>
-                </p>
-                <p>This link expires in 1 hour. If you didn't request this, you can safely ignore this email.</p>
-                <p style="color: #666; font-size: 12px;">Or copy this link: ${resetUrl}</p>
-              </div>
-            `,
-          });
+        const { sendPasswordResetEmail } = await import('@/lib/email');
+        const emailResult = await sendPasswordResetEmail({
+          to: email,
+          name: user.name,
+          resetUrl,
+        });
+        if (emailResult.success) {
           logger.info({ email }, '[RESET_PASSWORD] Reset email sent');
         } else {
-          logger.warn({ email, resetUrl }, '[RESET_PASSWORD] Email not configured — token created but not sent');
+          logger.warn({ email, resetUrl, emailError: emailResult.error }, '[RESET_PASSWORD] Email not configured — token created but not sent');
         }
       } catch (emailError) {
         logError('RESET_PASSWORD_EMAIL', emailError);

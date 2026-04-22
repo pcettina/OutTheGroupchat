@@ -506,6 +506,12 @@ ${actionUrl ? `${actionText || 'View'}: ${actionUrl}` : ''}
 }
 
 // =============================================================================
+// Auth Email Functions (extracted to email-auth.ts — social/meetup-centric tone)
+// Re-exported here so all callers can import from '@/lib/email'.
+// =============================================================================
+export { sendWelcomeEmail, sendAuthVerificationEmail, sendPasswordResetEmail } from './email-auth';
+
+// =============================================================================
 // Meetup Email Functions (extracted to email-meetup.ts)
 // Re-exported here so all existing imports from '@/lib/email' continue to work.
 // =============================================================================

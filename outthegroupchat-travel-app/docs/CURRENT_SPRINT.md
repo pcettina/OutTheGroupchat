@@ -1,3 +1,49 @@
+# 🟡 Phase 7: Marketing & Brand Surface (nightly/2026-04-23, in progress)
+
+> **Status:** Phase 7 in progress as of 2026-04-22 (nightly/2026-04-23). 6/7 actions complete. Favicon deferred as optional.
+> **Test count:** ~1101 tests passing; 58 test files (no new files added)
+
+## 🟢 Completed 2026-04-22 (Nightly Build nightly/2026-04-23)
+
+### Wave 0 — TSC + Test Fixes (W3 shared file consolidation)
+
+- [W3-TSC] Fixed 3 TSC errors in `src/__tests__/api/ai-suggest-meetups.test.ts` — `mock.calls[0][0].prompt` typed as `string | undefined`; fixed with `as string` cast
+- [W3-TSC] Fixed auth-signup.test.ts — mock updated from `sendNotificationEmail` to `sendAuthVerificationEmail` (S2 email agent renamed the function in the route)
+- [W3-Search] Fixed `src/__tests__/api/search.test.ts` — updated 8 tests for M3 legacy type removal: `type=users/trips/activities` now expect 400; short-query empty shape updated to `{users:[], meetups:[], venues:[]}`; unused MOCK_TRIP/MOCK_ACTIVITY fixtures removed
+
+### Wave 1 — Tests
+
+- [M1] 30 tests in `src/__tests__/api/ai-suggest-meetups.test.ts` — covers POST /api/ai/suggest-meetups: auth, rate limiting, Zod validation, AI prompt construction, crewSize defaults, theme injection, error paths
+- [M2] 23 tests in `src/__tests__/api/ai-icebreakers.test.ts` — covers POST /api/ai/icebreakers: auth, rate limiting, Zod validation, prompt generation, error paths
+
+### Wave 2 — Features
+
+- [L1] About page created — `src/app/about/page.tsx` + OG metadata updated in `src/app/metadata.ts`
+- [M3] Search route legacy types removed — `src/app/api/search/route.ts` Zod enum pruned to `['all','people','meetups','venues']`; trips/activities paths removed
+- [M4] RichFeedItem.tsx refactored — 717→337 lines; extracted `FeedItemHeader.tsx`, `FeedItemActions.tsx`, `FeedItemLegacyCards.tsx`, `FeedItemTypes.ts`
+- [S2] Email auth templates rewritten — `src/lib/email-auth.ts` created; signup/verification/reset templates rewritten for meetup-centric tone; `src/app/api/auth/signup/route.ts` updated to call `sendAuthVerificationEmail`
+- [S3] ProfileCheckinsSection extracted — `src/components/profile/ProfileCheckinsSection.tsx` extracted from `profile/page.tsx`
+
+### Wave 2 — Small Tasks
+
+- [S1] CLAUDE.md project scope updated — meetup-centric context; trip-era guidance removed
+- [S4] UPGRADE_PLAN.md refreshed — package versions and priority re-assessed
+- [S5] FUTURE_IMPLEMENTATION.md + IMPLEMENTATION_STACK.md updated to 2026-04-22
+- [S6] SECURITY_AUDIT.md + TEST_CASES.md updated to 2026-04-22
+- [S7] README.md full rewrite — new value prop, meetup-centric feature list, updated metrics
+
+### Metrics
+
+- Tests: ~1048 → ~1101 (+53: +30 ai-suggest-meetups + 23 ai-icebreakers; search test count net 20 from prior 21 after fixture cleanup)
+- Test files: 58 (unchanged — no new test files created)
+- API routes: 52 (unchanged)
+- Phase 7 exit criteria: 6/7 actions complete (favicon deferred as optional)
+- New components: `FeedItemHeader.tsx`, `FeedItemActions.tsx`, `FeedItemLegacyCards.tsx`, `FeedItemTypes.ts`, `ProfileCheckinsSection.tsx`
+- New pages: `src/app/about/page.tsx`
+- New lib: `src/lib/email-auth.ts`
+
+---
+
 # 🟢 Complete — Phase 6: Feed/AI/Notifications Rescope (all sessions delivered)
 
 > **Status:** Phase 6 COMPLETE as of 2026-04-22 (nightly/2026-04-22 PR #55). All 4 Phase 6 actions done: feed rescoped, AI routes added, notification types migrated, search rescoped people-first. Phase 7 (Marketing surface) is next.

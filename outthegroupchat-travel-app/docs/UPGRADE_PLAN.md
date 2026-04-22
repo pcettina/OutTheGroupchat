@@ -1,18 +1,20 @@
 # Package Upgrade Plan
 
-**Last Updated:** 2026-04-09
+**Last Updated:** 2026-04-22
 **Status:** Planning
 
 This document tracks major version upgrades identified for the OutTheGroupchat stack. Upgrades are ordered by priority and dependency chain.
+
+> **Pivot note (2026-04-22):** The app completed Phase 6 of the social pivot — NotificationType pruned, Follow model deprecated, feed rescoped to Meetups/Check-ins/Crews. Phase 7 (marketing surface: landing page, OG tags, README rewrite) is next. No major package upgrades have been executed yet. Priority ordering below reflects the meetup-centric social network focus rather than the original trip-planning context.
 
 ---
 
 ## Priority Order
 
 1. React + Next.js (upgrade together — tightly coupled)
-2. Vercel AI SDK + provider packages (large version jump, breaking changes)
-3. Zod (schema validation used across all API routes)
-4. Prisma (ORM core — affects all DB access)
+2. Vercel AI SDK + provider packages (large version jump, breaking changes; **priority elevated** — icebreaker suggestions, meetup recommendations, and `ai/recommend` + `ai/chat` routes are core to the social UX)
+3. Prisma (ORM core — affects all DB access; meetups, check-ins, crew, RSVPs all depend on it)
+4. Zod (schema validation used across all API routes)
 5. TypeScript (compiler — affects all files)
 6. Tailwind CSS (styling — affects all components)
 7. ESLint + hookform/resolvers (tooling — lower risk)
@@ -51,11 +53,11 @@ This document tracks major version upgrades identified for the OutTheGroupchat s
 
 | Package | Current | Latest |
 |---------|---------|--------|
-| `ai` | 3.4.33 | 6.0.156 |
+| `ai` | 3.4.14 | 6.0.156 |
 | `@ai-sdk/anthropic` | 0.0.54 | 3.0.68 |
 | `@ai-sdk/openai` | 0.0.70 | 3.0.52 |
 
-**Priority:** High
+**Priority:** High — **elevated post-pivot.** The `ai/recommend` and `ai/chat` routes power meetup suggestions and icebreakers, which are now core social features. AI SDK v5+ introduces `ToolLoopAgent` patterns that would improve these routes. Upgrading unblocks model ID refreshes and tool-use improvements directly relevant to the meetup recommendation UX.
 
 **Key breaking changes to watch for:**
 - AI SDK v4+: `useChat` hook signature changed significantly. The `messages` type, `append` function, and streaming behavior have all been updated — do not rely on v3 patterns.
@@ -73,7 +75,30 @@ This document tracks major version upgrades identified for the OutTheGroupchat s
 
 ---
 
-### 3. Zod
+### 3. Prisma + @prisma/client
+
+| Field | Value |
+|-------|-------|
+| **Current** | 5.22.0 |
+| **Latest** | 7.7.0 |
+| **Priority** | Medium-High — **priority elevated post-pivot.** Meetups, check-ins, crew, and RSVPs all depend on Prisma. Prisma 7 improves edge-runtime performance (relevant for Neon/Vercel serverless) and has better TypeScript inference for relation includes. |
+
+**Key breaking changes to watch for:**
+- Prisma 6+: `PrismaClient` instantiation options and log levels may differ.
+- Driver adapters and Neon edge runtime support changes — verify `@neondatabase/serverless` adapter compatibility after upgrade.
+- `prisma.$queryRaw` template literal API: verify tag function behavior is unchanged.
+- Generated client types may change — particularly around relation includes and select return types.
+- `prisma generate` output format changes may require test mock updates (setup.ts mock object structure).
+
+**Recommended approach:**
+1. Run `npx prisma migrate dev` after upgrade to confirm schema compatibility.
+2. Regenerate client with `npm run db:generate` and fix any TypeScript errors.
+3. Update setup.ts mock if generated client interface changed.
+4. Run full test suite — pay attention to any Prisma delegate mock type cast failures.
+
+---
+
+### 4. Zod
 
 | Field | Value |
 |-------|-------|
@@ -90,31 +115,8 @@ This document tracks major version upgrades identified for the OutTheGroupchat s
 
 **Recommended approach:**
 1. Upgrade in a single PR. Run `tsc --noEmit` immediately after.
-2. Audit all 48 API routes that use Zod schemas for parse/safeParse error handling.
+2. Audit all 53 API routes that use Zod schemas for parse/safeParse error handling.
 3. Test edge cases: optional transforms, enum validation, coerce patterns (known Zod v3 quirks that v4 may handle differently).
-
----
-
-### 4. Prisma + @prisma/client
-
-| Field | Value |
-|-------|-------|
-| **Current** | 5.22.0 |
-| **Latest** | 7.7.0 |
-| **Priority** | Medium |
-
-**Key breaking changes to watch for:**
-- Prisma 6+: `PrismaClient` instantiation options and log levels may differ.
-- Driver adapters and edge runtime support changes — if using Prisma with Supabase edge, verify adapter compatibility.
-- `prisma.$queryRaw` template literal API: verify tag function behavior is unchanged.
-- Generated client types may change — particularly around relation includes and select return types.
-- `prisma generate` output format changes may require test mock updates (setup.ts mock object structure).
-
-**Recommended approach:**
-1. Run `npx prisma migrate dev` after upgrade to confirm schema compatibility.
-2. Regenerate client with `npm run db:generate` and fix any TypeScript errors.
-3. Update setup.ts mock if generated client interface changed.
-4. Run full test suite — pay attention to any Prisma delegate mock type cast failures.
 
 ---
 
@@ -206,9 +208,9 @@ This document tracks major version upgrades identified for the OutTheGroupchat s
 ```
 Week 1: Next.js 14 → 15 (async params/headers fixes)
 Week 2: Next.js 15 → 16 + React 18 → 19
-Week 3: AI SDK 3 → 6 + provider packages
-Week 4: Zod 3 → 4
-Week 5: Prisma 5 → 7
+Week 3: AI SDK 3 → 6 + provider packages  ← elevated; unblocks meetup recommendation UX
+Week 4: Prisma 5 → 7                       ← elevated; meetups/checkins/crew depend on it
+Week 5: Zod 3 → 4
 Week 6: TypeScript 5 → 6
 Week 7: Tailwind 3 → 4 (visual audit required)
 Week 8: ESLint 8 → 10 + hookform/resolvers

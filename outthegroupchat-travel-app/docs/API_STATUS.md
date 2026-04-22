@@ -8,11 +8,14 @@
 >
 > **Phase 6 COMPLETE (2026-04-22, nightly/2026-04-22 PR #55):** Feed rescoped (meetup/checkin types, POST→410), search people-first (users→meetups→venues), notification type migration (9 old trip types removed from schema), AI routes (suggest-meetups + icebreakers). All 4 Phase 6 actions complete.
 >
+> **Phase 7 IN PROGRESS (nightly/2026-04-23):** Marketing surface — About page, OG metadata, README rewrite, CLAUDE.md update, email templates, search test cleanup, AI route test suites (+53 tests: 30 suggest-meetups + 23 icebreakers). Test total: ~1101. See CURRENT_SPRINT.md.
+>
 > **Last Audit:** April 2026
-> **Live API routes (post-archive):** 50 (35 base + 6 Crew + 9 Phase 4 meetup/venue/cron routes + 3 Phase 5 check-in routes + privacy route + 2 new Phase 6 AI routes: suggest-meetups, icebreakers; note: feed POST now returns 410)
+> **Live API routes (post-archive):** 52 (35 base + 6 Crew + 9 Phase 4 meetup/venue/cron routes + 3 Phase 5 check-in routes + privacy route + 2 new Phase 6 AI routes: suggest-meetups, icebreakers; note: feed POST now returns 410)
 > **Archived API routes (Phase 1):** 13
 > **Target:** 100% for Beta Launch (re-baselined in Phase 8)
 > **Sentry Coverage:** 19/48 routes instrumented on pre-archive branch; coverage on new live surface re-computed after Phase 2
+> **Test count (2026-04-22, nightly/2026-04-23):** ~1101 tests passing (1100 confirmed + 1 from search.test.ts recount); 58 test files
 
 ---
 
@@ -118,7 +121,7 @@ Follow model marked @deprecated (retirement deferred to Phase 7)
 | `/api/discover/search` | GET | ✅ | 🔶 | Auth guard added 2026-03-24 (was unauthenticated — security improvement); rate limiting, Zod validation ✅ |
 | `/api/discover/recommendations` | GET | ✅ | 🔶 | Auth guard added 2026-03-24; category filter, rate limiting, pino logging ✅ |
 | `/api/discover/import` | POST | ✅ | ⏳ | Rate limiting + auth guard ✅ 2026-03-24; pino logging, typed helpers, fixed empty catch blocks |
-| `/api/search` | GET | ✅ | 🔶 | Email removed from select projection (privacy fix) ✅ 2026-03-20; **rescoped 2026-04-22 (Phase 6)** — people-first ordering (users→meetups→venues), Zod enum updated to `['all','people','meetups','venues']`, trip/activity search paths removed |
+| `/api/search` | GET | ✅ | 🔶 | Email removed from select projection (privacy fix) ✅ 2026-03-20; **rescoped 2026-04-22 (Phase 6)** — people-first ordering (users→meetups→venues), Zod enum updated to `['all','people','meetups','venues']`, trip/activity search paths removed; **search.test.ts updated 2026-04-22 (nightly/2026-04-23) — 20 tests, legacy type→400 assertions added** |
 | `/api/geocoding` | GET | ✅ | 🔶 | Geocoding for destination search via Nominatim; Zod validation added 2026-03-21 |
 | `/api/inspiration` | GET | ✅ | 🔶 | Auth guard added 2026-03-08; Zod coerce.number on query params + POST body schema added 2026-03-22 |
 | `/api/images/search` | GET | ✅ | 🔶 | Image search via Unsplash API; requires UNSPLASH_ACCESS_KEY |
@@ -139,8 +142,8 @@ Email removed from select projection in /api/search/route.ts
 | `/api/ai/recommend` | POST | ✅ | ⏳ | Retained — Phase 6 will retarget to venues/meetups |
 | `/api/ai/recommend` | GET | ✅ | ⏳ | Retained; trip-scoped `?tripId=` branch archived with trip routes |
 | `/api/ai/search` | GET/POST | ✅ | ⏳ | Semantic search with embeddings — retained (destinations branch to be repurposed for venues/cities) |
-| `/api/ai/suggest-meetups` | POST | ✅ | ⏳ | **NEW 2026-04-21 (Phase 6)** — given user's city, Crew, past check-ins, suggest meetup ideas via OpenAI; rate-limited, Zod-validated; 11 tests in `suggest-meetups.test.ts` |
-| `/api/ai/icebreakers` | POST | ✅ | ⏳ | **NEW 2026-04-21 (Phase 6)** — given a new Crew member, suggest conversation starters; rate-limited, Zod-validated; 10 tests in `icebreakers.test.ts` |
+| `/api/ai/suggest-meetups` | POST | ✅ | ⏳ | **NEW 2026-04-21 (Phase 6)** — given user's city, Crew, past check-ins, suggest meetup ideas via OpenAI; rate-limited, Zod-validated; **✅ tested 2026-04-22 (nightly/2026-04-23) — 30 tests in `ai-suggest-meetups.test.ts`** |
+| `/api/ai/icebreakers` | POST | ✅ | ⏳ | **NEW 2026-04-21 (Phase 6)** — given a new Crew member, suggest conversation starters; rate-limited, Zod-validated; **✅ tested 2026-04-22 (nightly/2026-04-23) — 23 tests in `ai-icebreakers.test.ts`** |
 | ~~`/api/ai/generate-itinerary`~~ | POST | 📦 | — | Archived 2026-04-16 — see Archived Routes |
 | ~~`/api/ai/suggest-activities`~~ | POST | 📦 | — | Archived 2026-04-16 — see Archived Routes |
 

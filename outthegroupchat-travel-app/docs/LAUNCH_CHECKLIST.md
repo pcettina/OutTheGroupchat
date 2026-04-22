@@ -8,7 +8,7 @@
 - [x] Phase 4: Meetups core — All 3 sessions complete (2026-04-18): API routes ✅ | venue search (Places API) ✅ | meetup UI (MeetupDetail, AttendeeList, MeetupInviteModal) ✅ | RSVP ✅ | invite ✅ | Pusher real-time ✅ | MEETUP_STARTING_SOON cron ✅ (PRs #48, #49, #51)
 - [x] Phase 5: Check-ins + presence — COMPLETE 2026-04-20 (PR #53): POST /api/checkins ✅ | GET /api/checkins/feed ✅ | DELETE /api/checkins/[id] ✅ | GET /api/checkins/[id] ✅ | CheckInButton (duration picker) ✅ | LiveActivityCard ("Join me" wired) ✅ | NearbyCrewList ✅ | /checkins page ✅ | /checkins/[id] page ✅ | Privacy settings page (/settings/privacy) ✅ | /api/users/privacy ✅ | Pusher city-channel broadcast ✅ | All Phase 5 exit criteria met ✅
 - [x] Phase 6: Feed/AI/notifications rescope — COMPLETE 2026-04-22 (PR #55): Feed rescoped (meetup/checkin types, trip/activity queries removed, POST returns 410) ✅ | POST /api/ai/suggest-meetups ✅ | POST /api/ai/icebreakers ✅ | Search people-first (users→meetups→venues) ✅ | 9 trip notification types removed from schema ✅ | Follow marked @deprecated ✅ | types/index.ts cleaned (264 lines) ✅
-- [ ] Phase 7: Marketing surface
+- [~] Phase 7: Marketing surface — 6/7 actions complete (nightly/2026-04-23): About page ✅ | OG metadata ✅ | README rewrite ✅ | CLAUDE.md update ✅ | Email templates ✅ | Search cleanup ✅ | Favicon (deferred/optional)
 - [ ] Phase 8: Launch-readiness re-audit
 
 ---
@@ -17,7 +17,7 @@
 >
 > **Target Launch:** Q2 2026 (Beta) — to be re-baselined post-pivot
 > **Current Status:** Refactoring (Phase 2 in progress — domain models added, DB migration pending)
-> **Last Updated:** 2026-04-22 (Phase 6 COMPLETE — feed rescoped, search people-first, notification types migrated, types cleanup; Phase 7 Marketing surface is next)
+> **Last Updated:** 2026-04-22 (Phase 7 in progress — nightly/2026-04-23: About page, OG metadata, README rewrite, email templates, AI test suites added; 6/7 actions complete, favicon deferred)
 
 ---
 
