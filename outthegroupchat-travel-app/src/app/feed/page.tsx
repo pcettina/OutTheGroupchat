@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { Navigation } from '@/components/Navigation';
 import { FeedItem, CommentThread, ShareModal } from '@/components/feed';
 
-type FeedType = 'all' | 'following' | 'trending';
+type FeedType = 'all' | 'meetups' | 'checkins' | 'crews';
 
 interface FeedItemData {
   id: string;
@@ -170,8 +170,9 @@ export default function FeedPage() {
             <div className="flex gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
               {[
                 { value: 'all' as FeedType, label: 'For You' },
-                { value: 'following' as FeedType, label: 'Following' },
-                { value: 'trending' as FeedType, label: 'Trending' },
+                { value: 'meetups' as FeedType, label: 'Meetups' },
+                { value: 'checkins' as FeedType, label: 'Check-ins' },
+                { value: 'crews' as FeedType, label: 'Crews' },
               ].map((tab) => (
                 <button
                   key={tab.value}
@@ -211,24 +212,32 @@ export default function FeedPage() {
               className="text-center py-16 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700"
             >
               <span className="text-6xl mb-4 block">
-                {feedType === 'following' ? '👥' : '📭'}
+                {feedType === 'meetups' ? '🗓️' : feedType === 'checkins' ? '📍' : feedType === 'crews' ? '👥' : '📭'}
               </span>
               <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
-                {feedType === 'following' 
-                  ? 'Follow some travelers!' 
+                {feedType === 'meetups'
+                  ? 'No meetups yet'
+                  : feedType === 'checkins'
+                  ? 'No check-ins yet'
+                  : feedType === 'crews'
+                  ? 'No crew activity yet'
                   : 'No activity yet'}
               </h3>
               <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
-                {feedType === 'following'
-                  ? 'Follow other users to see their trip updates in your feed.'
-                  : 'When people share their trips and activities, they\'ll show up here.'}
+                {feedType === 'meetups'
+                  ? "Meetups from your crew will appear here when they're planned."
+                  : feedType === 'checkins'
+                  ? 'Active check-ins from your crew will show up here.'
+                  : feedType === 'crews'
+                  ? 'Join a crew to see their activity here.'
+                  : "When people share meetups and check-ins, they'll show up here."}
               </p>
-              {feedType === 'following' && (
+              {feedType === 'crews' && (
                 <a
-                  href="/inspiration"
+                  href="/crew"
                   className="inline-block mt-4 px-6 py-2 bg-emerald-500 text-white rounded-full font-medium hover:bg-emerald-600 transition-colors"
                 >
-                  Discover Travelers
+                  Find Your Crew
                 </a>
               )}
             </motion.div>
@@ -286,13 +295,13 @@ export default function FeedPage() {
             className="fixed bottom-6 right-6"
           >
             <a
-              href="/trips/new"
+              href="/meetups/new"
               className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-full font-medium shadow-lg hover:shadow-xl transition-all hover:scale-105"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              Plan a Trip
+              Plan a Meetup
             </a>
           </motion.div>
         </div>

@@ -198,16 +198,16 @@ export async function seedNotifications(
   console.log('🔔 Creating notifications...');
   
   const notifications: Array<{ userEmail: string; type: NotificationType; title: string; message: string; read: boolean }> = [
-    { userEmail: 'alex@demo.com', type: NotificationType.TRIP_INVITATION, title: 'New Trip Invitation', message: 'Jordan invited you to "Vegas Birthday Bash"', read: false },
-    { userEmail: 'alex@demo.com', type: NotificationType.SURVEY_REMINDER, title: 'Survey Closing Soon', message: 'Complete the survey for "Austin Music & BBQ Crawl" before it closes!', read: false },
-    { userEmail: 'alex@demo.com', type: NotificationType.TRIP_UPDATE, title: 'Trip Updated', message: 'New activity added to "Nashville Bachelor Party"', read: true },
-    { userEmail: 'jordan@demo.com', type: NotificationType.VOTE_REMINDER, title: 'Vote Now', message: 'Voting ends soon for "Miami Art Basel Weekend"', read: false },
-    { userEmail: 'jordan@demo.com', type: NotificationType.FOLLOW, title: 'New Follower', message: 'Riley started following you', read: true },
-    { userEmail: 'taylor@demo.com', type: NotificationType.ACTIVITY_COMMENT, title: 'New Comment', message: 'Alex commented on "Husk Restaurant"', read: false },
-    { userEmail: 'casey@demo.com', type: NotificationType.TRIP_UPDATE, title: 'Member Joined', message: 'Reese joined "Austin Music & BBQ Crawl"', read: true },
-    { userEmail: 'sam@demo.com', type: NotificationType.SURVEY_REMINDER, title: 'Survey Available', message: 'Share your preferences for "Colorado Ski Trip"', read: false },
-    { userEmail: 'riley@demo.com', type: NotificationType.TRIP_INVITATION, title: 'New Trip Invitation', message: 'Avery invited you to "Miami Art Basel Weekend"', read: true },
-    { userEmail: 'dakota@demo.com', type: NotificationType.TRIP_UPDATE, title: 'Trip Confirmed', message: '"Vegas Birthday Bash" is now fully booked!', read: false },
+    { userEmail: 'alex@demo.com', type: NotificationType.SYSTEM, title: 'New Trip Invitation', message: 'Jordan invited you to "Vegas Birthday Bash"', read: false },
+    { userEmail: 'alex@demo.com', type: NotificationType.SYSTEM, title: 'Survey Closing Soon', message: 'Complete the survey for "Austin Music & BBQ Crawl" before it closes!', read: false },
+    { userEmail: 'alex@demo.com', type: NotificationType.SYSTEM, title: 'Trip Updated', message: 'New activity added to "Nashville Bachelor Party"', read: true },
+    { userEmail: 'jordan@demo.com', type: NotificationType.SYSTEM, title: 'Vote Now', message: 'Voting ends soon for "Miami Art Basel Weekend"', read: false },
+    { userEmail: 'jordan@demo.com', type: NotificationType.CREW_REQUEST, title: 'New Follower', message: 'Riley started following you', read: true },
+    { userEmail: 'taylor@demo.com', type: NotificationType.SYSTEM, title: 'New Comment', message: 'Alex commented on "Husk Restaurant"', read: false },
+    { userEmail: 'casey@demo.com', type: NotificationType.SYSTEM, title: 'Member Joined', message: 'Reese joined "Austin Music & BBQ Crawl"', read: true },
+    { userEmail: 'sam@demo.com', type: NotificationType.SYSTEM, title: 'Survey Available', message: 'Share your preferences for "Colorado Ski Trip"', read: false },
+    { userEmail: 'riley@demo.com', type: NotificationType.SYSTEM, title: 'New Trip Invitation', message: 'Avery invited you to "Miami Art Basel Weekend"', read: true },
+    { userEmail: 'dakota@demo.com', type: NotificationType.SYSTEM, title: 'Trip Confirmed', message: '"Vegas Birthday Bash" is now fully booked!', read: false },
   ];
   
   for (const notif of notifications) {

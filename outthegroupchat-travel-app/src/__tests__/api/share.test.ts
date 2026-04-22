@@ -148,7 +148,7 @@ describe('POST /api/feed/share', () => {
       expect.objectContaining({
         data: expect.objectContaining({
           userId: 'user-2',
-          type: 'TRIP_LIKE',
+          type: 'SYSTEM',
         }),
       })
     );

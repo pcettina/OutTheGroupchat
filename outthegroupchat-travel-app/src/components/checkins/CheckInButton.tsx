@@ -16,6 +16,21 @@ interface ToastState {
 
 type ButtonState = 'idle' | 'loading' | 'checked-in';
 
+interface DurationOption {
+  label: string;
+  minutes: number;
+}
+
+const DURATION_OPTIONS: DurationOption[] = [
+  { label: '30 min', minutes: 30 },
+  { label: '1 hour', minutes: 60 },
+  { label: '3 hours', minutes: 180 },
+  { label: '6 hours', minutes: 360 },
+  { label: '12 hours', minutes: 720 },
+];
+
+const DEFAULT_DURATION_MINUTES = 360;
+
 export function CheckInButton({
   venueId,
   note,
@@ -24,6 +39,7 @@ export function CheckInButton({
 }: CheckInButtonProps) {
   const [buttonState, setButtonState] = useState<ButtonState>('idle');
   const [toast, setToast] = useState<ToastState | null>(null);
+  const [duration, setDuration] = useState(DEFAULT_DURATION_MINUTES);
 
   const showToast = (message: string, isError = false) => {
     setToast({ message, isError });
@@ -36,10 +52,12 @@ export function CheckInButton({
     setButtonState('loading');
 
     try {
+      const activeUntilOverride = new Date(Date.now() + duration * 60 * 1000).toISOString();
+
       const res = await fetch('/api/checkins', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ venueId, note }),
+        body: JSON.stringify({ venueId, note, activeUntilOverride }),
       });
 
       const data = (await res.json()) as {
@@ -70,6 +88,35 @@ export function CheckInButton({
 
   return (
     <div className={`relative inline-flex flex-col gap-2 ${className}`}>
+      {!isCheckedIn && (
+        <div
+          role="group"
+          aria-label="Check-in duration"
+          className="flex flex-wrap gap-1.5"
+        >
+          {DURATION_OPTIONS.map((option) => (
+            <button
+              key={option.minutes}
+              type="button"
+              onClick={() => setDuration(option.minutes)}
+              disabled={disabled}
+              aria-pressed={duration === option.minutes}
+              className={[
+                'rounded-full px-3 py-1 text-xs font-medium transition-all duration-100 border',
+                duration === option.minutes
+                  ? 'bg-teal-600 text-white border-teal-600'
+                  : 'bg-white text-teal-700 border-teal-300 hover:border-teal-500 hover:bg-teal-50',
+                disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      )}
+
       <button
         type="button"
         onClick={() => { void handleCheckIn(); }}

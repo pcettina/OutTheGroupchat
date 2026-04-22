@@ -1,13 +1,15 @@
 # 📡 API & Integration Status
 
-> **Last Updated: 2026-04-20**
+> **Last Updated: 2026-04-22**
 >
 > **Archival:** trip/activity routes moved to `src/app/api/_archive/` as of 2026-04-16 Phase 1. See REFACTOR_PLAN.md. Sections below that reference `/api/trips/*` and `/api/activities/*` reflect the pre-archive state for historical context; authoritative status for these routes is the "📦 Archived Routes" section near the bottom of this file.
 >
-> **Phase 5 Session 1 complete (2026-04-18, nightly/2026-04-19):** Check-in routes live — `POST /api/checkins`, `GET /api/checkins/feed`, `DELETE /api/checkins/[id]`. `CREW_CHECKED_IN_NEARBY` notification type added to schema. City-channel Pusher helper added. Components: `CheckInButton`, `LiveActivityCard`, `NearbyCrewList`. `/checkins` page added.
+> **Phase 5 COMPLETE (2026-04-20, nightly/2026-04-20 PR #53):** Privacy settings page, Pusher broadcast wiring, "Join me" CTA, duration picker, checkin detail route — all Phase 5 exit criteria met.
+>
+> **Phase 6 COMPLETE (2026-04-22, nightly/2026-04-22 PR #55):** Feed rescoped (meetup/checkin types, POST→410), search people-first (users→meetups→venues), notification type migration (9 old trip types removed from schema), AI routes (suggest-meetups + icebreakers). All 4 Phase 6 actions complete.
 >
 > **Last Audit:** April 2026
-> **Live API routes (post-archive):** 52 (35 base + 6 Crew + 8 Phase 4 meetup/venue routes + 1 Phase 4 cron + 3 new Phase 5 check-in routes)
+> **Live API routes (post-archive):** 50 (35 base + 6 Crew + 9 Phase 4 meetup/venue/cron routes + 3 Phase 5 check-in routes + privacy route + 2 new Phase 6 AI routes: suggest-meetups, icebreakers; note: feed POST now returns 410)
 > **Archived API routes (Phase 1):** 13
 > **Target:** 100% for Beta Launch (re-baselined in Phase 8)
 > **Sentry Coverage:** 19/48 routes instrumented on pre-archive branch; coverage on new live surface re-computed after Phase 2
@@ -63,10 +65,11 @@
 
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
-| `/api/feed` | GET | ✅ | ✅ | Main feed; Zod validation added 2026-03-21; **Sentry added 2026-04-16** |
-| `/api/feed/comments` | GET | ✅ | ✅ | **Trip support added** ✅ Dec 17; **Sentry added 2026-04-16** |
-| `/api/feed/comments` | POST | ✅ | ✅ | **Trip support added** ✅ Dec 17; **Sentry added 2026-04-16** |
-| `/api/feed/engagement` | POST | ✅ | ✅ | **Trip support added** ✅ Dec 17; **Sentry added 2026-04-16** |
+| `/api/feed` | GET | ✅ | ✅ | Main feed; **rescoped 2026-04-21 (nightly/2026-04-21) — Phase 6 complete** — item types now: `meetup_created`, `check_in_posted`, `crew_formed`, `meetup_attended`, `post_created`. Trip/activity queries removed. Zod validation added 2026-03-21; **Sentry added 2026-04-16** |
+| `/api/feed` | POST | ⛔ | — | Returns **410 Gone** as of 2026-04-21 — feed items are now generated from meetup/checkin events, not direct POST |
+| `/api/feed/comments` | GET | ✅ | ✅ | **Sentry added 2026-04-16** |
+| `/api/feed/comments` | POST | ✅ | ✅ | **Sentry added 2026-04-16** |
+| `/api/feed/engagement` | POST | ✅ | ✅ | **Sentry added 2026-04-16** |
 | `/api/feed/share` | POST | ✅ | ⏳ | Implemented with Zod validation + notification ✅ 2026-03-16; **Sentry added 2026-04-16** |
 
 ### Feed Issues to Fix
@@ -94,6 +97,14 @@ COMPLETED ✅ Dec 17:
 VERIFIED ✅ Dec 17:
 Frontend correctly accesses: data?.data?.notifications
 No fix needed - code was already correct
+
+COMPLETED ✅ 2026-04-22 (Phase 6 — nightly/2026-04-22):
+9 old trip NotificationTypes removed from schema.prisma:
+  TRIP_INVITATION, TRIP_UPDATE, TRIP_COMMENT, TRIP_LIKE,
+  ACTIVITY_COMMENT, ACTIVITY_RATING, SURVEY_REMINDER, VOTE_REMINDER, FOLLOW
+Remaining active types: SYSTEM, CREW_REQUEST, CREW_ACCEPTED, MEETUP_INVITED,
+  MEETUP_RSVP, MEETUP_STARTING_SOON, CREW_CHECKED_IN_NEARBY
+Follow model marked @deprecated (retirement deferred to Phase 7)
 ```
 
 ---
@@ -107,7 +118,7 @@ No fix needed - code was already correct
 | `/api/discover/search` | GET | ✅ | 🔶 | Auth guard added 2026-03-24 (was unauthenticated — security improvement); rate limiting, Zod validation ✅ |
 | `/api/discover/recommendations` | GET | ✅ | 🔶 | Auth guard added 2026-03-24; category filter, rate limiting, pino logging ✅ |
 | `/api/discover/import` | POST | ✅ | ⏳ | Rate limiting + auth guard ✅ 2026-03-24; pino logging, typed helpers, fixed empty catch blocks |
-| `/api/search` | GET | ✅ | 🔶 | Email removed from select projection (privacy fix) ✅ 2026-03-20 |
+| `/api/search` | GET | ✅ | 🔶 | Email removed from select projection (privacy fix) ✅ 2026-03-20; **rescoped 2026-04-22 (Phase 6)** — people-first ordering (users→meetups→venues), Zod enum updated to `['all','people','meetups','venues']`, trip/activity search paths removed |
 | `/api/geocoding` | GET | ✅ | 🔶 | Geocoding for destination search via Nominatim; Zod validation added 2026-03-21 |
 | `/api/inspiration` | GET | ✅ | 🔶 | Auth guard added 2026-03-08; Zod coerce.number on query params + POST body schema added 2026-03-22 |
 | `/api/images/search` | GET | ✅ | 🔶 | Image search via Unsplash API; requires UNSPLASH_ACCESS_KEY |
@@ -128,6 +139,8 @@ Email removed from select projection in /api/search/route.ts
 | `/api/ai/recommend` | POST | ✅ | ⏳ | Retained — Phase 6 will retarget to venues/meetups |
 | `/api/ai/recommend` | GET | ✅ | ⏳ | Retained; trip-scoped `?tripId=` branch archived with trip routes |
 | `/api/ai/search` | GET/POST | ✅ | ⏳ | Semantic search with embeddings — retained (destinations branch to be repurposed for venues/cities) |
+| `/api/ai/suggest-meetups` | POST | ✅ | ⏳ | **NEW 2026-04-21 (Phase 6)** — given user's city, Crew, past check-ins, suggest meetup ideas via OpenAI; rate-limited, Zod-validated; 11 tests in `suggest-meetups.test.ts` |
+| `/api/ai/icebreakers` | POST | ✅ | ⏳ | **NEW 2026-04-21 (Phase 6)** — given a new Crew member, suggest conversation starters; rate-limited, Zod-validated; 10 tests in `icebreakers.test.ts` |
 | ~~`/api/ai/generate-itinerary`~~ | POST | 📦 | — | Archived 2026-04-16 — see Archived Routes |
 | ~~`/api/ai/suggest-activities`~~ | POST | 📦 | — | Archived 2026-04-16 — see Archived Routes |
 
@@ -380,13 +393,17 @@ EMAIL_FROM=             # Email sender (onboarding@resend.dev) ✅
 
 Phase 4 closed with Session 3. Next: Phase 5 (Check-ins & live presence).
 
-### Phase 5 — Check-ins (Session 1 complete, 2026-04-18)
+### Phase 5 — Check-ins (COMPLETE 2026-04-20)
 
 | Endpoint | Method | Status | Notes |
 |----------|--------|--------|-------|
-| `/api/checkins` | POST | ✅ new | Create check-in (`activeUntil` defaults to now+6h); `CREW_CHECKED_IN_NEARBY` notification dispatched |
-| `/api/checkins/feed` | GET | ✅ new | Crew's recent check-ins (`WHERE activeUntil > now()`), visibility-scoped |
-| `/api/checkins/[id]` | DELETE | ✅ new | Cancel own check-in (soft: sets `activeUntil = now()`) |
+| `/api/checkins` | POST | ✅ | Create check-in (`activeUntilMinutes` override 30–720; default 360=6h); `CREW_CHECKED_IN_NEARBY` notification dispatched; Pusher city-channel broadcast |
+| `/api/checkins` | GET | ✅ | Get own check-ins |
+| `/api/checkins/feed` | GET | ✅ | Crew's recent check-ins (`WHERE activeUntil > now()`), visibility-scoped |
+| `/api/checkins/[id]` | GET | ✅ | Check-in detail with visibility gate; Phase 5 Session 2, 2026-04-20 |
+| `/api/checkins/[id]` | DELETE | ✅ | Cancel own check-in (soft: sets `activeUntil = now()`) |
+| `/api/users/privacy` | GET | ✅ | Get check-in privacy settings; Phase 5 Session 2, 2026-04-20 |
+| `/api/users/privacy` | PATCH | ✅ | Update check-in visibility (PUBLIC/CREW/PRIVATE); Phase 5 Session 2, 2026-04-20 |
 
 ---
 

@@ -193,13 +193,13 @@ describe('processInvitations — registered user', () => {
     expect(createCall.data.status).toBe('PENDING');
   });
 
-  it('creates a TRIP_INVITATION notification for a registered user', async () => {
+  it('creates a SYSTEM notification for a registered user (trip types migrated to SYSTEM)', async () => {
     await processInvitations(BASE_PARAMS);
 
     expect(mockNotification.create).toHaveBeenCalledOnce();
     const notifCall = mockNotification.create.mock.calls[0][0];
     expect(notifCall.data.userId).toBe(REGISTERED_USER.id);
-    expect(notifCall.data.type).toBe('TRIP_INVITATION');
+    expect(notifCall.data.type).toBe('SYSTEM');
     expect(notifCall.data.message).toContain('Paris Getaway');
   });
 

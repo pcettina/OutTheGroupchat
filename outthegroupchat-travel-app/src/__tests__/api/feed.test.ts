@@ -3,31 +3,35 @@
  *
  * Route: /api/feed  (GET, POST)
  *
+ * Phase 6 rescope (2026-04-21): feed now serves meetup_created and
+ * check_in_posted items.  Trip/activity/follow queries have been removed.
+ * POST returns 410 Gone (endpoint retired).
+ *
+ * feedType enum: 'all' | 'crew' | 'trending' (default: 'all')
+ *
  * Strategy
  * --------
  * - All external dependencies (Prisma, NextAuth, logger) are mocked in
  *   src/__tests__/setup.ts.  This file extends those mocks with the
- *   additional Prisma models the feed handlers require: follow, activity,
- *   activityRating, and savedActivity.
+ *   additional Prisma models the rescoped feed handler calls: meetup,
+ *   checkIn, and crew.
  * - Handlers are called directly with a minimal Request built from the
  *   web-platform APIs available in the Vitest node environment.
- * - GET is public — no session is required.  POST requires a session.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
-import { TripStatus, ActivityStatus, ActivityCategory, BookingStatus } from '@prisma/client';
 
 // Extend the global prisma mock (defined in setup.ts) with the additional
-// models and methods that the feed route handler calls.
+// models and methods that the rescoped feed route handler calls.
 vi.mock('@/lib/prisma', async (importOriginal) => {
   const original = await importOriginal<typeof import('@/lib/prisma')>();
   return {
     ...original,
     prisma: {
       ...original.prisma,
-      trip: {
+      meetup: {
         findMany: vi.fn(),
         findUnique: vi.fn(),
         findFirst: vi.fn(),
@@ -35,19 +39,19 @@ vi.mock('@/lib/prisma', async (importOriginal) => {
         update: vi.fn(),
         delete: vi.fn(),
       },
-      follow: {
+      checkIn: {
         findMany: vi.fn(),
-      },
-      activity: {
-        findMany: vi.fn(),
-      },
-      activityRating: {
-        findMany: vi.fn(),
-      },
-      savedActivity: {
-        findMany: vi.fn(),
-        upsert: vi.fn(),
+        findUnique: vi.fn(),
+        create: vi.fn(),
+        delete: vi.fn(),
         deleteMany: vi.fn(),
+      },
+      crew: {
+        findMany: vi.fn(),
+        findUnique: vi.fn(),
+        findFirst: vi.fn(),
+        create: vi.fn(),
+        update: vi.fn(),
       },
     },
   };
@@ -60,19 +64,17 @@ import { GET as feedGET, POST as feedPOST } from '@/app/api/feed/route';
 // Typed references to mocked modules
 // ---------------------------------------------------------------------------
 const mockGetServerSession = vi.mocked(getServerSession);
-const mockPrismaTrip = vi.mocked(prisma.trip);
-const mockPrismaFollow = vi.mocked(prisma.follow);
-const mockPrismaActivity = vi.mocked(prisma.activity);
-const mockPrismaActivityRating = vi.mocked(prisma.activityRating);
-const mockPrismaSavedActivity = vi.mocked(prisma.savedActivity);
+const mockPrismaMeetup = vi.mocked(prisma.meetup);
+const mockPrismaCheckIn = vi.mocked(prisma.checkIn);
+const mockPrismaCrew = vi.mocked(prisma.crew);
 
 // ---------------------------------------------------------------------------
 // Shared fixtures
 // ---------------------------------------------------------------------------
 
 const MOCK_USER_ID = 'user-feed-111';
-const MOCK_ACTIVITY_ID = 'activity-feed-222';
-const MOCK_TRIP_ID = 'trip-feed-333';
+const MOCK_MEETUP_ID = 'meetup-feed-222';
+const MOCK_CHECKIN_ID = 'checkin-feed-333';
 
 const MOCK_SESSION = {
   user: {
@@ -83,61 +85,43 @@ const MOCK_SESSION = {
   expires: '2099-01-01',
 };
 
-/** A minimal public trip row returned by prisma.trip.findMany. */
-const MOCK_TRIP_ROW = {
-  id: MOCK_TRIP_ID,
-  title: 'Tokyo Adventure',
+/** A minimal public meetup row returned by prisma.meetup.findMany. */
+const MOCK_MEETUP_ROW = {
+  id: MOCK_MEETUP_ID,
+  title: 'Friday Night Out',
   description: null,
-  destination: { city: 'Tokyo', country: 'Japan' },
-  status: 'PLANNING' as TripStatus,
-  isPublic: true,
-  coverImage: null,
-  budget: null,
-  createdAt: new Date('2026-01-15'),
-  updatedAt: new Date('2026-02-01'),
-  startDate: new Date('2026-07-01'),
-  endDate: new Date('2026-07-10'),
-  viewCount: 0,
-  ownerId: MOCK_USER_ID,
-  owner: { id: MOCK_USER_ID, name: 'Feed Tester', image: null },
-  _count: { members: 2, activities: 5 },
+  hostId: MOCK_USER_ID,
+  venueId: null,
+  venueName: 'The Blue Bar',
+  cityId: null,
+  scheduledAt: new Date(Date.now() + 86400000), // tomorrow
+  endsAt: null,
+  visibility: 'PUBLIC' as const,
+  capacity: null,
+  cancelled: false,
+  createdAt: new Date('2026-04-20'),
+  updatedAt: new Date('2026-04-20'),
+  host: { id: MOCK_USER_ID, name: 'Feed Tester', image: null },
+  venue: null,
+  _count: { attendees: 4 },
 };
 
-/** A minimal public activity row returned by prisma.activity.findMany. */
-const MOCK_ACTIVITY_ROW = {
-  id: MOCK_ACTIVITY_ID,
-  tripId: MOCK_TRIP_ID,
-  name: 'Shibuya Crossing Walk',
-  category: 'CULTURE' as ActivityCategory,
-  description: 'Walk through the famous crossing',
-  status: 'SUGGESTED' as ActivityStatus,
-  isPublic: true,
-  createdAt: new Date('2026-02-02'),
-  updatedAt: new Date('2026-02-02'),
-  date: null,
-  startTime: null,
-  endTime: null,
-  duration: null,
-  location: null,
-  cost: null,
-  currency: 'USD',
-  priceRange: null,
-  costDetails: null,
-  bookingStatus: 'NOT_NEEDED' as BookingStatus,
-  bookingUrl: null,
-  confirmationCode: null,
-  requirements: null,
-  originalTripId: null,
-  shareCount: 0,
-  externalLinks: null,
-  trip: {
-    id: MOCK_TRIP_ID,
-    title: 'Tokyo Adventure',
-    destination: { city: 'Tokyo', country: 'Japan' },
-    owner: { id: MOCK_USER_ID, name: 'Feed Tester', image: null },
-  },
-  ratings: [],
-  _count: { savedBy: 3, comments: 1 },
+/** A minimal public check-in row returned by prisma.checkIn.findMany. */
+const MOCK_CHECKIN_ROW = {
+  id: MOCK_CHECKIN_ID,
+  userId: MOCK_USER_ID,
+  venueId: null,
+  venueName: 'Corner Café',
+  cityId: null,
+  note: 'Working remotely today',
+  visibility: 'PUBLIC' as const,
+  activeUntil: new Date(Date.now() + 3600000), // 1h from now (still active)
+  latitude: null,
+  longitude: null,
+  createdAt: new Date('2026-04-20T14:00:00Z'),
+  user: { id: MOCK_USER_ID, name: 'Feed Tester', image: null },
+  venue: null,
+  city: { name: 'New York' },
 };
 
 /** Build a minimal Request accepted by the App Router handlers. */
@@ -168,11 +152,9 @@ beforeEach(() => {
   vi.clearAllMocks();
 
   // Default GET stubs — return empty datasets so no items are built.
-  mockPrismaTrip.findMany.mockResolvedValue([]);
-  mockPrismaActivity.findMany.mockResolvedValue([]);
-  mockPrismaActivityRating.findMany.mockResolvedValue([]);
-  mockPrismaFollow.findMany.mockResolvedValue([]);
-  mockPrismaSavedActivity.findMany.mockResolvedValue([]);
+  mockPrismaMeetup.findMany.mockResolvedValue([]);
+  mockPrismaCheckIn.findMany.mockResolvedValue([]);
+  mockPrismaCrew.findMany.mockResolvedValue([]);
 });
 
 // ===========================================================================
@@ -207,7 +189,7 @@ describe('GET /api/feed', () => {
     });
   });
 
-  it('returns empty data arrays when no trips, activities, or reviews exist', async () => {
+  it('returns empty data array when no meetups or check-ins exist', async () => {
     mockGetServerSession.mockResolvedValue(null);
     // All Prisma queries already default to [] in beforeEach.
 
@@ -231,9 +213,9 @@ describe('GET /api/feed', () => {
     expect(body.pagination.limit).toBe(5);
   });
 
-  it('includes trip feed items when public trips are returned by Prisma', async () => {
+  it('includes meetup_created items when public meetups are returned by Prisma', async () => {
     mockGetServerSession.mockResolvedValue(null);
-    mockPrismaTrip.findMany.mockResolvedValue([MOCK_TRIP_ROW]);
+    mockPrismaMeetup.findMany.mockResolvedValue([MOCK_MEETUP_ROW]);
 
     const res = await feedGET(makeRequest('/api/feed'));
     const body = await parseJson(res);
@@ -241,124 +223,86 @@ describe('GET /api/feed', () => {
     expect(res.status).toBe(200);
     expect(body.data.length).toBeGreaterThan(0);
 
-    const tripItem = body.data.find((item: { type: string }) => item.type === 'trip_created');
-    expect(tripItem).toBeDefined();
-    expect(tripItem.trip.id).toBe(MOCK_TRIP_ID);
-    expect(tripItem.trip.title).toBe('Tokyo Adventure');
+    const meetupItem = body.data.find((item: { type: string }) => item.type === 'meetup_created');
+    expect(meetupItem).toBeDefined();
+    expect(meetupItem.meetup.id).toBe(MOCK_MEETUP_ID);
+    expect(meetupItem.meetup.title).toBe('Friday Night Out');
   });
 
-  it('includes activity feed items when public activities are returned by Prisma', async () => {
-    mockGetServerSession.mockResolvedValue(null);
-    mockPrismaActivity.findMany.mockResolvedValue([MOCK_ACTIVITY_ROW]);
+  it('includes check_in_posted items when active check-ins are returned by Prisma', async () => {
+    mockGetServerSession.mockResolvedValue(MOCK_SESSION);
+    mockPrismaCheckIn.findMany.mockResolvedValue([MOCK_CHECKIN_ROW]);
 
     const res = await feedGET(makeRequest('/api/feed'));
     const body = await parseJson(res);
 
     expect(res.status).toBe(200);
-    const activityItem = body.data.find((item: { type: string }) => item.type === 'activity_added');
-    expect(activityItem).toBeDefined();
-    expect(activityItem.activity.id).toBe(MOCK_ACTIVITY_ID);
-    expect(activityItem.activity.name).toBe('Shibuya Crossing Walk');
+    const checkInItem = body.data.find((item: { type: string }) => item.type === 'check_in_posted');
+    expect(checkInItem).toBeDefined();
+    expect(checkInItem.checkIn.id).toBe(MOCK_CHECKIN_ID);
+  });
+
+  it('accepts feedType=all (default)', async () => {
+    mockGetServerSession.mockResolvedValue(null);
+
+    const res = await feedGET(makeRequest('/api/feed?type=all'));
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(200);
+    expect(body.success).toBe(true);
+  });
+
+  it('accepts feedType=crew', async () => {
+    mockGetServerSession.mockResolvedValue(MOCK_SESSION);
+
+    const res = await feedGET(makeRequest('/api/feed?type=crew'));
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(200);
+    expect(body.success).toBe(true);
+  });
+
+  it('accepts feedType=trending', async () => {
+    mockGetServerSession.mockResolvedValue(null);
+    mockPrismaMeetup.findMany.mockResolvedValue([MOCK_MEETUP_ROW]);
+
+    const res = await feedGET(makeRequest('/api/feed?type=trending'));
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(200);
+    expect(body.success).toBe(true);
+  });
+
+  it('returns 400 for an invalid feedType value', async () => {
+    mockGetServerSession.mockResolvedValue(null);
+
+    const res = await feedGET(makeRequest('/api/feed?type=invalid'));
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(400);
+    expect(body.error).toBeDefined();
+  });
+
+  it('returns 400 for legacy feedType=following (now invalid)', async () => {
+    mockGetServerSession.mockResolvedValue(null);
+
+    const res = await feedGET(makeRequest('/api/feed?type=following'));
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(400);
+    expect(body.error).toBeDefined();
   });
 });
 
 // ===========================================================================
-// POST /api/feed
+// POST /api/feed — retired (410 Gone)
 // ===========================================================================
 describe('POST /api/feed', () => {
-  it('returns 401 when unauthenticated', async () => {
-    mockGetServerSession.mockResolvedValue(null);
-
-    const res = await feedPOST(
-      makeRequest('/api/feed', { method: 'POST', body: { activityId: MOCK_ACTIVITY_ID, action: 'save' } })
-    );
+  it('returns 410 Gone for any POST request (endpoint retired)', async () => {
+    const res = await feedPOST();
     const body = await parseJson(res);
 
-    expect(res.status).toBe(401);
-    expect(body.error).toBe('Unauthorized');
-  });
-
-  it('returns 400 when activityId is missing', async () => {
-    mockGetServerSession.mockResolvedValue(MOCK_SESSION);
-
-    const res = await feedPOST(
-      makeRequest('/api/feed', { method: 'POST', body: { action: 'save' } })
-    );
-    const body = await parseJson(res);
-
-    expect(res.status).toBe(400);
-    expect(body.error).toBe('Invalid request');
-  });
-
-  it('returns 400 when action is not save or unsave', async () => {
-    mockGetServerSession.mockResolvedValue(MOCK_SESSION);
-
-    const res = await feedPOST(
-      makeRequest('/api/feed', { method: 'POST', body: { activityId: MOCK_ACTIVITY_ID, action: 'like' } })
-    );
-    const body = await parseJson(res);
-
-    expect(res.status).toBe(400);
-    expect(body.error).toBe('Invalid request');
-  });
-
-  it('saves an activity successfully and returns action: save', async () => {
-    mockGetServerSession.mockResolvedValue(MOCK_SESSION);
-    mockPrismaSavedActivity.upsert.mockResolvedValue({
-      id: 'saved-act-1',
-      userId: MOCK_USER_ID,
-      activityId: MOCK_ACTIVITY_ID,
-      savedAt: new Date(),
-    });
-
-    const res = await feedPOST(
-      makeRequest('/api/feed', { method: 'POST', body: { activityId: MOCK_ACTIVITY_ID, action: 'save' } })
-    );
-    const body = await parseJson(res);
-
-    expect(res.status).toBe(200);
-    expect(body.success).toBe(true);
-    expect(body.action).toBe('save');
-    expect(mockPrismaSavedActivity.upsert).toHaveBeenCalledOnce();
-    expect(mockPrismaSavedActivity.upsert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { userId_activityId: { userId: MOCK_USER_ID, activityId: MOCK_ACTIVITY_ID } },
-      })
-    );
-  });
-
-  it('unsaves an activity successfully and returns action: unsave', async () => {
-    mockGetServerSession.mockResolvedValue(MOCK_SESSION);
-    mockPrismaSavedActivity.deleteMany.mockResolvedValue({ count: 1 });
-
-    const res = await feedPOST(
-      makeRequest('/api/feed', { method: 'POST', body: { activityId: MOCK_ACTIVITY_ID, action: 'unsave' } })
-    );
-    const body = await parseJson(res);
-
-    expect(res.status).toBe(200);
-    expect(body.success).toBe(true);
-    expect(body.action).toBe('unsave');
-    expect(mockPrismaSavedActivity.deleteMany).toHaveBeenCalledOnce();
-    expect(mockPrismaSavedActivity.deleteMany).toHaveBeenCalledWith({
-      where: { userId: MOCK_USER_ID, activityId: MOCK_ACTIVITY_ID },
-    });
-  });
-
-  it('handles unsave for a non-existent save gracefully (deleteMany count: 0)', async () => {
-    mockGetServerSession.mockResolvedValue(MOCK_SESSION);
-    // deleteMany resolves with count 0 when no matching row exists — the
-    // handler does not distinguish this case; it still returns success.
-    mockPrismaSavedActivity.deleteMany.mockResolvedValue({ count: 0 });
-
-    const res = await feedPOST(
-      makeRequest('/api/feed', { method: 'POST', body: { activityId: MOCK_ACTIVITY_ID, action: 'unsave' } })
-    );
-    const body = await parseJson(res);
-
-    expect(res.status).toBe(200);
-    expect(body.success).toBe(true);
-    expect(body.action).toBe('unsave');
-    expect(mockPrismaSavedActivity.deleteMany).toHaveBeenCalledOnce();
+    expect(res.status).toBe(410);
+    expect(body.error).toMatch(/retired/i);
   });
 });

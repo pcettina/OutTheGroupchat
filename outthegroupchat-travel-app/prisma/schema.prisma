@@ -132,6 +132,7 @@ model User {
 // SOCIAL MODELS
 // ============================================
 
+/// @deprecated Scheduled for removal in Phase 8. Full Follow->Crew migration complete as of Phase 3.
 model Follow {
   id          String   @id @default(cuid())
   followerId  String
@@ -162,17 +163,7 @@ model Notification {
 }
 
 enum NotificationType {
-  TRIP_INVITATION
-  TRIP_UPDATE
-  TRIP_COMMENT
-  TRIP_LIKE
-  ACTIVITY_COMMENT
-  ACTIVITY_RATING
-  SURVEY_REMINDER
-  VOTE_REMINDER
-  FOLLOW
-  SYSTEM
-  // Social domain notification types (Phase 2)
+  // Social domain notification types (Phase 2+)
   CREW_REQUEST
   CREW_ACCEPTED
   MEETUP_INVITED
@@ -180,6 +171,7 @@ enum NotificationType {
   MEETUP_STARTING_SOON
   CHECK_IN_NEARBY
   CREW_CHECKED_IN_NEARBY
+  SYSTEM
 }
 
 // ============================================

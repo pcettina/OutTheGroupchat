@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { VenuePicker } from './VenuePicker';
@@ -17,6 +18,12 @@ interface CreateMeetupModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: (meetupId: string) => void;
+  /** Pre-fill the title field (e.g. from a "Join me" check-in link). */
+  initialTitle?: string;
+  /** Pre-fill the free-text venue name (e.g. when venueId lookup is unavailable). */
+  initialVenueName?: string;
+  /** The check-in id this meetup originated from (stored, not shown). */
+  initialCheckInId?: string;
 }
 
 const VISIBILITY_OPTIONS: { value: MeetupVisibility; label: string }[] = [
@@ -26,17 +33,48 @@ const VISIBILITY_OPTIONS: { value: MeetupVisibility; label: string }[] = [
   { value: 'PRIVATE', label: 'Private' },
 ];
 
-export function CreateMeetupModal({ isOpen, onClose, onSuccess }: CreateMeetupModalProps) {
-  const [title, setTitle] = useState('');
+export function CreateMeetupModal({
+  isOpen,
+  onClose,
+  onSuccess,
+  initialTitle,
+  initialVenueName,
+  initialCheckInId,
+}: CreateMeetupModalProps) {
+  // Read URL search params as a secondary source of pre-fill data.
+  // Props take priority; params are used when the modal is opened without props
+  // (e.g. rendered inside a page that receives query params directly).
+  const searchParams = useSearchParams();
+
+  const resolvedTitle = initialTitle ?? searchParams.get('title') ?? '';
+  const resolvedVenueName = initialVenueName ?? '';
+  const resolvedCheckInId = initialCheckInId ?? searchParams.get('checkInId') ?? '';
+  // venueId from params — used to attempt a pre-selected venue via VenuePicker
+  const paramVenueId = searchParams.get('venueId') ?? '';
+
+  const [title, setTitle] = useState(resolvedTitle);
   const [description, setDescription] = useState('');
   const [selectedVenue, setSelectedVenue] = useState<SelectedVenue | null>(null);
-  const [freeTextVenue, setFreeTextVenue] = useState('');
+  const [freeTextVenue, setFreeTextVenue] = useState(resolvedVenueName);
   const [scheduledAt, setScheduledAt] = useState('');
   const [endsAt, setEndsAt] = useState('');
   const [visibility, setVisibility] = useState<MeetupVisibility>('CREW');
   const [capacity, setCapacity] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Stored on the form state; sent with the meetup POST so the server can
+  // associate the meetup with the originating check-in if needed.
+  const [checkInId] = useState(resolvedCheckInId);
+
+  // When the modal opens, reset pre-fill values in case the caller's props changed.
+  useEffect(() => {
+    if (isOpen) {
+      setTitle(initialTitle ?? searchParams.get('title') ?? '');
+      setFreeTextVenue(initialVenueName ?? '');
+    }
+    // Only trigger on open/close transitions and prop changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   const handleClose = useCallback(() => {
     if (submitting) return;
@@ -96,11 +134,19 @@ export function CreateMeetupModal({ isOpen, onClose, onSuccess }: CreateMeetupMo
         capacity: parsedCapacity,
       };
 
+      // Associate with originating check-in if present.
+      if (checkInId) {
+        body.checkInId = checkInId;
+      }
+
       if (selectedVenue) {
         body.venueId = selectedVenue.id;
         body.venueName = selectedVenue.name;
       } else if (freeTextVenue.trim()) {
         body.venueName = freeTextVenue.trim();
+      } else if (paramVenueId) {
+        // Venue from check-in link — pass the venueId so the server can resolve it.
+        body.venueId = paramVenueId;
       }
 
       const res = await fetch('/api/meetups', {
@@ -227,14 +273,23 @@ export function CreateMeetupModal({ isOpen, onClose, onSuccess }: CreateMeetupMo
                     className="mb-2"
                   />
                   {!selectedVenue && (
-                    <input
-                      type="text"
-                      value={freeTextVenue}
-                      onChange={(e) => setFreeTextVenue(e.target.value)}
-                      placeholder="Or type a venue name freely"
-                      disabled={submitting}
-                      className={inputClass}
-                    />
+                    <>
+                      {paramVenueId && !freeTextVenue && (
+                        <p className="mb-1.5 text-xs text-slate-400 dark:text-slate-500">
+                          Venue from check-in will be used (or type a name below to override).
+                        </p>
+                      )}
+                      <input
+                        type="text"
+                        value={freeTextVenue}
+                        onChange={(e) => setFreeTextVenue(e.target.value)}
+                        placeholder={
+                          paramVenueId ? 'Override venue name (optional)' : 'Or type a venue name freely'
+                        }
+                        disabled={submitting}
+                        className={inputClass}
+                      />
+                    </>
                   )}
                 </div>
 

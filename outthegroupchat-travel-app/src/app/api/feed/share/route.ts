@@ -71,7 +71,7 @@ export async function POST(req: Request) {
         await prisma.notification.create({
           data: {
             userId: tripFull.ownerId,
-            type: 'TRIP_LIKE',
+            type: 'SYSTEM',
             title: 'Trip shared',
             message: `${session.user.name ?? 'Someone'} shared your trip "${tripFull.title}"${message ? `: "${message}"` : ''}`,
             data: {

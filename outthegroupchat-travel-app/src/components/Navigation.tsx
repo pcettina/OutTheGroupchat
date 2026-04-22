@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useSession, signOut } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Search, Newspaper, Bell, User, Users, Calendar, Mail, LogOut, Menu, X, ChevronDown, MapPin } from 'lucide-react';
+import { Sparkles, Search, Newspaper, Bell, User, Users, Calendar, Mail, LogOut, Menu, X, ChevronDown, MapPin, Shield } from 'lucide-react';
 
 export function Navigation() {
   const { data: session, status } = useSession();
@@ -169,6 +169,14 @@ export function Navigation() {
                               <Mail className="w-4 h-4" />
                               Invitations
                             </Link>
+                            <Link
+                              href="/settings/privacy"
+                              className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                              onClick={() => setIsProfileOpen(false)}
+                            >
+                              <Shield className="w-4 h-4" />
+                              Privacy Settings
+                            </Link>
                           </div>
                           <div className="pt-1 border-t border-slate-100 dark:border-slate-700">
                             <button
@@ -231,6 +239,19 @@ export function Navigation() {
                     {link.label}
                   </Link>
                 ))}
+                {status === 'authenticated' && (
+                  <>
+                    <div className="border-t border-slate-200 dark:border-slate-700 my-2" />
+                    <Link
+                      href="/settings/privacy"
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      <Shield className="w-4 h-4" />
+                      Privacy Settings
+                    </Link>
+                  </>
+                )}
                 {status !== 'authenticated' && (
                   <>
                     <div className="border-t border-slate-200 dark:border-slate-700 my-2" />
