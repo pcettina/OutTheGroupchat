@@ -1,0 +1,114 @@
+{
+  "$schema": "./palette.schema.json",
+  "version": "1.0",
+  "name": "Last Call",
+  "mode": "dark-first",
+  "source": "docs/design/DESIGN_BRIEF.md §3 (locked 2026-04-22, rev-2 web-verified)",
+  "locked": "2026-04-23",
+
+  "roles": {
+    "sodium":     { "hex": "#FF6B4A", "role": "Primary CTA — Check in, RSVP, Get on the list. NYC streetlight orange." },
+    "bourbon":    { "hex": "#FFB347", "role": "Secondary action, check-in glow" },
+    "brick":      { "hex": "#7A2C1A", "role": "Pressed states, depth wells, raised card on dark bg" },
+    "tile":       { "hex": "#5FB3A8", "role": "Crew identity color, 'you're in' confirmations. Replaces yellow." },
+    "maraschino": { "hex": "#3A1F2B", "role": "'Live now' / meetup-active badge — deep warm glow" },
+    "bgDark":     { "hex": "#15110E", "role": "App background (default mode)" },
+    "bgLight":    { "hex": "#FAF3E7", "role": "Light-mode background, warm-paper inversion" },
+    "textBright": { "hex": "#F5EBDD", "role": "Primary text on dark" },
+    "textDim":    { "hex": "#8B7E6F", "role": "Secondary text, timestamps, helper copy" },
+    "border":     { "hex": "#2B221C", "role": "Hairlines on dark bg" }
+  },
+
+  "scales": {
+    "sodium": {
+      "50":  "#FFF1EC",
+      "100": "#FFDCD0",
+      "200": "#FFBBA5",
+      "300": "#FF977A",
+      "400": "#FF8261",
+      "500": "#FF6B4A",
+      "600": "#E8502F",
+      "700": "#B93B1F",
+      "800": "#862914",
+      "900": "#5C1C0E",
+      "950": "#3A1107"
+    },
+    "tile": {
+      "50":  "#F0F8F7",
+      "100": "#DCEFEC",
+      "200": "#B7DED8",
+      "300": "#8AC9BF",
+      "400": "#6DBCB1",
+      "500": "#5FB3A8",
+      "600": "#478880",
+      "700": "#34665F",
+      "800": "#264C46",
+      "900": "#1C3835"
+    },
+    "bourbon": {
+      "50":  "#FFF7EC",
+      "100": "#FFE9C8",
+      "200": "#FFD28F",
+      "300": "#FFC169",
+      "400": "#FFB347",
+      "500": "#FFB347",
+      "600": "#E0932B",
+      "700": "#B6741C",
+      "800": "#855313",
+      "900": "#5C3A0D"
+    }
+  },
+
+  "semantic": {
+    "success": { "hex": "#5FB3A8", "token": "otg.tile",    "note": "Matches 'you're in' confirmation role from brief." },
+    "warning": { "hex": "#FFB347", "token": "otg.bourbon", "note": "Derived — brief did not explicitly name a warning token. Bourbon's caution-warmth reads correctly; propose for brief rev-3." },
+    "danger":  { "hex": "#D04A3C", "token": "otg.danger",  "note": "Derived — brief did not specify destructive/error color. Redder sibling to sodium, distinct enough to signal 'stop' vs 'go'. Propose for brief rev-3." }
+  },
+
+  "accessibility": {
+    "backgroundPairs": [
+      { "fg": "#FF6B4A", "bg": "#15110E", "ratio": "6.8:1",  "status": "AA",     "note": "Primary CTA on dark bg" },
+      { "fg": "#F5EBDD", "bg": "#15110E", "ratio": "14.2:1", "status": "AAA",    "note": "Bright text on dark bg" },
+      { "fg": "#8B7E6F", "bg": "#15110E", "ratio": "4.6:1",  "status": "AA-14+", "note": "Dim text on dark bg — passes AA at 14px+ only. Verify at ship." }
+    ]
+  },
+
+  "tailwindExtend": {
+    "colors": {
+      "otg": {
+        "sodium":     { "DEFAULT": "#FF6B4A", "50": "#FFF1EC", "100": "#FFDCD0", "200": "#FFBBA5", "300": "#FF977A", "400": "#FF8261", "500": "#FF6B4A", "600": "#E8502F", "700": "#B93B1F", "800": "#862914", "900": "#5C1C0E", "950": "#3A1107" },
+        "bourbon":    { "DEFAULT": "#FFB347", "50": "#FFF7EC", "100": "#FFE9C8", "200": "#FFD28F", "300": "#FFC169", "400": "#FFB347", "500": "#FFB347", "600": "#E0932B", "700": "#B6741C", "800": "#855313", "900": "#5C3A0D" },
+        "brick":      "#7A2C1A",
+        "tile":       { "DEFAULT": "#5FB3A8", "50": "#F0F8F7", "100": "#DCEFEC", "200": "#B7DED8", "300": "#8AC9BF", "400": "#6DBCB1", "500": "#5FB3A8", "600": "#478880", "700": "#34665F", "800": "#264C46", "900": "#1C3835" },
+        "maraschino": "#3A1F2B",
+        "bg": {
+          "dark":  "#15110E",
+          "light": "#FAF3E7"
+        },
+        "text": {
+          "bright": "#F5EBDD",
+          "dim":    "#8B7E6F"
+        },
+        "border":     "#2B221C",
+        "danger":     "#D04A3C"
+      }
+    }
+  },
+
+  "cssVariables": {
+    "selector": ":root",
+    "declarations": {
+      "--otg-sodium":      "#FF6B4A",
+      "--otg-bourbon":     "#FFB347",
+      "--otg-brick":       "#7A2C1A",
+      "--otg-tile":        "#5FB3A8",
+      "--otg-maraschino":  "#3A1F2B",
+      "--otg-bg-dark":     "#15110E",
+      "--otg-bg-light":    "#FAF3E7",
+      "--otg-text-bright": "#F5EBDD",
+      "--otg-text-dim":    "#8B7E6F",
+      "--otg-border":      "#2B221C",
+      "--otg-danger":      "#D04A3C"
+    }
+  }
+}
