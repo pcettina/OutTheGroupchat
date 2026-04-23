@@ -11,7 +11,64 @@ module.exports = {
         display: ['var(--font-outfit)', 'system-ui', 'sans-serif'],
       },
       colors: {
-        // Primary brand color - emerald
+        // OTG "Last Call" palette — brand/palette.json
+        // Source of truth: docs/design/DESIGN_BRIEF.md §3 (locked 2026-04-22)
+        otg: {
+          sodium: {
+            DEFAULT: '#FF6B4A',
+            50:  '#FFF1EC',
+            100: '#FFDCD0',
+            200: '#FFBBA5',
+            300: '#FF977A',
+            400: '#FF8261',
+            500: '#FF6B4A',
+            600: '#E8502F',
+            700: '#B93B1F',
+            800: '#862914',
+            900: '#5C1C0E',
+            950: '#3A1107',
+          },
+          bourbon: {
+            DEFAULT: '#FFB347',
+            50:  '#FFF7EC',
+            100: '#FFE9C8',
+            200: '#FFD28F',
+            300: '#FFC169',
+            400: '#FFB347',
+            500: '#FFB347',
+            600: '#E0932B',
+            700: '#B6741C',
+            800: '#855313',
+            900: '#5C3A0D',
+          },
+          brick: '#7A2C1A',
+          tile: {
+            DEFAULT: '#5FB3A8',
+            50:  '#F0F8F7',
+            100: '#DCEFEC',
+            200: '#B7DED8',
+            300: '#8AC9BF',
+            400: '#6DBCB1',
+            500: '#5FB3A8',
+            600: '#478880',
+            700: '#34665F',
+            800: '#264C46',
+            900: '#1C3835',
+          },
+          maraschino: '#3A1F2B',
+          bg: {
+            dark: '#15110E',
+            light: '#FAF3E7',
+          },
+          text: {
+            bright: '#F5EBDD',
+            dim: '#8B7E6F',
+          },
+          border: '#2B221C',
+          danger: '#D04A3C',
+        },
+        // Legacy (pre-pivot "warm sunset") — retained for non-breaking migration.
+        // TODO: remove once /design-component pass replaces emerald utilities site-wide.
         primary: {
           DEFAULT: '#10b981',
           50: '#ecfdf5',

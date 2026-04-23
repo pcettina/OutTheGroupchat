@@ -63,6 +63,22 @@
     --transition-fast: 150ms ease;
     --transition-normal: 250ms ease;
     --transition-slow: 350ms ease;
+
+    /* OTG "Last Call" palette — brand/palette.json
+       Source of truth: docs/design/DESIGN_BRIEF.md §3 (locked 2026-04-22).
+       Coexists with the legacy sunset palette above during pivot migration;
+       /design-component pass will retire the legacy tokens. */
+    --otg-sodium:      #FF6B4A;
+    --otg-bourbon:     #FFB347;
+    --otg-brick:       #7A2C1A;
+    --otg-tile:        #5FB3A8;
+    --otg-maraschino:  #3A1F2B;
+    --otg-bg-dark:     #15110E;
+    --otg-bg-light:    #FAF3E7;
+    --otg-text-bright: #F5EBDD;
+    --otg-text-dim:    #8B7E6F;
+    --otg-border:      #2B221C;
+    --otg-danger:      #D04A3C;
   }
 
   .dark {

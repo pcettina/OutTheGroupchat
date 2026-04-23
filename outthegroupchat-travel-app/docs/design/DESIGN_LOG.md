@@ -24,6 +24,44 @@ Every design session appends one entry. Append at the top (newest first).
 
 ## Entries
 
+### 2026-04-23 — brand-identity — palette
+
+**Context:** First `/brand-identity` artifact pass off the rev-2 locked brief. Scope deliberately narrowed to palette only — logo concepts, icon, favicon, OG, email headers deferred. Goal: emit a single source-of-truth file for the Last Call palette, wire it into Tailwind + CSS vars without breaking the existing emerald/amber "warm sunset" tokens still used across 117 files / 1721 utility occurrences.
+
+**Decisions:**
+- Created `brand/palette.json` as source of truth. Structure: `roles` (10 brief-verbatim tokens), `scales` (50–950 derived for sodium / tile / bourbon for Tailwind utility ergonomics), `semantic` (success/warning/danger mapping), `accessibility` (WCAG pairs carried from brief), `tailwindExtend` + `cssVariables` (copy-paste ready).
+- Extended `tailwind.config.js` `theme.extend.colors` with `otg.*` namespace. Legacy `primary` emerald scale kept in place with a TODO comment — removing it now would nuke the app. Reserved for `/design-component` pass.
+- Added 11 `--otg-*` CSS custom properties to `:root` in `src/styles/globals.css`, coexisting with the legacy sunset vars.
+- **Derived two semantic tokens not in brief §3:** `danger` `#D04A3C` (redder sibling to sodium — needed for destructive/error surfaces) and `warning` (mapped to existing `bourbon` `#FFB347`). Both flagged in `palette.json` with `note` fields. Proposing for brief rev-3.
+- Decision point on shade scales: brief uses role-based tokens only. Chose to emit numeric scales for `sodium`, `tile`, `bourbon` on top of the role tokens — matches how the rest of Tailwind works and lets components use `bg-otg-sodium-100` for tints without lookup tables. Other role tokens (brick, maraschino, bg, text, border) ship as single hex values because brief treats them as single-purpose.
+
+**Alternatives considered + rejected:**
+- Mass-replace emerald utilities site-wide in this pass — rejected, violates workflow scope (palette, not component refactor). 1721 occurrences across 117 files is its own multi-session effort. Logged as the largest follow-up.
+- Reconcile `palette.json` to the workflow spec's literal shape (`primary.50/100/500/900`, `accent.400/600`, etc.) — rejected. Brief §3 is role-based with 10 distinct semantic tokens; flattening into a 3-bucket shape would lose fidelity. Instead extended the spec with role-first + scales-alongside.
+- Adding an explicit dark-mode inversion block to `globals.css` `.dark { --otg-bg: var(--otg-bg-light); ... }` — rejected for this pass. Brief locks dark-first; light mode is "accessibility courtesy." Defer the inversion until the component refactor pass proves we need it.
+
+**Verification:**
+- `npx tsc --noEmit` — 0 errors
+- `npm run lint` — ✔ 0 warnings/errors
+- `npm run build` — ✅ full production build clean
+
+**Follow-ups:**
+- [ ] **Largest:** Replace 1721 emerald/amber/pink utility occurrences across 117 files with `otg.*` equivalents. Catalog per component in `/design-component` passes (`RSVPButton`, `CheckInButton` + `LiveActivityCard`, `NotificationCard`, `MeetupCard` first per brief §9).
+- [ ] Rewrite `src/styles/globals.css` component classes (`.btn-primary`, `.btn-secondary`, `.card-gradient`, `.avatar`, `.progress-bar`, `.text-gradient`, `.glow-emerald`, `::selection`) to use `otg.*`. These hold the inherited "warm sunset" gradient language that contradicts Last Call dark-first.
+- [ ] Flip `darkMode: 'class'` → `darkMode: ['class']` + wire default `<html class="dark">` on app shell. Brief is explicit that dark is default; current default is light. Blocking for any meaningful Last Call rendering.
+- [ ] Retire `--color-primary` / `--color-secondary` / `--color-accent` CSS vars in favor of `--otg-*`. Audit `globals.css` `@layer components` block (nav-link, progress, skeleton, divider).
+- [ ] Propose brief rev-3 additions: explicit `--otg-danger` (`#D04A3C`) and `--otg-warning` (alias of bourbon). Dim-text 4.6:1 ratio verified on paper — verify rendered at 14px in a real surface once a component migrates.
+- [ ] Delete legacy `primary` emerald scale from `tailwind.config.js` once all utility references are migrated.
+
+**Artifacts shipped:**
+- `outthegroupchat-travel-app/brand/palette.json` (new, source of truth)
+- `outthegroupchat-travel-app/tailwind.config.js` (extended with `otg.*` namespace)
+- `outthegroupchat-travel-app/src/styles/globals.css` (`:root` extended with `--otg-*` vars)
+
+**Branch / PR:** `design/brand-identity-palette-2026-04-23` / (PR on push — awaiting user go-ahead)
+
+---
+
 ### 2026-04-22 — design-research — foundation (rev-2, web-verified)
 
 **Context:** Rev-1 of this workflow (commit ce5bea8) ran with `WebSearch` and `WebFetch` denied — Agents A (competitors) and D (tone) had to fall back to training-data recall and flagged uncertainty in their reports. Web tools were enabled in `.claude/settings.local.json` and all 5 agents were re-run in parallel with verified web access. This rev-2 entry replaces rev-1 as the locked foundation.
