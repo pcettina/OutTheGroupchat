@@ -82,12 +82,13 @@
   }
 
   .dark {
-    --color-background: 15 23 42;     /* Slate-900 */
-    --color-foreground: 248 250 252;  /* Slate-50 */
-    --color-muted: 148 163 184;       /* Slate-400 */
-    --color-muted-foreground: 100 116 139; /* Slate-500 */
-    --color-border: 51 65 85;         /* Slate-700 */
-    --color-card: 30 41 59;           /* Slate-800 */
+    /* Last Call — brand/palette.json. Default site-wide via <html class="dark"> in layout.tsx. */
+    --color-background: 21 17 14;       /* otg-bg-dark   #15110E */
+    --color-foreground: 245 235 221;    /* otg-text-bright #F5EBDD */
+    --color-muted: 139 126 111;         /* otg-text-dim  #8B7E6F */
+    --color-muted-foreground: 139 126 111;
+    --color-border: 43 34 28;           /* otg-border    #2B221C */
+    --color-card: 58 31 43;             /* otg-maraschino #3A1F2B */
   }
 }
 
@@ -392,7 +393,8 @@
   @apply bg-slate-400 dark:bg-slate-500;
 }
 
-/* Selection Color */
+/* Selection Color — Last Call sodium wash */
 ::selection {
-  @apply bg-emerald-500/30 text-emerald-900 dark:text-emerald-100;
+  background-color: rgba(255, 107, 74, 0.35);
+  color: #F5EBDD;
 }

@@ -1,4 +1,4 @@
-import { Outfit, Poppins } from 'next/font/google';
+import localFont from 'next/font/local';
 import '@/styles/globals.css';
 import { Providers } from '@/lib/providers';
 import { SkipLinks } from '@/components/accessibility';
@@ -6,21 +6,54 @@ import { Analytics } from '@vercel/analytics/react';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'OutTheGroupchat - Plan Group Trips Together',
-  description: 'The easiest way to plan trips with friends. Coordinate preferences, vote on activities, and create perfect group travel experiences.',
-  keywords: ['travel', 'group travel', 'trip planning', 'vacation', 'friends'],
+  title: 'OutTheGroupchat — Real plans with real people. Tonight.',
+  description:
+    'The social media app that wants to get you off your phone. NYC-first meetup network — check in, RSVP, invite your Crew, meet up IRL.',
+  keywords: [
+    'meetup',
+    'nyc',
+    'social',
+    'irl',
+    'crew',
+    'nightlife',
+    'off your phone',
+    'real plans',
+  ],
+  themeColor: '#15110E',
 };
 
-const outfit = Outfit({
-  subsets: ['latin'],
-  variable: '--font-outfit',
+// Display — Cabinet Grotesk (Fontshare ITF FFL). Hero, headings, numbers.
+const cabinetGrotesk = localFont({
+  src: [
+    { path: '../../public/fonts/CabinetGrotesk-Medium.woff2', weight: '500', style: 'normal' },
+    { path: '../../public/fonts/CabinetGrotesk-Bold.woff2', weight: '700', style: 'normal' },
+  ],
+  variable: '--font-display',
   display: 'swap',
 });
 
-const poppins = Poppins({
-  weight: ['400', '500', '600', '700'],
-  subsets: ['latin'],
-  variable: '--font-poppins',
+// Body — Switzer (Fontshare ITF FFL). UI 14–18px, body text, buttons.
+const switzer = localFont({
+  src: [
+    { path: '../../public/fonts/Switzer-Regular.woff2', weight: '400', style: 'normal' },
+    { path: '../../public/fonts/Switzer-Medium.woff2', weight: '500', style: 'normal' },
+  ],
+  variable: '--font-sans',
+  display: 'swap',
+});
+
+// Editorial italic — Instrument Serif Italic (Google Fonts OFL) standing in for Sentient italic,
+// which is temporarily broken on Fontshare's CSS API (tested 2026-04-23, all italic weights 500).
+// Swap back when their API heals — same italic-serif editorial register.
+const editorialItalic = localFont({
+  src: [
+    {
+      path: '../../public/fonts/InstrumentSerif-Italic.ttf',
+      weight: '400',
+      style: 'italic',
+    },
+  ],
+  variable: '--font-serif',
   display: 'swap',
 });
 
@@ -30,22 +63,23 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${outfit.variable} ${poppins.variable}`}>
+    <html
+      lang="en"
+      className={`dark ${cabinetGrotesk.variable} ${switzer.variable} ${editorialItalic.variable}`}
+    >
       <head>
         <link rel="icon" href="/favicon.ico" />
-        <meta name="theme-color" content="#10b981" />
       </head>
-      <body className="font-sans antialiased">
+      <body className="font-sans antialiased bg-otg-bg-dark text-otg-text-bright">
         <Providers>
-          {/* Skip Links for Accessibility */}
           <SkipLinks
             links={[
               { id: 'main-content', label: 'Skip to main content' },
               { id: 'navigation', label: 'Skip to navigation' },
             ]}
           />
-          
-          <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950/20">
+
+          <div className="min-h-screen bg-otg-bg-dark text-otg-text-bright">
             <main id="main-content" role="main">
               {children}
             </main>
