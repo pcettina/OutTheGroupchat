@@ -1,0 +1,60 @@
+name: Meetup starting-soon cron
+
+# Replaces the Vercel cron previously declared in
+# outthegroupchat-travel-app/vercel.json. Vercel Hobby rejects sub-daily
+# crons (`*/5 * * * *` fails deployment), so this hits the same endpoint
+# from GitHub Actions instead.
+#
+# The /api/cron/meetup-starting-soon route looks at meetups starting in
+# the T+55–T+65 minute window, which absorbs the ~15-minute scheduling
+# jitter GitHub Actions can have under load.
+#
+# Setup:
+#   1. Add CRON_SECRET as a GitHub repo secret with the same value used
+#      in Vercel env (Settings → Secrets and variables → Actions → New).
+#   2. Optionally add CRON_BASE_URL as a repo variable to override the
+#      default production URL (e.g., when a custom domain is wired up).
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'  # every 5 minutes (UTC)
+  workflow_dispatch:        # allow manual trigger from Actions tab
+
+concurrency:
+  group: meetup-starting-soon
+  cancel-in-progress: false  # let in-flight runs finish before queueing new ones
+
+jobs:
+  ping:
+    name: Ping /api/cron/meetup-starting-soon
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Hit cron endpoint
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          BASE_URL: ${{ vars.CRON_BASE_URL || 'https://outthegroupchat-travel-app.vercel.app' }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${CRON_SECRET:-}" ]; then
+            echo "::error::CRON_SECRET repo secret is not set. Add it under Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+
+          response_file=$(mktemp)
+          status=$(curl -sS -o "$response_file" -w '%{http_code}' \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            "${BASE_URL}/api/cron/meetup-starting-soon" || true)
+
+          echo "HTTP ${status}"
+          echo '--- response ---'
+          cat "$response_file"
+          echo
+          echo '--- end response ---'
+
+          if [ "${status}" != "200" ]; then
+            echo "::error::Cron ping failed with status ${status}"
+            exit 1
+          fi
