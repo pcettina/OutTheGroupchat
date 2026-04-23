@@ -24,6 +24,55 @@ Every design session appends one entry. Append at the top (newest first).
 
 ## Entries
 
+### 2026-04-23 — foundation — fonts + dark-mode default ("Last Call lights up")
+
+**Context:** Palette PR (#61) and logo PR (#62) are merged but the app itself doesn't yet *look* like the brief — still boots to light mode, still renders Outfit/Poppins, still uses the pre-pivot emerald/slate gradient. This pass wires the Fontshare fonts and flips dark-mode default so every subsequent `/design-component` pass sees the correct rendering context.
+
+**Decisions:**
+- **Flipped dark-mode default.** `<html class="dark">` added to `src/app/layout.tsx`. Brief §3 ("dark-first, warm-black") is now literal. Light mode exists as accessibility courtesy but is no longer the default.
+- **Loaded Fontshare fonts via `next/font/local`.** Self-hosted (not Fontshare's CDN) per brief guidance — wins on Core Web Vitals. Files in `public/fonts/`:
+  - Cabinet Grotesk Medium (500) + Bold (700) → `--font-display`
+  - Switzer Regular (400) + Medium (500) → `--font-sans`
+  - Instrument Serif Italic (400) → `--font-serif` (Sentient italic substitute — Fontshare Sentient italic API returns HTTP 500 across all weights as of 2026-04-23; all non-italic Sentient weights work. See follow-up to swap back.)
+- **Font stack exposed via Tailwind.** `fontFamily.sans = Switzer → system-ui → sans-serif`. `fontFamily.display = Cabinet → Switzer → system-ui`. `fontFamily.serif = Instrument Serif → Georgia → serif`. Any component can now use `font-display` / `font-sans` / `font-serif`.
+- **Re-pointed `.dark` CSS custom properties to Last Call tokens.** `--color-background` = `21 17 14` (warm-black), `--color-foreground` = `245 235 221` (bright cream), `--color-muted` = `139 126 111` (text-dim), `--color-border` = `43 34 28`, `--color-card` = `58 31 43` (maraschino). Components already using `bg-background` / `text-foreground` / `bg-muted` / `border-border` / `bg-card` now automatically render Last Call in dark mode. Components with hardcoded `bg-emerald-500` etc. still render the old palette — deferred to component refactor passes.
+- **Replaced metadata copy** with meetup-pivot language — title `"OutTheGroupchat — Real plans with real people. Tonight."`, description leads with "the social media app that wants to get you off your phone", keywords swapped from travel/vacation to meetup/nyc/irl/crew/nightlife.
+- **Updated `theme-color` meta** from emerald `#10b981` to warm-black `#15110E`. Mobile browser chrome now matches the dark app body.
+- **Selection + scrollbar** retinted to sodium/warm-black in `globals.css` — small but visible palette touch.
+
+**Alternatives considered + rejected:**
+- **Keep dark-mode as opt-in** (default light, toggle button) — rejected. Brief §3 is explicit ("dark-first, warm by default"). Shipping light-default would mean every design-component pass validates against the wrong context.
+- **Use Sentient italic anyway (non-italic + CSS `font-style: italic`)** — rejected. Synthesized italic from a non-italic cut usually looks worse than a true italic font. Instrument Serif Italic is a proper italic cut with similar editorial register — better fidelity.
+- **Use Fraunces or Crimson Text as italic serif** — rejected for now. Instrument Serif is what the concept renders used and what the user approved. Keep visual continuity.
+- **Load Fontshare via their CDN** (<link rel="stylesheet" href="api.fontshare.com...">) — rejected per brief. Self-hosted wins on Core Web Vitals, removes third-party CDN dependency.
+- **Refactor all 1721 hardcoded emerald/amber/pink utility occurrences in this PR** — rejected. 117-file refactor is too large and unrelated to the foundation goal. Belongs in `/design-component` passes.
+
+**Verification:**
+- `npx tsc --noEmit` — 0 errors
+- `npm run lint` — ✔ 0 warnings / errors
+- `npm run build` — ✅ full production build clean (pre-existing Sentry deprecation + punycode Node warnings only; nothing new introduced)
+
+**Follow-ups:**
+- [ ] **Swap Instrument Serif Italic → Fontshare Sentient italic** when Fontshare's CSS API heals. Single-file change (`src/app/layout.tsx` + rerun `public/fonts/download-fontshare.mjs`).
+- [ ] **Subset Instrument Serif TTF to Latin basic + common punctuation** — current TTF is 63 KB; subsetted woff2 would be ~15 KB. Blocks only bundle-size optimization.
+- [ ] **Component-level palette + font migration** — the 117-file / 1721-occurrence emerald/amber/pink audit catalogued in PR #61 plus all hardcoded `font-*` utilities that don't reference the new CSS vars. Largest single follow-up, belongs in `/design-component` passes (first targets: `RSVPButton`, `CheckInButton`, `MeetupCard`, `NotificationCard` per brief §9).
+- [ ] **Audit `@layer components` block in `globals.css`** — `.btn-primary`, `.btn-secondary`, `.btn-accent`, `.card-gradient`, `.avatar`, `.progress-bar`, `.text-gradient`, `.glow-emerald` all still reference the pre-pivot emerald/amber gradients. These aren't component instances but they're app-wide classes that need Last Call rewiring before any component using them can be considered on-brief.
+- [ ] Remove the legacy `primary` emerald scale from `tailwind.config.js` once all utility references are migrated. Logged in PR #61 follow-ups — unblocks after component pass.
+- [ ] First `/design-component` pass on `RSVPButton` with Pulse-In interaction (brief §6 signature micro-interaction #1).
+
+**Artifacts shipped:**
+- `public/fonts/CabinetGrotesk-{Medium,Bold}.woff2` (40 KB total)
+- `public/fonts/Switzer-{Regular,Medium}.woff2` (35 KB total)
+- `public/fonts/InstrumentSerif-Italic.ttf` (63 KB, unsubsetted — subset follow-up noted)
+- `public/fonts/download-fontshare.mjs` — re-runnable downloader script
+- `src/app/layout.tsx` — fonts wired + dark-mode default + pivot metadata
+- `tailwind.config.js` — fontFamily stack updated
+- `src/styles/globals.css` — `.dark` tokens retargeted to Last Call, selection retinted to sodium
+
+**Branch / PR:** `design/last-call-foundation-2026-04-23` / (PR on push)
+
+---
+
 ### 2026-04-23 — brand-identity — logo (mark locked, MVP ship)
 
 **Context:** Second `/brand-identity` artifact pass. Palette shipped separately on PR #61; this pass locks the visual mark. Scope deliberately narrowed to mark + derived icons/favicon — horizontal wordmark SVG, stacked SVG, light-mode variant, OG image, and email headers deferred to a later pass once Fontshare fonts (Cabinet Grotesk + Switzer + Sentient italic per brief §4) are loaded into the app via `next/font/local`.

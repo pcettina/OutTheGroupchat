@@ -7,8 +7,11 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['var(--font-outfit)', 'var(--font-poppins)', 'system-ui', 'sans-serif'],
-        display: ['var(--font-outfit)', 'system-ui', 'sans-serif'],
+        // OTG brief §4: Switzer for body, Cabinet Grotesk for display, Instrument Serif Italic
+        // as editorial (Sentient italic substitute — Fontshare Sentient italics API broken 2026-04-23).
+        sans: ['var(--font-sans)', 'system-ui', '-apple-system', 'sans-serif'],
+        display: ['var(--font-display)', 'var(--font-sans)', 'system-ui', 'sans-serif'],
+        serif: ['var(--font-serif)', 'Georgia', 'Cambria', 'serif'],
       },
       colors: {
         // OTG "Last Call" palette — brand/palette.json
