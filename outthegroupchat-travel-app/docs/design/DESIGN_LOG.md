@@ -24,6 +24,59 @@ Every design session appends one entry. Append at the top (newest first).
 
 ## Entries
 
+### 2026-04-23 — brand-identity — logo (mark locked, MVP ship)
+
+**Context:** Second `/brand-identity` artifact pass. Palette shipped separately on PR #61; this pass locks the visual mark. Scope deliberately narrowed to mark + derived icons/favicon — horizontal wordmark SVG, stacked SVG, light-mode variant, OG image, and email headers deferred to a later pass once Fontshare fonts (Cabinet Grotesk + Switzer + Sentient italic per brief §4) are loaded into the app via `next/font/local`.
+
+**Decisions:**
+- **Locked concept: Hybrid Exit.** Portrait phone silhouette (rounded rectangle, hand-inked stamp texture from the Receipt concept) containing a vertical bracket with asymmetric arms: short TOP arm stays inside the phone; long BOTTOM arm extends past the right edge through a visible gap in the phone outline, with a rounded cap on the leading edge. Curved "out the groupchat · out the groupchat" micro-text runs along the inside perimeter. The mark is a direct geometric translation of the positioning thesis: "the screen exists to put you in a room" (phone = screen, bracket = you, gap + rounded cap = the exit).
+- **Dual-fidelity strategy adopted.**
+  - Inked Exit (PIL-rendered PNG, round-2 concepts folder) — for hero/OG/email/marketing surfaces where the hand-drawn texture carries personality.
+  - Clean Exit (`brand/logo/logo-mark.svg`, hand-authored SVG) — for UI chrome / favicon / small app icon, where the ink-bleed texture muds together at sub-60px sizes. Same geometry, crisp vector.
+  - Rationale: most well-built brands (Stripe, Linear, Cash App) maintain simplified icon variants for small scales. Treating small-scale rendering as a designed-for constraint rather than a degraded fallback.
+- **Concept rounds.** Round 1 generated 5 genuinely distinct directions (Marquee Letter, Pin-Drop, Clink, Bracket, Receipt). User selected Receipt + Clink + Bracket as go-tos. Round 2 produced refinements of each + three hybrids (Tab = Receipt×Clink, Stub = Bracket×Receipt, Breakout = Clink×Bracket). User proposed a further hybrid combining Receipt's texture + Bracket's breakout geometry + a phone-silhouette form factor; this became Hybrid Exit and locked after one polish pass (arm flip + rounded leading cap).
+- **Font substitutions (render-time only).** Concept renders used local Fontshare-similar fonts from the canvas-design skill: Bricolage Grotesque (→ Cabinet Grotesk), Instrument Sans (→ Switzer), Instrument Serif Italic (→ Sentient italic). Production assets will re-render once the real Fontshare fonts are loaded per brief §4.
+
+**Alternatives considered + rejected:**
+- Long TOP arm exiting upward/right (round 2 first render) — user preferred bottom-arm orientation for anchored-above / escaping-below energy. Shipped version has long bottom arm.
+- Squared leading edge on the exit arm — replaced with rounded cap for motion/energy signal; also sets up the logged marketing-animation work (future rounded cap → avatar morphs).
+- Single-fidelity inked mark everywhere — rejected. At 32px the ink texture is indistinguishable from a rendering artifact. Dual-fidelity is more honest.
+- Full horizontal wordmark SVG ship this pass — deferred. Requires Fontshare fonts loaded in the app, which is its own non-trivial PR (italic Sentient via `next/font/local`). Blocking the mark on fonts would slow down downstream design-component work that needs the icon wired in.
+- Auto-derived OG image + email headers — deferred. These are composition-level design (logo + tagline + visual hook), not mechanical asset derivation. Better handled when marketing copy and hero page are being designed together.
+
+**Verification:**
+- `npx tsc --noEmit` — 0 errors
+- `npm run lint` — ✔ 0 warnings / errors
+- `npm run build` — ✅ clean, new icon.png / apple-icon.png / favicon.ico auto-detected by Next.js app-router convention
+
+**Follow-ups:**
+- [ ] **Load Fontshare fonts** via `next/font/local` per brief §4. Blocks horizontal wordmark SVG, on-brief marketing typography, and proper email templates.
+- [ ] Horizontal wordmark SVG (mark + "OutTheGroupchat" italic serif, right-aligned). After fonts load.
+- [ ] Stacked SVG (mark above wordmark, centered).
+- [ ] Light-mode SVG variant (swap bg + text colors; maybe invert sodium → brick for paper surfaces).
+- [ ] Favicon-optimized SVG for 16/32px (chunkier strokes, simplified gap — current favicon.ico renders from the hero-sized SVG and is marginal at 32px).
+- [ ] OG image 1200×630 — logo + "Real plans with real people. Tonight." hero + visual hook (inked Exit, per dual-fidelity).
+- [ ] Email header variants 600×160 × 3 (invite / RSVP / reminder) — once Resend templates are rewired post-Phase 8.
+- [ ] **Marketing animation — "Leading-arm avatars"** — see `brand/FUTURE_WORK.md`. Rounded cap on the long bottom arm morphs into running/biking/bar/golf/etc avatar silhouettes. Encodes "off your phone" as motion. Blocked until brand-identity PR ships + Phase 4 avatar illustration style locks.
+- [ ] Audit `src/components/` for hardcoded emerald / amber / pink utilities still referencing the pre-pivot palette — 1721 occurrences across 117 files (catalogued in palette PR #61). Largest single follow-up; belongs in `/design-component` passes.
+
+**Artifacts shipped:**
+- `brand/logo/logo-mark.svg` — locked clean vector mark
+- `brand/logo/logo-mark-{1024,512,256,180,120,60,32,16}.png` — rendered previews at standard sizes
+- `brand/logo/concepts/` — round 1 concept exploration (5 directions × wordmark + mark + contact sheets + grand grid)
+- `brand/logo/concepts/round-2/` — round 2 (3 refinements + 4 hybrids × wordmark + mark + contact sheet)
+- `brand/logo/concepts/design-philosophy.md` — "Last Call" manifesto governing the round-1 explorations
+- `brand/logo/render-clean-previews.mjs` — Playwright-based SVG→PNG renderer (uses project's installed Chromium)
+- `brand/logo/compile-favicon.py` — ICO compiler + app-router icon copier
+- `brand/FUTURE_WORK.md` — marketing animation concept logged
+- `src/app/icon.png` — 32×32 app-router default icon (auto-served at `/icon`)
+- `src/app/apple-icon.png` — 180×180 iOS home-screen icon (auto-served at `/apple-icon`)
+- `src/app/favicon.ico` — multi-size (16+32) favicon
+
+**Branch / PR:** `design/brand-identity-logo-2026-04-23` / (PR on push)
+
+---
+
 ### 2026-04-23 — brand-identity — palette
 
 **Context:** First `/brand-identity` artifact pass off the rev-2 locked brief. Scope deliberately narrowed to palette only — logo concepts, icon, favicon, OG, email headers deferred. Goal: emit a single source-of-truth file for the Last Call palette, wire it into Tailwind + CSS vars without breaking the existing emerald/amber "warm sunset" tokens still used across 117 files / 1721 utility occurrences.
