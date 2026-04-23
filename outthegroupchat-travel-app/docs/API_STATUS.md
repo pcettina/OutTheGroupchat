@@ -8,11 +8,15 @@
 >
 > **Phase 6 COMPLETE (2026-04-22, nightly/2026-04-22 PR #55):** Feed rescoped (meetup/checkin types, POST→410), search people-first (users→meetups→venues), notification type migration (9 old trip types removed from schema), AI routes (suggest-meetups + icebreakers). All 4 Phase 6 actions complete.
 >
+> **Phase 7 COMPLETE (2026-04-22, PR #56):** About page, OG metadata, README rewrite, CLAUDE.md updated, email-auth.ts extracted, search legacy types removed.
+>
+> **Phase 8 ACTIVE (2026-04-22, nightly build):** Launch-readiness re-audit underway. Test coverage: 1108 tests across 59 files (+3: checkins-feed.test.ts, checkins-id.test.ts, ai-suggest-meetups.test.ts). Sentry confirmed on all new crew, checkins, and AI routes.
+>
 > **Last Audit:** April 2026
 > **Live API routes (post-archive):** 50 (35 base + 6 Crew + 9 Phase 4 meetup/venue/cron routes + 3 Phase 5 check-in routes + privacy route + 2 new Phase 6 AI routes: suggest-meetups, icebreakers; note: feed POST now returns 410)
 > **Archived API routes (Phase 1):** 13
 > **Target:** 100% for Beta Launch (re-baselined in Phase 8)
-> **Sentry Coverage:** 19/48 routes instrumented on pre-archive branch; coverage on new live surface re-computed after Phase 2
+> **Sentry Coverage:** Confirmed on all crew routes, checkins routes, and AI routes (suggest-meetups, icebreakers) as of 2026-04-22 Phase 8 audit
 
 ---
 
@@ -139,8 +143,8 @@ Email removed from select projection in /api/search/route.ts
 | `/api/ai/recommend` | POST | ✅ | ⏳ | Retained — Phase 6 will retarget to venues/meetups |
 | `/api/ai/recommend` | GET | ✅ | ⏳ | Retained; trip-scoped `?tripId=` branch archived with trip routes |
 | `/api/ai/search` | GET/POST | ✅ | ⏳ | Semantic search with embeddings — retained (destinations branch to be repurposed for venues/cities) |
-| `/api/ai/suggest-meetups` | POST | ✅ | ⏳ | **NEW 2026-04-21 (Phase 6)** — given user's city, Crew, past check-ins, suggest meetup ideas via OpenAI; rate-limited, Zod-validated; 11 tests in `suggest-meetups.test.ts` |
-| `/api/ai/icebreakers` | POST | ✅ | ⏳ | **NEW 2026-04-21 (Phase 6)** — given a new Crew member, suggest conversation starters; rate-limited, Zod-validated; 10 tests in `icebreakers.test.ts` |
+| `/api/ai/suggest-meetups` | POST | ✅ | ⏳ | **NEW 2026-04-21 (Phase 6)** — given user's city, Crew, past check-ins, suggest meetup ideas via OpenAI; rate-limited, Zod-validated; 11 tests in `suggest-meetups.test.ts`; **27 tests in `ai-suggest-meetups.test.ts` added 2026-04-22 Phase 8**; Sentry confirmed ✅ |
+| `/api/ai/icebreakers` | POST | ✅ | ⏳ | **NEW 2026-04-21 (Phase 6)** — given a new Crew member, suggest conversation starters; rate-limited, Zod-validated; 10 tests in `icebreakers.test.ts`; Sentry confirmed ✅ |
 | ~~`/api/ai/generate-itinerary`~~ | POST | 📦 | — | Archived 2026-04-16 — see Archived Routes |
 | ~~`/api/ai/suggest-activities`~~ | POST | 📦 | — | Archived 2026-04-16 — see Archived Routes |
 
@@ -399,9 +403,9 @@ Phase 4 closed with Session 3. Next: Phase 5 (Check-ins & live presence).
 |----------|--------|--------|-------|
 | `/api/checkins` | POST | ✅ | Create check-in (`activeUntilMinutes` override 30–720; default 360=6h); `CREW_CHECKED_IN_NEARBY` notification dispatched; Pusher city-channel broadcast |
 | `/api/checkins` | GET | ✅ | Get own check-ins |
-| `/api/checkins/feed` | GET | ✅ | Crew's recent check-ins (`WHERE activeUntil > now()`), visibility-scoped |
-| `/api/checkins/[id]` | GET | ✅ | Check-in detail with visibility gate; Phase 5 Session 2, 2026-04-20 |
-| `/api/checkins/[id]` | DELETE | ✅ | Cancel own check-in (soft: sets `activeUntil = now()`) |
+| `/api/checkins/feed` | GET | ✅ | Crew's recent check-ins (`WHERE activeUntil > now()`), visibility-scoped; **13 tests in `checkins-feed.test.ts` added 2026-04-22 Phase 8** |
+| `/api/checkins/[id]` | GET | ✅ | Check-in detail with visibility gate; Phase 5 Session 2, 2026-04-20; **20 tests in `checkins-id.test.ts` added 2026-04-22 Phase 8** |
+| `/api/checkins/[id]` | DELETE | ✅ | Cancel own check-in (soft: sets `activeUntil = now()`); covered by `checkins-id.test.ts` |
 | `/api/users/privacy` | GET | ✅ | Get check-in privacy settings; Phase 5 Session 2, 2026-04-20 |
 | `/api/users/privacy` | PATCH | ✅ | Update check-in visibility (PUBLIC/CREW/PRIVATE); Phase 5 Session 2, 2026-04-20 |
 
@@ -446,4 +450,4 @@ All routes below were moved to `src/app/api/_archive/` on **2026-04-16** as part
 
 *Review and update after each API change.*
 
-*Last Updated: 2026-03-26 - /api/ai/search GET+POST fully implemented (semantic search, destinations branch); /api/newsletter/subscribe now requires auth; /api/auth/signup, /api/auth/reset-password, /api/auth/verify-email: rate limiting now first operation; 153 new tests tonight (1156 total, 56 test files); dead components (NotificationCenter.tsx, SharePreview.tsx) removed; JSDoc added to costs.ts; README updated. Also includes 2026-03-29 changes: /api/ai/chat Zod strengthened + JSON.parse safety; /api/ai/recommend Zod GET params + JSON.parse safety; /api/ai/suggest-activities + generate-itinerary JSON.parse safety; /api/notifications/[notificationId] Zod params (cuid) + bugfix (read was hardcoded true); JSDoc added to src/lib/geocoding.ts; N8N docs deprecated*
+*Last Updated: 2026-04-22 — Phase 8 (Launch-readiness re-audit) started. New test files: checkins-feed.test.ts (13 tests), checkins-id.test.ts (20 tests), ai-suggest-meetups.test.ts (27 tests). Sentry coverage confirmed on all crew routes, checkins routes, and AI routes (suggest-meetups, icebreakers). Total: 1108 tests passing across 59 test files.*

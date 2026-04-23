@@ -1,6 +1,6 @@
 # OutTheGroupchat — Scope Pivot & Refactor Plan
 
-> **Status:** Active — Phase 5 COMPLETE (2026-04-20, PR #53); Phase 6 ✅ COMPLETE (2026-04-22, PR #55): all 4 actions done — feed rescoped, AI routes added, notification types migrated, search people-first. Phase 7 (Marketing surface) is next.
+> **Status:** Active — Phase 7 ✅ COMPLETE (2026-04-22, PR #56 — unmerged to main); Phase 8 (Launch-readiness re-audit) now active (started 2026-04-22 nightly build).
 > **Created:** 2026-04-16 | **Last updated:** 2026-04-22
 > **Purpose:** Canonical planning doc for the pivot from group-trip-planning app → meetup-focused social network with a persistent `Crew` graph. All future refactor sessions reference this document.
 > **Decision:** Refactor in place (not rebuild). Trip-planning infrastructure is archived but preserved for potential future reactivation.
@@ -393,6 +393,9 @@ Each phase targets a discrete session (or a nightly build if small). Phases are 
 ---
 
 ### Phase 7 — Marketing & brand surface (1 session)
+
+> ✅ **COMPLETE 2026-04-22 (PR #56 — unmerged to main)** — /about page, OG metadata + Twitter Card updates, README.md full rewrite, CLAUDE.md updated for meetup scope, email-auth.ts extracted (sendWelcomeEmail, sendAuthVerificationEmail, sendPasswordResetEmail with meetup tone), search legacy types removed.
+
 **Objective:** External surfaces reflect the new product.
 **Actions:**
 1. New landing page (`src/app/page.tsx` or root route) with tagline and new illustrations
@@ -408,6 +411,9 @@ Each phase targets a discrete session (or a nightly build if small). Phases are 
 ---
 
 ### Phase 8 — Launch-readiness re-audit (1 session)
+
+> 🟡 **STARTED 2026-04-22 (nightly build)** — LAUNCH_CHECKLIST.md fully rewritten with meetup-centric milestones. +60 tests added (checkins-feed.test.ts, checkins-id.test.ts, ai-suggest-meetups.test.ts). Sentry confirmed on all crew, checkins, AI routes. RichFeedItem refactored (717→489 lines). TODO/FIXME count reduced to 0. PRODUCTION_ROADMAP.md updated to v3.3. E2E meetup-checkin spec added (14 tests). Key blockers identified: OPENAI_API_KEY, Pusher vars, Sentry DSN, Resend domain — all missing in Vercel production.
+
 **Objective:** Re-baseline the launch checklist against new scope.
 **Actions:**
 1. Rewrite `docs/LAUNCH_CHECKLIST.md` with meetup-centric milestones

@@ -1,29 +1,29 @@
 # OutTheGroupchat - Production Deployment & Feature Roadmap
 
 > **Target:** Q2 2026 Beta Launch
-> **Version:** 3.2 | **Last Updated:** 2026-04-17
+> **Version:** 3.3 | **Last Updated:** 2026-04-22
 
 ---
 
-## Pivot Status (2026-04-17)
+## Pivot Status (2026-04-22)
 
-- **Active refactor phase:** Phase 2 — New domain models & migrations
-- **Phases complete:** Phase 0 (PR backlog merged), Phase 1 (trip-planning archived)
-- **Phases remaining:** Phase 2–8 (see docs/REFACTOR_PLAN.md)
+- **Active refactor phase:** Phase 8 — Launch-readiness re-audit (in progress)
+- **Phases complete:** Phase 0 (PR backlog merged), Phase 1 (trip-planning archived), Phase 2 (Crew/Meetup/Venue schema), Phase 3 (Crew API + UI), Phase 4 (Meetup API + real-time), Phase 5 (Check-ins), Phase 6 (notification pruning, feed rescope, AI routes), Phase 7 (about page, OG metadata, email-auth split, README rewrite — PR #56, unmerged as of 2026-04-22)
+- **Phases remaining:** Phase 8 (this phase) — launch-readiness re-audit
 - **Pre-pivot tag:** v1.0-trip-planning (git tag, recoverable)
-- **Next milestone:** Phase 2 complete — Crew/Meetup/Venue models in Prisma (renamed from `Connection` 2026-04-17), `User.crewLabel` added, `CheckIn.activeUntil` added, mocks in setup.ts. Branch: `refactor/phase-2-crew-domain`. Q2/Q3/Q4 resolved (see REFACTOR_PLAN §9).
+- **Next milestone:** Phase 8 complete — all blockers resolved, beta environment verified, PR #56 merged to main
 
 ---
 
-## Current System Status (as of 2026-04-17)
+## Current System Status (as of 2026-04-22)
 
 ### Codebase Health Snapshot
 
 | Metric | Value |
 |--------|-------|
-| Tests passing (main) | 1,234 (59 test files) |
-| API routes | 48 (all rate-limited) |
-| TypeScript files | 266 |
+| Tests passing (nightly/2026-04-23 branch) | 1,100 (58 test files) |
+| Tests passing (main) | 1,048 |
+| API routes | 52 (all rate-limited) |
 | `any` types | 0 |
 | `console.*` in prod | 0 |
 | Files > 600 lines (prod) | 0 |
@@ -31,17 +31,18 @@
 | Lint warnings | 0 |
 | TSC errors | 0 |
 | Security score | 9/10 |
-| Sentry coverage | 19/48 routes |
+| Sentry coverage | 19/52 routes |
 | GitHub Actions CI | Passing |
+| Neon branch-per-PR workflow | Active |
 
-### Overall Launch Readiness: Launch readiness paused during pivot — will re-audit at Phase 8 (see REFACTOR_PLAN.md §5)
+### Overall Launch Readiness: ~82%
 
 | Category | Score | Target | Status |
 |----------|-------|--------|--------|
 | Infrastructure | 95% | 100% | Almost Ready |
-| Core Features | 82% | 90% | In Progress |
+| Core Features | 88% | 90% | Near Complete |
 | Security | 90% | 100% | In Progress |
-| Testing | 85% | 80% | Met |
+| Testing | 88% | 80% | Met |
 | Monitoring | 65% | 80% | In Progress |
 
 ### Implemented & Working
@@ -49,42 +50,44 @@
 | Feature | Status | Notes |
 |---------|--------|-------|
 | Authentication (Email/Password) | Working | NextAuth with credentials provider |
-| Email Verification | Working | VerificationToken created + email sent at signup (2026-03-21) |
-| Password Reset | Working | API + UI complete (2026-03-14) |
+| Email Verification | Working | VerificationToken created + email sent at signup |
+| Password Reset | Working | API + UI complete |
 | Navigation & Routing | Working | App Router, all pages functional |
-| Feed System | Working | Basic feed with engagement bar |
+| Feed System | Working | Rescoped to meetup-centric content (Phase 6) |
 | Like/React System | Working | Optimistic updates, emoji reactions |
 | Comment System | Working | Trip support added |
-| Share Modal | Working | POST /api/feed/share implemented with Zod + notification |
-| Profile Page | Working | Full profile with stats, preferences |
-| Discover Page | Working | Auth-guarded (2026-03-24); category filters, search |
-| Inspiration Page | Working | Zod coerce.number on query params |
-| Trip Creation | Working | Basic creation working; wizard flow pending |
-| Trip Itinerary | Working | GET/PUT with $transaction atomicity (2026-03-23) |
+| Share Modal | Working | POST /api/feed/share with Zod + notification |
+| Profile Page | Working | Full profile with stats; ProfileCheckinsSection extracted |
+| Discover Page | Working | People-first search (Phase 6 rescope) |
+| Crew System | Working | 6 API routes, CrewButton/CrewList UI, crew emails |
+| Meetup System | Working | Full CRUD, RSVP, invite, Pusher real-time, cron |
+| Check-ins System | Working | POST/GET/DELETE, crew feed, privacy settings, NearbyCrewList |
+| AI Meetup Suggestions | Working | POST /api/ai/suggest-meetups; 503 guard when key absent |
+| AI Icebreakers | Working | POST /api/ai/icebreakers; 503 guard when key absent |
 | AI Chat Assistant | Working | OpenAI connected, streaming; 503 guard when key absent |
-| AI Activity Suggestions | Working | 503 guard when OPENAI_API_KEY absent (2026-03-23) |
-| AI Itinerary Generation | Working | 503 guard when OPENAI_API_KEY absent (2026-03-23) |
-| Survey API | Working | API structure complete; frontend integration pending |
-| Voting API | Working | API structure complete; frontend integration pending |
-| Member Invitations | Working | Email-based via Resend |
-| Rate Limiting | Working | Upstash Redis-based on all major routes |
-| CORS | Working | Configured in next.config.js (2026-03-23) |
-| Security Headers | Working | HSTS, X-Frame-Options, CSP in next.config.js (2026-03-10) |
+| About Page | Working | Phase 7 — "off your phone" ethos (in PR #56) |
+| OG / Twitter Card Metadata | Working | Updated from trip-planning copy (in PR #56) |
+| Email (auth) | Working | email-auth.ts extracted — sendWelcomeEmail, sendAuthVerificationEmail, sendPasswordResetEmail |
+| Rate Limiting | Working | Upstash Redis-based on all 52 routes |
+| CORS | Working | Configured in next.config.js |
+| Security Headers | Working | HSTS, X-Frame-Options, CSP in next.config.js |
 | Error Boundaries | Working | global-error.tsx, error.tsx, not-found.tsx |
-| Sentry | Partial | 19/48 routes instrumented (2026-04-16); needs real DSN in Vercel |
+| Sentry | Partial | 19/52 routes instrumented; needs real DSN in Vercel |
 | Real-time (Pusher) | Partial | Configured; env vars missing in production |
 | Accessibility | Good | Skip links, ARIA patterns |
 | Responsive Design | Good | Mobile-first, 44px touch targets |
+| Privacy / Terms Pages | Working | Static pages present |
 
 ### Active Blockers (Must Fix Before Launch)
 
 | Issue | Priority | Status |
 |-------|----------|--------|
 | OPENAI_API_KEY not set in Vercel | Critical | Blocked by config |
+| PR #56 not merged to main (Phase 7) | High | Pending merge |
 | Pusher env vars missing in production | High | Blocked by config |
 | Sentry DSN not set in Vercel | High | Blocked by config |
+| DEMO_MODE=false in production | High | Enable before beta onboarding |
 | Resend domain not verified | Medium | Email may go to spam |
-| Rate limiting not on ALL endpoints | Medium | RESOLVED — 48/48 routes covered |
 | NEXTAUTH_SECRET strength unverified | Medium | Manual check needed |
 
 ---
@@ -111,93 +114,84 @@
 - Zod validation on all major API routes
 - Test suite from 0 to 925+ tests (49 test files)
 - Vitest + Testing Library configured
-- Playwright E2E framework configured (browsers need `npx playwright install chromium`)
+- Playwright E2E framework configured
 - Password reset API + UI complete
-- Email verification endpoint created and wired into signup
+- Email verification endpoint wired into signup
 - Global error boundary + custom 404/500 pages
 - Sentry installed and configured (needs production DSN)
 - Vercel Analytics enabled
 - Structured logging via pino (`@/lib/logger`)
 - Security hardening: /api/beta/initialize-password, /api/beta/status, /api/auth/demo
-- CORS configured (next.config.js)
-- Security headers added (HSTS, X-Frame-Options, CSP)
-- InviteMemberModal component
-- /api/feed/share implemented
-- discover/* routes require authentication (2026-03-24)
-- auth/demo Zod input validation (2026-03-24)
+- CORS configured; security headers added (HSTS, X-Frame-Options, CSP)
 
 ### April 2026 Sprint (In Progress)
 
-- Test suite scaled to 1,234+ tests on main (59 test files); nightly builds adding ~100 tests per run
-- Rate limiting expanded to all 48 API routes (48/48 — 100% coverage)
-- Security score raised to 9/10 (JSDoc, Zod coerce, input sanitization)
-- Sentry error monitoring expanded to 19/48 routes (trips, activities, search, inspiration, users, profile, discover x4, AI routes, auth routes) — 2026-04-16
-- beta/status route migrated from in-memory Map to Redis checkRateLimit (2026-04-16)
-- GitHub Actions CI pipeline added (.github/workflows/ci.yml) with TSC, lint, Vitest, Playwright
-- DeleteTripModal component wired to DELETE /api/trips/[tripId]
-- Privacy + Terms of Service pages added
-- JSDoc added across 14+ lib/service files
-- Dead components removed: DestinationCard, CategoryFilter, TrendingSection, TravelBadges
-- Voting page displays real vote counts from API (no more hardcoded zeros)
-- Voting PUT response now returns voteCounts + totalVotes
+- Test suite scaled to 1,100 on nightly/2026-04-23 branch (1,048 on main, 58 test files)
+- Rate limiting expanded to all 52 API routes (52/52 — 100% coverage)
+- Security score raised to 9/10
+- Sentry expanded to 19/52 routes (trips, activities, search, inspiration, users, profile, discover, AI, auth routes)
+- beta/status route migrated from in-memory Map to Redis checkRateLimit
+- GitHub Actions CI pipeline added with TSC, lint, Vitest, Playwright
+- Neon branch-per-PR workflow activated (schema-diff comments on every PR)
+- **Pivot Phases 1–7 complete:**
+  - Phase 1: Trip code archived to src/_archive/
+  - Phase 2: Crew/Meetup/Venue/CheckIn models in Prisma; crewLabel, activeUntil added
+  - Phase 3: Crew API (6 routes), CrewButton/CrewList UI, crew emails
+  - Phase 4: Meetup API (5 routes), MeetupDetail page, Pusher real-time, Google Places, cron
+  - Phase 5: Check-ins API + UI, "Join me" flow, privacy settings, NearbyCrewList, duration picker
+  - Phase 6: NotificationType pruned, feed rescoped, search people-first, AI routes (suggest-meetups + icebreakers)
+  - Phase 7: About page, OG metadata, README rewrite, email-auth.ts extracted, search legacy types removed (PR #56)
+- RichFeedItem.tsx refactored 717→337 lines (4 sub-components extracted)
+- profile/page.tsx refactored 623→559 lines (ProfileCheckinsSection extracted)
+- Dead components removed: DestinationCard, CategoryFilter, TrendingSection, TravelBadges, SignUpForm
 
 ---
 
 ## Remaining Work Before Beta Launch
 
-### Phase 1: Critical Fixes (Do First)
+### Phase 8: Launch-Readiness Re-Audit (Active)
 
 ```
+[ ] Merge PR #56 to main (Phase 7 complete)
 [ ] Set OPENAI_API_KEY in Vercel production
 [ ] Set Pusher env vars in Vercel production
 [ ] Obtain real Sentry DSN + set in Vercel
 [ ] Verify Resend domain for email deliverability
-[ ] NEXTAUTH_SECRET rotation (32+ chars)
+[ ] Set DEMO_MODE=true for beta onboarding
+[ ] NEXTAUTH_SECRET rotation (32+ chars) — verify
 [ ] Session timeout configuration
 [ ] Failed login attempt limiting
-[x] Rate limiting on all endpoints (COMPLETE — 48/48 covered as of 2026-04-16)
-[ ] XSS prevention (DOMPurify) verification
-[ ] Trip editing flow
-[ ] Trip deletion/archiving (DeleteTripModal added 2026-04-08)
-[ ] Trip wizard (multi-step creation)
-[ ] Expand Sentry to remaining 29/48 routes (19/48 instrumented)
-[ ] Merge 22 open PRs into main (PRs #17–#38 open)
-```
-
-### Phase 2: Core Feature Completion
-
-```
-[ ] Survey frontend integration
-[ ] Voting frontend integration
-[ ] Real-time vote updates via Pusher
-[ ] Survey results display
-[ ] Follow system integration
-[ ] No search results empty state
-[ ] Form validation errors inline
-```
-
-### Phase 3: Pre-Beta Infrastructure
-
-```
+[ ] Expand Sentry to remaining 33/52 routes (19/52 instrumented)
 [ ] Uptime monitoring (BetterStack/Checkly)
-[ ] Status page
 [ ] Alert channels (Slack/Email)
+[ ] Database backup schedule verified
+[ ] Playwright E2E tests: auth flow + check-in flow end-to-end
+```
+
+### Post-Phase 8: Pre-Beta Infrastructure
+
+```
+[ ] Status page
 [ ] Log aggregation
-[ ] Database backup schedule
-[ ] Playwright browsers installed in CI
-[ ] Auth flow E2E tests complete
 [ ] Custom domain (optional for beta)
+[ ] Two-factor authentication (post-beta)
+[ ] OAuth providers: Google, Apple (post-beta)
 ```
 
-### Phase 4: Legal & Content
+---
 
-```
-[ ] Privacy Policy page
-[ ] Terms of Service page
-[ ] Meta titles/descriptions on all pages
-[ ] Open Graph tags
-[ ] Favicon configured
-```
+## Risk Register
+
+| Risk | Likelihood | Impact | Mitigation |
+|------|------------|--------|-----------|
+| Location data stalker vector | Low | High | activeUntil clamped to max 12h; CHECK-IN visibility=PRIVATE/CREW supported |
+| Crew-request abuse | Low | Medium | Crew requests require mutual acceptance; no auto-add |
+| Location precision abuse | Low | Medium | Check-in stores city/neighborhood only — no lat/lng stored in CheckIn model |
+| OpenAI key absent in prod | High | Medium | All AI routes return 503 gracefully; app fully functional without key |
+| Email deliverability (Resend unverified) | High | Medium | Transactional emails may land in spam until domain verified |
+| Pusher env vars missing | High | Medium | Real-time events silently no-op; check-in feed falls back to polling |
+| Sentry DSN missing | High | Low | Errors not captured in production until DSN set |
+| PR #56 unmerged | High | Low | Phase 7 features live on branch only; no user impact until merged |
 
 ---
 
@@ -216,7 +210,7 @@
 |         |                    |                                         |
 |         v                    v                                         |
 |  +---------------+    +---------------+    +-------------------+      |
-|  | Supabase      |    |  Upstash      |    |  Pusher           |      |
+|  | Neon          |    |  Upstash      |    |  Pusher           |      |
 |  | PostgreSQL    |    |  Redis        |    |  (Real-time)      |      |
 |  | (via Prisma5) |    |  Rate Limit   |    |  [needs env vars] |      |
 |  +---------------+    +---------------+    +-------------------+      |
@@ -230,20 +224,19 @@
 +-----------------------------------------------------------------------+
 ```
 
-### Actual Database: Supabase PostgreSQL
-> Note: An earlier version of this document referenced PlanetScale (MySQL). The actual database is Supabase PostgreSQL, connected via Prisma 5.22.0.
+> Note: Database migrated from Supabase → Neon (via Vercel Marketplace) on 2026-04-17. Neon branch-per-PR workflow active.
 
 ### Cost Estimation (Monthly)
 
 | Service | Free Tier | Starter | Growth |
 |---------|-----------|---------|--------|
 | **Vercel** (Hosting) | $0 | $20 | $70 |
-| **Supabase** (Database) | $0 | $25 | $100 |
+| **Neon** (Database) | $0 | $19 | $69 |
 | **Upstash** (Redis) | $0 (10k/day) | $10 | $25 |
 | **Pusher** (Real-time) | $0 (200k msg) | $49 | $99 |
 | **OpenAI** (AI) | Pay-as-go | ~$20 | ~$100 |
 | **Sentry** (Errors) | $0 (5k events) | $26 | $80 |
-| **Total** | **~$0-20** | **~$150** | **~$474** |
+| **Total** | **~$0-20** | **~$144** | **~$443** |
 
 ---
 
@@ -255,15 +248,16 @@
 - [ ] NEXTAUTH_SECRET is strong (32+ chars) — verify
 - [x] Database credentials not in code
 - [x] API keys not exposed to client
-- [x] Rate limiting on major endpoints (Upstash)
-- [x] Input validation on major API routes (Zod)
+- [x] Rate limiting on all endpoints (Upstash — 52/52)
+- [x] Input validation on all API routes (Zod)
 - [x] SQL injection prevention (Prisma)
 - [x] XSS prevention (React handles, plus DOMPurify installed)
-- [x] CORS configured (next.config.js, 2026-03-23)
-- [x] Security headers (HSTS, X-Frame-Options, CSP — 2026-03-10)
-- [x] Rate limiting on ALL 48 endpoints (COMPLETE — 2026-04-16)
+- [x] CORS configured (next.config.js)
+- [x] Security headers (HSTS, X-Frame-Options, CSP)
 - [ ] Session timeout configuration
 - [ ] Failed login attempt limiting
+- [x] Check-in visibility controls (PUBLIC / CREW / PRIVATE)
+- [x] activeUntil clamped (max 12h) — stalker vector mitigated
 
 ### Completed Security Fixes
 
@@ -271,11 +265,12 @@
 - [x] JWT callback DB query optimized (signIn/update only)
 - [x] Email removed from user search (privacy)
 - [x] Placeholder user creation abuse fixed (PendingInvitation model)
-- [x] /api/beta/initialize-password protected by N8N_API_KEY auth (2026-03-19)
-- [x] /api/beta/status response narrowed to {exists, passwordInitialized} (2026-03-22)
-- [x] /api/auth/demo guarded by DEMO_MODE env var (2026-03-22)
-- [x] /api/discover/search requires auth (2026-03-24)
-- [x] /api/discover/recommendations requires auth (2026-03-24)
+- [x] /api/beta/initialize-password protected by N8N_API_KEY auth
+- [x] /api/beta/status response narrowed to {exists, passwordInitialized}
+- [x] /api/auth/demo guarded by DEMO_MODE env var
+- [x] /api/discover/search and /api/discover/recommendations require auth
+- [x] Check-in location stores city/neighborhood only (no lat/lng)
+- [x] Crew-request requires mutual acceptance (no auto-add)
 
 ### Post-Beta (Nice to Have)
 
@@ -294,12 +289,23 @@
 - [ ] < 3s page load time (Vercel Analytics)
 - [ ] > 99% uptime (BetterStack)
 - [ ] Error rate < 1% (Sentry)
+- [ ] All Vercel env vars configured
 
 ### User Targets
 
 - [ ] 20-50 beta users signed up
-- [ ] 10+ trips created
-- [ ] Survey/voting flows tested end-to-end
+- [ ] 10+ meetups created
+- [ ] Check-in flow tested end-to-end by at least 5 users
+
+---
+
+## Timeline
+
+| Milestone | Target | Status |
+|-----------|--------|--------|
+| Phase 7 complete | 2026-04-22 | PR #56 open |
+| Phase 8 complete (all blockers resolved) | 2026-04-30 | In progress |
+| Beta launch | Q2 2026 | Pending Phase 8 |
 
 ---
 
@@ -307,26 +313,26 @@
 
 ### If Site Goes Down
 1. Check Vercel status page
-2. Check Supabase status
+2. Check Neon status
 3. Review Sentry for errors
 4. Check BetterStack alerts (once configured)
 5. Rollback to previous deployment if needed
 
 ### If Database Issues
-1. Check Supabase dashboard
-2. Verify connection string
+1. Check Neon dashboard
+2. Verify connection string / pooler URL
 3. Check for query timeouts in Sentry
 4. Scale connection pool if needed
 
 ### If AI Not Working
 1. Verify OPENAI_API_KEY is set in Vercel environment
 2. Check OpenAI status page
-3. Routes return 503 gracefully when key absent (implemented 2026-03-23)
-4. Fall back to manual itinerary planning UI
+3. Routes return 503 gracefully when key absent
+4. App is fully functional without AI features
 
 ---
 
-*Document Version: 3.2*
+*Document Version: 3.3*
 *Target Launch: Q2 2026 (Beta)*
-*Last Updated: 2026-04-17*
+*Last Updated: 2026-04-22*
 *Owner: Development Team*

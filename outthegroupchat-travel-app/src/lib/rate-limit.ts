@@ -85,7 +85,9 @@ export async function checkRateLimit(
 }
 
 /**
- * Get rate limit headers for response
+ * Build standard rate-limit response headers from a checkRateLimit result.
+ * @param result - The rate-limit result object (limit, remaining, reset)
+ * @returns Headers map with X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset
  */
 export function getRateLimitHeaders(result: {
   limit: number;

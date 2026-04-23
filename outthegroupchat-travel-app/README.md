@@ -14,7 +14,7 @@ A LinkedIn-style social network built for in-person meetups, not trip planning. 
 
 ## Pivot Status
 
-> **Active refactor: Phase 5 of 8.** Phase 4 (Meetups) complete — PRs #48, #49, #51. Phase 5 (Check-ins & live presence) now starting. Trip-planning code archived in `src/_archive/` (see `docs/REFACTOR_PLAN.md`). All infrastructure — auth, database, real-time, API layer — is 100% reused. No data loss; schema migrations are additive.
+> **Active refactor: Phase 8 of 8 (launch-readiness re-audit).** Phases 1–7 complete. Meetup social network fully operational — Crew graph, meetups, check-ins, feed, AI features, and marketing surface all done. Phase 8 finalises launch checklist, Sentry coverage, E2E tests, and production readiness. Trip-planning code archived in `src/_archive/` (see `docs/REFACTOR_PLAN.md`).
 
 ## Tech Stack
 

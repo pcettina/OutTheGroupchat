@@ -97,6 +97,7 @@ export const config = {
   matcher: [
     '/profile/:path*',
     '/crew/:path*',
+    '/api/crew/:path*',
     '/meetups',
     '/meetups/:path*',
     '/api/profile/:path*',

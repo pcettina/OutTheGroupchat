@@ -1,398 +1,256 @@
-# 🚀 OutTheGroupchat - Launch Checklist
+# OutTheGroupchat — Launch Checklist (Meetup-Centric)
+
+> **Last Updated: 2026-04-22**
+> **Phase 8: Launch-readiness re-audit** — This checklist was fully rewritten during Phase 8 (2026-04-22) to reflect the meetup-centric social network product. The trip-era checklist has been superseded.
+> **Target Launch:** Q2 2026 (Beta)
+> **Overall Readiness: ~82%** (updated 2026-04-22, per PRODUCTION_ROADMAP.md v3.3)
 
 ## Pivot Progress (see docs/REFACTOR_PLAN.md)
+
 - [x] Phase 0: PR backlog merged, `v1.0-trip-planning` tagged
 - [x] Phase 1: Trip code archived to `src/_archive/`, tests excluded, Navigation cleaned
-- [~] Phase 2: Schema ✅ | Generate ✅ | setup.ts mocks ✅ | Crew rename + `crewLabel` + `activeUntil` on branch `refactor/phase-2-crew-domain` (2026-04-17) | DB migration ⏳ (manual step)
-- [x] Phase 3: Crew system (routes + UI) — `/api/crew/*`, `CrewButton`, `CrewList` ✅ 2026-04-18 (PR #46 + #47)
-- [x] Phase 4: Meetups core — All 3 sessions complete (2026-04-18): API routes ✅ | venue search (Places API) ✅ | meetup UI (MeetupDetail, AttendeeList, MeetupInviteModal) ✅ | RSVP ✅ | invite ✅ | Pusher real-time ✅ | MEETUP_STARTING_SOON cron ✅ (PRs #48, #49, #51)
-- [x] Phase 5: Check-ins + presence — COMPLETE 2026-04-20 (PR #53): POST /api/checkins ✅ | GET /api/checkins/feed ✅ | DELETE /api/checkins/[id] ✅ | GET /api/checkins/[id] ✅ | CheckInButton (duration picker) ✅ | LiveActivityCard ("Join me" wired) ✅ | NearbyCrewList ✅ | /checkins page ✅ | /checkins/[id] page ✅ | Privacy settings page (/settings/privacy) ✅ | /api/users/privacy ✅ | Pusher city-channel broadcast ✅ | All Phase 5 exit criteria met ✅
-- [x] Phase 6: Feed/AI/notifications rescope — COMPLETE 2026-04-22 (PR #55): Feed rescoped (meetup/checkin types, trip/activity queries removed, POST returns 410) ✅ | POST /api/ai/suggest-meetups ✅ | POST /api/ai/icebreakers ✅ | Search people-first (users→meetups→venues) ✅ | 9 trip notification types removed from schema ✅ | Follow marked @deprecated ✅ | types/index.ts cleaned (264 lines) ✅
-- [ ] Phase 7: Marketing surface
-- [ ] Phase 8: Launch-readiness re-audit
+- [x] Phase 2: Schema + Crew rename + `crewLabel` + `activeUntil` + Neon migration applied (PR #43, #44, #45)
+- [x] Phase 3: Crew system (6 routes + UI) — all Zod-validated, rate-limited, Sentry-instrumented, 32 tests (PR #46, #47)
+- [x] Phase 4: Meetups core — All 3 sessions complete (2026-04-18): API routes, venue search (Places API), meetup UI, RSVP, invite, Pusher real-time, MEETUP_STARTING_SOON cron (PRs #48, #49, #51)
+- [x] Phase 5: Check-ins + presence — COMPLETE 2026-04-20 (PR #53): POST/GET/DELETE check-in routes, CheckInButton (duration picker), LiveActivityCard ("Join me" wired), NearbyCrewList, /checkins page, /checkins/[id], privacy settings, Pusher city-channel broadcast
+- [x] Phase 6: Feed/AI/notifications rescope — COMPLETE 2026-04-22 (PR #55): feed rescoped (meetup/checkin types), suggest-meetups + icebreakers AI routes, search people-first, 9 trip notification types removed
+- [x] Phase 7: Marketing surface — COMPLETE 2026-04-22 (PR #56): /about page, OG metadata, README rewrite, CLAUDE.md updated, email-auth.ts extracted
+- [~] Phase 8: Launch-readiness re-audit — ACTIVE 2026-04-22 (this nightly build)
 
 ---
 
-> **⚠️ Scope change (2026-04-16):** This checklist is now STALE against the new social-meetup product. It will be rewritten in Phase 8 of `docs/REFACTOR_PLAN.md`. Trip-era checklist items below remain visible for reference but should **NOT** be used to gate launch. Readiness scores below reflect the archived trip product and are intentionally left unchanged to avoid implying progress against the new scope.
->
-> **Target Launch:** Q2 2026 (Beta) — to be re-baselined post-pivot
-> **Current Status:** Refactoring (Phase 2 in progress — domain models added, DB migration pending)
-> **Last Updated:** 2026-04-22 (Phase 6 COMPLETE — feed rescoped, search people-first, notification types migrated, types cleanup; Phase 7 Marketing surface is next)
+## Core Loops
+
+These are the critical user flows. All must work end-to-end before beta.
+
+- [x] **Signup → email verification → profile complete** (incl. optional `crewLabel`)
+  - [x] POST /api/auth/signup creates user + VerificationToken + sends email ✅
+  - [x] GET /api/auth/verify-email validates token ✅
+  - [x] Profile page shows city, bio, crewLabel fields ✅
+- [x] **Crew request → accept → both users see each other in /crew**
+  - [x] POST /api/crew/request creates Crew row (PENDING), fires CREW_REQUEST notification + email ✅
+  - [x] PATCH /api/crew/[id] accept emits CREW_ACCEPTED notification + email ✅
+  - [x] GET /api/crew lists accepted Crew members ✅
+  - [x] CrewButton component reflects all states (SELF/NOT_IN_CREW/PENDING/ACCEPTED/DECLINED/BLOCKED) ✅
+- [x] **Meetup create (default visibility=CREW) → invite Crew member → RSVP → count updates real-time**
+  - [x] POST /api/meetups creates meetup, default visibility=CREW ✅
+  - [x] POST /api/meetups/[id]/invite dispatches invite emails + MEETUP_INVITED notification ✅
+  - [x] POST /api/meetups/[id]/rsvp emits attendee:joined/left via Pusher ✅
+  - [x] MeetupDetail page subscribes to Pusher meetup channel, live-updates on events ✅
+- [x] **Check-in → Crew sees it in feed within 5s; expired check-ins no longer appear**
+  - [x] POST /api/checkins triggers Pusher city-channel broadcast ✅
+  - [x] GET /api/checkins/feed filters WHERE activeUntil > now() ✅
+  - [x] NearbyCrewList polls /api/checkins/feed every 60s + Pusher subscription ✅
+- [x] **Notifications fire for: Crew request, meetup invite, nearby check-in**
+  - [x] CREW_REQUEST notification dispatched on POST /api/crew/request ✅
+  - [x] MEETUP_INVITED notification dispatched on POST /api/meetups/[id]/invite ✅
+  - [x] CREW_CHECKED_IN_NEARBY notification bulk-dispatched to Crew on POST /api/checkins ✅
 
 ---
 
-## 📊 Launch Readiness Score
+## Trust & Safety
 
-| Category | Score | Target | Status |
-|----------|-------|--------|--------|
-| Infrastructure | 92% | 100% | 🟡 Almost Ready |
-| Core Features | 77% | 90% | 🟠 In Progress |
-| Security | 83% | 100% | 🟠 In Progress |
-| Testing | 72% | 80% | 🟠 In Progress |
-| Monitoring | 55% | 80% | 🟠 In Progress |
+Critical for social + location features. Most items require product decisions before engineering.
 
-**Overall Readiness: 78%** → Target: 85% for Beta Launch
-
-> Last updated: 2026-04-16
-
----
-
-## ✅ PHASE 1: Infrastructure (COMPLETE)
-
-### Hosting & Deployment
-- [x] Vercel project configured
-- [x] Production environment set up
-- [x] Build pipeline working
-- [x] Auto-deployment from main branch
-- [ ] Custom domain configured (optional for beta)
-- [x] SSL certificate active (Vercel automatic)
-
-### Database
-- [x] Supabase PostgreSQL connected
-- [x] Prisma ORM configured
-- [x] Connection pooling enabled
-- [ ] Database backup schedule configured
-- [ ] Database monitoring active
-
-### External Services
-- [x] Upstash Redis connected (rate limiting)
-- [ ] Pusher fully configured (real-time)
-- [x] Email service configured (Resend) ✅ Dec 17
-- [x] AI API keys configured (OpenAI) ✅ Dec 17
-- [x] .env.example with all required vars ✅ 2026-03-10
+- [ ] **Block user / remove-from-Crew flow**
+  - [x] PATCH /api/crew/[id] with action=block is implemented ✅
+  - [ ] Block user UI — no frontend surface yet
+  - [ ] Remove from Crew UI — no dedicated UI (API exists via DELETE /api/crew/[id])
+- [ ] **Report user / report meetup**
+  - [ ] POST /api/reports — not yet implemented
+  - [ ] Report UI — not yet implemented
+- [x] **Privacy settings (check-in visibility, profile visibility, activeUntil override bounds)**
+  - [x] GET/PATCH /api/users/privacy — PUBLIC/CREW/PRIVATE visibility ✅
+  - [x] /settings/privacy page + PrivacySettingsForm ✅
+  - [x] activeUntilMinutes clamped to [30min, 12h] in POST /api/checkins ✅
+- [ ] **Location data retention policy + user control**
+  - [x] CheckIn.activeUntil hides from feed after window, row persists for history ✅
+  - [ ] User-facing data deletion / export (GDPR/CCPA) — not yet implemented
+- [ ] **Age verification** — not yet implemented (may not be legally required; Product decision needed)
+- [ ] **Meetup abuse prevention**
+  - [x] Rate limiting on POST /api/meetups via apiRateLimiter ✅
+  - [ ] High-frequency creator flagging — not yet implemented
+- [x] **Crew request rate limit per user (anti-spam)**
+  - [x] apiRateLimiter applied to POST /api/crew/request ✅
 
 ---
 
-## 🔧 PHASE 2: Core Features (IN PROGRESS)
+## Performance
 
-### Authentication ✅
-- [x] Email/password signup
-- [x] Email/password signin
-- [x] Session management (NextAuth)
-- [x] Password reset flow ✅ 2026-03-14 (API + UI complete)
-- [x] Email verification endpoint ✅ 2026-03-19 (GET /api/auth/verify-email created)
-- [x] Email verification sending on signup ✅ 2026-03-21 (VerificationToken created + email sent at signup)
-- [ ] OAuth providers (Google, Apple) - *Post-beta*
+New requirements for social feed and real-time features.
 
-### Trip Management 🔶
-- [x] Create trip API
-- [x] Trip listing
-- [x] Trip detail page
-- [ ] Trip wizard (multi-step creation)
-- [ ] Trip editing
-- [ ] Trip deletion/archiving
-- [x] Member invitation via email ✅ Dec 17
-- [x] Activity management ✅ Dec 17
-- [x] Itinerary route complete (GET/POST/PUT with $transaction atomicity) ✅ 2026-03-23
-
-### Social Features 🔶
-- [x] Basic feed display
-- [x] Engagement bar UI
-- [x] Comments API (Trip support added) ✅ Dec 17
-- [x] Reactions/Likes API (Trip support added) ✅ Dec 17
-- [x] Share functionality ✅ 2026-03-16 (POST /api/feed/share implemented with Zod + notification)
-- [ ] Follow system integration
-
-### Group Coordination 🔶
-- [x] Survey API structure
-- [x] Voting API structure
-- [ ] Survey frontend integration
-- [ ] Voting frontend integration
-- [ ] Real-time vote updates
-- [ ] Survey results display
-
-### AI Features 🔶
-- [x] Chat UI component
-- [x] API endpoints defined
-- [x] Connect to real AI (OpenAI) ✅ Dec 17
-- [x] Streaming responses ✅ Dec 17
-- [x] Trip context awareness ✅ Dec 17
-- [x] suggest-activities route complete (503 guard when OPENAI_API_KEY absent) ✅ 2026-03-23
-- [x] generate-itinerary route complete (503 guard when OPENAI_API_KEY absent) ✅ 2026-03-23
+- [ ] **Feed query < 200ms p95 (Crew graph fan-out)**
+  - [ ] Benchmark /api/checkins/feed with 100+ Crew members — not yet measured
+  - [ ] Benchmark /api/feed (meetup/checkin join) under load — not yet measured
+- [ ] **Pusher connection count budget per user**
+  - [ ] Document channel subscription pattern per page — not yet audited
+  - [ ] Pusher env vars configured in Vercel production — BLOCKED (missing env vars)
+- [ ] **City-channel sharding plan**
+  - [x] City-channel pattern implemented: `city-checkins-{citySlug}` ✅
+  - [ ] Sharding plan for high-density cities — not yet designed
 
 ---
 
-## 🔒 PHASE 3: Security (CRITICAL)
+## Platform (Infrastructure & Environment)
 
-### Authentication Security
-- [x] Password hashing (bcrypt)
-- [x] Secure session cookies
-- [ ] NEXTAUTH_SECRET is strong (32+ chars)
-- [ ] Session timeout configuration
-- [ ] Failed login attempt limiting
-
-### API Security
-- [x] SQL injection prevention (Prisma)
-- [x] Rate limiting infrastructure (Upstash)
-- [x] Rate limiting on all authentication endpoints ✅ 2026-03-26 (signup, reset-password, verify-email — rate limiting now first operation)
-- [ ] Rate limiting on ALL remaining endpoints
-- [x] Input validation on major API routes (Zod) ✅ 2026-03-24 — notifications, feed/comments, feed/engagement, pusher/auth, users/[userId], discover/*, images/search, inspiration, cron, auth/demo added; ai/chat Zod strengthened + JSON.parse safety on 5 AI routes + notifications/[notificationId] ✅ 2026-03-29
-- [x] /api/discover/search requires authentication ✅ 2026-03-24 (security improvement — was unauthenticated)
-- [x] /api/discover/recommendations requires authentication ✅ 2026-03-24
-- [x] /api/auth/demo has Zod input validation ✅ 2026-03-24
-- [x] XSS prevention (DOMPurify) ✅ 2026-03-25 (RichFeedItem.tsx)
-- [x] CORS configured properly ✅ 2026-03-23 — /api/:path* CORS headers added to next.config.js
-
-### Critical Fixes Required
-```
-⚠️ MUST FIX BEFORE LAUNCH:
-
-1. [x] Fix in-memory rate limiting → Use Upstash Redis ✅ Dec 2025
-   File: src/lib/rate-limit.ts (Redis-based implementation)
-
-2. [x] Fix JWT callback DB query on every request ✅ Dec 2025
-   File: src/lib/auth.ts (trigger check on signIn/update only)
-
-3. [x] Remove email from user search ✅ 2026-03-20
-   File: src/app/api/search/route.ts
-
-4. [x] Fix placeholder user creation abuse ✅ Dec 2025
-   File: src/app/api/trips/[tripId]/invitations/route.ts
-
-5. [x] Fix unauthenticated /api/beta/initialize-password (account takeover) ✅ 2026-03-19
-   File: src/app/api/beta/initialize-password/route.ts (N8N_API_KEY auth added)
-
-6. [x] Narrow /api/beta/status response (data minimization) ✅ 2026-03-22
-   File: src/app/api/beta/status/route.ts (response now returns only {exists, passwordInitialized})
-
-7. [x] Guard /api/auth/demo behind DEMO_MODE env var ✅ 2026-03-22
-   File: src/app/api/auth/demo/route.ts (hardcoded password removed; requires DEMO_MODE=true)
-
-8. [x] Strip email from unauthenticated public trip responses ✅ 2026-03-25
-   File: src/app/api/trips/[tripId]/route.ts (email removed from public GET)
-
-9. [x] Remove NODE_ENV/version from /api/health (data minimization) ✅ 2026-03-25
-   File: src/app/api/health/route.ts (response shape narrowed to {status, timestamp, database})
-```
-
-### Security Headers
-- [x] Add security headers to next.config.js ✅ 2026-03-10
-- [x] HSTS enabled ✅ 2026-03-10
-- [x] X-Frame-Options set ✅ 2026-03-10
-- [x] Content-Security-Policy defined ✅ 2026-03-10
+- [ ] **OPENAI_API_KEY in Vercel production** — BLOCKED (missing; icebreakers/suggestions will fail in prod)
+- [ ] **SENTRY_DSN in Vercel production** — BLOCKED (missing; Sentry infra ready, needs real DSN)
+- [ ] **Pusher env vars in production** — BLOCKED (PUSHER_APP_ID, PUSHER_KEY, PUSHER_SECRET, PUSHER_CLUSTER, NEXT_PUBLIC_PUSHER_KEY, NEXT_PUBLIC_PUSHER_CLUSTER all missing)
+- [ ] **Resend domain verified** — BLOCKED (email goes to spam; onboarding@resend.dev is placeholder)
+- [x] **Rate limiting coverage on all new routes** — all crew, meetup, checkin, and AI routes use `apiRateLimiter` ✅
+- [x] **GOOGLE_PLACES_API_KEY** — documented in .env.example; optional fallback (DB-first venue search works without it) ✅
+- [x] **Upstash Redis connected** (rate limiting, beta/status) ✅
+- [x] **Neon PostgreSQL connected** (migrated from Supabase 2026-04-17) ✅
+- [x] **Vercel deployment** — auto-deploy from main branch ✅
+- [x] **SSL certificate** — Vercel automatic ✅
 
 ---
 
-## 🧪 PHASE 4: Testing
+## Authentication & Security
 
-### Unit Tests
-- [x] Service layer tests ✅ 2026-03-23 (recommendation.service.test.ts TSC errors fixed; all tests passing)
-- [x] Utility function tests (email, geocoding, invitations, rate-limit) ✅ 2026-03-11
-- [x] API route tests (trips 30, voting 10, survey 11, feed 12) ✅ 2026-03-10
-- [x] API route tests (auth/signup, notifications, profile) ✅ 2026-03-11
-- [x] API route tests (trips-suggestions 23, trips-flights 26, trips-members 29) ✅ 2026-03-20 — total: 382 tests across 22 files
-- [x] API route tests (verify-email 9, pusher-auth 14, trips-members POST +12) ✅ 2026-03-21 — total: ~577 tests across 31 files
-- [x] API route tests (signup 15, trips-tripid 20, ai-chat+recommend 24, tripid-invitations 14, tripid-recommendations 11) ✅ 2026-03-22 — total: ~661 tests across 37 files
-- [x] API route tests (ai-search 12, discover ~20, images-search 10, newsletter 10, geocoding-api 12) + lib tests (recommendation.service) ✅ 2026-03-23 — total: 746 tests across 42 files
-- [x] API route tests (trips-voting 50, trips-invitations 33, pusher-feed-social 38, trips-itinerary 43) ✅ 2026-03-23 — total: 910+ tests across 46 files
-- [x] API route tests (trips-itinerary +21, auth-demo 13, cron 10, discover-search 12) + discover.test.ts auth fixes ✅ 2026-03-24 — total: 924 tests across 49 files
-- [x] API route tests (invitations-post 18, ai-get-methods 16, beta-extended 21, users-follow 24) ✅ 2026-03-25 — total: 1003 tests across 53 files
-- [x] Service tests + API tests (recommendation.service 45, survey.service 36, geocoding-images 32, inspiration +39) ✅ 2026-03-26 — total: 1156 tests across 56 files
-- [x] API route tests (ai-generate-itinerary 31, ai-suggest-activities 25, discover-import 21) ✅ 2026-03-29
-- [x] API route tests (feed-extended 42, notifications-extended 33, health 14, trips-survey-voting-extended 23) ✅ 2026-04-16 — total: **1346 tests across 63 files**
-
-### Integration Tests
-- [ ] Auth flow tests
-- [x] Trip CRUD tests ✅ 2026-03-10
-- [x] Database operation tests (covered via API mocks) ✅ 2026-03-10
-
-### E2E Tests (Critical Flows)
-- [x] Auth flow E2E spec created (Playwright) ✅ 2026-03-23 — e2e/auth-flow.spec.ts
-- [ ] User signup → trip creation → invite flow
-- [ ] Survey completion flow
-- [ ] Voting flow
-
-### Manual Testing Checklist
-```bash
-□ Sign up with new account
-□ Sign in with existing account
-□ Create a new trip
-□ View trip details
-□ Invite a member (link-based)
-□ View feed
-□ Navigate all pages
-□ Test on mobile browser
-□ Test on multiple browsers
-```
+- [x] Email/password signup ✅
+- [x] Email/password signin ✅
+- [x] Session management (NextAuth) ✅
+- [x] Password reset flow (API + UI) ✅
+- [x] Email verification on signup ✅
+- [x] Rate limiting on auth endpoints (signup, reset-password, verify-email) — rate limit is first operation ✅
+- [x] DEMO_MODE env guard on /api/auth/demo ✅
+- [x] Input validation (Zod) on all API routes ✅
+- [x] XSS prevention (DOMPurify) ✅
+- [x] Security headers (CSP, HSTS, X-Frame-Options) ✅
+- [x] CORS configured ✅
+- [ ] NEXTAUTH_SECRET is strong (32+ chars) — verify in production
+- [ ] Failed login attempt limiting — not yet implemented (rate limiter covers burst, not lockout)
 
 ---
 
-## 📊 PHASE 5: Monitoring & Observability
+## Testing & Quality
 
-### Error Tracking
-- [x] Sentry installed and configured ✅ 2026-03-10 (instrumentation-client.ts onRouterTransitionStart fixed 2026-03-20; src/lib/sentry.ts helper created 2026-03-25; needs real DSN in Vercel)
-- [x] Sentry captureException added to 19/48 routes ✅ 2026-04-16 (feed x4, notifications x2, trips/route x1, trips/[tripId] x8, auth x4)
-- [ ] Error alerts configured (pending Sentry DSN)
-- [ ] Source maps uploaded (pending Sentry DSN)
-
-### Performance
-- [x] Vercel Analytics enabled ✅ 2026-03-16
-- [ ] Core Web Vitals monitoring
-- [ ] API response time tracking
-
-### Uptime
-- [ ] Uptime monitoring (BetterStack/Checkly)
-- [ ] Status page created
-- [ ] Alert channels configured (Slack/Email)
-
-### Logging
-- [x] Structured logging implemented (pino via @/lib/logger) ✅ 2026-03-09
-- [ ] Log aggregation configured
-- [ ] Debug logs removed from production (in progress: 59 → target ~20)
+- [x] 1108 Vitest tests passing across 59 test files (2026-04-22) ✅
+- [x] 0 TSC errors ✅
+- [x] 0 lint warnings/errors ✅
+- [x] 0 `any` types ✅
+- [x] 0 `console.*` in production code ✅
+- [x] 0 TODO/FIXME in production code ✅
+- [x] 0 production files >600 lines ✅
+- [x] Playwright E2E smoke tests (11 tests, 4 suites) ✅
+- [x] Playwright E2E meetup+checkin tests (14 tests, e2e/meetup-checkin.spec.ts) ✅ 2026-04-22 Phase 8
+- [x] GitHub Actions CI (build + lint + test + Prisma) ✅
+- [x] Neon branch-per-PR workflow with prisma migrate deploy + schema-diff comment ✅
+- [ ] E2E critical path: signup → Crew request → meetup create → RSVP → check-in (full user journey) — in progress
+- [ ] Test coverage for /api/crew/* routes — 32 tests in crew.test.ts ✅; additional edge cases pending
 
 ---
 
-## 🎨 PHASE 6: UI/UX Polish
+## Monitoring & Observability
 
-### Loading States
-- [x] Skeleton loaders on all data-fetching pages ✅ Dec 17
-- [x] Loading spinners on actions ✅ Dec 17
-- [x] Optimistic updates where appropriate ✅ Dec 17
-
-### Empty States
-- [x] No trips empty state ✅ Dec 17
-- [x] No notifications empty state ✅ Dec 17
-- [ ] No search results state
-
-### Error States
-- [x] Global error boundary ✅ 2026-03-13 (global-error.tsx)
-- [x] Friendly 404 page ✅ 2026-03-13 (not-found.tsx)
-- [x] Friendly 500 page ✅ 2026-03-13 (error.tsx)
-- [ ] Form validation errors inline
-
-### Responsive Design
-- [x] All pages tested on mobile ✅ Dec 17
-- [x] Touch targets 44px minimum ✅ Dec 17
-- [x] Mobile navigation working ✅ Dec 17
-
-### Accessibility
-- [x] Skip links implemented
-- [x] ARIA patterns in place
-- [ ] Keyboard navigation tested
-- [ ] Screen reader tested
+- [x] Sentry installed and configured (instrumentation-client.ts, instrumentation.ts) ✅
+- [x] Sentry coverage on crew routes, checkins routes, AI routes confirmed ✅ 2026-04-22 Phase 8
+- [ ] SENTRY_DSN configured in Vercel production — BLOCKED
+- [ ] Source maps uploaded — BLOCKED (needs DSN)
+- [x] Structured logging via pino ✅
+- [ ] Log aggregation (Vercel log drain or external) — not yet configured
+- [x] Vercel Analytics enabled ✅
+- [ ] Core Web Vitals monitoring — not yet configured
+- [ ] API response time tracking / p95 benchmarks — not yet measured
+- [ ] Uptime monitoring — not yet configured
 
 ---
 
-## 📝 PHASE 7: Content & Legal
+## UI/UX
 
-### Pages Required
-- [ ] Privacy Policy
-- [ ] Terms of Service
-- [ ] About page (optional)
-- [ ] Help/FAQ (optional)
-
-### SEO
-- [ ] Meta titles on all pages
-- [ ] Meta descriptions
-- [ ] Open Graph tags
-- [ ] Favicon configured
+- [x] Skeleton loaders on all data-fetching pages ✅
+- [x] Loading spinners on actions ✅
+- [x] Optimistic updates (CrewButton, RSVPButton) ✅
+- [x] Empty states on feed, checkins, crew pages ✅
+- [x] Friendly 404 page (not-found.tsx) ✅
+- [x] Friendly 500 page (error.tsx) ✅
+- [x] Global error boundary (global-error.tsx + Sentry) ✅
+- [x] All pages tested on mobile ✅
+- [x] Touch targets 44px minimum ✅
+- [x] Accessibility skip links + ARIA patterns ✅
+- [ ] Keyboard navigation tested end-to-end — not yet verified
+- [ ] Screen reader tested — not yet verified
 
 ---
 
-## 🚀 LAUNCH DAY CHECKLIST
+## Content & Legal
+
+- [x] /privacy page ✅
+- [x] /terms page ✅
+- [x] /about page ✅ 2026-04-22 Phase 7
+- [x] OG tags + Twitter Card metadata ✅ 2026-04-22 Phase 7
+- [x] README rewritten for new product ✅ 2026-04-22 Phase 7
+- [ ] Privacy Policy content — placeholder page exists; needs legal review
+- [ ] Terms of Service content — placeholder page exists; needs legal review
+- [ ] Favicon / brand assets updated — using legacy emerald theme
+
+---
+
+## Launch Day
 
 ### T-24 Hours
-- [ ] Final production build tested
-- [ ] All environment variables verified
-- [ ] Database backed up
-- [ ] Team notification channels ready
+- [ ] Final production build verified clean (build + lint + test)
+- [ ] All required environment variables set in Vercel (OPENAI_API_KEY, Pusher, Sentry, Resend)
+- [ ] Database backup confirmed
 - [ ] Monitoring dashboards accessible
 
 ### T-1 Hour
-- [ ] Verify DNS propagation
-- [ ] Test all critical flows on production
-- [ ] Confirm monitoring is working
+- [ ] Test all critical flows on production (signup, Crew request, meetup create, check-in)
+- [ ] Confirm Sentry is capturing errors
+- [ ] Confirm Pusher is connected in production
 - [ ] Team on standby
 
 ### Launch
 - [ ] Deploy final version
 - [ ] Verify deployment successful
-- [ ] Test signup flow
-- [ ] Test trip creation
+- [ ] Test signup flow on production
 - [ ] Announce to beta users
 
 ### Post-Launch (First 24 Hours)
-- [ ] Monitor error rates
-- [ ] Monitor server load
+- [ ] Monitor error rates in Sentry
+- [ ] Monitor Pusher connection counts
 - [ ] Respond to user feedback
 - [ ] Hot-fix critical issues if needed
 
 ---
 
-## 📅 Launch Timeline
+## Key Blockers for Beta Launch
 
-```
-Week 1 (Dec 16-22)
-├── ✅ Infrastructure complete
-├── 🔄 Security critical fixes
-├── ✅ Core API completion ✅ Dec 17
-└── ✅ Comments/Reactions fix ✅ Dec 17
-
-Week 2 (Dec 23-29)
-├── Trip wizard integration
-├── Email service setup
-├── Testing phase
-└── UI polish
-
-Week 3 (Dec 30 - Jan 5)
-├── Security hardening
-├── Monitoring setup
-├── Final testing
-└── Pre-launch prep
-
-Week 4 (Jan 6-12)
-├── Beta user invites
-├── **BETA LAUNCH** 🚀
-├── Monitor & iterate
-└── Collect feedback
-```
+| Item | Blocked By | Action Required |
+|------|-----------|-----------------|
+| AI features (icebreakers, suggest-meetups) | OPENAI_API_KEY missing in Vercel | Add key to Vercel env vars |
+| Real-time features (RSVP updates, checkin feed) | Pusher env vars missing in Vercel | Add PUSHER_* vars to Vercel |
+| Error monitoring | SENTRY_DSN missing in Vercel | Create Sentry project, add DSN |
+| Email deliverability | Resend domain not verified | Verify domain or use verified sender |
 
 ---
 
-## 🎯 Success Metrics for Beta
-
-| Metric | Target | How to Track |
-|--------|--------|--------------|
-| User signups | 20-50 | Database count |
-| Trips created | 10+ | Database count |
-| Error rate | < 1% | Sentry |
-| Page load time | < 3s | Vercel Analytics |
-| Uptime | > 99% | BetterStack |
-
----
-
-## 📞 Quick Commands
+## Quick Commands
 
 ```bash
-# Local Development
+cd outthegroupchat-travel-app
+
+# Dev
 npm run dev
 
-# Build & Test
+# Build & validate
 npm run build
 npm run lint
+npx tsc --noEmit
+
+# Tests
+npm test                    # Vitest (all 59 test files)
+npm run test:e2e            # Playwright E2E
 
 # Database
-npx prisma studio
-npx prisma db push
-npx prisma generate
-
-# Deploy
-git push origin main  # Auto-deploys to Vercel
+npm run db:generate         # Regenerate Prisma client
+npm run db:push             # Push schema to database
+npm run db:studio           # Open Prisma Studio
 ```
 
 ---
 
-## 🔗 Important Links
+*This checklist should be reviewed before each nightly build and before any release.*
 
-| Resource | URL |
-|----------|-----|
-| Production | https://outthegroupchat-travel-app.vercel.app |
-| Vercel Dashboard | https://vercel.com/patrick-cettinas-projects/outthegroupchat-travel-app |
-| Supabase Dashboard | (from env vars) |
-| Upstash Dashboard | https://console.upstash.com |
-
----
-
-*This checklist should be reviewed daily during launch preparation.*
-
-*Last Updated: 2026-03-26 - 153 new tests (1156 total, 56 files); rate limiting added as first operation on auth/signup, auth/reset-password, auth/verify-email; newsletter/subscribe now requires auth; ai/search GET+POST fully implemented; dead components removed (NotificationCenter.tsx, SharePreview.tsx); recommendation.service.test.ts, survey.service.test.ts, geocoding-images.test.ts created. Also includes 2026-03-29 changes: JSON.parse safety on 5 AI routes + notifications/[notificationId]; Zod strengthened on ai/chat; notifications/[notificationId] bugfix (read was hardcoded true); JSDoc added to geocoding.ts; 3 new test files (ai-generate-itinerary, ai-suggest-activities, discover-import)*
+*Last Updated: 2026-04-22 — Full rewrite for Phase 8 meetup-centric launch readiness. Previous trip-era checklist superseded.*

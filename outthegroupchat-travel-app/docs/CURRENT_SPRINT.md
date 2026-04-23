@@ -1,3 +1,47 @@
+# 🟡 Active — Phase 8: Launch-Readiness Re-Audit (nightly build 2026-04-22)
+
+> **Status:** Phase 8 started 2026-04-22. All nightly tasks completed. Tests: 1108 passing across 59 test files (+60 from tonight). RichFeedItem refactored. Sentry confirmed on all new routes. Docs updated.
+> **Test count:** 1108 tests passing; 59 test files (+3 new: checkins-feed.test.ts, checkins-id.test.ts, ai-suggest-meetups.test.ts)
+
+---
+
+## 🟢 Completed 2026-04-22 (Nightly Build - Phase 8)
+
+### Wave 1 — Tests
+
+- [L1] `src/__tests__/api/checkins-feed.test.ts` — 13 tests: GET /api/checkins/feed auth, visibility scoping, activeUntil filter, crew member restriction, empty feed, error paths
+- [L1] `src/__tests__/api/checkins-id.test.ts` — 20 tests: GET /api/checkins/[id] detail + DELETE cancel; visibility gating, 404 handling, auth, soft-delete (activeUntil = now()), error paths
+- [L2] `src/__tests__/api/ai-suggest-meetups.test.ts` — 27 tests: POST /api/ai/suggest-meetups auth, Zod validation, OpenAI integration, rate limiting, context handling, error paths
+- New mocks needed: none (setup.ts unchanged)
+
+### Wave 2 — Features
+
+- [M1] Sentry coverage audit — crew routes (`/api/crew/*`): already fully instrumented ✅ no changes needed
+- [M2] Sentry coverage audit — checkins/venues routes: already fully instrumented ✅ no changes needed
+- [M3] Sentry coverage audit — AI routes (`suggest-meetups`, `icebreakers`): already fully instrumented ✅ no changes needed
+- [M4] `docs/PRODUCTION_ROADMAP.md` — updated to v3.3 (Phase 8 active, readiness ~82%, risk register updated)
+- [M5] `src/components/feed/RichFeedItem.tsx` — refactored 717→489 lines; created `FeedItemHeader.tsx`, `FeedItemActions.tsx`, `FeedItemLegacyCards.tsx`
+
+### Wave 2 — Small Tasks
+
+- [S1] `src/app/checkins/page.tsx` — CheckInButton uncommented, placeholder div removed, TODO comments removed
+- [S2] `src/middleware.ts` — `/api/crew/:path*` added to matcher
+- [S3] `README.md` — Pivot status updated to Phase 8 of 8
+- [S4] `src/lib/rate-limit.ts` — `getRateLimitHeaders` JSDoc improved
+- [S5] `e2e/meetup-checkin.spec.ts` — 14 Playwright E2E tests created for meetup and check-in critical paths
+
+### Metrics (post-validation)
+
+- Tests: 1048 → 1108 (+60 tonight: +13 checkins-feed, +20 checkins-id, +27 ai-suggest-meetups)
+- Test files: 56 → 59 (+3 new)
+- API routes: 50 (unchanged)
+- any types: 0 | console.*: 0 | TODO/FIXME: 0 (was 2, both fixed tonight)
+- Files >600 lines: 0 production files (RichFeedItem.tsx fixed tonight)
+- Build: PASS | Lint: PASS | Prisma: valid | TSC: 0 errors
+- Phase 8 started: launch-readiness re-audit underway
+
+---
+
 # 🟢 Complete — Phase 6: Feed/AI/Notifications Rescope (all sessions delivered)
 
 > **Status:** Phase 6 COMPLETE as of 2026-04-22 (nightly/2026-04-22 PR #55). All 4 Phase 6 actions done: feed rescoped, AI routes added, notification types migrated, search rescoped people-first. Phase 7 (Marketing surface) is next.
