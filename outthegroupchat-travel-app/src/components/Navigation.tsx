@@ -41,17 +41,23 @@ export function Navigation() {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50">
-      <div className="glass border-b border-white/10">
+      <div className="glass border-b border-otg-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <Link href="/" className="flex items-center gap-2 group">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-lg group-hover:shadow-emerald-500/30 transition-shadow">
-                <span className="text-white font-bold text-lg">OG</span>
-              </div>
-              <span className="font-display font-bold text-xl hidden sm:block">
-                <span className="text-gradient">Out</span>
-                <span className="text-slate-700 dark:text-slate-200">TheGroupchat</span>
+            {/* Logo — Hybrid Exit mark (brand/logo/logo-mark.svg) */}
+            <Link href="/" className="flex items-center gap-2.5 group">
+              <Image
+                src="/logo-mark.svg"
+                alt=""
+                aria-hidden="true"
+                width={26}
+                height={40}
+                priority
+                className="h-9 w-auto transition-transform group-hover:-translate-y-0.5"
+              />
+              <span className="font-display font-bold text-xl hidden sm:block tracking-tight">
+                <span className="text-otg-sodium">Out</span>
+                <span className="text-otg-text-bright">TheGroupchat</span>
               </span>
             </Link>
 
@@ -78,11 +84,11 @@ export function Navigation() {
                   {/* Notifications Bell */}
                   <Link
                     href="/notifications"
-                    className="relative p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    className="relative p-2 rounded-full hover:bg-otg-maraschino transition-colors"
                   >
-                    <Bell className="w-6 h-6 text-slate-600 dark:text-slate-400" />
+                    <Bell className="w-6 h-6 text-otg-text-dim" />
                     {notificationCount > 0 && (
-                      <span className="absolute top-0.5 right-0.5 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                      <span className="absolute top-0.5 right-0.5 w-5 h-5 bg-otg-sodium text-otg-bg-dark text-xs font-bold rounded-full flex items-center justify-center">
                         {notificationCount > 9 ? '9+' : notificationCount}
                       </span>
                     )}
@@ -92,7 +98,7 @@ export function Navigation() {
                   <div className="relative">
                     <button
                       onClick={() => setIsProfileOpen(!isProfileOpen)}
-                      className="flex items-center gap-2 p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                      className="flex items-center gap-2 p-1.5 rounded-full hover:bg-otg-maraschino transition-colors"
                     >
                       <div className="avatar avatar-md">
                         {session.user?.image ? (
@@ -107,7 +113,7 @@ export function Navigation() {
                           <span>{session.user?.name?.[0] || 'U'}</span>
                         )}
                       </div>
-                      <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
+                      <ChevronDown className={`w-4 h-4 text-otg-text-dim transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
                     </button>
 
                     <AnimatePresence>
@@ -119,27 +125,26 @@ export function Navigation() {
                           transition={{ duration: 0.15 }}
                           className="absolute right-0 mt-2 w-56 card p-2 shadow-xl"
                         >
-                          <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-700">
-                            <p className="font-semibold text-slate-900 dark:text-white truncate">
+                          <div className="px-3 py-2 border-b border-otg-border">
+                            <p className="font-semibold text-otg-text-bright truncate">
                               {session.user?.name}
                             </p>
-                            <p className="text-sm text-slate-500 truncate">
+                            <p className="text-sm text-otg-text-dim truncate">
                               {session.user?.email}
                             </p>
                           </div>
                           <div className="py-1">
                             <Link
                               href="/profile"
-                              className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                              className="flex items-center gap-2 px-3 py-2 text-sm text-otg-text-bright hover:bg-otg-bg-dark/60 hover:text-otg-sodium rounded-lg transition-colors"
                               onClick={() => setIsProfileOpen(false)}
                             >
                               <User className="w-4 h-4" />
                               Profile
                             </Link>
-                            {/* Phase 3: crew + meetups pages coming in Phase 3 */}
                             <Link
                               href="/crew"
-                              className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                              className="flex items-center gap-2 px-3 py-2 text-sm text-otg-text-bright hover:bg-otg-bg-dark/60 hover:text-otg-sodium rounded-lg transition-colors"
                               onClick={() => setIsProfileOpen(false)}
                             >
                               <Users className="w-4 h-4" />
@@ -147,7 +152,7 @@ export function Navigation() {
                             </Link>
                             <Link
                               href="/meetups"
-                              className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                              className="flex items-center gap-2 px-3 py-2 text-sm text-otg-text-bright hover:bg-otg-bg-dark/60 hover:text-otg-sodium rounded-lg transition-colors"
                               onClick={() => setIsProfileOpen(false)}
                             >
                               <Calendar className="w-4 h-4" />
@@ -155,7 +160,7 @@ export function Navigation() {
                             </Link>
                             <Link
                               href="/checkins"
-                              className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                              className="flex items-center gap-2 px-3 py-2 text-sm text-otg-text-bright hover:bg-otg-bg-dark/60 hover:text-otg-sodium rounded-lg transition-colors"
                               onClick={() => setIsProfileOpen(false)}
                             >
                               <MapPin className="w-4 h-4" />
@@ -163,7 +168,7 @@ export function Navigation() {
                             </Link>
                             <Link
                               href="/invitations"
-                              className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                              className="flex items-center gap-2 px-3 py-2 text-sm text-otg-text-bright hover:bg-otg-bg-dark/60 hover:text-otg-sodium rounded-lg transition-colors"
                               onClick={() => setIsProfileOpen(false)}
                             >
                               <Mail className="w-4 h-4" />
@@ -171,20 +176,20 @@ export function Navigation() {
                             </Link>
                             <Link
                               href="/settings/privacy"
-                              className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                              className="flex items-center gap-2 px-3 py-2 text-sm text-otg-text-bright hover:bg-otg-bg-dark/60 hover:text-otg-sodium rounded-lg transition-colors"
                               onClick={() => setIsProfileOpen(false)}
                             >
                               <Shield className="w-4 h-4" />
                               Privacy Settings
                             </Link>
                           </div>
-                          <div className="pt-1 border-t border-slate-100 dark:border-slate-700">
+                          <div className="pt-1 border-t border-otg-border">
                             <button
                               onClick={() => signOut({ callbackUrl: '/' })}
-                              className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                              className="flex items-center gap-2 w-full px-3 py-2 text-sm text-otg-danger hover:bg-otg-danger/10 rounded-lg transition-colors"
                             >
                               <LogOut className="w-4 h-4" />
-                              Sign Out
+                              Sign out
                             </button>
                           </div>
                         </motion.div>
@@ -194,11 +199,11 @@ export function Navigation() {
                 </>
               ) : (
                 <div className="flex items-center gap-3">
-                  <Link href="/auth/signin" className="btn-ghost btn text-sm py-2">
-                    Sign In
+                  <Link href="/auth/signin" className="btn btn-ghost text-sm py-2">
+                    Sign in
                   </Link>
                   <Link href="/auth/signup" className="btn btn-primary text-sm py-2">
-                    Get Started
+                    Get started
                   </Link>
                 </div>
               )}
@@ -206,7 +211,8 @@ export function Navigation() {
               {/* Mobile Menu Button */}
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="md:hidden p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                className="md:hidden p-2 rounded-lg text-otg-text-bright hover:bg-otg-maraschino transition-colors"
+                aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
               >
                 {isMobileMenuOpen ? (
                   <X className="w-6 h-6" />
@@ -225,14 +231,14 @@ export function Navigation() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="md:hidden border-t border-slate-200/20"
+              className="md:hidden border-t border-otg-border"
             >
               <div className="px-4 py-3 space-y-1">
                 {navLinks.map((link) => (
                   <Link
                     key={link.href}
                     href={link.href}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-otg-text-bright hover:bg-otg-maraschino hover:text-otg-sodium transition-colors"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     <span>{link.icon}</span>
@@ -241,33 +247,33 @@ export function Navigation() {
                 ))}
                 {status === 'authenticated' && (
                   <>
-                    <div className="border-t border-slate-200 dark:border-slate-700 my-2" />
+                    <div className="border-t border-otg-border my-2" />
                     <Link
                       href="/settings/privacy"
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg text-otg-text-bright hover:bg-otg-maraschino hover:text-otg-sodium transition-colors"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       <Shield className="w-4 h-4" />
-                      Privacy Settings
+                      Privacy settings
                     </Link>
                   </>
                 )}
                 {status !== 'authenticated' && (
                   <>
-                    <div className="border-t border-slate-200 dark:border-slate-700 my-2" />
+                    <div className="border-t border-otg-border my-2" />
                     <Link
                       href="/auth/signin"
-                      className="block px-3 py-2 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                      className="block px-3 py-2 rounded-lg text-otg-text-bright hover:bg-otg-maraschino transition-colors"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
-                      Sign In
+                      Sign in
                     </Link>
                     <Link
                       href="/auth/signup"
-                      className="block px-3 py-2 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 transition-colors text-center"
+                      className="block px-3 py-2 rounded-lg bg-otg-sodium text-otg-bg-dark font-semibold hover:bg-otg-sodium-400 transition-colors text-center"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
-                      Get Started
+                      Get started
                     </Link>
                   </>
                 )}

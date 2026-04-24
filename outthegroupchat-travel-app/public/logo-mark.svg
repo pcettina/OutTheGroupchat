@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  OTG Logo Mark — clean vector variant (dual-fidelity: UI / favicon / small icon).
+  Design: Hybrid Exit (locked 2026-04-23). Hand-inked texture stripped for small-scale legibility.
+  Palette: sodium #FF6B4A on warm-black #15110E. See brand/palette.json.
+  Geometry: portrait phone silhouette, short top arm inside, long bottom arm exits right with rounded leading cap and a visible gap in the outline.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 560" role="img" aria-label="OutTheGroupchat">
+  <title>OutTheGroupchat</title>
+
+  <!--
+    Phone outline with a gap on the right edge where the long bottom arm exits.
+    Built as a single stroked rounded-rect path, with a mask that punches out the gap zone.
+  -->
+  <defs>
+    <mask id="exit-gap" maskUnits="userSpaceOnUse">
+      <rect x="0" y="0" width="360" height="560" fill="#FFFFFF"/>
+      <!-- gap: right edge, aligned with the long bottom arm -->
+      <rect x="320" y="388" width="40" height="44" fill="#000000"/>
+    </mask>
+  </defs>
+
+  <!-- phone silhouette -->
+  <rect
+    x="40" y="40"
+    width="280" height="480"
+    rx="48" ry="48"
+    fill="none"
+    stroke="#FF6B4A"
+    stroke-width="8"
+    mask="url(#exit-gap)"
+  />
+
+  <!-- bracket: vertical spine -->
+  <rect x="132" y="180" width="24" height="200" fill="#FF6B4A"/>
+  <!-- short TOP arm — stays inside -->
+  <rect x="132" y="180" width="108" height="24" fill="#FF6B4A"/>
+  <!-- long BOTTOM arm — exits past right edge -->
+  <rect x="132" y="356" width="220" height="24" fill="#FF6B4A"/>
+  <!-- rounded cap at leading edge of long arm -->
+  <circle cx="352" cy="368" r="12" fill="#FF6B4A"/>
+</svg>

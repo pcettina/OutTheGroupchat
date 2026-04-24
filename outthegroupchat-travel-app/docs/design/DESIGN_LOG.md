@@ -24,6 +24,64 @@ Every design session appends one entry. Append at the top (newest first).
 
 ## Entries
 
+### 2026-04-23 — landing — homepage + nav refactor ("Last Call lands")
+
+**Context:** After shipping the palette (PR #61), logo mark (PR #62), and foundation — fonts + dark-mode default (PR #63), production still didn't *look* like the brief. Visiting outthegroupchat.org rendered the emerald "OG" square nav logo, an emerald→teal→cyan `.text-gradient` hero, and the stale "The social app that gets you off your phone" headline. The tokens were loaded; nothing was using them yet. This pass wires the `otg.*` tokens and the Hybrid Exit mark into the three surfaces a first-time visitor actually sees: the root landing page, the nav bar, and the app-wide `@layer components` utility classes that the rest of the app inherits from.
+
+**Decisions:**
+- **Retired emerald from `@layer components` and `@layer utilities` in `globals.css`.** Every app-wide utility class (`.btn-primary`, `.btn-secondary`, `.btn-accent`, `.btn-ghost`, `.btn-outline`, `.card`, `.card-gradient`, `.card-glass`, `.input`, `.badge-*`, `.avatar`, `.nav-link`, `.progress-bar`, `.stat-value`, `.skeleton`, `.divider`, `.text-gradient`, `.text-gradient-sunset`, `.glass`, `.glow-emerald`, `.glow-amber`, scrollbar track/thumb) now references `otg.*` tokens. Class names preserved for non-breaking migration — every existing call site inherits the new look with zero code changes.
+  - `.btn-primary`: sodium fill on warm-black text, brick on active. Replaces emerald→teal gradient.
+  - `.btn-secondary`: bourbon fill. `.btn-accent`: tile (Crew accent).
+  - `.card`: `bg-otg-maraschino` with `border-otg-border` — matches brief §3 dim-bar feel.
+  - `.text-gradient`: sodium→bourbon (was emerald→teal→cyan).
+  - `.glow-emerald` / `.glow-amber`: names retained, values repointed to sodium / bourbon rgba.
+- **Refactored `src/app/page.tsx`** — full rebuild from pre-pivot travel-app copy to brief-locked meetup copy.
+  - Hero headline: **"Real plans with real people. Tonight."** (brief §1 verbatim), with "Tonight." rendered in the new sodium→bourbon `.text-gradient`.
+  - Subhead split into two lines to match brief voice — "The social media app that wants to get you off your phone." + "NYC-first meetup network — check in, RSVP, invite your Crew, meet up IRL."
+  - Pre-hero pill: `"NYC — last call, tonight"` in sodium-on-maraschino with a ping dot. Brief voice check: dry, sentence-case, no emoji/exclamation.
+  - Primary CTA: `"Get in the Groupchat"` (logged-out) / `"Who's out tonight"` (authenticated, routes to `/checkins`).
+  - Secondary CTA for logged-out visitors reworked from "Explore Demo 🎮" → "Look around first" (demo session) — removed emoji, removed "Demo" marketing label, replaced with dry voice.
+  - Feature section headline: `"From group chat to real life"` with "to" set in Instrument Serif Italic (editorial accent role). Three feature cards — Build your Crew (sodium), Check in somewhere (tile), Actually show up (bourbon) — icon tones applied via a static `toneClasses` map (Tailwind JIT-safe, no dynamic string interpolation).
+  - CTA card headline swapped from "Ready to Meet Someone?" → `"Put your phone down somewhere good."` — brief voice hit. CTA repoints to `/meetups/new` when authenticated.
+  - Stats row kept but sentence-cased (`"meetups posted"`, `"people connected"`, `"cities"`, `"rating"`) and retinted to sodium→bourbon.
+  - Background blobs: sodium/bourbon/tile halos replace emerald/amber/pink. Reads like sodium-lamp light through a dim bar window.
+  - Icons swapped from inline SVG paths to `lucide-react` (`Users`, `MapPin`, `CheckCircle2`, `ArrowRight`) — consistent icon kit.
+- **Refactored `src/components/Navigation.tsx`** — replaced the emerald gradient "OG" square with the Hybrid Exit mark served from `public/logo-mark.svg` via `next/image` at `h-9 w-auto`. Wordmark "OutTheGroupchat" retained with sodium accent on "Out". Nav chrome: `bg-otg-bg-dark/70` glass + `border-otg-border`, all slate-* token references replaced with `text-otg-text-bright` / `text-otg-text-dim` / `hover:bg-otg-maraschino`. Notification badge recolored sodium-on-warm-black. Profile dropdown, sign-in/sign-up CTAs, and mobile menu all retinted. Copy sentence-cased throughout ("Sign in", "Get started", "Sign out", "Privacy settings").
+- **Copied `brand/logo/logo-mark.svg` → `public/logo-mark.svg`** so it's servable at `/logo-mark.svg`. Kept the `brand/` source file as the canonical editable artifact.
+- **First-time visitor path is now on-brief.** Landing page, nav bar, every CTA, every card, every badge, every avatar, every progress bar — all render Last Call without touching any individual feature component.
+
+**Alternatives considered + rejected:**
+- **Rename `.btn-primary` → `.btn-sodium`** — rejected. 40+ call sites site-wide; rename forces a mass-edit PR for zero user-visible benefit. Preserving class names is the cheaper path to the same rendered result.
+- **Scope the PR to only `page.tsx` (leave Navigation + component classes for later)** — rejected. The emerald "OG" square is visible on *every* page, not just the landing page. Half-shipping means every authenticated page still looks pre-pivot. Nav had to land in the same PR.
+- **Drop the legacy `primary` emerald scale in `tailwind.config.js` while we're here** — rejected. Still 117 files / 1721 references to emerald utilities outside the three files in this PR. Removing the scale would red-screen every non-refactored component. Logged as a follow-up (gated on the `/design-component` audit).
+- **Use a Framer Motion morph from logo-mark's long-arm cap to an avatar silhouette in the hero** — rejected. Brief is clear: animations come last (Phase 6 per brief §6 priority order). Cataloged in `brand/FUTURE_WORK.md` from PR #62.
+- **Keep emoji 🎮 on the demo CTA** — rejected. Brief voice: no emoji, no exclamation.
+
+**Verification:**
+- `npx tsc --noEmit` — 0 errors
+- `npm run lint` — ✔ 0 warnings / errors
+- `npm run build` — ✅ clean production build
+- `npm test` — **1048 passed** (matches main; no route logic touched)
+
+**Follow-ups:**
+- [ ] Continue the `/design-component` pass on individual feature components (117-file emerald/amber/pink audit continues) — first targets per brief §9: `RSVPButton` (Pulse-In micro-interaction), `CheckInButton`, `MeetupCard`, `NotificationCard`.
+- [ ] `src/app/profile/page.tsx` retains some hardcoded slate utilities outside the `btn-primary` site. Lower priority since profile isn't a landing surface, but should sweep in a `/design-component` pass.
+- [ ] Remove the legacy `primary` emerald scale + legacy `--color-primary` CSS vars from `tailwind.config.js` + `globals.css` `:root` once the utility audit completes.
+- [ ] Horizontal wordmark SVG (`logo-wordmark.svg`) — now unblocked by the Fontshare fonts shipped in PR #63. Will replace the text-based wordmark in `Navigation.tsx` + footer with the set type for pixel-perfect kerning.
+- [ ] OG image (1200×630) + email header strips (3× 600×160) — still deferred from PR #62 logo ship. Both use the new mark + Fontshare type; plan is a single render script that emits all three.
+- [ ] Hero illustration ("phone + group of people walking out" per brief §7) is currently stubbed with three floating receipt cards. Deferred to illustration pass (Phase 4).
+- [ ] Landing-page screenshot capture into `docs/design/screenshots/last-call-lands-2026-04-23/` — not automated; manual capture after Vercel deploy.
+
+**Artifacts shipped:**
+- `src/app/page.tsx` — full landing rebuild (342 → 310 lines, brief-locked copy, sodium/bourbon/tile halos, Hybrid Exit in footer)
+- `src/components/Navigation.tsx` — Hybrid Exit mark, warm-black chrome, sentence-case nav copy
+- `src/styles/globals.css` — `@layer components` + `@layer utilities` + scrollbar utilities fully retinted to `otg.*` tokens
+- `public/logo-mark.svg` — Hybrid Exit mark served from public/
+
+**Branch / PR:** `design/last-call-lands-2026-04-23` / (PR on push)
+
+---
+
 ### 2026-04-23 — foundation — fonts + dark-mode default ("Last Call lights up")
 
 **Context:** Palette PR (#61) and logo PR (#62) are merged but the app itself doesn't yet *look* like the brief — still boots to light mode, still renders Outfit/Poppins, still uses the pre-pivot emerald/slate gradient. This pass wires the Fontshare fonts and flips dark-mode default so every subsequent `/design-component` pass sees the correct rendering context.
