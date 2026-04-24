@@ -56,8 +56,10 @@
 
 ### External Services
 - [x] Upstash Redis connected (rate limiting)
-- [ ] Pusher fully configured (real-time)
+- [ ] Sentry DSN set in Vercel — see [`OPS_LAUNCH_CHECKLIST.md#1-sentry-dsn`](./OPS_LAUNCH_CHECKLIST.md#1-sentry-dsn)
+- [ ] Pusher env vars set in Vercel (6 vars) — see [`OPS_LAUNCH_CHECKLIST.md#2-pusher-env-vars`](./OPS_LAUNCH_CHECKLIST.md#2-pusher-env-vars)
 - [x] Email service configured (Resend) ✅ Dec 17
+- [ ] Resend domain verified + `EMAIL_FROM` switched off sandbox — see [`OPS_LAUNCH_CHECKLIST.md#3-resend-domain-verification`](./OPS_LAUNCH_CHECKLIST.md#3-resend-domain-verification)
 - [x] .env.example with all required vars ✅ 2026-03-10 (AI provider vars removed 2026-04-23)
 
 ---
