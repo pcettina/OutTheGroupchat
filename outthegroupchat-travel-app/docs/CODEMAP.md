@@ -121,14 +121,6 @@ outthegroupchat-travel-app/
 │   │   ├── api-config.ts          # API constants
 │   │   ├── api-middleware.ts       # Auth decorators, Zod validation helpers
 │   │   ├── providers.tsx          # React Query + Session providers
-│   │   ├── ai/
-│   │   │   ├── client.ts          # Vercel AI SDK wrapper
-│   │   │   ├── embeddings.ts      # Vector embeddings + similarity search
-│   │   │   └── prompts/
-│   │   │       ├── index.ts
-│   │   │       ├── budget.ts
-│   │   │       ├── itinerary.ts
-│   │   │       └── recommendations.ts
 │   │   ├── api/
 │   │   │   ├── unsplash.ts        # Unsplash image search
 │   │   │   ├── places.ts          # Google Places API
@@ -158,7 +150,6 @@ outthegroupchat-travel-app/
 │       │   ├── notifications.test.ts # 19 Vitest tests for notifications API
 │       │   ├── profile.test.ts    # 10 Vitest tests for profile API
 │       │   ├── reset-password.test.ts # 286L — 12 Vitest tests for password reset API
-│       │   ├── ai.test.ts         # 411L — 19 Vitest tests for AI routes
 │       │   ├── users.test.ts      # 316L — 19 Vitest tests for users/follow API
 │       │   ├── share.test.ts      # 204L — 13 Vitest tests for feed share endpoint
 │       │   ├── inspiration.test.ts # 358L — 20 Vitest tests for inspiration API
@@ -208,14 +199,6 @@ outthegroupchat-travel-app/
 | Auth | NextAuth.js + Prisma Adapter | ^4.24.7 |
 | Styling | Tailwind CSS | ^3.4.1 |
 | Animation | Framer Motion | ^11.0.0 |
-
-### AI & ML
-
-| Package | Version | Purpose |
-|---------|---------|---------|
-| ai (Vercel AI SDK) | ^3.4.14 | Streaming chat, completions |
-| @ai-sdk/openai | ^0.0.70 | OpenAI provider |
-| @ai-sdk/anthropic | ^0.0.54 | Anthropic provider |
 
 ### Real-time & Communication
 
@@ -488,18 +471,6 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `/api/discover/recommendations` | GET | Yes | No | Personalized recommendations |
 | `/api/inspiration` | GET, POST | Yes | Yes (GET) | Trip templates, trending, popular |
 
-### AI Endpoints
-
-| Endpoint | Methods | Auth | Zod | Purpose |
-|----------|---------|------|-----|---------|
-| `/api/ai/chat` | GET, POST | Yes | Yes | Streaming travel chat (rate limited) |
-| `/api/ai/recommend` | GET, POST | Yes | Yes | AI + DB recommendation engine |
-| `/api/ai/suggest-activities` | POST | Yes | Yes | Activity suggestions with events |
-| `/api/ai/search` | GET, POST | Yes | Yes | Semantic search with embeddings |
-| `/api/ai/generate-itinerary` | POST | Yes | Yes | AI itinerary generation (Prisma tx) |
-| `/api/ai/suggest-meetups` | POST | Yes | Yes | **Phase 6 (2026-04-21)** — Given user city/Crew/check-ins, suggest meetup ideas via OpenAI |
-| `/api/ai/icebreakers` | POST | Yes | Yes | **Phase 6 (2026-04-21)** — Given a new Crew member context, return conversation starters via OpenAI |
-
 ### Meetups & Venues (Phase 4, 2026-04-18)
 
 | Endpoint | Methods | Auth | Zod | Purpose |
@@ -739,16 +710,6 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `lib/email.ts` (392L) | sendInvite, sendNotification, sendTripUpdate | Resend email templates |
 | `lib/rate-limit.ts` | rateLimit, getRemainingQuota | Upstash rate limiter |
 
-### AI/LLM
-
-| File | Exports | Purpose |
-|------|---------|---------|
-| `lib/ai/client.ts` | generateCompletion, streamCompletion | Vercel AI SDK wrapper |
-| `lib/ai/embeddings.ts` | getEmbedding, similaritySearch | Vector embedding + cosine similarity |
-| `lib/ai/prompts/budget.ts` | BUDGET_ANALYSIS_PROMPT | Budget prompts |
-| `lib/ai/prompts/itinerary.ts` | ITINERARY_GENERATION_PROMPT | Itinerary prompts |
-| `lib/ai/prompts/recommendations.ts` | RECOMMENDATION_ANALYSIS_PROMPT | Recommendation prompts |
-
 ### External APIs
 
 | File | Exports | Purpose |
@@ -834,8 +795,6 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `src/__tests__/api/notifications-rescoped.test.ts` | — | 18 | Social notification types — CREW_REQUEST, CREW_ACCEPTED, MEETUP_INVITED, MEETUP_RSVP, MEETUP_STARTING_SOON, CREW_CHECKED_IN_NEARBY, SYSTEM ✅ 2026-04-22 Phase 6 |
 | `src/__tests__/api/search.test.ts` | — | 21 | GET /api/search — people-first ordering (users→meetups→venues), type enum validation, empty results ✅ 2026-04-22 Phase 6 (rewrote from 13 trip-focused tests) |
 | `src/__tests__/api/discover-recommendations.test.ts` | — | 26 | GET /api/discover/recommendations — auth, category filter, rate limiting, pagination, empty results, error paths ✅ 2026-04-21 Phase 6 S1 |
-| `src/__tests__/api/suggest-meetups.test.ts` | — | 11 | POST /api/ai/suggest-meetups — auth, Zod validation, OpenAI integration, error handling ✅ 2026-04-21 Phase 6 S1 |
-| `src/__tests__/api/icebreakers.test.ts` | — | 10 | POST /api/ai/icebreakers — auth, Zod validation, OpenAI integration, graceful degradation ✅ 2026-04-21 Phase 6 S1 |
 | `src/__tests__/api/privacy-settings.test.ts` | — | 28 | GET/PATCH /api/users/privacy — auth, visibility enum validation, Zod errors, update flow ✅ 2026-04-20 Phase 5 S2 |
 | `src/__tests__/api/checkins-pusher.test.ts` | — | 16 | Pusher broadcast on POST /api/checkins — city channel trigger, visibility gating, graceful degradation ✅ 2026-04-20 Phase 5 S2 |
 | `src/__tests__/api/venues-search-places.test.ts` | 474 | 18 | GET /api/venues/search — auth, DB-only path, Places API path, upsert, dedupe, category filter ✅ 2026-04-18 Phase 4 S3 |
@@ -855,8 +814,6 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `src/__tests__/api/pusher-auth.test.ts` | — | 14 | Pusher channel auth (POST /api/pusher/auth) |
 | `src/__tests__/api/auth-signup.test.ts` | — | 15 | POST /api/auth/signup — validation, token creation, email send ✅ 2026-03-22 |
 | `src/__tests__/api/trips-tripid.test.ts` | — | 20 | GET/PATCH/DELETE /api/trips/[tripId] ✅ 2026-03-22 |
-| `src/__tests__/api/ai-chat.test.ts` | — | ~12 | POST /api/ai/chat ✅ 2026-03-22 |
-| `src/__tests__/api/ai-recommend.test.ts` | — | ~12 | POST/GET /api/ai/recommend ✅ 2026-03-22 |
 | `src/__tests__/api/trips-tripid-invitations.test.ts` | — | 14 | GET/POST /api/trips/[tripId]/invitations ✅ 2026-03-22 |
 | `src/__tests__/api/trips-tripid-recommendations.test.ts` | — | 11 | GET/POST /api/trips/[tripId]/recommendations ✅ 2026-03-22 |
 | `src/__tests__/api/trips-voting.test.ts` | — | 50 | Full voting session lifecycle — GET/POST/PUT /api/trips/[tripId]/voting ✅ 2026-03-23 |
@@ -868,14 +825,11 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `src/__tests__/api/cron.test.ts` | — | 10 | GET /api/cron — CRON_SECRET validation, job execution ✅ 2026-03-24 |
 | `src/__tests__/api/discover-search.test.ts` | — | 12 | GET /api/discover/search — auth guard, rate limiting, Zod params ✅ 2026-03-24 |
 | `src/__tests__/api/invitations-post.test.ts` | — | 18 | POST /api/trips/[tripId]/invitations — accept/decline flows ✅ 2026-03-25 |
-| `src/__tests__/api/ai-get-methods.test.ts` | — | 16 | GET /api/ai/chat + GET /api/ai/recommend ✅ 2026-03-25 |
 | `src/__tests__/api/beta-extended.test.ts` | — | 21 | Extended beta route coverage ✅ 2026-03-25 |
 | `src/__tests__/api/users-follow.test.ts` | — | 24 | POST /api/users/[userId] follow/unfollow lifecycle ✅ 2026-03-25 |
 | `src/__tests__/services/recommendation.service.test.ts` | — | 45 | RecommendationService: analyzeSurveyResponses, dateAnalysis, locationPreferences, activityPreferences, createTripSurvey ✅ 2026-03-26 |
 | `src/__tests__/services/survey.service.test.ts` | — | 36 | SurveyService: getUserPreferencesSurvey, getTripPlanningSurvey, analyzeSurveyResponses, closeSurvey, createTripSurvey (default+custom expiry) ✅ 2026-03-26 |
 | `src/__tests__/api/geocoding-images.test.ts` | — | 32 | GET /api/geocoding + GET /api/images/search ✅ 2026-03-26 |
-| `src/__tests__/api/ai-generate-itinerary.test.ts` | — | 31 | POST /api/ai/generate-itinerary — auth, 503 guard, rate-limit, validation, 404/403, multi-day, AI/DB failures ✅ 2026-03-29 |
-| `src/__tests__/api/ai-suggest-activities.test.ts` | — | 25 | POST /api/ai/suggest-activities — pure AI generation, no Prisma ✅ 2026-03-29 |
 | `src/__tests__/api/discover-import.test.ts` | — | 21 | POST /api/discover/import — rate limiting, auth guard, externalActivity.upsert, OpenTripMap fetch ✅ 2026-03-29 |
 | `src/__tests__/api/voting.test.ts` | — | 10 | Voting API (create, vote, close session) |
 | `src/__tests__/api/survey.test.ts` | — | 11 | Survey API (create, respond, analyze) |
@@ -891,7 +845,6 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `src/__tests__/api/notifications.test.ts` | — | 19 | Notifications API (inbox, mark-read, delete) |
 | `src/__tests__/api/profile.test.ts` | — | 10 | Profile API (GET, PATCH preferences) |
 | `src/__tests__/api/reset-password.test.ts` | 286 | 12 | Password reset API (POST request, PATCH confirm, token validation, expiry) |
-| `src/__tests__/api/ai.test.ts` | 411 | 19 | AI routes (chat, recommend, suggest-activities, search, generate-itinerary) |
 | `src/__tests__/api/users.test.ts` | 316 | 19 | Users API (follow/unfollow, profile, social) |
 | `src/__tests__/api/share.test.ts` | 204 | 13 | Feed share endpoint |
 | `src/__tests__/api/inspiration.test.ts` | 358 | 20 | Inspiration API (templates, trending, popular) |
@@ -900,7 +853,6 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `src/__tests__/api/inspiration.test.ts` | — | 20 | Inspiration API |
 | `src/__tests__/api/search.test.ts` | — | 15 | Search API |
 | `src/__tests__/api/share.test.ts` | — | 13 | Feed share API |
-| `src/__tests__/api/ai.test.ts` | — | 19 | AI routes (suggest-activities, generate-itinerary) |
 | `src/__tests__/api/users.test.ts` | — | 19 | Users API + health endpoint |
 | `src/__tests__/api/activities.test.ts` | — | 15 | Activities API (GET, POST save/unsave, PUT comment/rate) |
 | `src/__tests__/api/beta.test.ts` | — | 21 | Beta signup, beta status, newsletter subscribe |
@@ -950,7 +902,7 @@ db:seed        → npx tsx prisma/seed/index.ts
 | Error monitoring | Sentry — 19/48 coverage on pre-archive branch; coverage recomputed on new live surface in Phase 2 |
 | Live API routes | 50 (35 base + 6 Crew + 9 Phase 4 meetup/venue/cron + 3 Phase 5 check-in + privacy + 2 Phase 6 AI: suggest-meetups, icebreakers; feed POST now 410) |
 | Files >400 lines | 0 in prod (email.ts 507 lines, email-crew.ts extracted; types/index.ts reduced to 264 lines in Phase 6) |
-| Production env gaps | OPENAI_API_KEY, Pusher vars, Sentry DSN, Resend domain, GOOGLE_PLACES_API_KEY |
+| Production env gaps | Pusher vars, Sentry DSN, Resend domain, GOOGLE_PLACES_API_KEY |
 | **Phase status** | **Phase 6 COMPLETE** (2026-04-22): feed rescoped, search people-first, 9 trip notification types removed, types/index.ts cleaned. Phase 7 (Marketing surface) is next. |
 
 ---
@@ -972,9 +924,9 @@ As of **2026-04-16** the trip-planning product surface has been archived to `_ar
 | Git tag | `v1.0-trip-planning` anchors the pre-pivot commit |
 
 ### What remains live
-- **API (~35 routes):** auth/*, beta/*, feed/*, users/*, profile, search, notifications/*, invitations/*, discover/*, inspiration, ai/* (chat/recommend/search), pusher/auth, geocoding, images/search, newsletter, cron, health
-- **Pages:** /, /auth/*, /profile, /feed, /discover, /inspiration, /notifications, /search, /settings, /onboarding, /privacy, /terms
-- **Components:** accessibility, ai (chat), auth, discover, feed, notifications, onboarding, profile, search, settings, social, ui + Navigation.tsx (trip links removed)
+- **API (~45 routes):** auth/*, beta/*, crew/*, checkins/*, feed/*, meetups/*, venues/*, users/*, profile, search, notifications/*, invitations/*, discover/*, inspiration, pusher/auth, geocoding, images/search, newsletter, cron, health
+- **Pages:** /, /auth/*, /profile, /feed, /discover, /inspiration, /notifications, /search, /settings, /onboarding, /privacy, /terms, /crew, /meetups, /checkins
+- **Components:** accessibility, auth, checkins, crew, discover, feed, meetups, notifications, onboarding, profile, search, settings, social, ui + Navigation.tsx (trip links removed, AI removed 2026-04-23)
 - **Services:** survey.service.ts (repurpose-pending)
 - **Prisma models retained:** User, Account, Session, VerificationToken, Follow, Notification, TripComment, TripLike (last two to be generalized into Post* in Phase 2+)
 

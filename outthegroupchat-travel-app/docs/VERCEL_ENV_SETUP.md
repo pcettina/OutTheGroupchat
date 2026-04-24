@@ -17,8 +17,6 @@ Add these in your Vercel Dashboard: **Settings** > **Environment Variables**
 
 | Variable | Description | Status |
 |----------|-------------|--------|
-| `OPENAI_API_KEY` | For AI chat features | ⚠️ **NOT SET** - See troubleshooting below |
-| `ANTHROPIC_API_KEY` | Alternative AI provider | Optional |
 | `RESEND_API_KEY` | Email service (Resend) | ✅ SET Dec 17 |
 | `EMAIL_FROM` | Email sender address | ✅ SET Dec 17 (onboarding@resend.dev) |
 | `N8N_API_KEY` | n8n workflow authentication for beta/newsletter endpoints | ⚠️ **REQUIRED FOR N8N** - See N8N_DEPLOYMENT_CHECKLIST.md |
@@ -79,7 +77,6 @@ After deployment, test:
 - `https://yourapp.vercel.app/api/auth/session` - Should return session info
 - `https://yourapp.vercel.app/feed` - Should load feed page
 - `https://yourapp.vercel.app/profile` - Should show profile (if logged in)
-- `https://yourapp.vercel.app/api/ai/chat` - Should connect to OpenAI (POST)
 - Email invitations - Should send via Resend
 
 ## Email Service Setup (Resend)
@@ -113,45 +110,3 @@ After deployment, test:
 ### Auth Errors
 - Ensure `NEXTAUTH_URL` matches your deployed domain exactly
 - Verify `NEXTAUTH_SECRET` is set (any random value works)
-
-### AI Chat Not Working (OPENAI_API_KEY Missing)
-**Symptom:** AI chat returns 503 error: "AI service is not configured"
-
-**Diagnosis from Logs:**
-Check Vercel logs for entries like:
-```json
-{
-  "hasEnvVar": false,
-  "envVarLength": 0,
-  "envVarPrefix": "none",
-  "envVarType": "undefined"
-}
-```
-
-**Fix:**
-1. Go to Vercel Dashboard → Your Project → **Settings** → **Environment Variables**
-2. Click **Add New**
-3. **Key:** `OPENAI_API_KEY`
-4. **Value:** Your OpenAI API key (starts with `sk-`)
-5. **IMPORTANT:** Select **Production** environment (or "All Environments")
-6. Click **Save**
-7. **Redeploy** your application (or wait for next deployment)
-
-**Getting OpenAI API Key:**
-1. Go to [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
-2. Sign in or create account
-3. Click **Create new secret key**
-4. Copy the key (starts with `sk-`)
-5. Paste into Vercel environment variables
-
-**Verification:**
-After redeploying, check logs again. Should see:
-- `hasEnvVar: true`
-- `envVarLength: > 0` (typically 51+ characters)
-- `envVarPrefix: "sk-..."`
-
-**Common Mistakes:**
-- ❌ Setting variable only for Preview/Development, not Production
-- ❌ Forgetting to redeploy after adding variable
-- ❌ Using wrong variable name (must be exactly `OPENAI_API_KEY`)
-- ❌ Copying key with extra spaces or newlines

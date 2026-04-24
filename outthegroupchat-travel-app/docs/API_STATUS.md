@@ -133,25 +133,7 @@ Email removed from select projection in /api/search/route.ts
 
 ## 🤖 AI APIs
 
-| Endpoint | Method | Status | Frontend Connected | Notes |
-|----------|--------|--------|-------------------|-------|
-| `/api/ai/chat` | POST | ✅ | ✅ | **OpenAI connected** ✅ Dec 17; retained (generic chat assistant, Phase 6 retarget) |
-| `/api/ai/recommend` | POST | ✅ | ⏳ | Retained — Phase 6 will retarget to venues/meetups |
-| `/api/ai/recommend` | GET | ✅ | ⏳ | Retained; trip-scoped `?tripId=` branch archived with trip routes |
-| `/api/ai/search` | GET/POST | ✅ | ⏳ | Semantic search with embeddings — retained (destinations branch to be repurposed for venues/cities) |
-| `/api/ai/suggest-meetups` | POST | ✅ | ⏳ | **NEW 2026-04-21 (Phase 6)** — given user's city, Crew, past check-ins, suggest meetup ideas via OpenAI; rate-limited, Zod-validated; 11 tests in `suggest-meetups.test.ts` |
-| `/api/ai/icebreakers` | POST | ✅ | ⏳ | **NEW 2026-04-21 (Phase 6)** — given a new Crew member, suggest conversation starters; rate-limited, Zod-validated; 10 tests in `icebreakers.test.ts` |
-| ~~`/api/ai/generate-itinerary`~~ | POST | 📦 | — | Archived 2026-04-16 — see Archived Routes |
-| ~~`/api/ai/suggest-activities`~~ | POST | 📦 | — | Archived 2026-04-16 — see Archived Routes |
-
-### AI Issues to Fix
-```
-COMPLETED ✅ Dec 17:
-1. [x] Connect to OpenAI/Claude API
-2. [x] Enable streaming responses
-3. [x] Add proper rate limiting (Upstash Redis)
-4. [x] Add trip context to prompts
-```
+**All AI endpoints removed 2026-04-23** (`ops/kill-all-ai-2026-04-23`). Legacy trip-era routes (`/api/ai/chat`, `recommend`, `search`, `generate-itinerary`, `suggest-activities`) deleted; Phase 6 meetup routes (`/api/ai/suggest-meetups`, `/api/ai/icebreakers`) deleted before wiring to UI. `@ai-sdk/openai`, `@ai-sdk/anthropic`, and `ai` (Vercel AI SDK) removed from dependencies. `OPENAI_API_KEY` and `ANTHROPIC_API_KEY` no longer consumed.
 
 ---
 
@@ -334,7 +316,6 @@ NEXTAUTH_SECRET=
 NEXTAUTH_URL=
 
 # Need to Add
-ANTHROPIC_API_KEY=      # Alternative AI (optional)
 PUSHER_APP_ID=          # Real-time
 PUSHER_KEY=             # Real-time
 PUSHER_SECRET=          # Real-time
@@ -343,7 +324,6 @@ NEXT_PUBLIC_PUSHER_KEY= # Real-time (client)
 NEXT_PUBLIC_PUSHER_CLUSTER= # Real-time (client)
 
 # Already Set ✅ Dec 17
-OPENAI_API_KEY=         # For AI features ✅
 RESEND_API_KEY=         # Email service ✅
 EMAIL_FROM=             # Email sender (onboarding@resend.dev) ✅
 ```

@@ -56,14 +56,7 @@ async function testTypeImports() {
   } catch (e: any) {
     imports['lib/prisma'] = false;
   }
-  
-  try {
-    await import('../src/lib/ai/client');
-    imports['lib/ai/client'] = true;
-  } catch (e: any) {
-    imports['lib/ai/client'] = false;
-  }
-  
+
   return { success: Object.values(imports).every(v => v), imports };
 }
 

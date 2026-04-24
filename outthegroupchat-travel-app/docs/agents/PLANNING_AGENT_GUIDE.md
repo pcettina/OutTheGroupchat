@@ -81,7 +81,6 @@ Use this for every new feature:
 - **Frontend:** Next.js 14 App Router
 - **Database:** PostgreSQL + Prisma
 - **Auth:** NextAuth.js
-- **AI:** Vercel AI SDK (OpenAI primary)
 - **Real-time:** Pusher (configured, env vars missing in production)
 - **Styling:** TailwindCSS + Framer Motion
 - **Monitoring:** Sentry (infrastructure in `src/lib/sentry.ts` — awaiting DSN env var in Vercel)

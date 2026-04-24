@@ -61,9 +61,7 @@
 | Inspiration Page | Working | Zod coerce.number on query params |
 | Trip Creation | Working | Basic creation working; wizard flow pending |
 | Trip Itinerary | Working | GET/PUT with $transaction atomicity (2026-03-23) |
-| AI Chat Assistant | Working | OpenAI connected, streaming; 503 guard when key absent |
-| AI Activity Suggestions | Working | 503 guard when OPENAI_API_KEY absent (2026-03-23) |
-| AI Itinerary Generation | Working | 503 guard when OPENAI_API_KEY absent (2026-03-23) |
+| AI features | Removed | All AI routes, lib, components, and deps (`@ai-sdk/*`, `ai`) deleted 2026-04-23 (`ops/kill-all-ai-2026-04-23`) |
 | Survey API | Working | API structure complete; frontend integration pending |
 | Voting API | Working | API structure complete; frontend integration pending |
 | Member Invitations | Working | Email-based via Resend |

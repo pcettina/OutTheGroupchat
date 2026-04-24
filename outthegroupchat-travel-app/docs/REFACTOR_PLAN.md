@@ -31,7 +31,7 @@ Trip-planning is **archived, not deleted.** It lives on in `src/_archive/trips/`
 ## 2. Current State Baseline (2026-04-16)
 
 ### 2.1 What we have
-- **Stack:** Next.js 14 App Router, TypeScript strict, Prisma + PostgreSQL (Supabase), NextAuth, Pusher, OpenAI (Vercel AI SDK), Upstash Redis, Resend, Tailwind, Framer Motion
+- **Stack:** Next.js 14 App Router, TypeScript strict, Prisma + PostgreSQL (Neon via Vercel Marketplace), NextAuth, Pusher, Upstash Redis, Resend, Tailwind, Framer Motion
 - **Scale:** 48 API routes, 24 Prisma models, 63 test files, 1346 passing tests, 266 TS files
 - **Health:** Build PASS, 0 lint, 0 TSC, 0 `any`, 0 `console.*`, 48/48 rate-limited, 9/10 security score
 - **Launch readiness:** 78% (target 85% for beta)

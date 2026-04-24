@@ -44,7 +44,6 @@ These items are blockers or near-blockers for the Q2 2026 beta launch. See LAUNC
 
 | Item | Priority | Status |
 |------|----------|--------|
-| Set OPENAI_API_KEY in Vercel | Critical | Missing |
 | Set Pusher env vars in Vercel | Critical | Missing |
 | Obtain Sentry DSN + set in Vercel | High | Missing |
 | Verify Resend domain | High | Pending |
@@ -306,7 +305,7 @@ These items are blockers or near-blockers for the Q2 2026 beta launch. See LAUNC
 
 ```
 Q2 2026 — Beta Launch Prep (Current)
-+-- Set production env vars (OpenAI, Pusher, Sentry)
++-- Set production env vars (Pusher, Sentry)
 +-- Trip wizard + trip editing UI
 +-- Survey/voting frontend integration
 +-- Uptime monitoring
