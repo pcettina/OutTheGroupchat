@@ -1,6 +1,6 @@
 # Product Vision — v1
 
-**Status:** Captured 2026-04-24 from founder direction. **20 resolutions locked 2026-04-24** (R1–R8 round 1, R9–R15 round 2, R16–R20 round 3); 1 sub-question provisionally defaulted (SQ7); 4 round-3 sub-questions flagged. See the Resolutions log for full decision history. This document is the north star for v1 product scope. Pulls ahead of the current meetup/check-in primitives toward an **intent → group → coordinate → go** flow.
+**Status:** Captured 2026-04-24 from founder direction. **25 resolutions locked 2026-04-24** (R1–R8 round 1, R9–R15 round 2, R16–R20 round 3, R21–R25 round 4). All prior-round sub-questions now resolved; 2 new round-4 sub-questions flagged (zoom threshold for venue-marker rendering; event-context detection for Crew-anchor selection). See the Resolutions log for full decision history. This document is the north star for v1 product scope.
 
 ---
 
@@ -101,7 +101,7 @@ Each heatmap window supports two overlay layers the user toggles independently:
 - **Crew layer** — direct Crew members only (baseline trust tier).
 - **Friend-of-friend layer** — 1-hop via Crew by default. Mutual-Crew threshold slider (≥1, ≥2, ≥3, …) tightens the graph.
 
-Result: 4 conceptual views (Interest × Crew, Interest × FoF, Presence × Crew, Presence × FoF), surfaced via 2 tabs × 2 overlay toggles. Individuals never resolve in any view; Axes 2 + 3 of the Privacy model (granularity, identity) govern per-contribution detail. Display refreshes every 30s while visible (per R19).
+Result: 4 conceptual views (Interest × Crew, Interest × FoF, Presence × Crew, Presence × FoF), surfaced via 2 tabs × 2 overlay toggles. Individuals never resolve in any view; Axes 2 + 3 of the Privacy model (granularity, identity) govern per-contribution detail. Display refreshes every 30s while visible (per R19). **Zoom-aware rendering (per R22):** at neighborhood zoom, contributions aggregate into cell density; zooming in past the neighborhood boundary surfaces discrete markers for venue-tagged Intents.
 
 ---
 
@@ -217,23 +217,44 @@ Data-model consequence: `Intent` gains an optional `venueId` field alongside `ci
 **Question:** What identity mode does a just-accepted Crew relationship default to?
 **Resolution:** **Direct Crew defaults to `Known`.** Crew membership is an explicit two-way opt-in — it *is* the trust signal. Defaulting Crew to Anonymous would mute the feature in the case where users want it most visible. **FoF defaults to `Crew-anchored Anonymous`:** the contributor's personal identity is not revealed, but the shared anchor is — viewers see *"an anonymous friend of [your crew member]"* rather than a bare "someone." This preserves social context ("this is in Alex's circle") without compromising FoF anonymity. Both defaults are user-overridable per relationship.
 
-Open (see round-3 sub-questions): when a FoF user shares multiple mutual Crew anchors with the viewer, which anchor is named?
+### R21 — SubCrew gating after the initial 2: open, no approval needed
+**Question:** Can a 3rd Crew member drop in via "I'm in" without approval, or does the 2-person seed gate further joiners?
+**Resolution:** **Open to any direct Crew member with a matching Intent — no approval needed.** The original 2 already opted into the Topic; they don't gate other matching members. The joiner's "I'm in" tap is itself an explicit opt-in signal, so no second gate is needed. Promoted from provisional default to locked resolution after founder confirmation 2026-04-24.
+
+### R22 — Intent with both `cityArea` and `venueId`: contribute to both, zoom-aware rendering
+**Question:** Does `venueId` override `cityArea` for heatmap contribution, or do both get counted?
+**Resolution:** **Both contribute; rendering is zoom-aware.** Aggregation-wise, an Intent with both set contributes to the viewer's cell at whatever granularity they have access to — so the contribution naturally appears in the neighborhood cell when zoomed out. **When the viewer zooms in past the neighborhood boundary**, specific tagged venues are highlighted as discrete markers (with density sizing) within the broader density overlay. This preserves neighborhood-level signal (good for "where's the scene") and surfaces venue-level specificity (good for "where specifically are they going") without double-counting.
+
+Data model: no change to Intent (it already carries both fields per R16). Rendering change lives in the heatmap client.
+
+### R23 — Pusher channel granularity for heatmap push (v1.5 direction)
+**Question:** When heatmap push ships in v1.5, what channel shape do we plan for?
+**Resolution:** **Per-neighborhood keyed by `cityArea`** — channel names like `heatmap-nyc-east-village-interest`. Scales with city size, keeps fan-out reasonable, aligns with the R16 `cityArea` taxonomy already in the data model. This is *direction*, not a commitment to v1.5 implementation — we may tune cell-size if neighborhoods prove lopsided in traffic.
+
+### R24 — Crew-anchor selection: event-context priority, then most-recent interaction
+**Question:** When an FoF user shares multiple mutual Crew anchors with the viewer, which one is named?
+**Resolution:** **Priority hierarchy:**
+1. **Mutual Crew member who is in the current SubCrew** (when viewing in an event-specific context). Forefronts the person actually present in the plan.
+2. **Most-recently-interacted-with mutual Crew member** — last DM, last shared check-in, or last RSVP overlap in the past 90 days.
+3. **Most-recent Crew-edge creation** (tiebreaker when no interaction history exists).
+4. **Alphabetical** (final tiebreaker).
+
+Event-context priority only applies in SubCrew-contextual views (coordination surface, event detail). In general heatmap browsing with no event context, the rule falls back to the interaction-recency ladder.
+
+User-configurable anchor ordering is a v1.5 upgrade if users ask for it.
+
+### R25 — Heatmap poll re-render: always re-render in v1
+**Question:** Skip re-render when contribution set hasn't changed?
+**Resolution:** **Always re-render.** Premature optimization to add change-detection in v1. If render cost or flicker proves real on low-end devices during profiling, add a contribution-ID diff check (skip render when the set is identical) in v1.5 — equivalent to density-delta math without floating-point fuzz.
 
 ---
 
 ## New open sub-questions
 
-One question from the round-1 sub-question pass remains open:
+All prior-round sub-questions now resolved. Round-4 surfaces two new threads from R22 and R24:
 
-1. **SubCrew gating after the initial 2.** Can a 3rd Crew member drop in via "I'm in" without approval? Does the 2-person seed gate further joiners, or is any Crew member with a matching Intent auto-added?
-   - **Provisional default** (not yet founder-confirmed): open to any direct Crew member with a matching Intent, no approval needed. The original 2 already opted into the Topic; they don't gate other matching members.
-
-Round-3 sub-questions surfaced by R16–R20 (no ship blocker for Lane B — all now complete — but need answers before the Intent surface builds):
-
-2. **Intent with both `cityArea` and `venueId`.** When the user picks both (venue within neighborhood), does `venueId` override the neighborhood entirely for the heatmap, or does the Intent contribute to both the venue cell AND the wider neighborhood cell? Simpler model = venue overrides; richer signal = both.
-3. **Pusher channel granularity for heatmap push** (deferred until v1.5). Per-city (noisy), per-neighborhood (balanced), per-cell (precise but fan-out heavy)? Per-neighborhood feels right but locks in early what "neighborhood" means structurally.
-4. **Crew-anchor selection when multiple mutuals exist.** If an FoF user shares 3 of the viewer's Crew as mutuals, which one is named in the `"anonymous friend of [X]"` attribution? Strongest tie (most interaction history)? Most-recent Crew addition? Random? User-ordered preference?
-5. **Minimum-change threshold for heatmap polls.** Should the 30s refresh skip re-rendering if the underlying density hasn't changed meaningfully (< N% delta), or always re-render? Affects perceived flicker and rendering cost on low-end devices.
+1. **Zoom threshold for venue-marker rendering (R22).** At what zoom level does the heatmap switch from pure density overlay to "density overlay + discrete venue markers for tagged `venueId` contributions"? Fixed zoom level? Adaptive to viewport size or contribution count?
+2. **Event-context detection for anchor selection (R24).** When is the heatmap viewer considered to be "in a SubCrew-contextual view"? Explicit route (`/subcrew/[id]`)? A user-toggled filter? Viewing a specific Intent that's part of a SubCrew? Defines when R24's priority 1 (SubCrew-anchor) activates vs. falling back to priority 2 (most-recent interaction).
 
 ---
 
@@ -257,5 +278,5 @@ These are v1 scope, not v0. Nothing in the current PR backlog ships them yet.
 
 ---
 
-**Last updated:** 2026-04-24 (round 3: R16–R20 locked; 4 round-3 sub-questions surfaced; SQ7 still provisional; Lane B complete)
-**Source:** Founder direction, captured across three resolution rounds on 2026-04-24.
+**Last updated:** 2026-04-24 (round 4: R21 — SQ7 locked; R22–R25 round-3 sub-questions resolved; 2 round-4 sub-questions surfaced; Lane B complete)
+**Source:** Founder direction, captured across four resolution rounds on 2026-04-24.
