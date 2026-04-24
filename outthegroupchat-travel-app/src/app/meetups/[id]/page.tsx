@@ -32,12 +32,26 @@ interface MeetupDetailData {
 }
 interface ApiResponse { success: boolean; data?: MeetupDetailData; error?: string; }
 
-// Visibility label config (inlined to avoid touching MeetupCard)
+// Last Call palette — brief §3. Mirrors MeetupCard's VISIBILITY_LABELS so a meetup reads
+// the same here as in the feed: Crew → tile; Public → sodium; Invite only → bourbon;
+// Private → warm-black neutral.
 const VISIBILITY_LABELS: Record<string, { label: string; classes: string }> = {
-  PUBLIC: { label: 'Public', classes: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' },
-  CREW: { label: 'Crew', classes: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' },
-  INVITE_ONLY: { label: 'Invite Only', classes: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' },
-  PRIVATE: { label: 'Private', classes: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' },
+  PUBLIC: {
+    label: 'Public',
+    classes: 'bg-otg-sodium/15 text-otg-sodium ring-1 ring-inset ring-otg-sodium/30',
+  },
+  CREW: {
+    label: 'Crew',
+    classes: 'bg-otg-tile/15 text-otg-tile ring-1 ring-inset ring-otg-tile/30',
+  },
+  INVITE_ONLY: {
+    label: 'Invite only',
+    classes: 'bg-otg-bourbon/15 text-otg-bourbon ring-1 ring-inset ring-otg-bourbon/30',
+  },
+  PRIVATE: {
+    label: 'Private',
+    classes: 'bg-otg-bg-dark text-otg-text-dim ring-1 ring-inset ring-otg-border',
+  },
 };
 
 const PUSHER_EVENTS = ['attendee:joined', 'attendee:left', 'meetup:updated', 'meetup:cancelled'] as const;
@@ -50,7 +64,7 @@ function formatDateTime(iso: string): string {
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+    <div className="min-h-screen bg-otg-bg-dark">
       <Navigation />
       <div className="pt-20 pb-12">
         <div className="max-w-3xl mx-auto px-4 space-y-6">{children}</div>
@@ -132,12 +146,12 @@ export default function MeetupDetailPage() {
       const res = await fetch(`/api/meetups/${id}`, { method: 'DELETE' });
       if (!res.ok) {
         const body = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(body?.error ?? 'Failed to cancel meetup');
+        throw new Error(body?.error ?? 'Couldn\u2019t cancel. Try again.');
       }
       router.push('/meetups');
     } catch (err) {
       setCancelling(false);
-      window.alert(err instanceof Error ? err.message : 'Failed to cancel meetup');
+      window.alert(err instanceof Error ? err.message : 'Couldn\u2019t cancel. Try again.');
     }
   }, [id, router]);
 
@@ -145,14 +159,14 @@ export default function MeetupDetailPage() {
   if (sessionStatus === 'loading' || (loading && !meetup && !errorStatus)) {
     return (
       <Shell>
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 animate-pulse">
-          <div className="h-7 w-2/3 bg-slate-200 dark:bg-slate-700 rounded mb-3" />
-          <div className="h-4 w-full bg-slate-200 dark:bg-slate-700 rounded mb-2" />
-          <div className="h-4 w-1/2 bg-slate-200 dark:bg-slate-700 rounded mb-6" />
+        <div className="rounded-2xl border border-otg-border bg-otg-maraschino p-6 animate-pulse">
+          <div className="h-7 w-2/3 bg-otg-bg-dark/60 rounded mb-3" />
+          <div className="h-4 w-full bg-otg-bg-dark/60 rounded mb-2" />
+          <div className="h-4 w-1/2 bg-otg-bg-dark/60 rounded mb-6" />
           <div className="space-y-2">
-            <div className="h-4 w-1/3 bg-slate-200 dark:bg-slate-700 rounded" />
-            <div className="h-4 w-1/4 bg-slate-200 dark:bg-slate-700 rounded" />
-            <div className="h-4 w-1/3 bg-slate-200 dark:bg-slate-700 rounded" />
+            <div className="h-4 w-1/3 bg-otg-bg-dark/60 rounded" />
+            <div className="h-4 w-1/4 bg-otg-bg-dark/60 rounded" />
+            <div className="h-4 w-1/3 bg-otg-bg-dark/60 rounded" />
           </div>
         </div>
       </Shell>
@@ -163,13 +177,13 @@ export default function MeetupDetailPage() {
   if (errorStatus === 401) {
     return (
       <Shell>
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-10 text-center">
-          <p className="text-slate-700 dark:text-slate-300 mb-4">
-            Please sign in to view this meetup.
+        <div className="rounded-2xl border border-otg-border bg-otg-maraschino p-10 text-center">
+          <p className="text-otg-text-bright mb-4">
+            Sign in to see this meetup.
           </p>
           <Link
             href="/auth/signin"
-            className="inline-flex items-center rounded-full bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 text-sm font-medium transition"
+            className="inline-flex items-center rounded-full bg-otg-sodium hover:bg-otg-sodium-400 active:bg-otg-brick text-otg-bg-dark px-4 py-2 text-sm font-medium transition-colors"
           >
             Sign in
           </Link>
@@ -181,11 +195,11 @@ export default function MeetupDetailPage() {
   if (errorStatus === 404) {
     return (
       <Shell>
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-10 text-center">
-          <p className="text-slate-700 dark:text-slate-300 mb-4">Meetup not found.</p>
+        <div className="rounded-2xl border border-otg-border bg-otg-maraschino p-10 text-center">
+          <p className="text-otg-text-bright mb-4">Meetup not found.</p>
           <Link
             href="/meetups"
-            className="inline-flex items-center rounded-full bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 text-sm font-medium transition"
+            className="inline-flex items-center rounded-full bg-otg-sodium hover:bg-otg-sodium-400 active:bg-otg-brick text-otg-bg-dark px-4 py-2 text-sm font-medium transition-colors"
           >
             Back to meetups
           </Link>
@@ -197,12 +211,12 @@ export default function MeetupDetailPage() {
   if (errorStatus !== null || !meetup) {
     return (
       <Shell>
-        <div className="rounded-2xl bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-200 p-6 text-center">
-          <p className="mb-4">{errorMessage ?? 'Something went wrong loading this meetup.'}</p>
+        <div className="rounded-2xl border border-otg-danger/30 bg-otg-danger/10 text-otg-text-bright p-6 text-center">
+          <p className="mb-4">{errorMessage ?? 'That didn\u2019t go through. Try again.'}</p>
           <button
             type="button"
             onClick={() => void fetchMeetup()}
-            className="inline-flex items-center rounded-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 text-sm font-medium transition"
+            className="inline-flex items-center rounded-full bg-otg-danger hover:bg-otg-danger/80 text-otg-text-bright px-4 py-2 text-sm font-medium transition-colors"
           >
             Try again
           </button>
@@ -215,7 +229,7 @@ export default function MeetupDetailPage() {
   const isHost = !!session?.user?.id && session.user.id === meetup.hostId;
   const vis = VISIBILITY_LABELS[meetup.visibility] ?? {
     label: meetup.visibility,
-    classes: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
+    classes: 'bg-otg-bg-dark text-otg-text-dim ring-1 ring-inset ring-otg-border',
   };
   const venueLabel = meetup.venueName ?? meetup.venue?.name ?? null;
   const attendeeCount = meetup.attendees.length;
@@ -243,25 +257,25 @@ export default function MeetupDetailPage() {
       {meetup.cancelled && (
         <div
           role="alert"
-          className="rounded-2xl bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-200 p-4 flex items-center gap-3"
+          className="rounded-2xl border border-otg-danger/30 bg-otg-danger/10 text-otg-text-bright p-4 flex items-center gap-3"
         >
-          <XCircle className="w-5 h-5 shrink-0" />
+          <XCircle className="w-5 h-5 shrink-0 text-otg-danger" aria-hidden="true" />
           <div>
-            <p className="font-semibold">This meetup has been cancelled.</p>
-            <p className="text-sm opacity-80">No new RSVPs will be accepted.</p>
+            <p className="font-semibold">This meetup is cancelled.</p>
+            <p className="text-sm text-otg-text-dim">No new RSVPs.</p>
           </div>
         </div>
       )}
 
       {/* Header card */}
-      <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6">
+      <div className="rounded-2xl border border-otg-border bg-otg-maraschino p-6">
         <div className="flex items-start justify-between gap-3 mb-4">
           <div className="flex-1 min-w-0">
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white leading-snug">
+            <h1 className="font-display text-2xl font-bold text-otg-text-bright leading-snug">
               {meetup.title}
             </h1>
             {meetup.description && (
-              <p className="text-slate-600 dark:text-slate-400 mt-2 whitespace-pre-wrap">
+              <p className="text-otg-text-dim mt-2 whitespace-pre-wrap">
                 {meetup.description}
               </p>
             )}
@@ -273,22 +287,22 @@ export default function MeetupDetailPage() {
           </span>
         </div>
 
-        <dl className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
+        <dl className="space-y-2 text-sm text-otg-text-dim">
           <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 shrink-0 text-slate-400" />
+            <Calendar className="w-4 h-4 shrink-0 text-otg-text-dim" aria-hidden="true" />
             <span>
               {formatDateTime(meetup.scheduledAt)}
-              {meetup.endsAt && <>{' – '}{formatDateTime(meetup.endsAt)}</>}
+              {meetup.endsAt && <>{' \u2013 '}{formatDateTime(meetup.endsAt)}</>}
             </span>
           </div>
           {venueLabel && (
             <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 shrink-0 text-slate-400" />
+              <MapPin className="w-4 h-4 shrink-0 text-otg-text-dim" aria-hidden="true" />
               <span className="truncate">{venueLabel}</span>
             </div>
           )}
           <div className="flex items-center gap-2">
-            <Users className="w-4 h-4 shrink-0 text-slate-400" />
+            <Users className="w-4 h-4 shrink-0 text-otg-text-dim" aria-hidden="true" />
             <span>
               {attendeeCount} {attendeeCount === 1 ? 'attendee' : 'attendees'}
               {meetup.capacity !== null && ` / ${meetup.capacity} capacity`}
@@ -297,8 +311,8 @@ export default function MeetupDetailPage() {
         </dl>
 
         {/* Host strip */}
-        <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
+        <div className="mt-5 pt-4 border-t border-otg-border flex items-center gap-2">
+          <div className="w-7 h-7 rounded-full overflow-hidden bg-otg-bg-dark border border-otg-border flex items-center justify-center shrink-0">
             {meetup.host.image ? (
               <Image
                 src={meetup.host.image}
@@ -308,19 +322,19 @@ export default function MeetupDetailPage() {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <span className="text-xs font-semibold text-slate-500">
+              <span className="text-xs font-semibold text-otg-text-dim">
                 {meetup.host.name?.[0]?.toUpperCase() ?? '?'}
               </span>
             )}
           </div>
-          <span className="text-xs text-slate-500 dark:text-slate-400 truncate">
+          <span className="text-xs text-otg-text-dim truncate">
             Hosted by{' '}
-            <span className="font-medium text-slate-700 dark:text-slate-300">
+            <span className="font-medium text-otg-text-bright">
               {meetup.host.name ?? 'Anonymous'}
             </span>
           </span>
           <Eye
-            className="w-3.5 h-3.5 shrink-0 text-slate-300 dark:text-slate-600 ml-auto"
+            className="w-3.5 h-3.5 shrink-0 text-otg-text-dim/60 ml-auto"
             aria-hidden="true"
           />
         </div>
@@ -328,40 +342,40 @@ export default function MeetupDetailPage() {
 
       {/* Action buttons */}
       {!isHost && !meetup.cancelled && (
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5">
-          <h2 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">Your RSVP</h2>
+        <div className="rounded-2xl border border-otg-border bg-otg-maraschino p-5">
+          <h2 className="text-sm font-semibold text-otg-text-bright mb-3">Your RSVP</h2>
           <RSVPButton meetupId={meetup.id} currentStatus={meetup.myRsvpStatus} />
         </div>
       )}
 
       {isHost && !meetup.cancelled && (
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 flex flex-wrap items-center gap-3">
+        <div className="rounded-2xl border border-otg-border bg-otg-maraschino p-5 flex flex-wrap items-center gap-3">
           <button
             type="button"
             onClick={() => setInviteOpen(true)}
-            className="inline-flex items-center gap-2 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 text-sm font-medium transition"
+            className="inline-flex items-center gap-2 rounded-full bg-otg-sodium hover:bg-otg-sodium-400 active:bg-otg-brick text-otg-bg-dark px-4 py-2 text-sm font-medium transition-colors"
           >
-            <Mail className="w-4 h-4" />
+            <Mail className="w-4 h-4" aria-hidden="true" />
             Invite Crew
           </button>
           <button
             type="button"
             onClick={() => void handleCancel()}
             disabled={cancelling}
-            className="inline-flex items-center gap-2 rounded-full bg-red-500 hover:bg-red-600 text-white px-4 py-2 text-sm font-medium transition disabled:opacity-60 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-2 rounded-full bg-otg-danger hover:bg-otg-danger/80 text-otg-text-bright px-4 py-2 text-sm font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            <XCircle className="w-4 h-4" />
-            {cancelling ? 'Cancelling…' : 'Cancel Meetup'}
+            <XCircle className="w-4 h-4" aria-hidden="true" />
+            {cancelling ? 'Cancelling\u2026' : 'Cancel meetup'}
           </button>
-          <span className="ml-auto text-xs text-slate-500 dark:text-slate-400">
+          <span className="ml-auto text-xs text-otg-text-dim">
             {meetup.invitesCount} {meetup.invitesCount === 1 ? 'invite' : 'invites'} sent
           </span>
         </div>
       )}
 
       {/* Attendees */}
-      <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5">
-        <h2 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">Attendees</h2>
+      <div className="rounded-2xl border border-otg-border bg-otg-maraschino p-5">
+        <h2 className="text-sm font-semibold text-otg-text-bright mb-4">Attendees</h2>
         <AttendeeList attendees={attendeesForList} hostId={meetup.hostId} />
       </div>
 

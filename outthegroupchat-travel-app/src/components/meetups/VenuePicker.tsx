@@ -22,6 +22,11 @@ interface VenuePickerProps {
  * Debounces input by 300 ms before fetching. Shows a dropdown of results,
  * a "No venues found" message when the query returns nothing, and a clear
  * button once a venue is selected.
+ *
+ * Palette: Last Call (brief §3). Sits on `bg-otg-bg-dark` inside the meetup modal,
+ * focus ring uses sodium so the picker reads as part of the same form as the
+ * sodium-primary Create CTA. Dropdown surface is `bg-otg-maraschino` to separate
+ * it visually from the bg-otg-bg-dark input.
  */
 export function VenuePicker({ value, onChange, className = '' }: VenuePickerProps) {
   const [query, setQuery] = useState('');
@@ -59,7 +64,7 @@ export function VenuePicker({ value, onChange, className = '' }: VenuePickerProp
       const res = await fetch(url);
 
       if (!res.ok) {
-        setError('Failed to fetch venues');
+        setError('Couldn’t load venues.');
         setResults([]);
         return;
       }
@@ -68,7 +73,7 @@ export function VenuePicker({ value, onChange, className = '' }: VenuePickerProp
       setResults(data.venues ?? []);
       setOpen(true);
     } catch {
-      setError('Failed to fetch venues');
+      setError('Couldn’t load venues.');
       setResults([]);
     } finally {
       setLoading(false);
@@ -109,19 +114,21 @@ export function VenuePicker({ value, onChange, className = '' }: VenuePickerProp
   // If a venue is selected, show the selected state instead of the input.
   if (value) {
     return (
-      <div className={`flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 ${className}`}>
+      <div
+        className={`flex items-center gap-2 rounded-lg border border-otg-border bg-otg-bg-dark px-3 py-2 ${className}`}
+      >
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium text-gray-900">{value.name}</p>
+          <p className="truncate text-sm font-medium text-otg-text-bright">{value.name}</p>
           {value.address && (
-            <p className="truncate text-xs text-gray-500">{value.address}</p>
+            <p className="truncate text-xs text-otg-text-dim">{value.address}</p>
           )}
-          <p className="truncate text-xs text-gray-400">{value.city}</p>
+          <p className="truncate text-xs text-otg-text-dim/80">{value.city}</p>
         </div>
         <button
           type="button"
           onClick={handleClear}
           aria-label="Clear selected venue"
-          className="ml-2 shrink-0 rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="ml-2 shrink-0 rounded p-1 text-otg-text-dim hover:bg-otg-maraschino hover:text-otg-text-bright focus:outline-none focus:ring-2 focus:ring-otg-sodium transition-colors"
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -133,9 +140,9 @@ export function VenuePicker({ value, onChange, className = '' }: VenuePickerProp
 
   return (
     <div ref={containerRef} className={`relative ${className}`}>
-      <div className="flex items-center rounded-lg border border-gray-200 bg-white px-3 py-2 focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500">
+      <div className="flex items-center rounded-lg border border-otg-border bg-otg-bg-dark px-3 py-2 focus-within:border-otg-sodium focus-within:ring-1 focus-within:ring-otg-sodium transition-colors">
         <svg
-          className="mr-2 h-4 w-4 shrink-0 text-gray-400"
+          className="mr-2 h-4 w-4 shrink-0 text-otg-text-dim"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -154,12 +161,12 @@ export function VenuePicker({ value, onChange, className = '' }: VenuePickerProp
           value={query}
           onChange={handleInputChange}
           onFocus={() => { if (results.length > 0) setOpen(true); }}
-          placeholder="Search venues..."
-          className="w-full bg-transparent text-sm text-gray-900 placeholder-gray-400 focus:outline-none"
+          placeholder="Search venues"
+          className="w-full bg-transparent text-sm text-otg-text-bright placeholder:text-otg-text-dim/70 focus:outline-none"
         />
         {loading && (
           <svg
-            className="ml-2 h-4 w-4 shrink-0 animate-spin text-gray-400"
+            className="ml-2 h-4 w-4 shrink-0 animate-spin text-otg-text-dim"
             fill="none"
             viewBox="0 0 24 24"
             aria-hidden="true"
@@ -175,12 +182,12 @@ export function VenuePicker({ value, onChange, className = '' }: VenuePickerProp
           id="venue-listbox"
           role="listbox"
           aria-label="Venue suggestions"
-          className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg"
+          className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-otg-border bg-otg-maraschino shadow-lg"
         >
           {error ? (
-            <li className="px-4 py-3 text-sm text-red-500">{error}</li>
+            <li className="px-4 py-3 text-sm text-otg-danger">{error}</li>
           ) : results.length === 0 ? (
-            <li className="px-4 py-3 text-sm text-gray-500">No venues found</li>
+            <li className="px-4 py-3 text-sm text-otg-text-dim">No venues found.</li>
           ) : (
             results.map((venue) => (
               <li
@@ -190,13 +197,13 @@ export function VenuePicker({ value, onChange, className = '' }: VenuePickerProp
                 onClick={() => handleSelect(venue)}
                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleSelect(venue); }}
                 tabIndex={0}
-                className="cursor-pointer px-4 py-3 hover:bg-indigo-50 focus:bg-indigo-50 focus:outline-none"
+                className="cursor-pointer px-4 py-3 hover:bg-otg-bg-dark/60 focus:bg-otg-bg-dark/60 focus:outline-none transition-colors"
               >
-                <p className="text-sm font-medium text-gray-900">{venue.name}</p>
-                <p className="text-xs text-gray-500">
+                <p className="text-sm font-medium text-otg-text-bright">{venue.name}</p>
+                <p className="text-xs text-otg-text-dim">
                   {[venue.address, venue.city].filter(Boolean).join(' · ')}
                 </p>
-                <span className="inline-block rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500 capitalize">
+                <span className="mt-1 inline-block rounded-full bg-otg-bg-dark px-2 py-0.5 text-xs text-otg-text-dim ring-1 ring-inset ring-otg-border capitalize">
                   {venue.category.toLowerCase()}
                 </span>
               </li>

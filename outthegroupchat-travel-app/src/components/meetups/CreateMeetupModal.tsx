@@ -158,20 +158,23 @@ export function CreateMeetupModal({
       const data = (await res.json()) as { success: boolean; data?: { id: string }; error?: string };
 
       if (!res.ok || !data.success) {
-        throw new Error(data.error ?? 'Failed to create meetup.');
+        throw new Error(data.error ?? 'That didn\u2019t go through. Try again.');
       }
 
       onSuccess?.(data.data!.id);
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong.');
+      setError(err instanceof Error ? err.message : 'That didn\u2019t go through. Try again.');
     } finally {
       setSubmitting(false);
     }
   };
 
+  // Last Call palette — brief §3. Inputs live on the dark app background, not a white card
+  // surface: `bg-otg-bg-dark` keeps them readable inside the `bg-otg-maraschino` modal
+  // without competing with the form labels. Focus rings use sodium.
   const inputClass =
-    'w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-60';
+    'w-full rounded-lg border border-otg-border bg-otg-bg-dark px-3 py-2 text-sm text-otg-text-bright placeholder:text-otg-text-dim/70 focus:border-otg-sodium focus:outline-none focus:ring-1 focus:ring-otg-sodium disabled:opacity-60';
 
   return (
     <AnimatePresence>
@@ -184,7 +187,7 @@ export function CreateMeetupModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-50 bg-black/50"
+            className="fixed inset-0 z-50 bg-otg-bg-dark/70 backdrop-blur-sm"
             onClick={handleBackdropClick}
             aria-hidden="true"
           />
@@ -201,23 +204,23 @@ export function CreateMeetupModal({
             transition={{ duration: 0.2 }}
             className="fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto max-h-[90vh]"
           >
-            <div className="m-4 rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900">
+            <div className="m-4 rounded-2xl border border-otg-border bg-otg-maraschino shadow-2xl">
               {/* Header */}
-              <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 dark:border-slate-800">
+              <div className="flex items-center justify-between border-b border-otg-border px-6 py-4">
                 <h2
                   id="create-meetup-title"
-                  className="text-lg font-semibold text-slate-900 dark:text-white"
+                  className="font-display text-lg font-semibold text-otg-text-bright"
                 >
-                  Create Meetup
+                  Create meetup
                 </h2>
                 <button
                   type="button"
                   onClick={handleClose}
                   disabled={submitting}
                   aria-label="Close"
-                  className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 disabled:opacity-50 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+                  className="rounded-full p-2 text-otg-text-dim hover:bg-otg-bg-dark hover:text-otg-text-bright disabled:opacity-50 transition-colors"
                 >
-                  <X className="h-5 w-5" />
+                  <X className="h-5 w-5" aria-hidden="true" />
                 </button>
               </div>
 
@@ -227,16 +230,16 @@ export function CreateMeetupModal({
                 <div>
                   <label
                     htmlFor="meetup-title"
-                    className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300"
+                    className="mb-1.5 block text-sm font-medium text-otg-text-bright"
                   >
-                    Title <span className="text-red-500">*</span>
+                    Title <span className="text-otg-sodium" aria-hidden="true">*</span>
                   </label>
                   <input
                     id="meetup-title"
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder="e.g. Rooftop hangout"
+                    placeholder="Rooftop hangout"
                     disabled={submitting}
                     required
                     className={inputClass}
@@ -247,7 +250,7 @@ export function CreateMeetupModal({
                 <div>
                   <label
                     htmlFor="meetup-description"
-                    className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300"
+                    className="mb-1.5 block text-sm font-medium text-otg-text-bright"
                   >
                     Description
                   </label>
@@ -255,7 +258,7 @@ export function CreateMeetupModal({
                     id="meetup-description"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    placeholder="What's the vibe?"
+                    placeholder="What’s the vibe?"
                     rows={3}
                     disabled={submitting}
                     className={`${inputClass} resize-none`}
@@ -264,7 +267,7 @@ export function CreateMeetupModal({
 
                 {/* Venue */}
                 <div>
-                  <span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                  <span className="mb-1.5 block text-sm font-medium text-otg-text-bright">
                     Venue
                   </span>
                   <VenuePicker
@@ -275,8 +278,8 @@ export function CreateMeetupModal({
                   {!selectedVenue && (
                     <>
                       {paramVenueId && !freeTextVenue && (
-                        <p className="mb-1.5 text-xs text-slate-400 dark:text-slate-500">
-                          Venue from check-in will be used (or type a name below to override).
+                        <p className="mb-1.5 text-xs text-otg-text-dim">
+                          Venue from your check-in will be used. Type below to override.
                         </p>
                       )}
                       <input
@@ -284,7 +287,7 @@ export function CreateMeetupModal({
                         value={freeTextVenue}
                         onChange={(e) => setFreeTextVenue(e.target.value)}
                         placeholder={
-                          paramVenueId ? 'Override venue name (optional)' : 'Or type a venue name freely'
+                          paramVenueId ? 'Override venue name (optional)' : 'Or type a venue name'
                         }
                         disabled={submitting}
                         className={inputClass}
@@ -298,9 +301,9 @@ export function CreateMeetupModal({
                   <div>
                     <label
                       htmlFor="meetup-scheduled-at"
-                      className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300"
+                      className="mb-1.5 block text-sm font-medium text-otg-text-bright"
                     >
-                      Date & Time <span className="text-red-500">*</span>
+                      Date &amp; time <span className="text-otg-sodium" aria-hidden="true">*</span>
                     </label>
                     <input
                       id="meetup-scheduled-at"
@@ -309,15 +312,15 @@ export function CreateMeetupModal({
                       onChange={(e) => setScheduledAt(e.target.value)}
                       disabled={submitting}
                       required
-                      className={inputClass}
+                      className={`${inputClass} [color-scheme:dark]`}
                     />
                   </div>
                   <div>
                     <label
                       htmlFor="meetup-ends-at"
-                      className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300"
+                      className="mb-1.5 block text-sm font-medium text-otg-text-bright"
                     >
-                      End Time
+                      End time
                     </label>
                     <input
                       id="meetup-ends-at"
@@ -325,7 +328,7 @@ export function CreateMeetupModal({
                       value={endsAt}
                       onChange={(e) => setEndsAt(e.target.value)}
                       disabled={submitting}
-                      className={inputClass}
+                      className={`${inputClass} [color-scheme:dark]`}
                     />
                   </div>
                 </div>
@@ -334,7 +337,7 @@ export function CreateMeetupModal({
                 <div>
                   <label
                     htmlFor="meetup-visibility"
-                    className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300"
+                    className="mb-1.5 block text-sm font-medium text-otg-text-bright"
                   >
                     Visibility
                   </label>
@@ -357,9 +360,9 @@ export function CreateMeetupModal({
                 <div>
                   <label
                     htmlFor="meetup-capacity"
-                    className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300"
+                    className="mb-1.5 block text-sm font-medium text-otg-text-bright"
                   >
-                    Capacity <span className="text-slate-400 font-normal">(2–500)</span>
+                    Capacity <span className="text-otg-text-dim font-normal">(2–500)</span>
                   </label>
                   <input
                     id="meetup-capacity"
@@ -376,7 +379,10 @@ export function CreateMeetupModal({
 
                 {/* Error */}
                 {error && (
-                  <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+                  <p
+                    role="alert"
+                    className="rounded-lg border border-otg-danger/30 bg-otg-danger/10 px-3 py-2 text-sm text-otg-text-bright"
+                  >
                     {error}
                   </p>
                 )}
@@ -387,16 +393,16 @@ export function CreateMeetupModal({
                     type="button"
                     onClick={handleClose}
                     disabled={submitting}
-                    className="rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                    className="rounded-full border border-otg-border bg-otg-bg-dark px-5 py-2 text-sm font-medium text-otg-text-bright hover:border-otg-text-dim disabled:opacity-50 transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="rounded-full bg-indigo-600 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-60"
+                    className="rounded-full bg-otg-sodium px-5 py-2 text-sm font-medium text-otg-bg-dark hover:bg-otg-sodium-400 active:bg-otg-brick disabled:opacity-60 transition-colors"
                   >
-                    {submitting ? 'Creating…' : 'Create Meetup'}
+                    {submitting ? 'Creating\u2026' : 'Create meetup'}
                   </button>
                 </div>
               </form>

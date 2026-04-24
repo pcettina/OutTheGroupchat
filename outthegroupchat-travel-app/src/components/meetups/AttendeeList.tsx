@@ -17,24 +17,31 @@ interface SectionConfig {
   countBadgeClass: string;
 }
 
+// Last Call palette — brief §3. Section roles mirror RSVPButton so a meetup's
+// attendee roster reads with the same color grammar as the RSVP action:
+// GOING=sodium (primary affirmative), MAYBE=bourbon (warm hedge), DECLINED=tile
+// (teal-neutral, Crew-scope; intentionally softer than a "danger" refusal).
 const SECTIONS: SectionConfig[] = [
   {
     status: 'GOING',
     label: 'Going',
-    headerClass: 'text-emerald-700 dark:text-emerald-300',
-    countBadgeClass: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
+    headerClass: 'text-otg-sodium',
+    countBadgeClass:
+      'bg-otg-sodium/15 text-otg-sodium ring-1 ring-inset ring-otg-sodium/30',
   },
   {
     status: 'MAYBE',
     label: 'Maybe',
-    headerClass: 'text-amber-700 dark:text-amber-300',
-    countBadgeClass: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+    headerClass: 'text-otg-bourbon',
+    countBadgeClass:
+      'bg-otg-bourbon/15 text-otg-bourbon ring-1 ring-inset ring-otg-bourbon/30',
   },
   {
     status: 'DECLINED',
     label: 'Declined',
-    headerClass: 'text-slate-600 dark:text-slate-400',
-    countBadgeClass: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
+    headerClass: 'text-otg-text-dim',
+    countBadgeClass:
+      'bg-otg-bg-dark text-otg-text-dim ring-1 ring-inset ring-otg-border',
   },
 ];
 
@@ -49,8 +56,8 @@ function AttendeeRow({ attendee, isHost }: AttendeeRowProps) {
   const isCheckedIn = attendee.checkedInAt !== null;
 
   return (
-    <div className="inline-flex items-center gap-2 rounded-full bg-slate-50 dark:bg-slate-800/50 px-3 py-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-      <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-700 flex items-center justify-center shrink-0">
+    <div className="inline-flex items-center gap-2 rounded-full bg-otg-bg-dark/60 border border-otg-border px-3 py-1.5 hover:border-otg-sodium/40 transition-colors">
+      <div className="w-8 h-8 rounded-full overflow-hidden bg-otg-maraschino border border-otg-border flex items-center justify-center shrink-0">
         {attendee.user.image ? (
           <Image
             src={attendee.user.image}
@@ -60,19 +67,19 @@ function AttendeeRow({ attendee, isHost }: AttendeeRowProps) {
             className="w-full h-full object-cover"
           />
         ) : (
-          <span className="text-xs font-semibold text-slate-500 dark:text-slate-300">
+          <span className="text-xs font-semibold text-otg-text-dim">
             {initial}
           </span>
         )}
       </div>
 
-      <span className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate max-w-[140px]">
+      <span className="text-sm font-medium text-otg-text-bright truncate max-w-[140px]">
         {displayName}
       </span>
 
       {isHost && (
         <span
-          className="inline-flex items-center gap-1 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+          className="inline-flex items-center gap-1 rounded-full bg-otg-bourbon/15 text-otg-bourbon ring-1 ring-inset ring-otg-bourbon/30 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
           aria-label="Host"
         >
           <Crown className="w-3 h-3" aria-hidden="true" />
@@ -82,7 +89,7 @@ function AttendeeRow({ attendee, isHost }: AttendeeRowProps) {
 
       {isCheckedIn && (
         <CheckCircle2
-          className="w-4 h-4 text-emerald-500 shrink-0"
+          className="w-4 h-4 text-otg-tile shrink-0"
           aria-label="Checked in at venue"
         />
       )}
@@ -94,9 +101,9 @@ export function AttendeeList({ attendees, hostId, className }: AttendeeListProps
   if (attendees.length === 0) {
     return (
       <div
-        className={`text-sm text-slate-500 dark:text-slate-400 italic ${className ?? ''}`.trim()}
+        className={`text-sm text-otg-text-dim font-serif italic ${className ?? ''}`.trim()}
       >
-        No attendees yet — be the first to RSVP!
+        Nobody has RSVP&apos;d yet. Be the first.
       </div>
     );
   }

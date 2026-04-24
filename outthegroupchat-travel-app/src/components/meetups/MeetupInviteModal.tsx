@@ -179,7 +179,7 @@ export function MeetupInviteModal({ meetupId, isOpen, onClose, onSuccess }: Meet
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-50 bg-black/50"
+            className="fixed inset-0 z-50 bg-otg-bg-dark/70 backdrop-blur-sm"
             onClick={handleBackdropClick}
             aria-hidden="true"
           />
@@ -194,13 +194,13 @@ export function MeetupInviteModal({ meetupId, isOpen, onClose, onSuccess }: Meet
             transition={{ duration: 0.2 }}
             className="fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto max-h-[90vh]"
           >
-            <div className="m-4 rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900">
+            <div className="m-4 rounded-2xl border border-otg-border bg-otg-maraschino shadow-2xl">
               {/* Header */}
-              <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 dark:border-slate-800">
+              <div className="flex items-center justify-between border-b border-otg-border px-6 py-4">
                 <div className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
-                  <h2 id="invite-meetup-title" className="text-lg font-semibold text-slate-900 dark:text-white">
-                    Invite to Meetup
+                  <Users className="h-5 w-5 text-otg-tile" aria-hidden="true" />
+                  <h2 id="invite-meetup-title" className="font-display text-lg font-semibold text-otg-text-bright">
+                    Invite Crew
                   </h2>
                 </div>
                 <button
@@ -208,35 +208,35 @@ export function MeetupInviteModal({ meetupId, isOpen, onClose, onSuccess }: Meet
                   onClick={handleClose}
                   disabled={submitting}
                   aria-label="Close"
-                  className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 disabled:opacity-50 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+                  className="rounded-full p-2 text-otg-text-dim hover:bg-otg-bg-dark hover:text-otg-text-bright disabled:opacity-50 transition-colors"
                 >
-                  <X className="h-5 w-5" />
+                  <X className="h-5 w-5" aria-hidden="true" />
                 </button>
               </div>
 
               {/* Form */}
               <form onSubmit={(e) => { void handleSubmit(e); }} className="px-6 py-5">
-                <div className="mb-4 max-h-[50vh] overflow-y-auto rounded-lg border border-slate-100 dark:border-slate-800">
+                <div className="mb-4 max-h-[50vh] overflow-y-auto rounded-lg border border-otg-border bg-otg-bg-dark/60">
                   {loadingCrew && (
-                    <p className="px-4 py-6 text-center text-sm text-slate-500 dark:text-slate-400">
-                      Loading crew…
+                    <p className="px-4 py-6 text-center text-sm text-otg-text-dim">
+                      Loading Crew…
                     </p>
                   )}
 
                   {!loadingCrew && crewError && (
-                    <p role="alert" className="px-4 py-6 text-center text-sm text-red-600 dark:text-red-400">
+                    <p role="alert" className="px-4 py-6 text-center text-sm text-otg-text-bright">
                       {crewError}
                     </p>
                   )}
 
                   {!loadingCrew && !crewError && invitableUsers.length === 0 && (
-                    <div className="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                    <div className="px-4 py-8 text-center text-sm text-otg-text-dim">
                       <p className="mb-2">
-                        You don&apos;t have any crew yet. Add crew members from their profile to invite them.
+                        You don&apos;t have Crew yet. Add people from their profile to invite them.
                       </p>
                       <Link
                         href="/discover"
-                        className="font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
+                        className="font-medium text-otg-sodium hover:text-otg-sodium-400 transition-colors"
                         onClick={handleClose}
                       >
                         Find people on Discover →
@@ -245,7 +245,7 @@ export function MeetupInviteModal({ meetupId, isOpen, onClose, onSuccess }: Meet
                   )}
 
                   {!loadingCrew && !crewError && invitableUsers.length > 0 && (
-                    <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+                    <ul className="divide-y divide-otg-border">
                       {invitableUsers.map((user, idx) => {
                         const checked = selectedIds.has(user.id);
                         const inputId = `invite-user-${user.id}`;
@@ -254,7 +254,7 @@ export function MeetupInviteModal({ meetupId, isOpen, onClose, onSuccess }: Meet
                           <li key={user.id}>
                             <label
                               htmlFor={inputId}
-                              className="flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                              className="flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-otg-maraschino/60 transition-colors"
                             >
                               <input
                                 id={inputId}
@@ -263,25 +263,25 @@ export function MeetupInviteModal({ meetupId, isOpen, onClose, onSuccess }: Meet
                                 onChange={() => toggleUser(user.id)}
                                 disabled={submitting}
                                 autoFocus={idx === 0}
-                                className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50"
+                                className="h-4 w-4 rounded border-otg-border bg-otg-bg-dark text-otg-sodium focus:ring-otg-sodium focus:ring-offset-0 disabled:opacity-50"
                               />
-                              <div className="relative h-9 w-9 flex-shrink-0 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+                              <div className="relative h-9 w-9 flex-shrink-0 overflow-hidden rounded-full bg-otg-maraschino border border-otg-border">
                                 {user.image ? (
                                   <Image src={user.image} alt={displayName} fill sizes="36px" className="object-cover" />
                                 ) : (
-                                  <span className="flex h-full w-full items-center justify-center text-sm font-semibold text-slate-600 dark:text-slate-300">
+                                  <span className="flex h-full w-full items-center justify-center text-sm font-semibold text-otg-text-dim">
                                     {displayName.charAt(0).toUpperCase()}
                                   </span>
                                 )}
                               </div>
                               <div className="min-w-0 flex-1">
-                                <p className="truncate text-sm font-medium text-slate-900 dark:text-white">{displayName}</p>
+                                <p className="truncate text-sm font-medium text-otg-text-bright">{displayName}</p>
                                 {user.city && (
-                                  <p className="truncate text-xs text-slate-500 dark:text-slate-400">{user.city}</p>
+                                  <p className="truncate text-xs text-otg-text-dim">{user.city}</p>
                                 )}
                               </div>
                               {user.crewLabel && (
-                                <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">
+                                <span className="rounded-full bg-otg-tile/15 px-2 py-0.5 text-xs font-medium text-otg-tile ring-1 ring-inset ring-otg-tile/30">
                                   {user.crewLabel}
                                 </span>
                               )}
@@ -294,13 +294,16 @@ export function MeetupInviteModal({ meetupId, isOpen, onClose, onSuccess }: Meet
                 </div>
 
                 {selectedCount > 0 && (
-                  <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">
+                  <p className="mb-3 text-xs text-otg-text-dim">
                     {selectedCount} of 20 max selected
                   </p>
                 )}
 
                 {error && (
-                  <p role="alert" className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+                  <p
+                    role="alert"
+                    className="mb-3 rounded-lg border border-otg-danger/30 bg-otg-danger/10 px-3 py-2 text-sm text-otg-text-bright"
+                  >
                     {error}
                   </p>
                 )}
@@ -310,14 +313,14 @@ export function MeetupInviteModal({ meetupId, isOpen, onClose, onSuccess }: Meet
                     type="button"
                     onClick={handleClose}
                     disabled={submitting}
-                    className="rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                    className="rounded-full border border-otg-border bg-otg-bg-dark px-5 py-2 text-sm font-medium text-otg-text-bright hover:border-otg-text-dim disabled:opacity-50 transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={submitting || selectedCount === 0}
-                    className="inline-flex items-center gap-2 rounded-full bg-indigo-600 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-60"
+                    className="inline-flex items-center gap-2 rounded-full bg-otg-sodium px-5 py-2 text-sm font-medium text-otg-bg-dark hover:bg-otg-sodium-400 active:bg-otg-brick disabled:opacity-60 transition-colors"
                   >
                     <Send className="h-4 w-4" aria-hidden="true" />
                     {submitLabel}

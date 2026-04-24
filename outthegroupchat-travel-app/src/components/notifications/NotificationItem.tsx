@@ -1,8 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Image from 'next/image';
-import { motion } from 'framer-motion';
+import {
+  motion,
+  useAnimationControls,
+  useReducedMotion,
+  type PanInfo,
+} from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
 import Link from 'next/link';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -18,6 +23,7 @@ import {
   Users,
   type LucideIcon,
 } from 'lucide-react';
+import { triggerHaptic } from '@/lib/motion';
 
 // Matches Prisma `NotificationType` enum (prisma/schema.prisma). Uppercase values arrive
 // verbatim from the API — don't re-case on the client.
@@ -101,15 +107,31 @@ const TYPE_CONFIG: Record<NotificationType, TypeConfig> = {
 
 const FALLBACK_CONFIG = TYPE_CONFIG.SYSTEM;
 
+// Swipe-Dismiss with Detent — brief §6 signature micro-interaction #3.
+// Card follows finger 1:1 (no drag constraints; momentum off). At 35% of the viewport
+// width the detent fires once per gesture via `navigator.vibrate(6)` — the haptic
+// teaches gesture threshold without a tutorial (Linear issue swipe + iOS Mail pattern).
+// Past threshold: snap off-screen with a neutral spring, fade to 0, then delete.
+// Below threshold: spring back to rest with a slight overshoot.
+const DISMISS_THRESHOLD_PCT = 0.35;
+const EXIT_SPRING = { type: 'spring', visualDuration: 0.22, bounce: 0 } as const;
+const RETURN_SPRING = { type: 'spring', visualDuration: 0.22, bounce: 0.4 } as const;
+const SSR_FALLBACK_WIDTH = 400;
+
 export function NotificationItem({
   notification,
   onMarkRead,
   onDelete,
 }: NotificationItemProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const queryClient = useQueryClient();
   const config = TYPE_CONFIG[notification.type] ?? FALLBACK_CONFIG;
   const Icon = config.icon;
+
+  const shouldReduceMotion = useReducedMotion();
+  const controls = useAnimationControls();
+  const thresholdCrossedRef = useRef(false);
 
   const markReadMutation = useMutation({
     mutationFn: async () => {
@@ -142,23 +164,92 @@ export function NotificationItem({
   });
 
   const handleClick = () => {
+    // Drag + click disambiguation — Framer's drag gesture normally suppresses clicks
+    // past its internal threshold, but when a drag is in flight we still guard here
+    // so a gesture that hovered near the start point doesn't silently mark-as-read.
+    if (isDragging) return;
     if (!notification.read) {
       markReadMutation.mutate();
     }
   };
 
+  const getThreshold = () => {
+    if (typeof window === 'undefined') return SSR_FALLBACK_WIDTH * DISMISS_THRESHOLD_PCT;
+    return window.innerWidth * DISMISS_THRESHOLD_PCT;
+  };
+
+  const handleDrag = (
+    _event: MouseEvent | TouchEvent | PointerEvent,
+    info: PanInfo,
+  ) => {
+    const past = Math.abs(info.offset.x) >= getThreshold();
+    if (past && !thresholdCrossedRef.current) {
+      thresholdCrossedRef.current = true;
+      triggerHaptic('swipe-dismiss');
+    } else if (!past && thresholdCrossedRef.current) {
+      // Allow the haptic to re-fire if the user drags past, back under, then past again.
+      thresholdCrossedRef.current = false;
+    }
+  };
+
+  const handleDragEnd = async (
+    _event: MouseEvent | TouchEvent | PointerEvent,
+    info: PanInfo,
+  ) => {
+    const past = Math.abs(info.offset.x) >= getThreshold();
+
+    if (past) {
+      const direction = info.offset.x < 0 ? -1 : 1;
+      const viewport =
+        typeof window !== 'undefined' ? window.innerWidth : SSR_FALLBACK_WIDTH;
+      // Snap off the edge, fade to 0, then fire the delete mutation. The card stays
+      // off-screen during the network round-trip; when React Query invalidates the
+      // list, AnimatePresence's exit runs on an invisible element (opacity already 0),
+      // so there's no second visible animation.
+      await controls.start({
+        x: direction * viewport,
+        opacity: 0,
+        transition: EXIT_SPRING,
+      });
+      deleteMutation.mutate();
+    } else {
+      thresholdCrossedRef.current = false;
+      await controls.start({
+        x: 0,
+        opacity: 1,
+        transition: RETURN_SPRING,
+      });
+    }
+    setIsDragging(false);
+  };
+
+  // Reduced-motion users skip the drag gesture entirely — they still have the delete
+  // button in the hover-actions row. Haptics and motion are independently disabled by
+  // users at the OS level (brief §6).
+  const canSwipe = !shouldReduceMotion;
+
   const content = (
     <motion.div
+      drag={canSwipe ? 'x' : false}
+      dragMomentum={false}
+      onDragStart={() => setIsDragging(true)}
+      onDrag={handleDrag}
+      onDragEnd={handleDragEnd}
+      animate={controls}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      whileHover={{ scale: 1.005 }}
+      whileHover={isDragging ? undefined : { scale: 1.005 }}
       onClick={handleClick}
       className={[
-        'relative rounded-xl border transition-colors cursor-pointer',
+        'relative rounded-xl border transition-colors select-none',
+        canSwipe ? 'touch-pan-y' : '',
         notification.read
           ? 'bg-otg-maraschino border-otg-border'
           : 'bg-otg-maraschino border-otg-sodium/40',
-      ].join(' ')}
+        canSwipe && isDragging ? 'cursor-grabbing' : 'cursor-pointer',
+      ]
+        .filter(Boolean)
+        .join(' ')}
     >
       {/* Unread indicator — sodium rail on the left edge */}
       {!notification.read && (
@@ -220,7 +311,7 @@ export function NotificationItem({
         {/* Hover actions */}
         <div
           className={`flex items-center gap-1 transition-opacity ${
-            isHovered ? 'opacity-100' : 'opacity-0'
+            isHovered && !isDragging ? 'opacity-100' : 'opacity-0'
           }`}
         >
           {!notification.read && (

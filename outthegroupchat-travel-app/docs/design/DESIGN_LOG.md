@@ -24,6 +24,100 @@ Every design session appends one entry. Append at the top (newest first).
 
 ## Entries
 
+### 2026-04-24 — design-component — NotificationItem swipe + meetup-surface palette sweep
+
+**Context:** Lane B of the `/design-component` rotation. Two deliverables in one pass:
+1. **NotificationItem Swipe-Dismiss with Detent** — brief §6's third signature micro-interaction, deferred from PR #71 (which was palette-only on NotificationItem). This is the first OTG gesture that uses a drag + threshold + haptic system, so it also establishes the vocabulary for any future swipe surfaces (check-in cards, meetup invites).
+2. **Meetup-surface palette sweep** — the MeetupDetail page + four meetup components (AttendeeList, CreateMeetupModal, MeetupInviteModal, VenuePicker) still rendered the legacy indigo/emerald/slate/red palette from before the pivot. Visiting `/meetups/[id]` boot the app out of Last Call chrome. Authenticated users creating/joining meetups — the core pivot surface — saw the most pre-pivot palette residue anywhere in the app. This pass retires those utilities and lands those surfaces on `otg.*` tokens.
+
+**Decisions:**
+- **Swipe-Dismiss with Detent (NotificationItem).** Brief §6 signature #3 implemented verbatim:
+  - `drag="x"` with `dragMomentum={false}` and no `dragConstraints` — card follows finger 1:1 on horizontal axis; vertical scroll passes through via Framer's auto `touch-action: pan-y`.
+  - Threshold: **35% of `window.innerWidth`** (re-measured on each gesture so tablet + desktop orientation flips stay correct).
+  - Haptic: `triggerHaptic('swipe-dismiss')` → `navigator.vibrate(6)` fires **once** on threshold cross (tracked via `thresholdCrossedRef`) — re-armed if user drags back under and past again within the same gesture. No-op on iOS Safari + desktop.
+  - Release past threshold: `controls.start({ x: direction * innerWidth, opacity: 0, transition: { type: 'spring', visualDuration: 0.22, bounce: 0 } })` → then `deleteMutation.mutate()`. Card goes off-screen **before** the network round-trip, so the subsequent React Query invalidation + AnimatePresence exit runs on an invisible element (opacity already 0) — no second visible animation.
+  - Release below threshold: spring back to `x: 0` with `bounce: 0.4` (slight overshoot signals "it did register, it's just not enough").
+  - **Reduced-motion path:** `useReducedMotion()` → `drag={false}`. The delete + mark-read buttons are still visible in the hover-actions row, so the affordance is preserved for users with motion disabled. Haptic is orthogonal (users can silence vibration at the OS level; motion and haptics are not the same preference per brief §6).
+  - **Bi-directional swipe accepted.** Linear issue swipe is left-only; iOS Mail is bi-directional with different actions per side. OTG has only one dismiss target (delete), so gating direction adds nothing for the user — either direction reads as "get this off my screen." Swipe-left and swipe-right both dismiss.
+  - **Click suppression.** Framer's drag gesture suppresses the pointerup → click pipeline past its internal threshold. The component adds a second guard via `isDragging` state so mark-as-read doesn't fire on gestures that hovered near the origin point. Link navigation (when `actionUrl` is set) remains intact on a true tap.
+  - Cursor: `cursor-pointer` at rest, `cursor-grabbing` while dragging (desktop affordance).
+- **AttendeeList palette sweep.** Status colors align with `RSVPButton.tsx` (which already shipped on Last Call in PR #68): Going → sodium, Maybe → bourbon, Declined → tile (teal-neutral; intentionally not `danger` — a "declined" RSVP isn't a destructive event). Attendee pill bg → `bg-otg-bg-dark/60` with `border-otg-border`. Host crown → bourbon tint with ring-inset (secondary accent, so it reads as "authority" without competing with Going's sodium). Checked-in `CheckCircle2` → `text-otg-tile` (Crew-accent, "in the room" affordance). Empty-state copy rewritten: "No attendees yet — be the first to RSVP!" → **"Nobody has RSVP'd yet. Be the first."** (brief §5: sentence case, no exclamation, specific outcome verb).
+- **MeetupDetail page palette sweep** (`src/app/meetups/[id]/page.tsx`):
+  - Shell: `bg-slate-50 dark:bg-slate-900` → `bg-otg-bg-dark` (dark-first per brief §3; light mode is accessibility courtesy, not a branching code path).
+  - All card wrappers (`bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700`) → **`bg-otg-maraschino border-otg-border`**. Matches MeetupCard from PR #69.
+  - Inline `VISIBILITY_LABELS` updated to mirror `MeetupCard`'s mapping exactly: Public=sodium, Crew=tile, Invite only=bourbon, Private=warm-black neutral. A meetup now reads the same here as it does in the feed.
+  - Typography: `text-slate-900 dark:text-white` → `text-otg-text-bright`; `text-slate-600 dark:text-slate-400` → `text-otg-text-dim`; h1 switched to `font-display` (Cabinet Grotesk).
+  - Skeleton shimmer strips: `bg-slate-200 dark:bg-slate-700` → `bg-otg-bg-dark/60` (reads as a darker impression against `bg-otg-maraschino`).
+  - 401 / 404 CTAs: emerald → sodium (primary brand CTA color). Copy sentence-cased ("Please sign in to view this meetup." → **"Sign in to see this meetup."**).
+  - Error-retry banner: `bg-red-50 dark:bg-red-900/30` → `border-otg-danger/30 bg-otg-danger/10`. Retry button → `bg-otg-danger`. Copy swapped to brief string #8: **"That didn't go through. Try again."** Cancel-confirm error message also updated to "Couldn't cancel. Try again." (dropped the corporate "Failed to" hedge per brief §5).
+  - Cancel-meetup button label: **"Cancel Meetup" → "Cancel meetup"** (sentence case). Cancelling… state keeps the M-dash ellipsis (\u2026) for a consistent in-flight affordance.
+  - Cancellation banner: "This meetup has been cancelled." → **"This meetup is cancelled."** + "No new RSVPs will be accepted." → "No new RSVPs." (brief §5: tighter, no corporate hedging).
+- **CreateMeetupModal palette sweep.**
+  - Backdrop: `bg-black/50` → `bg-otg-bg-dark/70 backdrop-blur-sm` (blurs the sodium halos on the landing page so the modal foregrounds cleanly).
+  - Modal surface: white/slate → `bg-otg-maraschino border-otg-border`. Input class rewritten to sit on `bg-otg-bg-dark` (not white) with sodium focus ring.
+  - `datetime-local` inputs get `[color-scheme:dark]` — tells the browser to render the native picker chrome in dark mode so the date/time text doesn't flash white on click.
+  - Required-field asterisks: red → sodium (primary brand accent).
+  - Title heading: **"Create Meetup" → "Create meetup"** (sentence case). Primary CTA label same change. Placeholder text rewritten per brief §5: "e.g. Rooftop hangout" → **"Rooftop hangout"** (drop the "e.g." crutch).
+  - Error pill: red-50/red-600 → `border-otg-danger/30 bg-otg-danger/10 text-otg-text-bright`. Generic fallback error now reads **"That didn't go through. Try again."** (brief string #8).
+  - Indigo primary button → sodium (`bg-otg-sodium text-otg-bg-dark` with `hover:bg-otg-sodium-400 active:bg-otg-brick` — same gradient as RSVPButton's active state).
+- **MeetupInviteModal palette sweep.**
+  - Same backdrop + modal surface treatment as CreateMeetupModal.
+  - Title heading: **"Invite to Meetup" → "Invite Crew"** (matches MeetupDetail's host-side button label; Crew is the proper-noun target per brief §5).
+  - Users icon tinted tile (Crew-identity color per brief §3).
+  - Checkbox: indigo → sodium with dark-mode offset (`focus:ring-offset-0` keeps the ring readable on `bg-otg-bg-dark`).
+  - Crew label pill: indigo-50 → `bg-otg-tile/15 text-otg-tile ring-1 ring-inset ring-otg-tile/30` (Crew accent).
+  - Discover link color: indigo → sodium.
+  - Empty-state copy: "You don't have any crew yet. Add crew members from their profile to invite them." → **"You don't have Crew yet. Add people from their profile to invite them."** (Crew capitalized; "crew members" trimmed; brief §5 tighter copy).
+  - "Loading crew…" → "Loading Crew…" (capitalization only).
+- **VenuePicker palette sweep.**
+  - Input container: `border-gray-200 bg-white` → `bg-otg-bg-dark border-otg-border` with sodium focus ring.
+  - Selected-venue card: same treatment; clear button recolored to `text-otg-text-dim hover:text-otg-text-bright`.
+  - Dropdown: `bg-white` → **`bg-otg-maraschino`** (intentionally different from the input's `bg-otg-bg-dark` — the bg step separates the dropdown visually from the input without a heavy shadow, matching the rest of the app's two-tier dark chrome).
+  - Venue-option hover: `hover:bg-indigo-50` → `hover:bg-otg-bg-dark/60` (subtle, dark-on-dark).
+  - Category pill: `bg-gray-100 text-gray-500` → `bg-otg-bg-dark text-otg-text-dim ring-1 ring-inset ring-otg-border`.
+  - Error state text: red-500 → `text-otg-danger`. Empty-state copy: "No venues found" → **"No venues found."** (brief §5: period on full sentences).
+  - Error message copy: "Failed to fetch venues" → **"Couldn't load venues."** (drop "Failed to" corporate hedge).
+  - Placeholder: "Search venues..." → **"Search venues"** (brief §5: no ellipses — they signal hesitation).
+  - JSDoc header updated to document Last Call palette decisions so the next pass on this component doesn't need to reverse-engineer the two-tier bg choice.
+
+**Alternatives considered + rejected:**
+- **Left-only swipe (iOS Mail dominant pattern, Linear issue swipe)** — rejected for OTG because the single dismiss action (delete) doesn't benefit from directional gating. Restricting to left-only would force users to remember which side "dismiss" lives on without an in-product hint.
+- **Show a reveal behind the swiped card (red bg with trash icon, iOS Mail-style)** — rejected this pass. Would need a second layer element absolutely-positioned behind the draggable card + logic to show it only when |offset.x| > 0. The brief's signature #3 spec is lean on visual reveal — it leans on haptic + motion to teach the threshold. Shipping the minimal spec first; reveal is a follow-up if the haptic-only version tests poorly.
+- **Animate opacity continuously during drag (fade-as-you-swipe)** — rejected. Brief §6 specifies "fades opacity 1 → 0" as part of the **release** animation, not the drag. Keeping opacity at 1 during drag preserves the card's legibility while the user is still deciding (they might drag past threshold and then cancel).
+- **Ship a Framer `<Drawer>` or `<Sheet>` component instead of a custom drag handler** — rejected. Framer's built-in drag primitives (`drag="x"` + `useAnimationControls`) are already sufficient and keep the dependency surface small. A `<Drawer>` abstraction would add weight for one gesture.
+- **Use `useTransform` to derive opacity from x during drag** — prototyped, rejected. Mixing derived motion values with `animate={controls}` caused conflicts when controls needed to take over opacity on release — the derived value fought the controls target. Simpler: let the drag only drive position, and handle opacity changes exclusively through controls on release.
+- **Keep the "No attendees yet — be the first to RSVP!" exclamation** — rejected. Brief §5 rule: no exclamation marks in transactional copy. Empty states are transactional.
+- **Use `bg-otg-bg-dark` for VenuePicker's dropdown surface (matching the input)** — rejected. Against `bg-otg-bg-dark` the dropdown visually merges into the input, making the hover state indistinguishable. `bg-otg-maraschino` provides the one-step lift the dropdown needs to feel like a separate surface.
+- **Pull swipe threshold from the card's own bounding box (not viewport)** — rejected as over-engineering. Viewport width is the mental model users already have ("drag halfway across the screen"); a card-width-relative threshold would change feel on narrow screens where the card is already ~80% of the viewport.
+- **Refactor MeetupDetail shell `<div className="min-h-screen bg-otg-bg-dark">` into a shared `<MeetupShell>` component** — rejected. The shell has 3 distinct error states + 1 loading state + the main render path; extracting would create a component with 5+ branches that each render a completely different inner layout. Low abstraction value. Kept inline.
+
+**Verification:**
+- `npx tsc --noEmit` — **0 errors**
+- `npm run lint` — **✔ 0 warnings / 0 errors**
+- `npm run build` — **✅ clean** (after `rm -rf .next`)
+- `npm test -- --run` — **900 passed** (47 files). No test touched — swipe is gesture + framer-motion, not behavior covered by the current Vitest surface. Adding jsdom-level drag tests would need `@testing-library/user-event` pointer simulation; logged as follow-up.
+
+**Follow-ups:**
+- [ ] Add a jsdom-level test for NotificationItem's `handleDragEnd` threshold decision (past threshold → deleteMutation called; below threshold → controls animate to `x:0`). Blocked on `@testing-library/user-event` pointer helpers + framer-motion test utilities.
+- [ ] Playwright smoke test for the swipe gesture on `/notifications` — confirm no regression on vertical scroll, confirm the click + mark-as-read path still works.
+- [ ] Reveal-behind-card pattern for Swipe-Dismiss (iOS Mail-style) — gate on whether haptic-only tests well in early user feedback.
+- [ ] Retire `src/app/meetups/[id]/page.tsx` `Shell` component duplication across loading/error branches if a future pass finds the shell code rendering with unrelated content divergences. Current branches differ enough that DRY'ing would harm readability.
+- [ ] `/meetups/new` page is a thin wrapper around `CreateMeetupModal`; confirm it renders the updated modal chrome after deploy (nothing to change in the page file since the modal handles all surfaces, but worth a visual check).
+- [ ] Date/time `datetime-local` input on Chrome renders a calendar popover using the browser's own theme — `[color-scheme:dark]` pushes dark chrome but the picker isn't perfectly on-palette. If this surfaces as a visual issue, swap to a custom date/time picker component (downstream, out of this pass's scope).
+- [ ] Extend Swipe-Dismiss to `LiveActivityCard` (checkin feed) once the checkins surface sweep lands — same vocabulary, different delete target.
+
+**Artifacts shipped:**
+- `src/components/notifications/NotificationItem.tsx` — Swipe-Dismiss with Detent added; drag / haptic / reduced-motion plumbing; JSX copy kept
+- `src/components/meetups/AttendeeList.tsx` — palette + empty-state copy
+- `src/components/meetups/CreateMeetupModal.tsx` — palette + sentence-case headings / CTA / placeholders / error copy
+- `src/components/meetups/MeetupInviteModal.tsx` — palette + Crew-noun capitalization + Discover-link recolor
+- `src/components/meetups/VenuePicker.tsx` — two-tier dark chrome (input vs dropdown) + sodium focus + rewritten error / empty-state / placeholder copy
+- `src/app/meetups/[id]/page.tsx` — Shell + header card + action row + attendees panel + 401/404/error states
+
+**Branch / PR:** `design/notifications-nearby-crew-2026-04-24` / (PR on push)
+
+---
+
 ### 2026-04-23 — landing — homepage + nav refactor ("Last Call lands")
 
 **Context:** After shipping the palette (PR #61), logo mark (PR #62), and foundation — fonts + dark-mode default (PR #63), production still didn't *look* like the brief. Visiting outthegroupchat.org rendered the emerald "OG" square nav logo, an emerald→teal→cyan `.text-gradient` hero, and the stale "The social app that gets you off your phone" headline. The tokens were loaded; nothing was using them yet. This pass wires the `otg.*` tokens and the Hybrid Exit mark into the three surfaces a first-time visitor actually sees: the root landing page, the nav bar, and the app-wide `@layer components` utility classes that the rest of the app inherits from.
