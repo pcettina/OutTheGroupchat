@@ -54,14 +54,6 @@ OutTheGroupchat is a full-stack group travel planning application built with mod
 |  |   Service     |  |    Service    |  |   Service     |                    |
 |  +---------------+  +---------------+  +---------------+                    |
 |                                                                              |
-|  +-----------------------------------------------------------------------+  |
-|  |                         AI Integration Layer                           |  |
-|  |  +-------------+  +-------------+  +-------------+                    |  |
-|  |  |   OpenAI    |  |  Anthropic  |  |  Embeddings |                    |  |
-|  |  |   GPT-4o    |  |   Claude    |  |  In-memory  |                    |  |
-|  |  |   (primary) |  |  (optional) |  |  Vector     |                    |  |
-|  |  +-------------+  +-------------+  +-------------+                    |  |
-|  +-----------------------------------------------------------------------+  |
 +-----------------------------------------------------------------------------+
                                     |
                                     v
@@ -129,17 +121,6 @@ OutTheGroupchat is a full-stack group travel planning application built with mod
 |------------|---------|---------|
 | **@upstash/ratelimit** | 2.0.7 | Redis-based rate limiting |
 | **@upstash/redis** | 1.35.8 | Redis client |
-
-### AI & ML
-
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| **Vercel AI SDK** | 3.4.14 | AI provider abstraction + streaming |
-| **@ai-sdk/openai** | 0.0.70 | OpenAI GPT-4o integration (primary) |
-| **@ai-sdk/anthropic** | 0.0.54 | Claude integration (optional, key not required) |
-| **Custom Embeddings** | - | In-memory vector search (cosine similarity) |
-
-> Note: All AI routes return 503 gracefully when OPENAI_API_KEY is absent, preventing request hangs in production.
 
 ### Real-time
 
@@ -290,15 +271,6 @@ enum PriceRange {
 | GET | `/api/trips/[tripId]/suggestions` | Activity suggestions (external APIs) |
 | GET | `/api/trips/[tripId]/flights` | Flight data (Amadeus) |
 
-### AI
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/ai/generate-itinerary` | Generate AI itinerary (503 if no key) |
-| POST | `/api/ai/suggest-activities` | Get activity suggestions (503 if no key) |
-| POST | `/api/ai/chat` | Chat with trip assistant (streaming) |
-| GET/POST | `/api/ai/search` | Semantic search |
-
 ### Auth
 
 | Method | Endpoint | Description |
@@ -447,10 +419,6 @@ DATABASE_URL="postgresql://..."
 NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="..."              # Must be 32+ chars in production
 
-# AI
-OPENAI_API_KEY="sk-..."           # MISSING in Vercel production
-ANTHROPIC_API_KEY="sk-ant-..."    # Optional
-
 # Real-time
 PUSHER_APP_ID=""                  # MISSING in Vercel production
 PUSHER_KEY=""
@@ -502,7 +470,6 @@ LOG_LEVEL=""                      # pino log level (info, debug, warn, error)
     { "path": "/api/cron", "schedule": "0 0 * * *" }
   ],
   "functions": {
-    "app/api/ai/**/*.ts": { "maxDuration": 60 },
     "app/api/cron/route.ts": { "maxDuration": 300 }
   }
 }
@@ -555,8 +522,7 @@ npm run test:e2e     # Run Playwright E2E (requires browser install)
 ## Performance Optimizations
 
 1. **React Query Caching**: 60-second stale time, optimistic updates
-2. **API Route Streaming**: AI chat uses Vercel AI SDK streaming responses
-3. **Database Indexing**: Prisma auto-indexes on relations
+2. **Database Indexing**: Prisma auto-indexes on relations
 4. **Image Optimization**: Next.js `<Image>` component (0 raw `<img>` tags)
 5. **Code Splitting**: App Router automatic per-route splitting
 6. **Edge Caching**: Vercel edge network

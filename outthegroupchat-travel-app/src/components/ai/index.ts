@@ -1,2 +1,0 @@
-export { TripChat } from './TripChat';
-

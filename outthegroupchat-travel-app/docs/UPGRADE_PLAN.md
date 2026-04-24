@@ -10,12 +10,13 @@ This document tracks major version upgrades identified for the OutTheGroupchat s
 ## Priority Order
 
 1. React + Next.js (upgrade together — tightly coupled)
-2. Vercel AI SDK + provider packages (large version jump, breaking changes)
-3. Zod (schema validation used across all API routes)
-4. Prisma (ORM core — affects all DB access)
-5. TypeScript (compiler — affects all files)
-6. Tailwind CSS (styling — affects all components)
-7. ESLint + hookform/resolvers (tooling — lower risk)
+2. Zod (schema validation used across all API routes)
+3. Prisma (ORM core — affects all DB access)
+4. TypeScript (compiler — affects all files)
+5. Tailwind CSS (styling — affects all components)
+6. ESLint + hookform/resolvers (tooling — lower risk)
+
+> Vercel AI SDK + provider packages previously sat at position 2 — removed 2026-04-23 when all AI functionality was deleted (`ops/kill-all-ai-2026-04-23`).
 
 ---
 
@@ -47,33 +48,7 @@ This document tracks major version upgrades identified for the OutTheGroupchat s
 
 ---
 
-### 2. Vercel AI SDK + Provider Packages
-
-| Package | Current | Latest |
-|---------|---------|--------|
-| `ai` | 3.4.33 | 6.0.156 |
-| `@ai-sdk/anthropic` | 0.0.54 | 3.0.68 |
-| `@ai-sdk/openai` | 0.0.70 | 3.0.52 |
-
-**Priority:** High
-
-**Key breaking changes to watch for:**
-- AI SDK v4+: `useChat` hook signature changed significantly. The `messages` type, `append` function, and streaming behavior have all been updated — do not rely on v3 patterns.
-- `streamText`, `generateText`, `generateObject` — parameter names changed: `parameters` renamed to `inputSchema` in tool definitions. Audit all tool definitions in AI routes.
-- Provider instantiation changed: `openai('model-id')` and `anthropic('model-id')` pattern via `@ai-sdk/openai` / `@ai-sdk/anthropic` — confirm initialization still matches v3 patterns.
-- `ToolLoopAgent` and agent patterns introduced in v5+ — consider adopting for agentic routes.
-- Model IDs must be refreshed — do not assume old model IDs remain valid.
-
-**Recommended approach:**
-1. Read `node_modules/ai/docs/` after upgrade for current API surface.
-2. Upgrade `ai` package first, then provider packages to matching major versions.
-3. Fix type errors file by file — start with `src/app/api/ai/` routes.
-4. Update all `useChat` client usages in components — check common-errors reference.
-5. Run `tsc --noEmit` and fix all type errors before testing.
-
----
-
-### 3. Zod
+### 2. Zod
 
 | Field | Value |
 |-------|-------|

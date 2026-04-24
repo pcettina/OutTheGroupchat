@@ -7,7 +7,7 @@
 - [x] Phase 3: Crew system (routes + UI) — `/api/crew/*`, `CrewButton`, `CrewList` ✅ 2026-04-18 (PR #46 + #47)
 - [x] Phase 4: Meetups core — All 3 sessions complete (2026-04-18): API routes ✅ | venue search (Places API) ✅ | meetup UI (MeetupDetail, AttendeeList, MeetupInviteModal) ✅ | RSVP ✅ | invite ✅ | Pusher real-time ✅ | MEETUP_STARTING_SOON cron ✅ (PRs #48, #49, #51)
 - [x] Phase 5: Check-ins + presence — COMPLETE 2026-04-20 (PR #53): POST /api/checkins ✅ | GET /api/checkins/feed ✅ | DELETE /api/checkins/[id] ✅ | GET /api/checkins/[id] ✅ | CheckInButton (duration picker) ✅ | LiveActivityCard ("Join me" wired) ✅ | NearbyCrewList ✅ | /checkins page ✅ | /checkins/[id] page ✅ | Privacy settings page (/settings/privacy) ✅ | /api/users/privacy ✅ | Pusher city-channel broadcast ✅ | All Phase 5 exit criteria met ✅
-- [x] Phase 6: Feed/AI/notifications rescope — COMPLETE 2026-04-22 (PR #55): Feed rescoped (meetup/checkin types, trip/activity queries removed, POST returns 410) ✅ | POST /api/ai/suggest-meetups ✅ | POST /api/ai/icebreakers ✅ | Search people-first (users→meetups→venues) ✅ | 9 trip notification types removed from schema ✅ | Follow marked @deprecated ✅ | types/index.ts cleaned (264 lines) ✅
+- [x] Phase 6: Feed/AI/notifications rescope — COMPLETE 2026-04-22 (PR #55): Feed rescoped (meetup/checkin types, trip/activity queries removed, POST returns 410) ✅ | Search people-first (users→meetups→venues) ✅ | 9 trip notification types removed from schema ✅ | Follow marked @deprecated ✅ | types/index.ts cleaned (264 lines) ✅ | All AI routes later deleted 2026-04-23 (ops/kill-all-ai)
 - [ ] Phase 7: Marketing surface
 - [ ] Phase 8: Launch-readiness re-audit
 
@@ -58,8 +58,7 @@
 - [x] Upstash Redis connected (rate limiting)
 - [ ] Pusher fully configured (real-time)
 - [x] Email service configured (Resend) ✅ Dec 17
-- [x] AI API keys configured (OpenAI) ✅ Dec 17
-- [x] .env.example with all required vars ✅ 2026-03-10
+- [x] .env.example with all required vars ✅ 2026-03-10 (AI provider vars removed 2026-04-23)
 
 ---
 
@@ -101,14 +100,8 @@
 - [ ] Real-time vote updates
 - [ ] Survey results display
 
-### AI Features 🔶
-- [x] Chat UI component
-- [x] API endpoints defined
-- [x] Connect to real AI (OpenAI) ✅ Dec 17
-- [x] Streaming responses ✅ Dec 17
-- [x] Trip context awareness ✅ Dec 17
-- [x] suggest-activities route complete (503 guard when OPENAI_API_KEY absent) ✅ 2026-03-23
-- [x] generate-itinerary route complete (503 guard when OPENAI_API_KEY absent) ✅ 2026-03-23
+### AI Features (removed)
+- All AI routes, library code, components, and dependencies (`@ai-sdk/openai`, `@ai-sdk/anthropic`, `ai`) deleted 2026-04-23 in `ops/kill-all-ai-2026-04-23`. `OPENAI_API_KEY` and `ANTHROPIC_API_KEY` are no longer consumed. Not on the launch path.
 
 ---
 

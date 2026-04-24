@@ -21,7 +21,6 @@ A LinkedIn-style social network built for in-person meetups, not trip planning. 
 - **Framework**: Next.js 14 (App Router)
 - **Database**: PostgreSQL with Prisma ORM
 - **Authentication**: NextAuth.js
-- **AI**: Vercel AI SDK with OpenAI/Claude
 - **Real-time**: Pusher
 - **Styling**: Tailwind CSS
 - **Animations**: Framer Motion
@@ -105,11 +104,8 @@ See `.env.example` for all required variables. Key services:
 |---------|----------|---------|
 | PostgreSQL | Yes | Database |
 | NextAuth.js | Yes | Authentication |
-| OpenAI/Anthropic | Yes | AI features |
 | Pusher | No | Real-time updates |
-| Amadeus | No | Flight search |
-| Ticketmaster | No | Event discovery |
-| Google Places | No | Location data |
+| Google Places | No | Venue search |
 
 ## Scripts
 

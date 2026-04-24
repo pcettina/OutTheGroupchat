@@ -100,7 +100,6 @@ export const config = {
     '/meetups',
     '/meetups/:path*',
     '/api/profile/:path*',
-    '/api/ai/:path*',
     '/api/notifications/:path*',
     '/api/invitations/:path*',
     '/api/meetups/:path*',
