@@ -17,10 +17,10 @@ interface Notification {
     image?: string;
   };
   metadata?: {
-    tripId?: string;
-    tripTitle?: string;
-    activityId?: string;
-    activityName?: string;
+    meetupId?: string;
+    meetupTitle?: string;
+    checkInId?: string;
+    venueName?: string;
   };
 }
 

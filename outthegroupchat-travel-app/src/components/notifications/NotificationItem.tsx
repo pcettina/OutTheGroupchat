@@ -6,19 +6,30 @@ import { motion } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
 import Link from 'next/link';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  Check,
+  Clock,
+  Info,
+  Mail,
+  MapPin,
+  Trash2,
+  UserCheck,
+  UserPlus,
+  Users,
+  type LucideIcon,
+} from 'lucide-react';
 
+// Matches Prisma `NotificationType` enum (prisma/schema.prisma). Uppercase values arrive
+// verbatim from the API — don't re-case on the client.
 export type NotificationType =
-  | 'trip_invite'
-  | 'trip_update'
-  | 'member_joined'
-  | 'survey_created'
-  | 'survey_completed'
-  | 'vote_started'
-  | 'vote_ended'
-  | 'activity_added'
-  | 'comment'
-  | 'mention'
-  | 'reminder';
+  | 'CREW_REQUEST'
+  | 'CREW_ACCEPTED'
+  | 'MEETUP_INVITED'
+  | 'MEETUP_RSVP'
+  | 'MEETUP_STARTING_SOON'
+  | 'CHECK_IN_NEARBY'
+  | 'CREW_CHECKED_IN_NEARBY'
+  | 'SYSTEM';
 
 interface NotificationItemProps {
   notification: {
@@ -35,29 +46,60 @@ interface NotificationItemProps {
       image?: string;
     };
     metadata?: {
-      tripId?: string;
-      tripTitle?: string;
-      activityId?: string;
-      activityName?: string;
+      meetupId?: string;
+      meetupTitle?: string;
+      checkInId?: string;
+      venueName?: string;
     };
   };
   onMarkRead?: (id: string) => void;
   onDelete?: (id: string) => void;
 }
 
-const typeConfig: Record<NotificationType, { icon: string; color: string; bgColor: string }> = {
-  trip_invite: { icon: '✈️', color: 'text-emerald-600', bgColor: 'bg-emerald-100 dark:bg-emerald-900/30' },
-  trip_update: { icon: '📝', color: 'text-blue-600', bgColor: 'bg-blue-100 dark:bg-blue-900/30' },
-  member_joined: { icon: '👋', color: 'text-pink-600', bgColor: 'bg-pink-100 dark:bg-pink-900/30' },
-  survey_created: { icon: '📋', color: 'text-purple-600', bgColor: 'bg-purple-100 dark:bg-purple-900/30' },
-  survey_completed: { icon: '✅', color: 'text-green-600', bgColor: 'bg-green-100 dark:bg-green-900/30' },
-  vote_started: { icon: '🗳️', color: 'text-indigo-600', bgColor: 'bg-indigo-100 dark:bg-indigo-900/30' },
-  vote_ended: { icon: '🏆', color: 'text-amber-600', bgColor: 'bg-amber-100 dark:bg-amber-900/30' },
-  activity_added: { icon: '📍', color: 'text-orange-600', bgColor: 'bg-orange-100 dark:bg-orange-900/30' },
-  comment: { icon: '💬', color: 'text-cyan-600', bgColor: 'bg-cyan-100 dark:bg-cyan-900/30' },
-  mention: { icon: '@', color: 'text-rose-600', bgColor: 'bg-rose-100 dark:bg-rose-900/30' },
-  reminder: { icon: '⏰', color: 'text-yellow-600', bgColor: 'bg-yellow-100 dark:bg-yellow-900/30' },
+// Last Call role-color mapping (brief §3) — kept coarse intentionally so a notification
+// reads as a *kind* of event, not a specific one. Crew-scope → tile; Meetup → sodium;
+// Check-in → bourbon; System → neutral.
+type TypeConfig = {
+  icon: LucideIcon;
+  ringClass: string; // bg tint + text tint on the badge/avatar footer
 };
+
+const TYPE_CONFIG: Record<NotificationType, TypeConfig> = {
+  CREW_REQUEST: {
+    icon: UserPlus,
+    ringClass: 'bg-otg-tile/15 text-otg-tile ring-1 ring-inset ring-otg-tile/30',
+  },
+  CREW_ACCEPTED: {
+    icon: UserCheck,
+    ringClass: 'bg-otg-tile/15 text-otg-tile ring-1 ring-inset ring-otg-tile/30',
+  },
+  MEETUP_INVITED: {
+    icon: Mail,
+    ringClass: 'bg-otg-sodium/15 text-otg-sodium ring-1 ring-inset ring-otg-sodium/30',
+  },
+  MEETUP_RSVP: {
+    icon: Users,
+    ringClass: 'bg-otg-sodium/15 text-otg-sodium ring-1 ring-inset ring-otg-sodium/30',
+  },
+  MEETUP_STARTING_SOON: {
+    icon: Clock,
+    ringClass: 'bg-otg-sodium/15 text-otg-sodium ring-1 ring-inset ring-otg-sodium/30',
+  },
+  CHECK_IN_NEARBY: {
+    icon: MapPin,
+    ringClass: 'bg-otg-bourbon/15 text-otg-bourbon ring-1 ring-inset ring-otg-bourbon/30',
+  },
+  CREW_CHECKED_IN_NEARBY: {
+    icon: MapPin,
+    ringClass: 'bg-otg-bourbon/15 text-otg-bourbon ring-1 ring-inset ring-otg-bourbon/30',
+  },
+  SYSTEM: {
+    icon: Info,
+    ringClass: 'bg-otg-bg-dark text-otg-text-dim ring-1 ring-inset ring-otg-border',
+  },
+};
+
+const FALLBACK_CONFIG = TYPE_CONFIG.SYSTEM;
 
 export function NotificationItem({
   notification,
@@ -66,7 +108,8 @@ export function NotificationItem({
 }: NotificationItemProps) {
   const [isHovered, setIsHovered] = useState(false);
   const queryClient = useQueryClient();
-  const config = typeConfig[notification.type] || typeConfig.trip_update;
+  const config = TYPE_CONFIG[notification.type] ?? FALLBACK_CONFIG;
+  const Icon = config.icon;
 
   const markReadMutation = useMutation({
     mutationFn: async () => {
@@ -108,24 +151,25 @@ export function NotificationItem({
     <motion.div
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      whileHover={{ scale: 1.01 }}
+      whileHover={{ scale: 1.005 }}
       onClick={handleClick}
-      className={`relative bg-white dark:bg-slate-800 rounded-xl border transition-all cursor-pointer ${
+      className={[
+        'relative rounded-xl border transition-colors cursor-pointer',
         notification.read
-          ? 'border-slate-200 dark:border-slate-700'
-          : 'border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-900/10'
-      }`}
+          ? 'bg-otg-maraschino border-otg-border'
+          : 'bg-otg-maraschino border-otg-sodium/40',
+      ].join(' ')}
     >
-      {/* Unread Indicator */}
+      {/* Unread indicator — sodium rail on the left edge */}
       {!notification.read && (
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-emerald-500 rounded-r-full" />
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-otg-sodium rounded-r-full" />
       )}
 
       <div className="p-4 flex items-start gap-3">
-        {/* Icon or Avatar */}
+        {/* Sender avatar (if present) with a type badge; otherwise show the type icon at full size */}
         {notification.sender ? (
           <div className="relative">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white font-semibold">
+            <div className="w-10 h-10 rounded-full bg-otg-bg-dark border border-otg-border flex items-center justify-center text-otg-text-bright font-semibold overflow-hidden">
               {notification.sender.image ? (
                 <Image
                   src={notification.sender.image}
@@ -138,43 +182,57 @@ export function NotificationItem({
                 notification.sender.name.charAt(0)
               )}
             </div>
-            <span className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full ${config.bgColor} flex items-center justify-center text-xs`}>
-              {config.icon}
+            <span
+              className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full ${config.ringClass} flex items-center justify-center`}
+              aria-hidden="true"
+            >
+              <Icon className="w-3 h-3" />
             </span>
           </div>
         ) : (
-          <div className={`w-10 h-10 rounded-full ${config.bgColor} flex items-center justify-center text-xl`}>
-            {config.icon}
+          <div
+            className={`w-10 h-10 rounded-full ${config.ringClass} flex items-center justify-center`}
+            aria-hidden="true"
+          >
+            <Icon className="w-5 h-5" />
           </div>
         )}
 
-        {/* Content */}
+        {/* Body */}
         <div className="flex-1 min-w-0">
-          <p className={`font-medium ${notification.read ? 'text-slate-700 dark:text-slate-300' : 'text-slate-900 dark:text-white'}`}>
+          <p
+            className={
+              notification.read
+                ? 'font-medium text-otg-text-dim'
+                : 'font-semibold text-otg-text-bright'
+            }
+          >
             {notification.title}
           </p>
-          <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2 mt-0.5">
+          <p className="text-sm text-otg-text-dim line-clamp-2 mt-0.5">
             {notification.message}
           </p>
-          <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">
+          <p className="text-xs text-otg-text-dim/80 mt-1">
             {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
           </p>
         </div>
 
-        {/* Actions */}
-        <div className={`flex items-center gap-1 transition-opacity ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
+        {/* Hover actions */}
+        <div
+          className={`flex items-center gap-1 transition-opacity ${
+            isHovered ? 'opacity-100' : 'opacity-0'
+          }`}
+        >
           {!notification.read && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 markReadMutation.mutate();
               }}
-              className="p-1.5 text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-              title="Mark as read"
+              aria-label="Mark as read"
+              className="p-1.5 text-otg-text-dim hover:text-otg-sodium hover:bg-otg-bg-dark/60 rounded-lg transition-colors"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
+              <Check className="w-4 h-4" aria-hidden="true" />
             </button>
           )}
           <button
@@ -182,12 +240,10 @@ export function NotificationItem({
               e.stopPropagation();
               deleteMutation.mutate();
             }}
-            className="p-1.5 text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-            title="Delete"
+            aria-label="Delete notification"
+            className="p-1.5 text-otg-text-dim hover:text-otg-danger hover:bg-otg-bg-dark/60 rounded-lg transition-colors"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
+            <Trash2 className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
       </div>
