@@ -1,3 +1,33 @@
+# 🟢 Completed 2026-04-23 (Nightly Build nightly/2026-04-25)
+
+> **Phase 8 — Launch-readiness re-audit (in progress)**
+> Test count: ~1125 (1108 + 17 new from crew-block-email.test.ts)
+
+## Tasks Completed
+
+### Wave 1 — Tests
+- [M1] `src/__tests__/api/crew-block-email.test.ts` created — 17 tests covering crew block/unblock flows and email dispatch for crew actions.
+
+### Wave 2 — Features / Cleanup
+- [L1] `src/lib/email-crew.ts` DELETED — was a dead duplicate of crew email functions already in `email.ts`. No route changes needed; crew emails were already properly wired.
+- [L2] Dead component cleanup — DELETED `src/components/profile/TripHistory.tsx`, `BadgeShowcase.tsx`, `PreferencesCard.tsx`, `src/components/ui/FloatingShareButton.tsx`. Removed dead barrel exports from `profile/index.ts` and `ui/index.ts`. TSC: 0 errors.
+- [M2] Rate-limit audit — all 13 meetup/checkin/venue route handlers confirmed already rate-limited with `checkRateLimit`. No gaps found.
+- [M3+M4] `outthegroupchat-travel-app/README.md` and `docs/PRODUCTION_ROADMAP.md` updated with Phase 8 status, 1108 tests, 45 routes, AI removal noted.
+- [M5+S1+S2] CREATED `src/app/api/discover/route.ts` (410 Gone response). MODIFIED `src/app/checkins/page.tsx` — wired `CheckInButton`, removed stale TODO div.
+- [S3] CANCELLED — `email-crew.ts` deleted by L1 (no JSDoc needed).
+- [S4] No changes — `crew/requests` and `users/privacy` routes already fully Sentry-instrumented.
+- [S5] `docs/SECURITY_AUDIT.md` updated — added Phase 8 Security Review section covering Crew/Meetup/Checkin/Venue surfaces, updated to 2026-04-23.
+
+### Metrics
+- Tests: 1108 → ~1125 (+17 new: crew-block-email.test.ts)
+- Test files: 47 → 48 (+1)
+- API routes: 45 → 46 (+1: discover/route.ts as 410 Gone)
+- TS files: ~219 (net: -5 deleted [email-crew.ts + 4 components], +1 created [discover/route.ts])
+- Dead components removed: 4 (TripHistory, BadgeShowcase, PreferencesCard, FloatingShareButton)
+- Phase 8 actions #3 (security audit) and #4 (rate-limit audit) COMPLETE
+
+---
+
 # 🟢 Complete — Phase 6: Feed/AI/Notifications Rescope (all sessions delivered)
 
 > **Status:** Phase 6 COMPLETE as of 2026-04-22 (nightly/2026-04-22 PR #55). All 4 Phase 6 actions done: feed rescoped, AI routes added, notification types migrated, search rescoped people-first. Phase 7 (Marketing surface) is next.

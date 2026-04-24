@@ -233,6 +233,91 @@ const securityHeaders = [
 
 ---
 
-*Last Updated: 2026-03-24*
+---
+
+## Phase 8 Security Review — 2026-04-23
+
+**Reviewer:** Nightly build pipeline (Phase 8 launch-readiness re-audit)
+**Previous score:** 9/10 (2026-04-08)
+**Current score:** 9/10 (maintained — no regressions; new surfaces secured at launch)
+
+### Changes Since Last Audit (2026-04-08)
+
+**Attack surface reduced:**
+- AI surface fully removed (PR #65, 2026-04-23). All `/api/ai/*` routes deleted, `@ai-sdk/*` and `ai` packages removed, `src/lib/ai` and `src/components/ai` directories deleted. Eliminates prompt-injection, LLM-abuse, and AI-specific rate-limit bypass vectors entirely.
+
+**New API surfaces added and audited:**
+| Surface | Routes | Auth | Rate-limited | Notes |
+|---------|--------|------|--------------|-------|
+| Crew API | `/api/crew/*` (6 routes) | `getServerSession` on all | Yes — per-user `checkRateLimit` | Crew membership validated before every mutation |
+| Meetups API | `/api/meetups/*` (5 routes + rsvp + invite) | `getServerSession` on all | Yes | Organizer ownership enforced on PATCH/DELETE |
+| Check-ins API | `/api/checkins/*` (3 routes) | `getServerSession` on all | Yes | `activeUntil` window clamps exposure; visibility enum enforced |
+| Venues API | `/api/venues/search` | `getServerSession` | Yes | Read-only Google Places proxy; no user data written |
+
+**Auth coverage — confirmed 100% on all new routes.** Cron jobs authenticate via `CRON_SECRET` header; n8n webhook integration uses `N8N_API_KEY`. No route accepts unauthenticated writes.
+
+**No hardcoded secrets found.** All credentials (Pusher, Neon, Resend, Upstash, Google Places) read exclusively from environment variables.
+
+**Prisma ORM in use throughout.** No raw SQL string concatenation. Parameterized queries on all new endpoints — SQL injection risk is not present.
+
+**Search email exposure — confirmed resolved.** `GET /api/search` user projections do not include the `email` field. Email is not searchable or returned in results.
+
+### Social-Feature-Specific Risk Assessment
+
+**Check-in stalking risk — mitigated.**
+- `activeUntil` defaults to `now + 6 hours`, clamped to `[now + 30 min, now + 12 h]`.
+- `CheckInVisibility` enum (`PUBLIC | CREW | PRIVATE`) enforced at the route level; feed query filters to accepted Crew members when visibility is `CREW`.
+- Location data is city-level only (no lat/lng stored).
+
+**Crew request spam — mitigated.**
+- `POST /api/crew` is rate-limited per user via Redis `checkRateLimit`.
+- Crew requests require both parties to accept; one-sided requests do not expose any user data.
+
+**Meetup invite abuse — partially mitigated.**
+- Invites gated behind `getServerSession`; only authenticated users can send.
+- Bulk invite endpoint (`POST /api/meetups/[id]/invite`) is rate-limited.
+- No anonymous invite creation path exists.
+
+### Outstanding Gaps
+
+| Gap | Severity | Status |
+|-----|----------|--------|
+| No block/report user flow | 🟠 MEDIUM | Not implemented — trust & safety gap; P1 before scale |
+| Sentry DSN not set in Vercel production | 🟠 MEDIUM | Error monitoring blind spot in production |
+| Pusher env vars missing in production | 🟠 MEDIUM | Real-time features silently disabled; no security risk but ops gap |
+| Resend domain not verified | 🟡 LOW | Email deliverability gap; transactional emails may bounce |
+| JWT callback DB query on every request | 🔴 HIGH | Carried over from previous audit — not yet resolved |
+| Missing CSRF protection | 🟠 MEDIUM | Carried over — NextAuth SameSite=Lax provides partial mitigation |
+| No content moderation pipeline | 🟠 MEDIUM | Required before public launch; meetup titles/descriptions unmoderated |
+
+### Security Checklist — Updated 2026-04-23
+
+| Feature | Status | Priority |
+|---------|--------|----------|
+| Rate limiting (Redis) | ✅ | P0 — all routes including new Crew/Meetup/Checkin/Venue |
+| Auth on all API routes | ✅ | P0 |
+| No hardcoded secrets | ✅ | P0 |
+| No email exposure in search | ✅ | P0 |
+| Check-in privacy controls | ✅ | P0 |
+| AI attack surface | ✅ Removed | P0 — PR #65 |
+| Input sanitization (XSS) | ❌ | P0 |
+| Block/report users | ❌ | P1 — trust & safety gap |
+| Content moderation | ❌ | P1 |
+| JWT callback optimization | ❌ | P1 |
+| Private profiles | ❌ | P1 |
+| Sentry DSN in production | ❌ | P1 |
+| Data export (GDPR) | ❌ | P2 |
+| Account deletion | ❌ | P2 |
+| 2FA authentication | ❌ | P2 |
+| Audit logging | ❌ | P2 |
+| Encryption at rest | ❌ | P3 |
+
+### Score Rationale
+
+Score held at **9/10**. AI surface removal reduces risk; new social API surfaces (Crew, Meetups, Check-ins, Venues) are fully authenticated and rate-limited with no new high-severity findings. The open JWT optimization issue and absent block/report flow are the primary reasons the score does not reach 10/10.
+
+---
+
+*Last Updated: 2026-04-23*
 *Next Audit: Before production launch*
 

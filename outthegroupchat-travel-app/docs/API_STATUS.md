@@ -1,6 +1,6 @@
 # 📡 API & Integration Status
 
-> **Last Updated: 2026-04-22**
+> **Last Updated: 2026-04-23**
 >
 > **Archival:** trip/activity routes moved to `src/app/api/_archive/` as of 2026-04-16 Phase 1. See REFACTOR_PLAN.md. Sections below that reference `/api/trips/*` and `/api/activities/*` reflect the pre-archive state for historical context; authoritative status for these routes is the "📦 Archived Routes" section near the bottom of this file.
 >
@@ -8,8 +8,10 @@
 >
 > **Phase 6 COMPLETE (2026-04-22, nightly/2026-04-22 PR #55):** Feed rescoped (meetup/checkin types, POST→410), search people-first (users→meetups→venues), notification type migration (9 old trip types removed from schema), AI routes (suggest-meetups + icebreakers). All 4 Phase 6 actions complete.
 >
+> **Phase 8 IN PROGRESS (2026-04-23, nightly/2026-04-25):** AI fully removed (PR #65 — all /api/ai/* routes deleted, @ai-sdk/* deps removed). Dead components deleted (TripHistory, BadgeShowcase, PreferencesCard, FloatingShareButton). email-crew.ts deleted (dead duplicate). discover/route.ts re-created as 410 Gone. CheckInButton wired in checkins/page.tsx. Security audit updated (SECURITY_AUDIT.md Phase 8 section). Rate limiting confirmed 100% on all new meetup/checkin/venue routes.
+>
 > **Last Audit:** April 2026
-> **Live API routes (post-archive):** 50 (35 base + 6 Crew + 9 Phase 4 meetup/venue/cron routes + 3 Phase 5 check-in routes + privacy route + 2 new Phase 6 AI routes: suggest-meetups, icebreakers; note: feed POST now returns 410)
+> **Live API routes (post-archive, post-Phase-8):** 46 (was 50; -2 AI routes suggest-meetups/icebreakers removed PR #65; -2 other AI routes already archived; discover GET/POST now 410 = 1 route; net: 46 live routes)
 > **Archived API routes (Phase 1):** 13
 > **Target:** 100% for Beta Launch (re-baselined in Phase 8)
 > **Sentry Coverage:** 19/48 routes instrumented on pre-archive branch; coverage on new live surface re-computed after Phase 2
@@ -113,8 +115,8 @@ Follow model marked @deprecated (retirement deferred to Phase 7)
 
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
-| `/api/discover` | GET | ✅ | ⏳ | Search events/places/restaurants/attractions/nightlife by city + date range; type param filters results |
-| `/api/discover` | POST | ✅ | ⏳ | Search flights via EventsService (origin, destination, departureDate, returnDate, adults); Zod validation added 2026-03-21 |
+| `/api/discover` | GET | ⛔ | — | Returns **410 Gone** as of 2026-04-23 — redirects clients to `/api/search` (the new people-first search surface). Created nightly/2026-04-25. |
+| `/api/discover` | POST | ⛔ | — | Returns **410 Gone** as of 2026-04-23 — trip-era flight search removed with archived EventsService. |
 | `/api/discover/search` | GET | ✅ | 🔶 | Auth guard added 2026-03-24 (was unauthenticated — security improvement); rate limiting, Zod validation ✅ |
 | `/api/discover/recommendations` | GET | ✅ | 🔶 | Auth guard added 2026-03-24; category filter, rate limiting, pino logging ✅ |
 | `/api/discover/import` | POST | ✅ | ⏳ | Rate limiting + auth guard ✅ 2026-03-24; pino logging, typed helpers, fixed empty catch blocks |
@@ -133,7 +135,17 @@ Email removed from select projection in /api/search/route.ts
 
 ## 🤖 AI APIs
 
-**All AI endpoints removed 2026-04-23** (`ops/kill-all-ai-2026-04-23`). Legacy trip-era routes (`/api/ai/chat`, `recommend`, `search`, `generate-itinerary`, `suggest-activities`) deleted; Phase 6 meetup routes (`/api/ai/suggest-meetups`, `/api/ai/icebreakers`) deleted before wiring to UI. `@ai-sdk/openai`, `@ai-sdk/anthropic`, and `ai` (Vercel AI SDK) removed from dependencies. `OPENAI_API_KEY` and `ANTHROPIC_API_KEY` no longer consumed.
+**All AI endpoints removed 2026-04-23** (`ops/kill-all-ai-2026-04-23`, PR #65). Legacy trip-era routes (`/api/ai/chat`, `recommend`, `search`, `generate-itinerary`, `suggest-activities`) deleted; Phase 6 meetup routes (`/api/ai/suggest-meetups`, `/api/ai/icebreakers`) deleted before wiring to UI. `@ai-sdk/openai`, `@ai-sdk/anthropic`, and `ai` (Vercel AI SDK) removed from dependencies. `OPENAI_API_KEY` and `ANTHROPIC_API_KEY` no longer consumed.
+
+| Endpoint | Status | Notes |
+|----------|--------|-------|
+| `/api/ai/suggest-meetups` | 🗑️ Removed | Removed — PR #65 (2026-04-23) |
+| `/api/ai/icebreakers` | 🗑️ Removed | Removed — PR #65 (2026-04-23) |
+| `/api/ai/chat` | 📦 Archived | Archived Phase 1 (2026-04-16) |
+| `/api/ai/recommend` | 📦 Archived | Archived Phase 1 (2026-04-16) |
+| `/api/ai/search` | 📦 Archived | Archived Phase 1 (2026-04-16) |
+| `/api/ai/generate-itinerary` | 📦 Archived | Archived Phase 1 (2026-04-16) |
+| `/api/ai/suggest-activities` | 📦 Archived | Archived Phase 1 (2026-04-16) |
 
 ---
 

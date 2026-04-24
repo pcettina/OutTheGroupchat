@@ -8,8 +8,8 @@
 - [x] Phase 4: Meetups core — All 3 sessions complete (2026-04-18): API routes ✅ | venue search (Places API) ✅ | meetup UI (MeetupDetail, AttendeeList, MeetupInviteModal) ✅ | RSVP ✅ | invite ✅ | Pusher real-time ✅ | MEETUP_STARTING_SOON cron ✅ (PRs #48, #49, #51)
 - [x] Phase 5: Check-ins + presence — COMPLETE 2026-04-20 (PR #53): POST /api/checkins ✅ | GET /api/checkins/feed ✅ | DELETE /api/checkins/[id] ✅ | GET /api/checkins/[id] ✅ | CheckInButton (duration picker) ✅ | LiveActivityCard ("Join me" wired) ✅ | NearbyCrewList ✅ | /checkins page ✅ | /checkins/[id] page ✅ | Privacy settings page (/settings/privacy) ✅ | /api/users/privacy ✅ | Pusher city-channel broadcast ✅ | All Phase 5 exit criteria met ✅
 - [x] Phase 6: Feed/AI/notifications rescope — COMPLETE 2026-04-22 (PR #55): Feed rescoped (meetup/checkin types, trip/activity queries removed, POST returns 410) ✅ | Search people-first (users→meetups→venues) ✅ | 9 trip notification types removed from schema ✅ | Follow marked @deprecated ✅ | types/index.ts cleaned (264 lines) ✅ | All AI routes later deleted 2026-04-23 (ops/kill-all-ai)
-- [ ] Phase 7: Marketing surface
-- [ ] Phase 8: Launch-readiness re-audit
+- [x] Phase 7: Marketing surface — COMPLETE 2026-04-22 (PR #56): About page, OG tags, README rewrite, email-auth.ts, search cleanup, RichFeedItem refactor
+- [~] Phase 8: Launch-readiness re-audit — IN PROGRESS 2026-04-23 (nightly/2026-04-25): AI removed (PR #65), dead components deleted (TripHistory, BadgeShowcase, PreferencesCard, FloatingShareButton), rate-limit audit confirmed clean, security audit updated. E2E Playwright and Sentry full-audit remaining.
 
 ---
 
@@ -17,7 +17,7 @@
 >
 > **Target Launch:** Q2 2026 (Beta) — to be re-baselined post-pivot
 > **Current Status:** Refactoring (Phase 2 in progress — domain models added, DB migration pending)
-> **Last Updated:** 2026-04-22 (Phase 6 COMPLETE — feed rescoped, search people-first, notification types migrated, types cleanup; Phase 7 Marketing surface is next)
+> **Last Updated:** 2026-04-23 (Phase 7 COMPLETE — About page, OG tags, README rewrite; Phase 8 IN PROGRESS — AI removed PR #65, dead components deleted, rate-limit audit clean, security audit updated)
 
 ---
 
@@ -118,7 +118,8 @@
 - [x] SQL injection prevention (Prisma)
 - [x] Rate limiting infrastructure (Upstash)
 - [x] Rate limiting on all authentication endpoints ✅ 2026-03-26 (signup, reset-password, verify-email — rate limiting now first operation)
-- [ ] Rate limiting on ALL remaining endpoints
+- [x] Rate limiting on all new meetup/checkin/venue route handlers confirmed ✅ 2026-04-23 (Phase 8 audit — 13 new routes all rate-limited via `checkRateLimit`)
+- [ ] Rate limiting on ALL remaining endpoints (legacy endpoints audit deferred)
 - [x] Input validation on major API routes (Zod) ✅ 2026-03-24 — notifications, feed/comments, feed/engagement, pusher/auth, users/[userId], discover/*, images/search, inspiration, cron, auth/demo added; ai/chat Zod strengthened + JSON.parse safety on 5 AI routes + notifications/[notificationId] ✅ 2026-03-29
 - [x] /api/discover/search requires authentication ✅ 2026-03-24 (security improvement — was unauthenticated)
 - [x] /api/discover/recommendations requires authentication ✅ 2026-03-24
@@ -183,6 +184,8 @@
 - [x] Service tests + API tests (recommendation.service 45, survey.service 36, geocoding-images 32, inspiration +39) ✅ 2026-03-26 — total: 1156 tests across 56 files
 - [x] API route tests (ai-generate-itinerary 31, ai-suggest-activities 25, discover-import 21) ✅ 2026-03-29
 - [x] API route tests (feed-extended 42, notifications-extended 33, health 14, trips-survey-voting-extended 23) ✅ 2026-04-16 — total: **1346 tests across 63 files**
+- [x] Dead trip-era components deleted (TripHistory, BadgeShowcase, PreferencesCard, FloatingShareButton) ✅ 2026-04-23 (Phase 8 cleanup)
+- [x] crew-block-email.test.ts created (17 tests) ✅ 2026-04-23 (Phase 8 nightly/2026-04-25) — total: **~1125 tests across 48 live test files**
 
 ### Integration Tests
 - [ ] Auth flow tests
@@ -388,4 +391,4 @@ git push origin main  # Auto-deploys to Vercel
 
 *This checklist should be reviewed daily during launch preparation.*
 
-*Last Updated: 2026-03-26 - 153 new tests (1156 total, 56 files); rate limiting added as first operation on auth/signup, auth/reset-password, auth/verify-email; newsletter/subscribe now requires auth; ai/search GET+POST fully implemented; dead components removed (NotificationCenter.tsx, SharePreview.tsx); recommendation.service.test.ts, survey.service.test.ts, geocoding-images.test.ts created. Also includes 2026-03-29 changes: JSON.parse safety on 5 AI routes + notifications/[notificationId]; Zod strengthened on ai/chat; notifications/[notificationId] bugfix (read was hardcoded true); JSDoc added to geocoding.ts; 3 new test files (ai-generate-itinerary, ai-suggest-activities, discover-import)*
+*Last Updated: 2026-04-23 — Phase 8 nightly/2026-04-25: AI removed (PR #65), dead components deleted (TripHistory, BadgeShowcase, PreferencesCard, FloatingShareButton), email-crew.ts deleted, discover/route.ts 410 Gone, CheckInButton wired in checkins/page.tsx, security audit Phase 8 section added, rate-limit audit clean (13 new routes confirmed), crew-block-email.test.ts (+17 tests). Tests: ~1125 across 48 live test files.*

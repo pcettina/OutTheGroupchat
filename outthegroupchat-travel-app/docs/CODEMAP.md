@@ -1,6 +1,6 @@
 # OutTheGroupchat — Full Codemap
 
-> Auto-generated 2026-03-10. Last updated 2026-04-22 (Phase 6 complete — feed rescope, search people-first, notification migration, types cleanup). Comprehensive reference for agents and developers.
+> Auto-generated 2026-03-10. Last updated 2026-04-23 (Phase 8 in progress — AI removed PR #65, dead components deleted, email-crew.ts deleted, discover/route.ts 410 Gone, CheckInButton wired, security audit updated). Comprehensive reference for agents and developers.
 >
 > **🔀 Pivot in progress:** See `docs/REFACTOR_PLAN.md`. Trip-planning surface archived under `_archive/` directories as of Phase 1 (2026-04-16). See [Archived surface (Phase 1)](#archived-surface-phase-1) section below and `src/_archive/README.md` for the preservation scheme.
 >
@@ -33,8 +33,8 @@ Full-stack Next.js 14 collaborative travel planning app. Groups plan trips toget
 
 **App root:** `outthegroupchat-travel-app/`
 **Source:** `outthegroupchat-travel-app/src/`
-**Stats (post-Phase-6-complete, 2026-04-22):** 50 live API routes (35 base + 6 Crew routes + 9 Phase 4 meetup/venue/cron routes + 3 Phase 5 check-in routes + privacy route + 2 Phase 6 AI routes: suggest-meetups, icebreakers; 13 archived in Phase 1; feed POST now 410) | live component groups: auth, feed (rescoped to meetup/checkin types, tabs updated), social (incl. `CrewButton`, `CrewRequestCard`, `CrewList`), meetups (incl. `MeetupCard`, `MeetupList`, `CreateMeetupModal`, `RSVPButton`, `VenuePicker`, `AttendeeList`, `MeetupInviteModal`), checkins (incl. `CheckInButton`, `LiveActivityCard`, `NearbyCrewList`), discover, notifications, profile (incl. Recent Check-ins section), search, settings (incl. `PrivacySettingsForm`), onboarding, ai, ui, accessibility + Navigation (incl. privacy link) | live pages: /, /auth/*, /profile, `/profile/[userId]`, /feed, /discover, /inspiration, /notifications, /search, /settings, `/settings/privacy`, /onboarding, /privacy, /terms, `/crew`, `/crew/requests`, `/meetups`, `/meetups/new`, `/meetups/[id]`, `/checkins`, `/checkins/[id]` | middleware: auth-protects `/profile/:path*`, `/crew/:path*`, `/meetups/:path*`, `/checkins/:path*`, `/settings/:path*`, `/api/checkins/*`, plus select `/api/*` paths
-**Test Health (2026-04-22):** 58 live test files (+3: feed.test.ts, feed-extended.test.ts, notifications-rescoped.test.ts) | ~1050 tests passing | 0 TSC errors | Phase 6 COMPLETE: feed rescoped, search people-first, 9 trip notification types removed, types/index.ts cleaned (264 lines), suggest-meetups + icebreakers AI routes live
+**Stats (post-Phase-8-partial, 2026-04-23):** 46 live API routes (AI routes removed PR #65; discover/route.ts now 410 Gone; email-crew.ts deleted; 13 archived in Phase 1; feed POST now 410) | live component groups: auth, feed (rescoped to meetup/checkin types, tabs updated), social (incl. `CrewButton`, `CrewRequestCard`, `CrewList`), meetups (incl. `MeetupCard`, `MeetupList`, `CreateMeetupModal`, `RSVPButton`, `VenuePicker`, `AttendeeList`, `MeetupInviteModal`), checkins (incl. `CheckInButton`, `LiveActivityCard`, `NearbyCrewList`), discover, notifications, profile (incl. Recent Check-ins section; TripHistory/BadgeShowcase/PreferencesCard deleted), search, settings (incl. `PrivacySettingsForm`), onboarding, ui (FloatingShareButton deleted), accessibility + Navigation (incl. privacy link) | live pages: /, /auth/*, /profile, `/profile/[userId]`, /feed, /discover, /inspiration, /notifications, /search, /settings, `/settings/privacy`, /onboarding, /privacy, /terms, `/crew`, `/crew/requests`, `/meetups`, `/meetups/new`, `/meetups/[id]`, `/checkins`, `/checkins/[id]` | middleware: auth-protects `/profile/:path*`, `/crew/:path*`, `/meetups/:path*`, `/checkins/:path*`, `/settings/:path*`, `/api/checkins/*`, plus select `/api/*` paths
+**Test Health (2026-04-23):** 48 live test files (+1: crew-block-email.test.ts) | ~1125 tests passing | 0 TSC errors | Phase 8 IN PROGRESS: AI removed, dead components deleted, rate-limit audit clean, security audit updated
 
 ---
 
@@ -465,7 +465,7 @@ db:seed        → npx tsx prisma/seed/index.ts
 
 | Endpoint | Methods | Auth | Zod | Purpose |
 |----------|---------|------|-----|---------|
-| `/api/discover` | GET, POST | Yes | Yes (GET) | Destination discovery + flight search |
+| `/api/discover` | GET, POST | — | — | **410 Gone** as of 2026-04-23 — redirects to `/api/search`; created nightly/2026-04-25 |
 | `/api/discover/search` | GET | Yes | Yes | Internal + external activity search |
 | `/api/discover/import` | POST | Yes | No | Import from OpenTripMap |
 | `/api/discover/recommendations` | GET | Yes | No | Personalized recommendations |
@@ -600,9 +600,9 @@ db:seed        → npx tsx prisma/seed/index.ts
 | Component | Props | Purpose |
 |-----------|-------|---------|
 | `ProfileHeader` | user, stats?, isOwn?, onEdit? | Cover + avatar + bio |
-| `TripHistory` | trips, userId?, variant? | Past trips timeline |
-| `BadgeShowcase` | badges, showCount? | Achievement badge grid |
-| `PreferencesCard` | preferences, onUpdate?, editable? | Travel preference display/edit |
+| ~~`TripHistory`~~ | — | Deleted 2026-04-23 (Phase 8 dead component cleanup — trip-era) |
+| ~~`BadgeShowcase`~~ | — | Deleted 2026-04-23 (Phase 8 dead component cleanup — trip-era) |
+| ~~`PreferencesCard`~~ | — | Deleted 2026-04-23 (Phase 8 dead component cleanup — trip-era) |
 
 ### Search (`components/search/`)
 
@@ -677,7 +677,7 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `Switch` | checked, onCheckedChange, disabled?, label? | Toggle switch |
 | `Select` | options, value, onChange, placeholder? | Dropdown select |
 | `ImagePicker` | onSelect, aspect?, maxSize? | Image upload & crop |
-| `FloatingShareButton` | itemId, itemType, onShare? | Floating share FAB |
+| ~~`FloatingShareButton`~~ | — | Deleted 2026-04-23 (Phase 8 dead component cleanup) |
 | `Toast` | message, type (success\|error\|info), duration?, onClose | Toast notification |
 
 ### Voting (`components/voting/`) — 📦 ARCHIVED 2026-04-16
@@ -707,7 +707,7 @@ db:seed        → npx tsx prisma/seed/index.ts
 | File | Exports | Purpose |
 |------|---------|---------|
 | `lib/pusher.ts` | getPusherServer, getPusherClient, channels, events, broadcastToTrip, broadcastToUser | Pusher instances + helpers |
-| `lib/email.ts` (392L) | sendInvite, sendNotification, sendTripUpdate | Resend email templates |
+| `lib/email.ts` (~513L) | sendInvite, sendNotification, sendCrewRequestEmail, sendCrewAcceptedEmail, sendMeetupInviteEmail, sendMeetupRSVPConfirmationEmail, sendMeetupStartingSoonEmail | Resend email templates (crew + meetup emails consolidated here; email-crew.ts deleted Phase 8 as dead duplicate) |
 | `lib/rate-limit.ts` | rateLimit, getRemainingQuota | Upstash rate limiter |
 
 ### External APIs
@@ -786,10 +786,11 @@ db:seed        → npx tsx prisma/seed/index.ts
 
 ## Tests
 
-**Total: ~1050 tests across 58 Vitest unit/integration test files** (Phase 6 complete, 2026-04-22; +3 test files; 0 TSC errors)
+**Total: ~1125 tests across 48 Vitest unit/integration test files** (Phase 8 partial, 2026-04-23; +1 test file: crew-block-email.test.ts; 0 TSC errors)
 
 | File | Lines | Tests | Coverage |
 |------|-------|-------|----------|
+| `src/__tests__/api/crew-block-email.test.ts` | — | 17 | Crew block/unblock flows and email dispatch for crew actions ✅ 2026-04-23 Phase 8 |
 | `src/__tests__/api/feed.test.ts` | — | 12 | GET /api/feed — rescoped meetup/checkin item types, pagination, auth ✅ 2026-04-22 Phase 6 |
 | `src/__tests__/api/feed-extended.test.ts` | — | 25 | Feed edge cases — empty feed, multiple content types, DB errors, feedType params ✅ 2026-04-22 Phase 6 |
 | `src/__tests__/api/notifications-rescoped.test.ts` | — | 18 | Social notification types — CREW_REQUEST, CREW_ACCEPTED, MEETUP_INVITED, MEETUP_RSVP, MEETUP_STARTING_SOON, CREW_CHECKED_IN_NEARBY, SYSTEM ✅ 2026-04-22 Phase 6 |
@@ -897,13 +898,13 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `any` types | 0 ✅ |
 | `console.*` | 0 ✅ |
 | TSC errors (prod + test) | 0 ✅ |
-| Vitest tests | ~1050 passing, 58 test files (Phase 6 complete, 2026-04-22; +3 new: feed.test.ts, feed-extended.test.ts, notifications-rescoped.test.ts); archived tests runnable on demand via `npm run test:archive` |
+| Vitest tests | ~1125 passing, 48 test files (Phase 8 partial, 2026-04-23; +1 new: crew-block-email.test.ts); archived tests runnable on demand via `npm run test:archive` |
 | E2E tests | 11 Playwright smoke tests (4 suites) — trip-specific specs archived |
 | Error monitoring | Sentry — 19/48 coverage on pre-archive branch; coverage recomputed on new live surface in Phase 2 |
-| Live API routes | 50 (35 base + 6 Crew + 9 Phase 4 meetup/venue/cron + 3 Phase 5 check-in + privacy + 2 Phase 6 AI: suggest-meetups, icebreakers; feed POST now 410) |
-| Files >400 lines | 0 in prod (email.ts 507 lines, email-crew.ts extracted; types/index.ts reduced to 264 lines in Phase 6) |
+| Live API routes | 46 (AI routes removed PR #65; discover/route.ts now 410 Gone; email-crew.ts lib deleted; feed POST now 410) |
+| Files >400 lines | 0 in prod (email.ts ~513 lines; types/index.ts reduced to 264 lines in Phase 6; email-crew.ts deleted Phase 8) |
 | Production env gaps | Pusher vars, Sentry DSN, Resend domain, GOOGLE_PLACES_API_KEY |
-| **Phase status** | **Phase 6 COMPLETE** (2026-04-22): feed rescoped, search people-first, 9 trip notification types removed, types/index.ts cleaned. Phase 7 (Marketing surface) is next. |
+| **Phase status** | **Phase 7 COMPLETE** (2026-04-22, PR #56): About page, OG tags, README rewrite, email-auth.ts. **Phase 8 IN PROGRESS** (2026-04-23): AI removed (PR #65), dead components deleted, rate-limit audit clean, security audit updated. Actions #5/#6 (E2E + Sentry full audit) remaining. |
 
 ---
 
@@ -924,7 +925,7 @@ As of **2026-04-16** the trip-planning product surface has been archived to `_ar
 | Git tag | `v1.0-trip-planning` anchors the pre-pivot commit |
 
 ### What remains live
-- **API (~45 routes):** auth/*, beta/*, crew/*, checkins/*, feed/*, meetups/*, venues/*, users/*, profile, search, notifications/*, invitations/*, discover/*, inspiration, pusher/auth, geocoding, images/search, newsletter, cron, health
+- **API (~46 routes):** auth/*, beta/*, crew/*, checkins/*, feed/*, meetups/*, venues/*, users/*, profile, search, notifications/*, invitations/*, discover (410 Gone), discover/search, discover/recommendations, discover/import, inspiration, pusher/auth, geocoding, images/search, newsletter, cron, health. **Note: all /api/ai/* routes removed PR #65 (2026-04-23).**
 - **Pages:** /, /auth/*, /profile, /feed, /discover, /inspiration, /notifications, /search, /settings, /onboarding, /privacy, /terms, /crew, /meetups, /checkins
 - **Components:** accessibility, auth, checkins, crew, discover, feed, meetups, notifications, onboarding, profile, search, settings, social, ui + Navigation.tsx (trip links removed, AI removed 2026-04-23)
 - **Services:** survey.service.ts (repurpose-pending)

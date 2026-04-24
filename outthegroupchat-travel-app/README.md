@@ -14,7 +14,7 @@ A LinkedIn-style social network built for in-person meetups, not trip planning. 
 
 ## Pivot Status
 
-> **Active refactor: Phase 5 of 8.** Phase 4 (Meetups) complete — PRs #48, #49, #51. Phase 5 (Check-ins & live presence) now starting. Trip-planning code archived in `src/_archive/` (see `docs/REFACTOR_PLAN.md`). All infrastructure — auth, database, real-time, API layer — is 100% reused. No data loss; schema migrations are additive.
+> **Active refactor: Phase 8 of 8 (Launch-readiness re-audit).** Phases 0–7 complete. AI surface fully removed (PR #65 — no `/api/ai/*` routes, no `@ai-sdk/*` deps). Recent design work: Last Call landing page, brand palette, and Fontshare fonts (PRs #61–#64). Trip-planning code archived in `src/_archive/` (see `docs/REFACTOR_PLAN.md`). All infrastructure — auth, database, real-time, API layer — is 100% reused.
 
 ## Tech Stack
 
@@ -71,7 +71,7 @@ A LinkedIn-style social network built for in-person meetups, not trip planning. 
 ```
 src/
 ├── app/                    # Next.js App Router pages
-│   ├── api/               # API routes (51 active routes)
+│   ├── api/               # API routes (45 active routes)
 │   │   ├── meetups/      # Meetup CRUD + RSVP
 │   │   ├── crew/         # Crew requests
 │   │   ├── checkins/     # Live presence
@@ -130,7 +130,6 @@ npm run db:seed    # Seed demo users and sample data
 
 The project includes:
 - `vercel.json` with cron job configuration
-- Optimized function durations for AI routes
 - Automatic builds on push
 
 ### Manual Deployment
@@ -197,15 +196,14 @@ Built with ❤️ by the OutTheGroupchat Team
 
 ## Recent Updates
 
-- **2026-04-20:** Phase 5 session 2 complete (PR #53). Privacy settings (GET/PATCH /api/users/privacy), Pusher city broadcast on check-in, GET /api/checkins/[id] visibility gate, /checkins/[id] detail page, feed visibility filter. 994 tests passing across 51 active API routes.
-- **2026-04-16:** Product pivot to social meetup network initiated. Phase 1 complete: trip-planning surface archived to `src/_archive/` (routes, pages, components, services). README and docs updated to reflect new vision. 841 tests passing post-archive across 35 active API routes.
-- **2026-04-16:** Sentry error monitoring expanded to 19/48 API routes; beta/status migrated to Redis rate limiting; dead components removed (DestinationCard, CategoryFilter, TrendingSection, TravelBadges); 112 new tests added (1,346+ total pre-archive)
-- **2026-04-15:** Sentry instrumented on 13 routes; beta/status Redis migration; JSDoc additions across lib/api modules
-- **2026-04-14:** Zod validation added to flights, suggestions, cron routes; Sentry expanded to 18 routes on branch
-- **2026-04-13:** Sentry installed on auth and AI routes; addBreadcrumb wrapper exported from lib/sentry; structured logging complete
-- **2026-04-08:** GitHub Actions CI configured; DeleteTripModal wired; survey/vote page error handling improved
-- **2026-04-06:** Security audit score 8→9/10; JSDoc added across 14 lib/service files; discover search wired
+- **2026-04-23:** Phase 8 (Launch-readiness re-audit) active. AI surface fully removed — all `/api/ai/*` routes, `@ai-sdk/*` deps, `src/lib/ai`, and `src/components/ai` deleted (PR #65). 1108+ tests passing across 45 active API routes.
+- **2026-04-22:** Design sprint: Last Call landing page, brand palette (`otg.*` Tailwind namespace), Fontshare fonts, dark-mode default, Hybrid Exit logo mark (PRs #61–#64).
+- **2026-04-22:** Phase 7 complete (PR #56). About page, OG/Twitter Card tags, email-auth.ts extracted, search type enum cleaned up, RichFeedItem refactored (717→337 lines).
+- **2026-04-20:** Phase 5 session 2 complete (PR #53). Privacy settings, Pusher city broadcast on check-in, feed visibility filter.
+- **2026-04-19:** Phase 5 complete (PR #52). Check-ins API + UI, "Join me" flow, NearbyCrewList, duration picker (PR #52–#54).
+- **2026-04-18:** Phase 4 complete (PR #48–#51). Meetup API routes, MeetupDetail page, Pusher real-time, Google Places API.
+- **2026-04-16:** Sentry error monitoring expanded to 19/48 API routes; beta/status migrated to Redis rate limiting; dead components removed.
 
 ---
 
-*Last Updated: 2026-04-20 | 994+ tests passing | 51 active API routes | 0 any types | 0 console.* | Build: PASS | Pivot: Phase 5 of 8*
+*Last Updated: 2026-04-23 | 1108+ tests passing | 45 active API routes | 0 any types | 0 console.* | Build: PASS | Pivot: Phase 8 of 8 (Launch-readiness re-audit)*

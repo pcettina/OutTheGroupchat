@@ -1,29 +1,30 @@
 # OutTheGroupchat - Production Deployment & Feature Roadmap
 
 > **Target:** Q2 2026 Beta Launch
-> **Version:** 3.2 | **Last Updated:** 2026-04-17
+> **Version:** 3.3 | **Last Updated:** 2026-04-23
 
 ---
 
-## Pivot Status (2026-04-17)
+## Pivot Status (2026-04-23)
 
-- **Active refactor phase:** Phase 2 — New domain models & migrations
-- **Phases complete:** Phase 0 (PR backlog merged), Phase 1 (trip-planning archived)
-- **Phases remaining:** Phase 2–8 (see docs/REFACTOR_PLAN.md)
+- **Active refactor phase:** Phase 8 — Launch-readiness re-audit
+- **Phases complete:** Phases 0–7 (see docs/REFACTOR_PLAN.md for details)
+- **Phases remaining:** Phase 8 (active — launch-readiness hardening)
 - **Pre-pivot tag:** v1.0-trip-planning (git tag, recoverable)
-- **Next milestone:** Phase 2 complete — Crew/Meetup/Venue models in Prisma (renamed from `Connection` 2026-04-17), `User.crewLabel` added, `CheckIn.activeUntil` added, mocks in setup.ts. Branch: `refactor/phase-2-crew-domain`. Q2/Q3/Q4 resolved (see REFACTOR_PLAN §9).
+- **AI removal:** All AI routes, lib, components, and deps (`@ai-sdk/*`, `ai`) deleted 2026-04-23 (PR #65 `ops/kill-all-ai-2026-04-23`). This reduces dependency footprint and eliminates the OPENAI_API_KEY requirement.
+- **Design sprint complete:** Last Call landing page, brand palette (`otg.*` Tailwind namespace), Fontshare fonts, dark-mode default, Hybrid Exit logo mark (PRs #61–#64).
 
 ---
 
-## Current System Status (as of 2026-04-17)
+## Current System Status (as of 2026-04-23)
 
 ### Codebase Health Snapshot
 
 | Metric | Value |
 |--------|-------|
-| Tests passing (main) | 1,234 (59 test files) |
-| API routes | 48 (all rate-limited) |
-| TypeScript files | 266 |
+| Tests passing (main) | 1,108 (47 test files) |
+| API routes | 45 (AI routes removed; all rate-limited) |
+| TypeScript files | ~260 |
 | `any` types | 0 |
 | `console.*` in prod | 0 |
 | Files > 600 lines (prod) | 0 |
@@ -31,18 +32,18 @@
 | Lint warnings | 0 |
 | TSC errors | 0 |
 | Security score | 9/10 |
-| Sentry coverage | 19/48 routes |
+| Sentry coverage | 19/45 routes |
 | GitHub Actions CI | Passing |
 
-### Overall Launch Readiness: Launch readiness paused during pivot — will re-audit at Phase 8 (see REFACTOR_PLAN.md §5)
+### Overall Launch Readiness: ~85% — Phase 8 re-audit active; primary blockers are production env vars (Sentry DSN, Pusher, Resend domain)
 
 | Category | Score | Target | Status |
 |----------|-------|--------|--------|
 | Infrastructure | 95% | 100% | Almost Ready |
-| Core Features | 82% | 90% | In Progress |
+| Core Features | 90% | 90% | Met (Phases 0–7 complete) |
 | Security | 90% | 100% | In Progress |
 | Testing | 85% | 80% | Met |
-| Monitoring | 65% | 80% | In Progress |
+| Monitoring | 65% | 80% | In Progress (Sentry DSN missing in Vercel) |
 
 ### Implemented & Working
 
@@ -61,7 +62,7 @@
 | Inspiration Page | Working | Zod coerce.number on query params |
 | Trip Creation | Working | Basic creation working; wizard flow pending |
 | Trip Itinerary | Working | GET/PUT with $transaction atomicity (2026-03-23) |
-| AI features | Removed | All AI routes, lib, components, and deps (`@ai-sdk/*`, `ai`) deleted 2026-04-23 (`ops/kill-all-ai-2026-04-23`) |
+| AI features | Removed | All AI routes, lib (`src/lib/ai`), components (`src/components/ai`), and deps (`@ai-sdk/*`, `ai`) deleted 2026-04-23 (PR #65) |
 | Survey API | Working | API structure complete; frontend integration pending |
 | Voting API | Working | API structure complete; frontend integration pending |
 | Member Invitations | Working | Email-based via Resend |
@@ -69,7 +70,7 @@
 | CORS | Working | Configured in next.config.js (2026-03-23) |
 | Security Headers | Working | HSTS, X-Frame-Options, CSP in next.config.js (2026-03-10) |
 | Error Boundaries | Working | global-error.tsx, error.tsx, not-found.tsx |
-| Sentry | Partial | 19/48 routes instrumented (2026-04-16); needs real DSN in Vercel |
+| Sentry | Partial | 19/45 routes instrumented (2026-04-16); needs real DSN in Vercel |
 | Real-time (Pusher) | Partial | Configured; env vars missing in production |
 | Accessibility | Good | Skip links, ARIA patterns |
 | Responsive Design | Good | Mobile-first, 44px touch targets |
@@ -78,12 +79,12 @@
 
 | Issue | Priority | Status |
 |-------|----------|--------|
-| OPENAI_API_KEY not set in Vercel | Critical | Blocked by config |
-| Pusher env vars missing in production | High | Blocked by config |
 | Sentry DSN not set in Vercel | High | Blocked by config |
+| Pusher env vars missing in production | High | Blocked by config (real-time features disabled) |
 | Resend domain not verified | Medium | Email may go to spam |
-| Rate limiting not on ALL endpoints | Medium | RESOLVED — 48/48 routes covered |
 | NEXTAUTH_SECRET strength unverified | Medium | Manual check needed |
+| Rate limiting not on ALL endpoints | Medium | RESOLVED — 45/45 routes covered |
+| OPENAI_API_KEY not set in Vercel | N/A | RESOLVED — AI surface fully removed (PR #65) |
 
 ---
 
@@ -126,18 +127,19 @@
 
 ### April 2026 Sprint (In Progress)
 
-- Test suite scaled to 1,234+ tests on main (59 test files); nightly builds adding ~100 tests per run
-- Rate limiting expanded to all 48 API routes (48/48 — 100% coverage)
+- Test suite at 1,108 tests on main (47 test files)
+- **AI surface fully removed** — all `/api/ai/*` routes, `@ai-sdk/*` deps, `src/lib/ai`, `src/components/ai` deleted (PR #65, 2026-04-23); dependency footprint reduced
+- **Design sprint:** Last Call landing page, brand palette (`otg.*` Tailwind namespace), Fontshare fonts, dark-mode default, Hybrid Exit logo mark (PRs #61–#64, 2026-04-22)
+- Phase 7 complete: About page, OG/Twitter Card tags, email-auth.ts extraction, RichFeedItem refactor 717→337 lines (PR #56, 2026-04-22)
+- Phase 8 active: Launch-readiness re-audit, middleware gap fixed, LAUNCH_CHECKLIST rewritten meetup-centric
+- Rate limiting expanded to all 45 active API routes (45/45 — 100% coverage)
 - Security score raised to 9/10 (JSDoc, Zod coerce, input sanitization)
-- Sentry error monitoring expanded to 19/48 routes (trips, activities, search, inspiration, users, profile, discover x4, AI routes, auth routes) — 2026-04-16
+- Sentry error monitoring at 19/45 routes (2026-04-16)
 - beta/status route migrated from in-memory Map to Redis checkRateLimit (2026-04-16)
 - GitHub Actions CI pipeline added (.github/workflows/ci.yml) with TSC, lint, Vitest, Playwright
-- DeleteTripModal component wired to DELETE /api/trips/[tripId]
 - Privacy + Terms of Service pages added
 - JSDoc added across 14+ lib/service files
 - Dead components removed: DestinationCard, CategoryFilter, TrendingSection, TravelBadges
-- Voting page displays real vote counts from API (no more hardcoded zeros)
-- Voting PUT response now returns voteCounts + totalVotes
 
 ---
 
@@ -146,20 +148,16 @@
 ### Phase 1: Critical Fixes (Do First)
 
 ```
-[ ] Set OPENAI_API_KEY in Vercel production
 [ ] Set Pusher env vars in Vercel production
 [ ] Obtain real Sentry DSN + set in Vercel
 [ ] Verify Resend domain for email deliverability
 [ ] NEXTAUTH_SECRET rotation (32+ chars)
 [ ] Session timeout configuration
 [ ] Failed login attempt limiting
-[x] Rate limiting on all endpoints (COMPLETE — 48/48 covered as of 2026-04-16)
+[x] Rate limiting on all endpoints (COMPLETE — 45/45 covered)
+[x] AI routes removed — OPENAI_API_KEY no longer required (PR #65)
 [ ] XSS prevention (DOMPurify) verification
-[ ] Trip editing flow
-[ ] Trip deletion/archiving (DeleteTripModal added 2026-04-08)
-[ ] Trip wizard (multi-step creation)
-[ ] Expand Sentry to remaining 29/48 routes (19/48 instrumented)
-[ ] Merge 22 open PRs into main (PRs #17–#38 open)
+[ ] Expand Sentry to remaining routes (19/45 instrumented)
 ```
 
 ### Phase 2: Core Feature Completion
@@ -220,28 +218,27 @@
 |  +---------------+    +---------------+    +-------------------+      |
 |         |                                                              |
 |         v                                                              |
-|  +---------------+    +---------------+    +-------------------+      |
-|  |  Sentry       |    |  BetterStack  |    |  OpenAI           |      |
-|  |  [needs DSN]  |    |  [pending]    |    |  [needs Vercel key]|     |
-|  +---------------+    +---------------+    +-------------------+      |
+|  +---------------+    +---------------+                               |
+|  |  Sentry       |    |  BetterStack  |                               |
+|  |  [needs DSN]  |    |  [pending]    |                               |
+|  +---------------+    +---------------+                               |
 |                                                                        |
 +-----------------------------------------------------------------------+
 ```
 
-### Actual Database: Supabase PostgreSQL
-> Note: An earlier version of this document referenced PlanetScale (MySQL). The actual database is Supabase PostgreSQL, connected via Prisma 5.22.0.
+### Actual Database: Neon PostgreSQL
+> Note: Migrated from Supabase to Neon (via Vercel Marketplace) on 2026-04-17. Connected via Prisma 5.22.0. Neon branch-per-PR workflow active.
 
 ### Cost Estimation (Monthly)
 
 | Service | Free Tier | Starter | Growth |
 |---------|-----------|---------|--------|
 | **Vercel** (Hosting) | $0 | $20 | $70 |
-| **Supabase** (Database) | $0 | $25 | $100 |
+| **Neon** (Database) | $0 | $19 | $69 |
 | **Upstash** (Redis) | $0 (10k/day) | $10 | $25 |
 | **Pusher** (Real-time) | $0 (200k msg) | $49 | $99 |
-| **OpenAI** (AI) | Pay-as-go | ~$20 | ~$100 |
 | **Sentry** (Errors) | $0 (5k events) | $26 | $80 |
-| **Total** | **~$0-20** | **~$150** | **~$474** |
+| **Total** | **~$0-20** | **~$124** | **~$343** |
 
 ---
 
@@ -259,7 +256,7 @@
 - [x] XSS prevention (React handles, plus DOMPurify installed)
 - [x] CORS configured (next.config.js, 2026-03-23)
 - [x] Security headers (HSTS, X-Frame-Options, CSP — 2026-03-10)
-- [x] Rate limiting on ALL 48 endpoints (COMPLETE — 2026-04-16)
+- [x] Rate limiting on ALL 45 active endpoints (COMPLETE — 2026-04-16)
 - [ ] Session timeout configuration
 - [ ] Failed login attempt limiting
 
@@ -316,15 +313,9 @@
 3. Check for query timeouts in Sentry
 4. Scale connection pool if needed
 
-### If AI Not Working
-1. Verify OPENAI_API_KEY is set in Vercel environment
-2. Check OpenAI status page
-3. Routes return 503 gracefully when key absent (implemented 2026-03-23)
-4. Fall back to manual itinerary planning UI
-
 ---
 
-*Document Version: 3.2*
+*Document Version: 3.3*
 *Target Launch: Q2 2026 (Beta)*
-*Last Updated: 2026-04-17*
+*Last Updated: 2026-04-23*
 *Owner: Development Team*

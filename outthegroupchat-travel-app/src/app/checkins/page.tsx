@@ -4,8 +4,7 @@ import type { Metadata } from 'next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import NearbyCrewList from '@/components/checkins/NearbyCrewList';
-// TODO: CheckInButton is created by L2 agent simultaneously — uncomment once available
-// import CheckInButton from '@/components/checkins/CheckInButton';
+import CheckInButton from '@/components/checkins/CheckInButton';
 
 export const metadata: Metadata = {
   title: 'Check-ins | OutTheGroupchat',
@@ -49,12 +48,7 @@ export default async function CheckInsPage() {
         </p>
       </div>
 
-      {/* TODO: Uncomment CheckInButton once L2 agent file is available */}
-      {/* <CheckInButton className="mb-6" /> */}
-      <div className="mb-6 rounded-2xl border border-slate-200 dark:border-slate-700 p-4 bg-white dark:bg-slate-800 text-center text-sm text-slate-500 dark:text-slate-400">
-        {/* Placeholder — CheckInButton (L2) will replace this block */}
-        Check-in button coming soon
-      </div>
+      <CheckInButton className="mb-6" />
 
       <hr className="border-slate-200 dark:border-slate-700 mb-6" />
 

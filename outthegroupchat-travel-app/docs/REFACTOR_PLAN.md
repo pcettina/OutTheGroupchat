@@ -1,7 +1,7 @@
 # OutTheGroupchat — Scope Pivot & Refactor Plan
 
-> **Status:** Active — Phase 5 COMPLETE (2026-04-20, PR #53); Phase 6 ✅ COMPLETE (2026-04-22, PR #55): all 4 actions done — feed rescoped, AI routes added, notification types migrated, search people-first. Phase 7 (Marketing surface) is next.
-> **Created:** 2026-04-16 | **Last updated:** 2026-04-22
+> **Status:** Active — Phase 7 ✅ COMPLETE (2026-04-22, PR #56): About page, OG tags, README rewrite, email-auth.ts, search cleanup, RichFeedItem refactor. Phase 8 🟡 IN PROGRESS (2026-04-23): AI removed PR #65, dead components deleted, rate-limit audit clean, security audit updated. Actions #5/#6 (E2E Playwright + Sentry full audit) remaining.
+> **Created:** 2026-04-16 | **Last updated:** 2026-04-23
 > **Purpose:** Canonical planning doc for the pivot from group-trip-planning app → meetup-focused social network with a persistent `Crew` graph. All future refactor sessions reference this document.
 > **Decision:** Refactor in place (not rebuild). Trip-planning infrastructure is archived but preserved for potential future reactivation.
 
@@ -393,29 +393,36 @@ Each phase targets a discrete session (or a nightly build if small). Phases are 
 ---
 
 ### Phase 7 — Marketing & brand surface (1 session)
+
+> ✅ **COMPLETE as of 2026-04-22 (PR #56)**
+
 **Objective:** External surfaces reflect the new product.
 **Actions:**
-1. New landing page (`src/app/page.tsx` or root route) with tagline and new illustrations
-2. `/about` page explaining the "off your phone" ethos
-3. `metadata.ts` OG tags + Twitter Card updates
-4. README.md full rewrite — new value prop, new feature list
-5. `CLAUDE.md` update — new project scope, remove trip-specific guidance
-6. Email templates (Resend): rewrite signup, verification, reset for new tone
-7. Favicon / logo refresh if desired
+1. ✅ New `/about` page explaining the "off your phone" ethos (`src/app/about/page.tsx`)
+2. ✅ `metadata.ts` OG tags + Twitter Card updates (`src/app/layout.tsx`)
+3. ✅ README.md full rewrite — new value prop, new feature list
+4. ✅ `CLAUDE.md` update — meetup-centric scope
+5. ✅ `src/lib/email-auth.ts` created — meetup-centric tone for auth emails (sendWelcomeEmail, sendAuthVerificationEmail, sendPasswordResetEmail)
+6. ✅ Search cleanup (type=users/type=trips/type=activities removed from Zod enum)
+7. ✅ RichFeedItem.tsx refactored (717→337 lines); extracted FeedItemHeader.tsx, FeedItemActions.tsx, FeedItemLegacyCards.tsx
+8. ✅ ProfileCheckinsSection.tsx extracted from profile/page.tsx
 
-**Exit criteria:** Fresh visitor to the site understands the product as a meetup-centric social network within 10 seconds.
+**Exit criteria:** Fresh visitor to the site understands the product as a meetup-centric social network within 10 seconds. ✅
 
 ---
 
 ### Phase 8 — Launch-readiness re-audit (1 session)
+
+> 🟡 **IN PROGRESS as of 2026-04-23 (nightly/2026-04-25)**
+
 **Objective:** Re-baseline the launch checklist against new scope.
 **Actions:**
-1. Rewrite `docs/LAUNCH_CHECKLIST.md` with meetup-centric milestones
-2. Update `docs/PRODUCTION_ROADMAP.md` (target date, priorities, new risk register)
-3. Security audit focused on new surfaces: location data handling, Crew-request abuse prevention, meetup spam, check-in stalking mitigation (Q4 `activeUntil` is first line of defense)
-4. Rate-limit audit for new routes
-5. E2E Playwright tests for new critical paths: signup → Crew request → meetup create → RSVP → check-in
-6. Sentry coverage audit: target 100% on new routes (don't repeat the 0/48-on-main debt)
+1. ✅ Rewrite `docs/LAUNCH_CHECKLIST.md` with meetup-centric milestones — COMPLETE (nightly/2026-04-24, PR #59, 2026-04-22)
+2. ✅ Update `docs/PRODUCTION_ROADMAP.md` (target date, priorities, new risk register) — COMPLETE (nightly/2026-04-25, 2026-04-23)
+3. ✅ **Security audit focused on new surfaces** — COMPLETE 2026-04-23: `docs/SECURITY_AUDIT.md` updated with Phase 8 Security Review section covering Crew/Meetup/Checkin/Venue surfaces (location data, Crew-request abuse, meetup spam, check-in stalking via `activeUntil`).
+4. ✅ **Rate-limit audit for new routes** — COMPLETE 2026-04-23: all 13 meetup/checkin/venue route handlers confirmed already rate-limited via `checkRateLimit`. No coverage gaps found.
+5. [ ] E2E Playwright tests for new critical paths: signup → Crew request → meetup create → RSVP → check-in
+6. [ ] Sentry coverage audit: target 100% on new routes (don't repeat the 0/48-on-main debt)
 
 **Exit criteria:** Updated launch checklist reflects real readiness of the new product, not the archived one.
 
