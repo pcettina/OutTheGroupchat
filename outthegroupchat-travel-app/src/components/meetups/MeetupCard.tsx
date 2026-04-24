@@ -26,23 +26,30 @@ interface MeetupCardProps {
   meetup: MeetupCardMeetup;
 }
 
+// Last Call palette — brief §3. Visibility maps to the same role colors the rest of the
+// app uses so a Crew-only meetup reads the same here as in the Crew inbox.
 const VISIBILITY_LABELS: Record<string, { label: string; classes: string }> = {
   PUBLIC: {
     label: 'Public',
-    classes: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
+    classes: 'bg-otg-sodium/15 text-otg-sodium ring-1 ring-inset ring-otg-sodium/30',
   },
   CREW: {
     label: 'Crew',
-    classes: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+    classes: 'bg-otg-tile/15 text-otg-tile ring-1 ring-inset ring-otg-tile/30',
   },
   INVITE_ONLY: {
-    label: 'Invite Only',
-    classes: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+    label: 'Invite only',
+    classes: 'bg-otg-bourbon/15 text-otg-bourbon ring-1 ring-inset ring-otg-bourbon/30',
   },
   PRIVATE: {
     label: 'Private',
-    classes: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
+    classes: 'bg-otg-bg-dark text-otg-text-dim ring-1 ring-inset ring-otg-border',
   },
+};
+
+const FALLBACK_VIS = {
+  label: 'Private',
+  classes: 'bg-otg-bg-dark text-otg-text-dim ring-1 ring-inset ring-otg-border',
 };
 
 function formatDateTime(iso: string): string {
@@ -57,23 +64,20 @@ function formatDateTime(iso: string): string {
 }
 
 export default function MeetupCard({ meetup }: MeetupCardProps) {
-  const vis = VISIBILITY_LABELS[meetup.visibility] ?? {
-    label: meetup.visibility,
-    classes: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
-  };
+  const vis = VISIBILITY_LABELS[meetup.visibility] ?? FALLBACK_VIS;
 
   return (
     <Link
       href={`/meetups/${meetup.id}`}
-      className="block rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 hover:shadow-md transition hover:border-slate-300 dark:hover:border-slate-600"
+      className="block rounded-2xl border border-otg-border bg-otg-maraschino p-5 shadow-md transition hover:border-otg-sodium hover:shadow-lg"
     >
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-slate-900 dark:text-white text-base leading-snug truncate">
+          <h3 className="font-display font-semibold text-otg-text-bright text-base leading-snug truncate">
             {meetup.title}
           </h3>
           {meetup.description && (
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
+            <p className="text-sm text-otg-text-dim mt-0.5 line-clamp-2">
               {meetup.description}
             </p>
           )}
@@ -85,29 +89,29 @@ export default function MeetupCard({ meetup }: MeetupCardProps) {
             {vis.label}
           </span>
           {meetup.cancelled && (
-            <span className="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">
+            <span className="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium bg-otg-danger/15 text-otg-danger ring-1 ring-inset ring-otg-danger/30">
               Cancelled
             </span>
           )}
         </div>
       </div>
 
-      <div className="space-y-1.5 text-sm text-slate-600 dark:text-slate-400">
+      <div className="space-y-1.5 text-sm text-otg-text-dim">
         <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4 shrink-0 text-slate-400" />
+          <Calendar className="w-4 h-4 shrink-0 text-otg-text-dim" aria-hidden="true" />
           <span>{formatDateTime(meetup.scheduledAt)}</span>
         </div>
 
         {meetup.venueName && (
           <div className="flex items-center gap-2">
-            <MapPin className="w-4 h-4 shrink-0 text-slate-400" />
+            <MapPin className="w-4 h-4 shrink-0 text-otg-text-dim" aria-hidden="true" />
             <span className="truncate">{meetup.venueName}</span>
           </div>
         )}
 
         {typeof meetup._count?.attendees === 'number' && (
           <div className="flex items-center gap-2">
-            <Users className="w-4 h-4 shrink-0 text-slate-400" />
+            <Users className="w-4 h-4 shrink-0 text-otg-text-dim" aria-hidden="true" />
             <span>
               {meetup._count.attendees}{' '}
               {meetup._count.attendees === 1 ? 'attendee' : 'attendees'}
@@ -116,8 +120,8 @@ export default function MeetupCard({ meetup }: MeetupCardProps) {
         )}
       </div>
 
-      <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2">
-        <div className="w-7 h-7 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
+      <div className="mt-4 pt-3 border-t border-otg-border flex items-center gap-2">
+        <div className="w-7 h-7 rounded-full overflow-hidden bg-otg-bg-dark border border-otg-border flex items-center justify-center shrink-0">
           {meetup.host.image ? (
             <Image
               src={meetup.host.image}
@@ -127,18 +131,18 @@ export default function MeetupCard({ meetup }: MeetupCardProps) {
               className="w-full h-full object-cover"
             />
           ) : (
-            <span className="text-xs font-semibold text-slate-500">
+            <span className="text-xs font-semibold text-otg-text-dim">
               {meetup.host.name?.[0]?.toUpperCase() ?? '?'}
             </span>
           )}
         </div>
-        <span className="text-xs text-slate-500 dark:text-slate-400 truncate">
+        <span className="text-xs text-otg-text-dim truncate">
           Hosted by{' '}
-          <span className="font-medium text-slate-700 dark:text-slate-300">
+          <span className="font-medium text-otg-text-bright">
             {meetup.host.name ?? 'Anonymous'}
           </span>
         </span>
-        <Eye className="w-3.5 h-3.5 shrink-0 text-slate-300 dark:text-slate-600 ml-auto" />
+        <Eye className="w-3.5 h-3.5 shrink-0 text-otg-text-dim/60 ml-auto" aria-hidden="true" />
       </div>
     </Link>
   );
