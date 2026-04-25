@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useSession, signOut } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Search, Newspaper, Bell, User, Users, Calendar, Mail, LogOut, Menu, X, ChevronDown, MapPin, Shield } from 'lucide-react';
+import { Sparkles, Search, Newspaper, Bell, User, Users, Calendar, Mail, LogOut, Menu, X, ChevronDown, MapPin, Shield, Target } from 'lucide-react';
 
 export function Navigation() {
   const { data: session, status } = useSession();
@@ -33,6 +33,7 @@ export function Navigation() {
   };
 
   const navLinks = [
+    { href: '/intents', label: 'Intents', icon: <Target className="w-4 h-4" /> },
     { href: '/inspiration', label: 'Inspiration', icon: <Sparkles className="w-4 h-4" /> },
     { href: '/discover', label: 'Discover', icon: <Search className="w-4 h-4" /> },
     { href: '/checkins', label: 'Check-ins', icon: <MapPin className="w-4 h-4" /> },
