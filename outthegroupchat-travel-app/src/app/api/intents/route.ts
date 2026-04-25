@@ -20,6 +20,7 @@ import { captureException } from '@/lib/sentry';
 import { apiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 import { classifyIntentText } from '@/lib/intent/topic-classifier';
 import { resolveIntentWindow, MAX_DAY_OFFSET } from '@/lib/intent/window-preset';
+import { tryFormSubCrew } from '@/lib/subcrew/try-form';
 
 const createIntentSchema = z
   .object({
@@ -36,22 +37,6 @@ const createIntentSchema = z
     message: 'Either rawText (for classification) or topicId (manual pick) is required',
     path: ['rawText'],
   });
-
-const intentSelect = {
-  id: true,
-  userId: true,
-  topicId: true,
-  windowPreset: true,
-  startAt: true,
-  endAt: true,
-  dayOffset: true,
-  state: true,
-  cityArea: true,
-  venueId: true,
-  rawText: true,
-  expiresAt: true,
-  createdAt: true,
-} as const;
 
 export async function POST(request: NextRequest) {
   try {
@@ -143,16 +128,40 @@ export async function POST(request: NextRequest) {
         rawText: rawText ?? null,
         expiresAt: window.expiresAt,
       },
-      select: intentSelect,
     });
 
+    // V1 Phase 2: try to auto-form a SubCrew with a Crew partner who has a
+    // matching live INTERESTED Intent. Failures are non-fatal — the Intent
+    // create succeeds regardless and a later create can re-trigger formation.
+    let formation = null;
+    try {
+      formation = await tryFormSubCrew(intent, prisma);
+    } catch (err) {
+      captureException(err);
+      apiLogger.error(
+        { err, intentId: intent.id },
+        '[INTENT_POST] tryFormSubCrew failed (non-fatal)',
+      );
+    }
+
     apiLogger.info(
-      { intentId: intent.id, userId: callerId, topicId, matchedKeywords },
+      {
+        intentId: intent.id,
+        userId: callerId,
+        topicId,
+        matchedKeywords,
+        subCrewFormed: formation?.subCrewId ?? null,
+      },
       '[INTENT_POST] Intent created',
     );
 
     return NextResponse.json(
-      { success: true, data: intent, matchedKeywords },
+      {
+        success: true,
+        data: intent,
+        matchedKeywords,
+        subCrewId: formation?.subCrewId ?? null,
+      },
       { status: 201 },
     );
   } catch (error) {
