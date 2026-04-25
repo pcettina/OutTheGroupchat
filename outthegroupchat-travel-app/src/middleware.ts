@@ -111,6 +111,7 @@ export const config = {
     '/api/topics',
     '/api/subcrews/:path*',
     '/subcrews/:path*',
+    '/api/recommendations',
     '/settings/:path*',
     '/api/users/privacy',
   ],

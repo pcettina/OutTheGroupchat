@@ -6,7 +6,11 @@ import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
-import { SubCrewCard, SubCrewCoordinationPanel } from '@/components/subcrews';
+import {
+  SubCrewCard,
+  SubCrewCoordinationPanel,
+  RecommendationsList,
+} from '@/components/subcrews';
 import type { SubCrewResponse } from '@/types/subcrew';
 
 export default function SubCrewDetailPage() {
@@ -70,12 +74,29 @@ export default function SubCrewDetailPage() {
             <SubCrewCard subCrew={subCrew} linkToDetail={false} />
 
             {viewerIsMember && callerUserId ? (
-              <SubCrewCoordinationPanel
-                subCrew={subCrew}
-                callerUserId={callerUserId}
-                callerIntentId={callerIntentId}
-                onChanged={fetchSubCrew}
-              />
+              <>
+                <SubCrewCoordinationPanel
+                  subCrew={subCrew}
+                  callerUserId={callerUserId}
+                  callerIntentId={callerIntentId}
+                  onChanged={fetchSubCrew}
+                />
+                <section className="rounded-2xl border border-otg-border bg-otg-surface/60 p-5">
+                  <header className="mb-3">
+                    <h2 className="text-base font-semibold text-otg-text-bright">
+                      Where to go
+                    </h2>
+                    <p className="text-xs text-otg-text-muted">
+                      Top picks for {subCrew.topic?.displayName ?? 'this Topic'}
+                      {subCrew.cityArea ? ` in ${subCrew.cityArea.replace(/-/g, ' ')}` : ''}.
+                    </p>
+                  </header>
+                  <RecommendationsList
+                    topicId={subCrew.topicId}
+                    cityArea={subCrew.cityArea}
+                  />
+                </section>
+              </>
             ) : (
               <p className="text-sm text-otg-text-muted">
                 You can see this SubCrew because you are Crew of a member. Tap I&rsquo;m in
