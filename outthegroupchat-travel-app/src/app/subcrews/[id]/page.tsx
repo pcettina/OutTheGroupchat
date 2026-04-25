@@ -1,54 +1,59 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
-import { SubCrewCard } from '@/components/subcrews';
+import { SubCrewCard, SubCrewCoordinationPanel } from '@/components/subcrews';
 import type { SubCrewResponse } from '@/types/subcrew';
 
 export default function SubCrewDetailPage() {
   const params = useParams<{ id: string }>();
   const id = params?.id;
+  const { data: session } = useSession();
+  const callerUserId = session?.user?.id ?? null;
 
   const [subCrew, setSubCrew] = useState<SubCrewResponse | null>(null);
   const [viewerIsMember, setViewerIsMember] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchSubCrew = useCallback(async () => {
     if (!id) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch(`/api/subcrews/${id}`);
-        const body = await res.json();
-        if (cancelled) return;
-        if (!res.ok || !body.success) {
-          setError(body.error ?? 'Could not load SubCrew.');
-          return;
-        }
-        setSubCrew(body.data.subCrew);
-        setViewerIsMember(body.data.viewerIsMember);
-      } catch {
-        if (!cancelled) setError('Network error.');
-      } finally {
-        if (!cancelled) setLoading(false);
+    try {
+      const res = await fetch(`/api/subcrews/${id}`);
+      const body = await res.json();
+      if (!res.ok || !body.success) {
+        setError(body.error ?? 'Could not load SubCrew.');
+        return;
       }
-    })();
-    return () => {
-      cancelled = true;
-    };
+      setSubCrew(body.data.subCrew);
+      setViewerIsMember(body.data.viewerIsMember);
+    } catch {
+      setError('Network error.');
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
+
+  useEffect(() => {
+    fetchSubCrew();
+  }, [fetchSubCrew]);
+
+  const callerMember = subCrew && callerUserId
+    ? subCrew.members.find((m) => m.userId === callerUserId)
+    : null;
+  const callerIntentId = callerMember?.intentId ?? null;
 
   return (
     <>
       <Navigation />
-      <main className="mx-auto max-w-2xl px-4 pt-24 pb-16 sm:px-6 lg:px-8">
+      <main className="mx-auto max-w-2xl space-y-6 px-4 pt-24 pb-16 sm:px-6 lg:px-8">
         <Link
           href="/intents"
-          className="mb-4 inline-flex items-center gap-1 text-sm text-otg-text-muted hover:text-otg-text-bright"
+          className="inline-flex items-center gap-1 text-sm text-otg-text-muted hover:text-otg-text-bright"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           Back to Intents
@@ -63,11 +68,20 @@ export default function SubCrewDetailPage() {
         {subCrew && (
           <>
             <SubCrewCard subCrew={subCrew} linkToDetail={false} />
-            <p className="mt-4 text-sm text-otg-text-muted">
-              {viewerIsMember
-                ? 'You are part of this SubCrew. Coordination + commit lands in the next phase.'
-                : 'You can see this SubCrew because you are Crew of a member.'}
-            </p>
+
+            {viewerIsMember && callerUserId ? (
+              <SubCrewCoordinationPanel
+                subCrew={subCrew}
+                callerUserId={callerUserId}
+                callerIntentId={callerIntentId}
+                onChanged={fetchSubCrew}
+              />
+            ) : (
+              <p className="text-sm text-otg-text-muted">
+                You can see this SubCrew because you are Crew of a member. Tap I&rsquo;m in
+                from the feed to join.
+              </p>
+            )}
           </>
         )}
       </main>
