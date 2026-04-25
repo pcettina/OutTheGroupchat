@@ -106,6 +106,7 @@ export const config = {
     '/api/venues/:path*',
     '/checkins/:path*',
     '/api/checkins/:path*',
+    '/api/intents/:path*',
     '/settings/:path*',
     '/api/users/privacy',
   ],
