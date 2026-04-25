@@ -1105,12 +1105,20 @@ model SubCrew {
 }
 
 model SubCrewMember {
-  id        String          @id @default(cuid())
-  subCrewId String
-  userId    String
-  intentId  String? // what opted them in (null if joined-without-Intent edge case)
-  joinedAt  DateTime        @default(now())
-  joinMode  SubCrewJoinMode
+  id           String          @id @default(cuid())
+  subCrewId    String
+  userId       String
+  intentId     String? // what opted them in (null if joined-without-Intent edge case)
+  joinedAt     DateTime        @default(now())
+  joinMode     SubCrewJoinMode
+  /// Phase 3 — member's "when works?" proposal. Seed members freeze
+  /// `SubCrew.startAt` by patching the parent SubCrew directly; non-seed
+  /// members surface their preference here for the seed to consider.
+  proposedTime DateTime?
+  /// Phase 3 — set when the member transitions their Intent from INTERESTED
+  /// to COMMITTED for this SubCrew. Read alongside the Intent's state to
+  /// distinguish "committed via this SubCrew" from "committed elsewhere."
+  committedAt  DateTime?
 
   subCrew SubCrew @relation(fields: [subCrewId], references: [id], onDelete: Cascade)
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
