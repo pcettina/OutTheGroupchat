@@ -107,6 +107,8 @@ export const config = {
     '/checkins/:path*',
     '/api/checkins/:path*',
     '/api/intents/:path*',
+    '/intents/:path*',
+    '/api/topics',
     '/settings/:path*',
     '/api/users/privacy',
   ],

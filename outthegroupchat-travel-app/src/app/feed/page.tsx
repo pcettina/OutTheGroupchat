@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Navigation } from '@/components/Navigation';
 import { FeedItem, CommentThread, ShareModal } from '@/components/feed';
+import { IntentPromptCard } from '@/components/intents';
 
 type FeedType = 'all' | 'meetups' | 'checkins' | 'crews';
 
@@ -158,6 +159,16 @@ export default function FeedPage() {
           >
             <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Activity Feed</h1>
             <p className="text-slate-500 dark:text-slate-400">See what the community is planning</p>
+          </motion.div>
+
+          {/* V1 Intent prompt — Phase 1 entry point to Journey A */}
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="mb-6"
+          >
+            <IntentPromptCard />
           </motion.div>
 
           {/* Feed Type Tabs */}
