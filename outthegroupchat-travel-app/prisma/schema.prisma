@@ -179,6 +179,10 @@ enum NotificationType {
   MEETUP_STARTING_SOON
   CHECK_IN_NEARBY
   CREW_CHECKED_IN_NEARBY
+  // V1 Phase 2 — fired when a SubCrew auto-forms around the recipient's Intent
+  SUBCREW_FORMED
+  // V1 Phase 2 — fired when someone taps "I'm in" on an existing SubCrew the recipient seeded
+  SUBCREW_JOINED
   SYSTEM
 }
 

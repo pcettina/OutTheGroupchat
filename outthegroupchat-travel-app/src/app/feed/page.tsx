@@ -5,6 +5,8 @@ import { motion } from 'framer-motion';
 import { Navigation } from '@/components/Navigation';
 import { FeedItem, CommentThread, ShareModal } from '@/components/feed';
 import { IntentPromptCard } from '@/components/intents';
+import { EmergingSubCrewCard } from '@/components/subcrews';
+import type { SubCrewResponse } from '@/types/subcrew';
 
 type FeedType = 'all' | 'meetups' | 'checkins' | 'crews';
 
@@ -71,6 +73,27 @@ export default function FeedPage() {
       imageUrl?: string;
     } | null;
   }>({ isOpen: false, data: null });
+
+  const [emergingSubCrews, setEmergingSubCrews] = useState<SubCrewResponse[]>([]);
+
+  // V1 Phase 2: surface joinable SubCrews above the feed.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/subcrews/emerging?limit=3');
+        const body = await res.json();
+        if (!cancelled && body.success) {
+          setEmergingSubCrews(body.data.subCrews as SubCrewResponse[]);
+        }
+      } catch {
+        // non-fatal — feed continues without the cards
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const fetchFeed = useCallback(async (page = 1, append = false) => {
     if (page === 1) {
@@ -160,6 +183,26 @@ export default function FeedPage() {
             <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Activity Feed</h1>
             <p className="text-slate-500 dark:text-slate-400">See what the community is planning</p>
           </motion.div>
+
+          {/* V1 Phase 2: emerging SubCrews you could join */}
+          {emergingSubCrews.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.04 }}
+              className="mb-6 space-y-3"
+            >
+              {emergingSubCrews.map((sc) => (
+                <EmergingSubCrewCard
+                  key={sc.id}
+                  subCrew={sc}
+                  onJoined={(joinedId) =>
+                    setEmergingSubCrews((prev) => prev.filter((s) => s.id !== joinedId))
+                  }
+                />
+              ))}
+            </motion.div>
+          )}
 
           {/* V1 Intent prompt — Phase 1 entry point to Journey A */}
           <motion.div

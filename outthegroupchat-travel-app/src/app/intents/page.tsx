@@ -5,40 +5,47 @@ import Link from 'next/link';
 import { Plus } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 import { IntentList } from '@/components/intents';
+import { SubCrewCard, EmergingSubCrewCard } from '@/components/subcrews';
 import type { IntentResponse } from '@/types/intent';
+import type { SubCrewResponse } from '@/types/subcrew';
 
-type Tab = 'mine' | 'crew';
+type Tab = 'mine' | 'crew' | 'subcrews';
 
 export default function IntentsPage() {
   const [tab, setTab] = useState<Tab>('mine');
   const [mine, setMine] = useState<IntentResponse[] | null>(null);
   const [crew, setCrew] = useState<IntentResponse[] | null>(null);
+  const [mySubCrews, setMySubCrews] = useState<SubCrewResponse[] | null>(null);
+  const [emergingSubCrews, setEmergingSubCrews] = useState<SubCrewResponse[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const [mineRes, crewRes] = await Promise.all([
+        const [mineRes, crewRes, mySubRes, emergingRes] = await Promise.all([
           fetch('/api/intents/mine'),
           fetch('/api/intents/crew'),
+          fetch('/api/subcrews/mine'),
+          fetch('/api/subcrews/emerging'),
         ]);
         const mineBody = await mineRes.json();
         const crewBody = await crewRes.json();
+        const mySubBody = await mySubRes.json();
+        const emergingBody = await emergingRes.json();
         if (cancelled) return;
         if (mineBody.success) setMine(mineBody.data.intents as IntentResponse[]);
         if (crewBody.success) setCrew(crewBody.data.intents as IntentResponse[]);
+        if (mySubBody.success) setMySubCrews(mySubBody.data.subCrews as SubCrewResponse[]);
+        if (emergingBody.success) setEmergingSubCrews(emergingBody.data.subCrews as SubCrewResponse[]);
       } catch {
-        if (!cancelled) setError('Could not load Intents.');
+        if (!cancelled) setError('Could not load.');
       }
     })();
     return () => {
       cancelled = true;
     };
   }, []);
-
-  const list = tab === 'mine' ? mine : crew;
-  const loading = list === null;
 
   return (
     <>
@@ -56,7 +63,7 @@ export default function IntentsPage() {
         </header>
 
         <div className="mb-4 flex gap-2 border-b border-otg-border">
-          {(['mine', 'crew'] as const).map((t) => (
+          {(['mine', 'crew', 'subcrews'] as const).map((t) => (
             <button
               key={t}
               type="button"
@@ -67,7 +74,7 @@ export default function IntentsPage() {
                   : 'border-transparent text-otg-text-muted hover:text-otg-text-bright'
               }`}
             >
-              {t === 'mine' ? 'Mine' : 'Crew'}
+              {t === 'mine' ? 'Mine' : t === 'crew' ? 'Crew' : 'SubCrews'}
             </button>
           ))}
         </div>
@@ -78,10 +85,60 @@ export default function IntentsPage() {
           </div>
         )}
 
-        {loading ? (
-          <p className="text-sm text-otg-text-muted">Loading…</p>
-        ) : (
-          <IntentList intents={list ?? []} showAuthor={tab === 'crew'} />
+        {tab === 'mine' &&
+          (mine === null ? (
+            <p className="text-sm text-otg-text-muted">Loading…</p>
+          ) : (
+            <IntentList intents={mine} />
+          ))}
+
+        {tab === 'crew' &&
+          (crew === null ? (
+            <p className="text-sm text-otg-text-muted">Loading…</p>
+          ) : (
+            <IntentList intents={crew} showAuthor />
+          ))}
+
+        {tab === 'subcrews' && (
+          <div className="space-y-6">
+            <section>
+              <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-otg-text-muted">
+                Joinable
+              </h2>
+              {emergingSubCrews === null ? (
+                <p className="text-sm text-otg-text-muted">Loading…</p>
+              ) : emergingSubCrews.length === 0 ? (
+                <p className="text-sm text-otg-text-muted">Nothing forming around your Crew right now.</p>
+              ) : (
+                <ul className="space-y-3">
+                  {emergingSubCrews.map((sc) => (
+                    <li key={sc.id}>
+                      <EmergingSubCrewCard subCrew={sc} />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+
+            <section>
+              <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-otg-text-muted">
+                Yours
+              </h2>
+              {mySubCrews === null ? (
+                <p className="text-sm text-otg-text-muted">Loading…</p>
+              ) : mySubCrews.length === 0 ? (
+                <p className="text-sm text-otg-text-muted">No SubCrews yet — keep posting Intents.</p>
+              ) : (
+                <ul className="space-y-3">
+                  {mySubCrews.map((sc) => (
+                    <li key={sc.id}>
+                      <SubCrewCard subCrew={sc} />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          </div>
         )}
       </main>
     </>
