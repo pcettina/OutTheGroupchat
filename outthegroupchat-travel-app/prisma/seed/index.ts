@@ -9,6 +9,7 @@ import {
   seedSurveys
 } from './generators/social';
 import { seedSocialDomain } from './generators/socialDomain';
+import { seedTopics } from './generators/topics';
 
 const prisma = new PrismaClient();
 
@@ -77,6 +78,13 @@ async function main() {
     await seedSocialDomain(prisma);
   } catch (err) {
     console.error('   ⚠️  Social domain seed failed (non-fatal):', err);
+  }
+
+  // 9. V1 Intent taxonomy (Phase 0 — Topic table)
+  try {
+    await seedTopics(prisma);
+  } catch (err) {
+    console.error('   ⚠️  Topic seed failed (non-fatal):', err);
   }
 
   console.log('\n' + '='.repeat(50));

@@ -124,6 +124,14 @@ model User {
   pollResponses         PollResponse[]
   posts                 Post[]           @relation("PostAuthor")
 
+  // V1 Intent-centric relations (Phase 0 — see docs/V1_IMPLEMENTATION_PLAN.md)
+  intents                 Intent[]
+  subCrewMemberships      SubCrewMember[]
+  crewRelSettingsAsViewer CrewRelationshipSetting[] @relation("RelSettingViewer")
+  crewRelSettingsAsTarget CrewRelationshipSetting[] @relation("RelSettingTarget")
+  heatmapContributions    HeatmapContribution[]
+  notificationPreferences NotificationPreference[]
+
   @@index([email])
   @@map("users")
 }
@@ -809,6 +817,7 @@ model Venue {
 
   meetups  Meetup[]
   checkIns CheckIn[]
+  intents  Intent[]
 
   @@index([city, category])
   @@index([latitude, longitude])
@@ -856,6 +865,7 @@ model Meetup {
   attendees MeetupAttendee[]
   invites   MeetupInvite[]
   polls     Poll[]
+  subCrew   SubCrew? // back-relation; set when a SubCrew coordinates into this Meetup
 
   @@index([hostId])
   @@index([scheduledAt])
@@ -970,4 +980,198 @@ model Post {
 
   @@index([authorId, createdAt])
   @@index([createdAt])
+}
+
+// ============================================
+// V1 INTENT-CENTRIC MODELS
+// ============================================
+// Source: docs/PRODUCT_VISION.md (R1–R25) + docs/V1_IMPLEMENTATION_PLAN.md Phase 0.
+// All field choices trace to a numbered resolution; comments cite the relevant R#.
+
+enum WindowPreset {
+  EARLY_MORNING
+  MORNING
+  BRUNCH
+  AFTERNOON
+  EVENING
+  NIGHT
+}
+
+enum IntentState {
+  INTERESTED // initial signal — visible to Crew, no heatmap contribution (R6)
+  COMMITTED // post-alignment — picks 3-axis privacy, contributes per R5/R20
+}
+
+enum SubCrewJoinMode {
+  SEED // one of the original 2 that formed the SubCrew (R2)
+  JOINED_VIA_IM_IN // tapped "I'm in" after formation (R21)
+}
+
+enum HeatmapContributionType {
+  INTEREST // from a live INTERESTED Intent (R13)
+  PRESENCE // from a CheckIn after COMMITTED + arrival (R13)
+}
+
+enum HeatmapGranularityMode {
+  BLOCK // baseline (R4)
+  DYNAMIC_CELL // finer; per-relationship opt-in (R4)
+  HIDDEN // explicit block-listed
+}
+
+enum HeatmapIdentityMode {
+  KNOWN // attributed (R20 Crew default)
+  ANONYMOUS // unattributed (subject to N≥3 floor per R14)
+  CREW_ANCHORED // FoF: "anonymous friend of [X]" (R20)
+}
+
+enum HeatmapSocialScope {
+  FULL_CREW
+  SUBGROUP_ONLY
+  NOBODY // default per R4
+}
+
+enum NotificationPreferenceTrigger {
+  DAILY_PROMPT // morning push, R8
+  PER_MEMBER_INTENT // user-flagged Crew member signaled, R8
+  GROUP_FORMATION // automatic; toggle controls whether the user gets push for it
+}
+
+/// Curated taxonomy backing free-text bucketing per R1/R9.
+/// `keywords` is the deterministic dictionary v1 uses to classify Intent.rawText
+/// into a Topic. `placesCategories` per R15 — maps to Google Places taxonomy.
+model Topic {
+  id               String   @id @default(cuid())
+  slug             String   @unique
+  displayName      String
+  keywords         String[]
+  placesCategories String[]
+  createdAt        DateTime @default(now())
+
+  intents  Intent[]
+  subCrews SubCrew[]
+}
+
+/// Lightweight signal of "what I want to do." Lighter than a Meetup — no fixed
+/// time, no attendees, no commitment until COMMITTED. See R3, R6, R12, R16, R22.
+model Intent {
+  id           String       @id @default(cuid())
+  userId       String
+  topicId      String
+  windowPreset WindowPreset
+  startAt      DateTime? // override of preset default (R3)
+  endAt        DateTime? // override of preset default (R3)
+  dayOffset    Int          @default(0) // 0..7 lookahead (R3)
+  state        IntentState  @default(INTERESTED)
+  cityArea     String? // neighborhood slug per R16
+  venueId      String? // specific-venue override per R22
+  rawText      String? // original user input (audit + future v1.5 embedder training)
+  createdAt    DateTime     @default(now())
+  expiresAt    DateTime // = window end + 2h per R12
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic Topic  @relation(fields: [topicId], references: [id])
+  venue Venue? @relation(fields: [venueId], references: [id])
+
+  subCrewMemberships SubCrewMember[]
+
+  @@index([userId, state, expiresAt]) // "my live intents"
+  @@index([topicId, windowPreset, dayOffset, expiresAt]) // SubCrew formation scan
+  @@index([cityArea]) // Interest heatmap aggregation
+}
+
+/// Auto-formed when ≥2 Crew members hold matching live INTERESTED Intents (R2).
+/// Adjacent-window hedges collapse to one SubCrew (R17). Optionally links to a
+/// concrete Meetup once coordination converges on time + venue.
+model SubCrew {
+  id           String       @id @default(cuid())
+  topicId      String
+  windowPreset WindowPreset
+  startAt      DateTime // broadest of the seed Intents' windows
+  endAt        DateTime
+  cityArea     String?
+  venueId      String?
+  meetupId     String?      @unique // set once SubCrew coordinates into a Meetup
+  createdAt    DateTime     @default(now())
+
+  topic   Topic           @relation(fields: [topicId], references: [id])
+  meetup  Meetup?         @relation(fields: [meetupId], references: [id])
+  members SubCrewMember[]
+
+  @@index([topicId, windowPreset, startAt])
+}
+
+model SubCrewMember {
+  id        String          @id @default(cuid())
+  subCrewId String
+  userId    String
+  intentId  String? // what opted them in (null if joined-without-Intent edge case)
+  joinedAt  DateTime        @default(now())
+  joinMode  SubCrewJoinMode
+
+  subCrew SubCrew @relation(fields: [subCrewId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  intent  Intent? @relation(fields: [intentId], references: [id])
+
+  @@unique([subCrewId, userId])
+  @@index([userId])
+}
+
+/// Per-relationship privacy overrides (R4 Axis 2 + 3). Defaults: BLOCK + KNOWN
+/// for direct Crew (R20); FoF defaults computed in app code, not stored here.
+model CrewRelationshipSetting {
+  id              String                 @id @default(cuid())
+  viewerId        String
+  targetId        String
+  granularityMode HeatmapGranularityMode @default(BLOCK)
+  identityMode    HeatmapIdentityMode    @default(KNOWN)
+  updatedAt       DateTime               @updatedAt
+  createdAt       DateTime               @default(now())
+
+  viewer User @relation("RelSettingViewer", fields: [viewerId], references: [id], onDelete: Cascade)
+  target User @relation("RelSettingTarget", fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@unique([viewerId, targetId])
+  @@index([targetId])
+}
+
+/// Derived data fed by Intents (INTEREST type) and CheckIns (PRESENCE type).
+/// Cell coordinates already anonymized at write time; raw lat/lng never leaves
+/// the aggregation window. See R13 for the two-window heatmap model.
+model HeatmapContribution {
+  id            String                  @id @default(cuid())
+  userId        String
+  type          HeatmapContributionType
+  sourceId      String // Intent.id or CheckIn.id depending on type
+  cellLat       Float // anonymized cell center
+  cellLng       Float
+  cellPrecision HeatmapGranularityMode
+  topicId       String?
+  windowPreset  WindowPreset?
+  socialScope   HeatmapSocialScope
+  identityMode  HeatmapIdentityMode
+  expiresAt     DateTime
+  createdAt     DateTime                @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([type, expiresAt, topicId]) // heatmap reads
+  @@index([userId, expiresAt]) // cleanup + user-scoped queries
+}
+
+/// Per-trigger notification opt-ins (R8). Daily prompt + per-member triggers
+/// + group-formation default-on. perMemberTargets is a denormalized list of
+/// userIds the viewer has flagged for PER_MEMBER_INTENT.
+model NotificationPreference {
+  id               String                        @id @default(cuid())
+  userId           String
+  trigger          NotificationPreferenceTrigger
+  enabled          Boolean                       @default(false)
+  schedule         String? // e.g. "09:00" for DAILY_PROMPT
+  perMemberTargets String[] // populated when trigger = PER_MEMBER_INTENT
+  updatedAt        DateTime                      @updatedAt
+  createdAt        DateTime                      @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, trigger])
 }
