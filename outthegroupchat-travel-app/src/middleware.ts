@@ -112,7 +112,9 @@ export const config = {
     '/api/subcrews/:path*',
     '/subcrews/:path*',
     '/api/recommendations',
+    '/api/heatmap',
+    '/heatmap/:path*',
     '/settings/:path*',
     '/api/users/privacy',
   ],
-}; 
+};

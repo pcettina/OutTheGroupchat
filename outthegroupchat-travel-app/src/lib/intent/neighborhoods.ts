@@ -11,4 +11,5 @@ export {
   type NeighborhoodSlug,
   NYC_NEIGHBORHOODS,
   isNeighborhoodSlug,
+  getNeighborhoodCentroid,
 } from '../../../prisma/seed/generators/neighborhoods-nyc';
