@@ -59,7 +59,11 @@ const nextConfig = {
       "style-src 'self' 'unsafe-inline'", // Required for styled-jsx and CSS-in-JS
       "img-src 'self' data: https: blob:",
       "font-src 'self' data:",
-      "connect-src 'self' https://api.openai.com https://api.anthropic.com https://*.pusher.com wss://*.pusher.com",
+      // Heatmap (maplibre-gl) needs OpenFreeMap tile endpoint + websockets for Pusher.
+      // AI origins removed (PR #65 — no AI surface in v1).
+      "connect-src 'self' https://*.pusher.com wss://*.pusher.com https://tiles.openfreemap.org",
+      // Heatmap tile rendering uses Web Workers loaded from a blob: URL.
+      "worker-src 'self' blob:",
       "frame-ancestors 'self'",
       "form-action 'self'",
       "base-uri 'self'",
