@@ -10,7 +10,7 @@
     },
     {
       "path": "/api/cron/expire-intents",
-      "schedule": "*/10 * * * *"
+      "schedule": "0 3 * * *"
     }
   ],
   "headers": [
