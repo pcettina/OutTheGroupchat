@@ -1,0 +1,56 @@
+name: Apply Prisma Migrations to Production
+
+# Mirrors the structure of `neon-pr-branch.yml` but targets the production
+# Neon branch instead of a per-PR branch.
+#
+# Triggers:
+#   - Auto: on push to `main` when migrations or schema changed.
+#   - Manual: `workflow_dispatch` lets us re-run for the initial backfill
+#     (the 5 V1 migrations already on main predate this workflow).
+#
+# Required GitHub secrets:
+#   - PROD_DATABASE_URL — Neon production branch connection string
+#   - PROD_DIRECT_URL   — same Neon production branch, direct (non-pooled)
+#                         connection. Prisma migrations require a direct
+#                         connection. If the project only exposes one URL,
+#                         use it for both.
+#
+# `prisma migrate deploy` only applies *pending* migrations and is the
+# production-safe migration command — it never resets state, never prompts.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'outthegroupchat-travel-app/prisma/migrations/**'
+      - 'outthegroupchat-travel-app/prisma/schema.prisma'
+  workflow_dispatch: {}
+
+concurrency:
+  group: prod-migrate
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    name: Prisma Migrate Deploy (Production)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: outthegroupchat-travel-app/package-lock.json
+
+      - name: Install deps
+        working-directory: outthegroupchat-travel-app
+        run: npm ci
+
+      - name: Run Prisma migrate deploy against production
+        working-directory: outthegroupchat-travel-app
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.PROD_DIRECT_URL }}
+        run: npx prisma migrate deploy
