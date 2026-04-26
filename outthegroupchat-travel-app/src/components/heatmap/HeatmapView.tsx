@@ -4,20 +4,24 @@
  * @module components/heatmap/HeatmapView
  * @description V1 Phase 4 — orchestrates the heatmap surface.
  *
- * Two tabs (Interest / Presence) and two overlay toggles (Crew / FoF).
- * Polls `/api/heatmap` every 30s per R19, **gating on Page Visibility**: when
- * the tab is hidden the interval pauses; on visibility-restore it refetches
- * immediately and resumes. Always re-renders on every poll per R25.
+ * Two tabs (Interest / Presence) and two overlay tiers (Crew / FoF). Polls
+ * `/api/heatmap` every 30s per R19, gating on Page Visibility: when the tab
+ * is hidden the interval pauses; on visibility-restore it refetches and
+ * resumes. Always re-renders on every poll per R25.
  *
- * FoF toggle is disabled in 4a; the slot is in place so 4b can drop in the
- * `MutualThresholdSlider` and flip the disabled flag without restructuring.
+ * Phase 4b adds:
+ *   - FoF toggle (formerly disabled in 4a) — sets `tier=fof` on the request.
+ *   - `MutualThresholdSlider` — feeds `mutualThreshold` per R5.
+ *   - Per-cell anchor attribution chip ("via Alex, Jamie + 2 more") for FoF
+ *     responses, rendered as a top-of-map summary list.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { Loader2, MapPin, Users } from 'lucide-react';
 import type { HeatmapCell, HeatmapResponse, HeatmapType, HeatmapVenueMarker } from '@/types/heatmap';
 import { NYC_NEIGHBORHOODS } from '@/lib/intent/neighborhoods';
+import { MutualThresholdSlider, useMutualThreshold } from './MutualThresholdSlider';
 
 const HeatmapMap = dynamic(
   () => import('./HeatmapMap').then((m) => m.HeatmapMap),
@@ -28,7 +32,9 @@ const POLL_INTERVAL_MS = 30_000;
 
 export function HeatmapView() {
   const [type, setType] = useState<HeatmapType>('interest');
+  const [tier, setTier] = useState<'crew' | 'fof'>('crew');
   const [cityArea, setCityArea] = useState<string>('');
+  const [mutualThreshold, setMutualThreshold] = useMutualThreshold(1);
   const [cells, setCells] = useState<HeatmapCell[]>([]);
   const [venueMarkers, setVenueMarkers] = useState<HeatmapVenueMarker[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,8 +45,9 @@ export function HeatmapView() {
   const fetchHeatmap = useCallback(async () => {
     setError(null);
     try {
-      const params = new URLSearchParams({ type, tier: 'crew' });
+      const params = new URLSearchParams({ type, tier });
       if (cityArea) params.set('cityArea', cityArea);
+      if (tier === 'fof') params.set('mutualThreshold', String(mutualThreshold));
       const res = await fetch(`/api/heatmap?${params.toString()}`, {
         cache: 'no-store',
       });
@@ -56,7 +63,7 @@ export function HeatmapView() {
     } finally {
       setLoading(false);
     }
-  }, [type, cityArea]);
+  }, [type, tier, cityArea, mutualThreshold]);
 
   useEffect(() => {
     fetchOnceRef.current = fetchHeatmap;
@@ -101,6 +108,21 @@ export function HeatmapView() {
     };
   }, []);
 
+  // When the user changes filters, refetch immediately (don't wait for poll).
+  useEffect(() => {
+    fetchHeatmap();
+    // fetchHeatmap captures all deps via useCallback; re-runs on dep change.
+  }, [fetchHeatmap]);
+
+  const anchorSummaries = useMemo(
+    () =>
+      cells
+        .filter((c) => c.anchorSummary)
+        .slice(0, 5)
+        .map((c) => c.anchorSummary as string),
+    [cells],
+  );
+
   return (
     <div className="flex flex-col h-full w-full gap-3">
       <div className="flex flex-wrap items-center justify-between gap-3 px-2">
@@ -113,26 +135,24 @@ export function HeatmapView() {
           </TabButton>
         </div>
 
-        <div className="flex items-center gap-2">
-          <label className="flex items-center gap-2 text-sm text-otg-text-bright">
-            <Users className="w-4 h-4 text-otg-sodium" />
-            <span>Crew</span>
-            <input
-              type="checkbox"
-              checked
-              disabled
-              aria-label="Crew layer (always on in Phase 4a)"
-              className="accent-otg-sodium"
-            />
-          </label>
+        <div className="flex flex-wrap items-center gap-2">
+          <TierToggle
+            label="Crew"
+            active={tier === 'crew'}
+            onClick={() => setTier('crew')}
+          />
+          <TierToggle
+            label="FoF"
+            active={tier === 'fof'}
+            onClick={() => setTier('fof')}
+          />
 
-          <label
-            className="flex items-center gap-2 text-sm text-otg-text-dim opacity-60 cursor-not-allowed"
-            title="FoF tier ships in Phase 4b"
-          >
-            <span>FoF</span>
-            <input type="checkbox" disabled aria-label="FoF layer (Phase 4b)" />
-          </label>
+          {tier === 'fof' && (
+            <MutualThresholdSlider
+              value={mutualThreshold}
+              onChange={setMutualThreshold}
+            />
+          )}
 
           <select
             value={cityArea}
@@ -149,6 +169,19 @@ export function HeatmapView() {
           </select>
         </div>
       </div>
+
+      {tier === 'fof' && anchorSummaries.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 px-2" aria-label="Anchor attribution summary">
+          {anchorSummaries.map((summary, idx) => (
+            <span
+              key={`${summary}-${idx}`}
+              className="text-xs px-2 py-0.5 rounded-full bg-otg-bg-dark border border-otg-border text-otg-text-dim"
+            >
+              {summary}
+            </span>
+          ))}
+        </div>
+      )}
 
       <div className="relative flex-1 min-h-[480px]">
         {loading && (
@@ -172,7 +205,9 @@ export function HeatmapView() {
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="px-4 py-3 rounded bg-black/60 text-otg-text-dim text-sm flex items-center gap-2">
               <MapPin className="w-4 h-4" />
-              No {type === 'interest' ? 'interest' : 'presence'} signals from your Crew right now.
+              {tier === 'fof'
+                ? `No ${type} signals at ≥${mutualThreshold} mutual Crew right now.`
+                : `No ${type === 'interest' ? 'interest' : 'presence'} signals from your Crew right now.`}
             </div>
           </div>
         )}
@@ -204,6 +239,33 @@ function TabButton({
       }
     >
       {children}
+    </button>
+  );
+}
+
+function TierToggle({
+  active,
+  label,
+  onClick,
+}: {
+  active: boolean;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={
+        'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ' +
+        (active
+          ? 'bg-otg-sodium text-otg-bg-dark border-otg-sodium'
+          : 'bg-otg-bg-dark text-otg-text-bright border-otg-border hover:border-otg-sodium')
+      }
+    >
+      <Users className="w-3 h-3" />
+      {label}
     </button>
   );
 }
