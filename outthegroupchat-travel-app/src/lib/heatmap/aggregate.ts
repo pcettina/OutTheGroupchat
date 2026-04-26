@@ -2,18 +2,16 @@
  * @module heatmap/aggregate
  * @description V1 Phase 4 — read-side aggregation for `GET /api/heatmap`.
  *
- * Resolves the viewer's accepted-Crew set, pulls live `HeatmapContribution`
- * rows for the requested type (INTEREST or PRESENCE), and groups them into
- * cell + venue-marker buckets. Enforces:
- *   - R4 viewer-side privacy via `CrewRelationshipSetting` (HIDDEN drops the
- *     contribution entirely).
- *   - R14 Anonymous N>=3 floor (per cell, applied to the ANONYMOUS bucket
- *     only — KNOWN / CREW_ANCHORED contributions surface independently).
- *   - SocialScope filter (FULL_CREW + SUBGROUP_ONLY allowed in 4a; the
- *     SUBGROUP_ONLY bucket will gain SubCrew-membership filtering in 4b).
+ * Two tiers share the same response shape:
+ *   - Crew tier: viewer's accepted Crew partners. Per-relationship
+ *     `CrewRelationshipSetting` (HIDDEN drops contributor) applies.
+ *   - FoF tier (4b): users 1-hop via Crew with mutual-Crew >= threshold.
+ *     Each cell carries an `anchorSummary` like "via Alex" derived from
+ *     `pickAnchor` per R24.
  *
- * FoF tier (4b) plugs into the same surface area; for now `tier=fof` returns
- * an empty payload via the route validator before this function is called.
+ * Both tiers enforce the R14 N>=3 anonymous floor — applied per-cell to the
+ * ANONYMOUS bucket only. KNOWN / CREW_ANCHORED contributions surface
+ * independently.
  */
 
 import {
@@ -25,20 +23,25 @@ import {
 } from '@prisma/client';
 import { prisma as defaultPrisma } from '@/lib/prisma';
 import type { HeatmapCell, HeatmapType, HeatmapVenueMarker } from '@/types/heatmap';
+import { getFofSet, type FofEntry } from '@/lib/heatmap/fof-graph';
+import { buildAnchorSummary, pickAnchor, type AnchorPick } from '@/lib/heatmap/anchor-select';
 
 type PrismaLike = Pick<
   typeof defaultPrisma,
-  'crew' | 'heatmapContribution' | 'crewRelationshipSetting' | 'intent' | 'checkIn' | 'venue'
+  'crew' | 'heatmapContribution' | 'crewRelationshipSetting' | 'intent' | 'checkIn' | 'venue' | 'user' | 'subCrewMember'
 >;
 
 export interface AggregateInput {
   viewerId: string;
   type: HeatmapType;
-  /** Phase 4a only supports `crew`. Phase 4b adds `fof`. */
-  tier: 'crew';
+  tier: 'crew' | 'fof';
   cityArea?: string;
   topicId?: string;
   windowPreset?: WindowPreset;
+  /** FoF only — minimum mutual-Crew count to include a FoF user (R5). */
+  mutualThreshold?: number;
+  /** FoF only — when set, R24 priority 1 (SubCrew-anchor) activates. */
+  subCrewId?: string;
   prismaClient?: PrismaLike;
 }
 
@@ -48,6 +51,28 @@ export interface AggregateOutput {
 }
 
 const ANONYMOUS_FLOOR = 3;
+
+interface ContributionRow {
+  id: string;
+  userId: string;
+  type: HeatmapContributionType;
+  sourceId: string;
+  cellLat: number;
+  cellLng: number;
+  cellPrecision: HeatmapGranularityMode;
+  identityMode: HeatmapIdentityMode;
+  socialScope: HeatmapSocialScope;
+  windowPreset: WindowPreset | null;
+  topicId: string | null;
+}
+
+interface CellBucket {
+  lat: number;
+  lng: number;
+  knownLike: ContributionRow[];
+  anonymous: ContributionRow[];
+  anchorNames: string[];
+}
 
 function cellKey(lat: number, lng: number): string {
   return `${lat.toFixed(6)},${lng.toFixed(6)}`;
@@ -67,6 +92,50 @@ async function getCrewPartnerIds(
   return rows.map((r) => (r.userAId === viewerId ? r.userBId : r.userAId));
 }
 
+function bucketContributions(
+  contributions: ReadonlyArray<ContributionRow>,
+  anchorByContributor?: Map<string, AnchorPick | null>,
+): Map<string, CellBucket> {
+  const groups = new Map<string, CellBucket>();
+  for (const c of contributions) {
+    const key = cellKey(c.cellLat, c.cellLng);
+    let entry = groups.get(key);
+    if (!entry) {
+      entry = { lat: c.cellLat, lng: c.cellLng, knownLike: [], anonymous: [], anchorNames: [] };
+      groups.set(key, entry);
+    }
+    if (c.identityMode === HeatmapIdentityMode.ANONYMOUS) {
+      entry.anonymous.push(c);
+    } else {
+      entry.knownLike.push(c);
+    }
+    if (anchorByContributor) {
+      const pick = anchorByContributor.get(c.userId);
+      if (pick?.anchorName) entry.anchorNames.push(pick.anchorName);
+    }
+  }
+  return groups;
+}
+
+function bucketsToCells(groups: Map<string, CellBucket>): HeatmapCell[] {
+  const cells: HeatmapCell[] = [];
+  for (const entry of Array.from(groups.values())) {
+    const anonCount = entry.anonymous.length >= ANONYMOUS_FLOOR ? entry.anonymous.length : 0;
+    const total = entry.knownLike.length + anonCount;
+    if (total === 0) continue;
+    const uniqueNames = Array.from(new Set(entry.anchorNames));
+    const anchorSummary = buildAnchorSummary(uniqueNames);
+    cells.push({
+      lat: entry.lat,
+      lng: entry.lng,
+      count: total,
+      ...(anchorSummary ? { anchorSummary } : {}),
+    });
+  }
+  cells.sort((a, b) => b.count - a.count);
+  return cells;
+}
+
 export async function aggregateContributions(
   input: AggregateInput,
 ): Promise<AggregateOutput> {
@@ -75,23 +144,155 @@ export async function aggregateContributions(
     input.type === 'interest'
       ? HeatmapContributionType.INTEREST
       : HeatmapContributionType.PRESENCE;
+  const now = new Date();
 
-  const crewIds = await getCrewPartnerIds(client, input.viewerId);
-  if (crewIds.length === 0) {
-    return { cells: [], venueMarkers: [] };
+  if (input.tier === 'fof') {
+    return aggregateFoF({ ...input, contributionType, client, now });
+  }
+  return aggregateCrew({ ...input, contributionType, client, now });
+}
+
+interface BranchInput extends AggregateInput {
+  contributionType: HeatmapContributionType;
+  client: PrismaLike;
+  now: Date;
+}
+
+async function aggregateCrew(input: BranchInput): Promise<AggregateOutput> {
+  const crewIds = await getCrewPartnerIds(input.client, input.viewerId);
+  if (crewIds.length === 0) return { cells: [], venueMarkers: [] };
+
+  const contributions = await fetchContributions(input.client, {
+    userIds: crewIds,
+    type: input.contributionType,
+    now: input.now,
+    topicId: input.topicId,
+    windowPreset: input.windowPreset,
+    socialScopes: [HeatmapSocialScope.FULL_CREW, HeatmapSocialScope.SUBGROUP_ONLY],
+  });
+  if (contributions.length === 0) return { cells: [], venueMarkers: [] };
+
+  const settings = await input.client.crewRelationshipSetting.findMany({
+    where: { viewerId: input.viewerId, targetId: { in: crewIds } },
+    select: { targetId: true, granularityMode: true },
+  });
+  const hiddenTargetIds = new Set(
+    settings
+      .filter((s) => s.granularityMode === HeatmapGranularityMode.HIDDEN)
+      .map((s) => s.targetId),
+  );
+  const visible = contributions.filter((c) => !hiddenTargetIds.has(c.userId));
+
+  const cells = bucketsToCells(bucketContributions(visible));
+  const venueMarkers = await deriveVenueMarkers(
+    input.client,
+    input.contributionType,
+    visible,
+    input.cityArea,
+  );
+
+  return { cells, venueMarkers };
+}
+
+async function aggregateFoF(input: BranchInput): Promise<AggregateOutput> {
+  const fofSet: FofEntry[] = await getFofSet({
+    viewerId: input.viewerId,
+    mutualThreshold: input.mutualThreshold ?? 1,
+    prismaClient: input.client,
+  });
+  if (fofSet.length === 0) return { cells: [], venueMarkers: [] };
+
+  const fofUserIds = fofSet.map((f) => f.userId);
+  const allAnchorIds = Array.from(new Set(fofSet.flatMap((f) => f.anchorIds)));
+
+  // Pre-fetch the data pickAnchor needs for each FoF user.
+  const [anchorUsers, crewEdges, subCrewMembers] = await Promise.all([
+    input.client.user.findMany({
+      where: { id: { in: allAnchorIds } },
+      select: { id: true, name: true },
+    }),
+    input.client.crew.findMany({
+      where: {
+        status: 'ACCEPTED',
+        OR: [
+          { userAId: input.viewerId, userBId: { in: allAnchorIds } },
+          { userBId: input.viewerId, userAId: { in: allAnchorIds } },
+        ],
+      },
+      select: { userAId: true, userBId: true, createdAt: true },
+    }),
+    input.subCrewId
+      ? input.client.subCrewMember.findMany({
+          where: { subCrewId: input.subCrewId },
+          select: { userId: true },
+        })
+      : Promise.resolve([] as Array<{ userId: string }>),
+  ]);
+
+  const nameById = new Map<string, string | null>(
+    anchorUsers.map((u) => [u.id, u.name]),
+  );
+  const createdAtByAnchor = new Map<string, Date>();
+  for (const e of crewEdges) {
+    const anchorId = e.userAId === input.viewerId ? e.userBId : e.userAId;
+    createdAtByAnchor.set(anchorId, e.createdAt);
+  }
+  const subCrewMemberIdSet = new Set(subCrewMembers.map((m) => m.userId));
+
+  const anchorByFofUser = new Map<string, AnchorPick | null>();
+  for (const f of fofSet) {
+    const subCrewAnchors = new Set(f.anchorIds.filter((a) => subCrewMemberIdSet.has(a)));
+    const pick = pickAnchor({
+      anchorIds: f.anchorIds,
+      subCrewMemberAnchorIds: subCrewAnchors,
+      crewEdgeCreatedByAnchor: createdAtByAnchor,
+      anchorNameById: nameById,
+    });
+    anchorByFofUser.set(f.userId, pick);
   }
 
-  const now = new Date();
-  const contributions = await client.heatmapContribution.findMany({
+  // FoF excludes SUBGROUP_ONLY (the viewer isn't in the FoF user's SubCrew
+  // by definition). FULL_CREW is the only relevant scope.
+  const contributions = await fetchContributions(input.client, {
+    userIds: fofUserIds,
+    type: input.contributionType,
+    now: input.now,
+    topicId: input.topicId,
+    windowPreset: input.windowPreset,
+    socialScopes: [HeatmapSocialScope.FULL_CREW],
+  });
+  if (contributions.length === 0) return { cells: [], venueMarkers: [] };
+
+  const cells = bucketsToCells(bucketContributions(contributions, anchorByFofUser));
+  const venueMarkers = await deriveVenueMarkers(
+    input.client,
+    input.contributionType,
+    contributions,
+    input.cityArea,
+  );
+
+  return { cells, venueMarkers };
+}
+
+async function fetchContributions(
+  client: PrismaLike,
+  opts: {
+    userIds: string[];
+    type: HeatmapContributionType;
+    now: Date;
+    topicId?: string;
+    windowPreset?: WindowPreset;
+    socialScopes: HeatmapSocialScope[];
+  },
+): Promise<ContributionRow[]> {
+  const rows = await client.heatmapContribution.findMany({
     where: {
-      userId: { in: crewIds },
-      type: contributionType,
-      expiresAt: { gt: now },
-      socialScope: {
-        in: [HeatmapSocialScope.FULL_CREW, HeatmapSocialScope.SUBGROUP_ONLY],
-      },
-      ...(input.topicId ? { topicId: input.topicId } : {}),
-      ...(input.windowPreset ? { windowPreset: input.windowPreset } : {}),
+      userId: { in: opts.userIds },
+      type: opts.type,
+      expiresAt: { gt: opts.now },
+      socialScope: { in: opts.socialScopes },
+      ...(opts.topicId ? { topicId: opts.topicId } : {}),
+      ...(opts.windowPreset ? { windowPreset: opts.windowPreset } : {}),
     },
     select: {
       id: true,
@@ -107,67 +308,7 @@ export async function aggregateContributions(
       topicId: true,
     },
   });
-
-  if (contributions.length === 0) {
-    return { cells: [], venueMarkers: [] };
-  }
-
-  // R4 — apply per-relationship CrewRelationshipSetting overrides.
-  // HIDDEN drops the contributor entirely from this viewer's heatmap.
-  const settings = await client.crewRelationshipSetting.findMany({
-    where: { viewerId: input.viewerId, targetId: { in: crewIds } },
-    select: { targetId: true, granularityMode: true },
-  });
-  const hiddenTargetIds = new Set(
-    settings
-      .filter((s) => s.granularityMode === HeatmapGranularityMode.HIDDEN)
-      .map((s) => s.targetId),
-  );
-
-  const visible = contributions.filter((c) => !hiddenTargetIds.has(c.userId));
-
-  // Group by cell. Phase 4 surfaces just the cell-level counts; the cityArea
-  // input acts as a top-level filter applied via Intent/CheckIn join below
-  // (cheap because most queries are city-scoped already).
-  const cellGroups = new Map<
-    string,
-    {
-      lat: number;
-      lng: number;
-      knownLike: typeof contributions;
-      anonymous: typeof contributions;
-    }
-  >();
-  for (const c of visible) {
-    const key = cellKey(c.cellLat, c.cellLng);
-    let entry = cellGroups.get(key);
-    if (!entry) {
-      entry = { lat: c.cellLat, lng: c.cellLng, knownLike: [], anonymous: [] };
-      cellGroups.set(key, entry);
-    }
-    if (c.identityMode === HeatmapIdentityMode.ANONYMOUS) {
-      entry.anonymous.push(c);
-    } else {
-      entry.knownLike.push(c);
-    }
-  }
-
-  const cells: HeatmapCell[] = [];
-  for (const entry of Array.from(cellGroups.values())) {
-    // R14 — Anonymous N>=3 floor. The anonymous bucket only contributes if it
-    // meets the threshold on its own (a single anonymous user mixed with
-    // KNOWN contributors is still identifying because the viewer can deduce
-    // who the unattributed signal is).
-    const anonCount = entry.anonymous.length >= ANONYMOUS_FLOOR ? entry.anonymous.length : 0;
-    const total = entry.knownLike.length + anonCount;
-    if (total === 0) continue;
-    cells.push({ lat: entry.lat, lng: entry.lng, count: total });
-  }
-  cells.sort((a, b) => b.count - a.count);
-
-  const venueMarkers = await deriveVenueMarkers(client, contributionType, visible, input.cityArea);
-
-  return { cells, venueMarkers };
+  return rows;
 }
 
 async function deriveVenueMarkers(
@@ -205,7 +346,6 @@ async function deriveVenueMarkers(
 
   if (sourceVenueMap.size === 0) return [];
 
-  // Tally counts per venueId.
   const venueCounts = new Map<string, number>();
   for (const c of contributions) {
     const venueId = sourceVenueMap.get(c.sourceId);

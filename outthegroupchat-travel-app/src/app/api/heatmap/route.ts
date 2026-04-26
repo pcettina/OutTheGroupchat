@@ -3,19 +3,21 @@
  * @description V1 Phase 4 — Journey D "See where people are."
  *
  * GET /api/heatmap
- *   Returns aggregated heatmap data for the authenticated viewer:
- *     - `cells` — anonymized density buckets at the viewer's permitted
- *       granularity (R4), with the R14 anonymous N>=3 floor enforced.
- *     - `venueMarkers` — discrete venue pins for contributions whose source
- *       Intent (or CheckIn) carries a `venueId`. The frontend shows these
- *       only when the viewer zooms in past z=15 per R22.
+ *   Returns aggregated heatmap data for the authenticated viewer.
+ *   - `cells` — anonymized density buckets at the viewer's permitted
+ *     granularity (R4), with the R14 anonymous N>=3 floor enforced.
+ *   - `venueMarkers` — discrete venue pins for contributions whose source
+ *     Intent (or CheckIn) carries a `venueId`. Frontend paints these only
+ *     when the viewer zooms in past z=15 per R22.
  *
  * Query params:
- *   type           interest | presence       (required)
- *   tier           crew                      (required; `fof` reserved for 4b)
- *   cityArea       neighborhood slug         (optional filter)
- *   topicId        cuid                      (optional filter)
- *   windowPreset   enum                      (optional filter)
+ *   type             interest | presence       (required)
+ *   tier             crew | fof                (required)
+ *   cityArea         neighborhood slug         (optional filter)
+ *   topicId          cuid                      (optional filter)
+ *   windowPreset     enum                      (optional filter)
+ *   mutualThreshold  1..10                     (FoF only — R5)
+ *   subCrewId        cuid                      (FoF only — activates R24 priority 1)
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -35,6 +37,8 @@ const heatmapQuerySchema = z.object({
   cityArea: z.string().min(1).max(100).optional(),
   topicId: z.string().cuid().optional(),
   windowPreset: z.nativeEnum(WindowPreset).optional(),
+  mutualThreshold: z.coerce.number().int().min(1).max(10).optional(),
+  subCrewId: z.string().cuid().optional(),
 });
 
 export async function GET(request: NextRequest) {
@@ -63,7 +67,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { type, tier, cityArea, topicId, windowPreset } = parsed.data;
+    const { type, tier, cityArea, topicId, windowPreset, mutualThreshold, subCrewId } =
+      parsed.data;
 
     if (cityArea && !isNeighborhoodSlug(cityArea)) {
       return NextResponse.json(
@@ -72,23 +77,15 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    if (tier === 'fof') {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'FoF tier ships in Phase 4b — use tier=crew for now',
-        },
-        { status: 400 },
-      );
-    }
-
     const result = await aggregateContributions({
       viewerId: session.user.id,
       type,
-      tier: 'crew',
+      tier,
       cityArea,
       topicId,
       windowPreset,
+      mutualThreshold: tier === 'fof' ? mutualThreshold ?? 1 : undefined,
+      subCrewId: tier === 'fof' ? subCrewId : undefined,
     });
 
     apiLogger.info(
@@ -96,6 +93,7 @@ export async function GET(request: NextRequest) {
         viewerId: session.user.id,
         type,
         tier,
+        mutualThreshold: tier === 'fof' ? mutualThreshold ?? 1 : null,
         cellCount: result.cells.length,
         venueMarkerCount: result.venueMarkers.length,
       },

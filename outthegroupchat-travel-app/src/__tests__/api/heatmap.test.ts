@@ -21,6 +21,7 @@ vi.mock('@/lib/rate-limit', () => ({
 
 import { GET as GET_HEATMAP } from '@/app/api/heatmap/route';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { __resetFofCacheForTests } from '@/lib/heatmap/fof-graph';
 
 type MockFn = ReturnType<typeof vi.fn>;
 const mockCrew = prisma.crew as unknown as { findMany: MockFn };
@@ -45,6 +46,7 @@ const makeReq = (qs = '') =>
 
 beforeEach(() => {
   vi.resetAllMocks();
+  __resetFofCacheForTests();
   mockCheckRateLimit.mockResolvedValue(RL_PASS);
   mockCrew.findMany.mockResolvedValue([]);
   mockHeatmap.findMany.mockResolvedValue([]);
@@ -90,12 +92,50 @@ describe('GET /api/heatmap — auth + validation', () => {
     expect(body.error).toMatch(/cityArea/i);
   });
 
-  it('400 on tier=fof in Phase 4a', async () => {
+  it('400 on mutualThreshold out of range (>10)', async () => {
     mockGetServerSession.mockResolvedValueOnce(sessionFor());
-    const res = await GET_HEATMAP(makeReq('type=interest&tier=fof'));
+    const res = await GET_HEATMAP(makeReq('type=interest&tier=fof&mutualThreshold=99'));
     expect(res.status).toBe(400);
+  });
+
+  it('400 on subCrewId not a cuid', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
+    const res = await GET_HEATMAP(makeReq('type=interest&tier=fof&subCrewId=not-a-cuid'));
+    expect(res.status).toBe(400);
+  });
+});
+
+describe('GET /api/heatmap — FoF tier (Phase 4b)', () => {
+  it('200 with empty payload when viewer has no Crew (and so no FoF)', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
+    const res = await GET_HEATMAP(makeReq('type=interest&tier=fof&mutualThreshold=1'));
+    expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.error).toMatch(/Phase 4b/);
+    expect(body.success).toBe(true);
+    expect(body.data.tier).toBe('fof');
+    expect(body.data.cells).toEqual([]);
+  });
+
+  it('aggregates a FoF cell with anchor attribution', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
+    // fof-graph: v1 ↔ p1 (anchor); p1 ↔ fof1
+    mockCrew.findMany
+      .mockResolvedValueOnce([{ userAId: 'v1', userBId: 'p1' }])
+      .mockResolvedValueOnce([{ userAId: 'p1', userBId: 'fof1' }])
+      .mockResolvedValueOnce([
+        { userAId: 'v1', userBId: 'p1', createdAt: new Date('2026-04-20T00:00:00Z') },
+      ]);
+    const mockUser = prisma.user as unknown as { findMany: MockFn };
+    mockUser.findMany.mockResolvedValueOnce([{ id: 'p1', name: 'Pat' }]);
+    mockHeatmap.findMany.mockResolvedValueOnce([
+      { id: 'h1', userId: 'fof1', sourceId: 's1', cellLat: 40.728, cellLng: -73.984, cellPrecision: 'BLOCK', identityMode: 'CREW_ANCHORED', socialScope: 'FULL_CREW', windowPreset: 'EVENING', topicId: 't1', type: 'INTEREST' },
+    ]);
+
+    const res = await GET_HEATMAP(makeReq('type=interest&tier=fof&mutualThreshold=1'));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.data.cells).toHaveLength(1);
+    expect(body.data.cells[0].anchorSummary).toBe('via Pat');
   });
 });
 
