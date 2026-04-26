@@ -8,11 +8,10 @@
  *      INTERESTED.
  *   3. Flips the Intent state INTERESTED → COMMITTED.
  *   4. Stamps SubCrewMember.committedAt.
- *   5. Optionally writes a HeatmapContribution if the Intent has a venueId
- *      we can resolve to lat/lng. Privacy axes (R4 + R20) are captured on
- *      the contribution; per-relationship overrides land on
- *      CrewRelationshipSetting via the existing /settings/privacy surface
- *      (out of scope for this PR).
+ *   5. Writes a HeatmapContribution via `buildInterestContributionData`. The
+ *      cell resolves from `Intent.venueId` first; if the Intent is
+ *      cityArea-only the writer falls back to the neighborhood centroid so
+ *      the contribution still surfaces in the Interest heatmap (Phase 4a).
  *
  * Privacy defaults (per the plan / R4):
  *   socialScope    — NOBODY
@@ -34,7 +33,7 @@ import { authOptions } from '@/lib/auth';
 import { apiLogger } from '@/lib/logger';
 import { captureException } from '@/lib/sentry';
 import { apiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
-import { anonymizeCell } from '@/lib/subcrew/cell-anonymize';
+import { buildInterestContributionData } from '@/lib/heatmap/contribution-writer';
 
 type RouteParams = { params: { id: string } };
 
@@ -105,6 +104,7 @@ export async function POST(request: NextRequest, context: RouteParams) {
         expiresAt: true,
         topicId: true,
         windowPreset: true,
+        cityArea: true,
         venueId: true,
       },
     });
@@ -118,17 +118,32 @@ export async function POST(request: NextRequest, context: RouteParams) {
       );
     }
 
-    // Resolve venue lat/lng for an optional HeatmapContribution write.
-    let venueLatLng: { latitude: number; longitude: number } | null = null;
+    let venueLatLng: { latitude: number | null; longitude: number | null } | null = null;
     if (intent.venueId) {
       const venue = await prisma.venue.findUnique({
         where: { id: intent.venueId },
         select: { latitude: true, longitude: true },
       });
-      if (venue && venue.latitude !== null && venue.longitude !== null) {
+      if (venue) {
         venueLatLng = { latitude: venue.latitude, longitude: venue.longitude };
       }
     }
+
+    const contributionData = buildInterestContributionData({
+      userId: callerId,
+      intent: {
+        id: intent.id,
+        venueId: intent.venueId,
+        cityArea: intent.cityArea,
+        topicId: intent.topicId,
+        windowPreset: intent.windowPreset,
+        expiresAt: intent.expiresAt,
+      },
+      venueLatLng,
+      socialScope,
+      granularity,
+      identityMode,
+    });
 
     const now = new Date();
 
@@ -146,32 +161,13 @@ export async function POST(request: NextRequest, context: RouteParams) {
       }),
     ];
 
-    let contributionId: string | null = null;
-    if (venueLatLng && granularity !== 'HIDDEN') {
-      const cell = anonymizeCell(venueLatLng.latitude, venueLatLng.longitude, granularity);
-      if (cell) {
-        writes.push(
-          prisma.heatmapContribution.create({
-            data: {
-              userId: callerId,
-              type: 'INTEREST',
-              sourceId: intent.id,
-              cellLat: cell.cellLat,
-              cellLng: cell.cellLng,
-              cellPrecision: granularity,
-              topicId: intent.topicId,
-              windowPreset: intent.windowPreset,
-              socialScope,
-              identityMode,
-              expiresAt: intent.expiresAt,
-            },
-          }),
-        );
-      }
+    if (contributionData) {
+      writes.push(prisma.heatmapContribution.create({ data: contributionData }));
     }
 
     const results = await prisma.$transaction(writes);
-    if (results.length === 3) {
+    let contributionId: string | null = null;
+    if (contributionData && results.length === 3) {
       const created = results[2] as { id?: string };
       contributionId = created.id ?? null;
     }

@@ -7,6 +7,7 @@ import { logger } from '@/lib/logger';
 import { captureException } from '@/lib/sentry';
 import { apiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 import { triggerCheckinEvent } from '@/lib/pusher';
+import { writePresenceContribution } from '@/lib/heatmap/contribution-writer';
 
 // ============================================
 // CONSTANTS
@@ -174,6 +175,29 @@ export async function POST(request: NextRequest) {
       } catch {
         // Pusher failure is non-fatal
       }
+    }
+
+    // V1 Phase 4 — write a PRESENCE HeatmapContribution. Non-fatal: a missing
+    // contribution just means this check-in won't surface in the Presence
+    // heatmap (e.g. PRIVATE visibility, or no resolvable lat/lng).
+    try {
+      await writePresenceContribution({
+        userId: callerId,
+        checkIn: {
+          id: checkIn.id,
+          venueId: checkIn.venueId,
+          latitude: checkIn.latitude,
+          longitude: checkIn.longitude,
+          visibility: checkIn.visibility,
+          activeUntil: checkIn.activeUntil,
+        },
+      });
+    } catch (err) {
+      captureException(err);
+      logger.error(
+        { err, checkInId: checkIn.id },
+        '[CHECKIN_POST] writePresenceContribution failed (non-fatal)',
+      );
     }
 
     logger.info({ checkInId: checkIn.id, userId: callerId }, '[CHECKIN_POST] Check-in created');
