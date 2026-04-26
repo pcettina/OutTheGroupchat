@@ -9,9 +9,15 @@
  * (default 90 days). The 90-day default preserves `rawText` for v1.5 embedder
  * training while keeping the table small.
  *
- * Scheduled via Vercel Cron (see vercel.json) every 10 minutes. Vercel Cron
- * issues GET requests only, so this handler responds to GET. Protected by
- * `CRON_SECRET` bearer token to match the existing cron pattern.
+ * Scheduled via Vercel Cron (see vercel.json) once a day at 03:00 UTC.
+ * The plan called for every 10 minutes, but Vercel's Hobby tier only
+ * permits daily cron schedules — sub-daily would fail vercel.json
+ * validation and block ALL deploys. Daily is fine here because expiry
+ * is implicit at read time (every Intent query filters
+ * `expiresAt > now()`); this cron is purely retention hygiene.
+ * Vercel Cron issues GET requests only, so this handler responds to
+ * GET. Protected by `CRON_SECRET` bearer token to match the existing
+ * cron pattern.
  *
  * Returns counts of currently-expired and just-deleted Intents for monitoring.
  */
