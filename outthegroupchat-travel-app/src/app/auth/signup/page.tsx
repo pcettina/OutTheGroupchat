@@ -4,6 +4,9 @@ import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
+import Image from 'next/image';
+import { motion } from 'framer-motion';
+import { Sparkles, AlertCircle, Loader2 } from 'lucide-react';
 
 interface PendingInvitation {
   id: string;
@@ -65,7 +68,7 @@ function SignUpForm() {
 
       if (signInResult?.error) {
         // If auto sign-in fails, redirect to sign-in page with the redirect preserved
-        const signInUrl = redirectTo 
+        const signInUrl = redirectTo
           ? `/auth/signin?registered=true&redirect=${encodeURIComponent(redirectTo)}`
           : '/auth/signin?registered=true';
         router.push(signInUrl);
@@ -79,7 +82,7 @@ function SignUpForm() {
           const tripIdMatch = redirectTo.match(/\/trips\/([^/?]+)/);
           if (tripIdMatch) {
             const tripId = tripIdMatch[1];
-            
+
             // Fetch user's pending invitations
             const invitationsResponse = await fetch('/api/invitations');
             if (invitationsResponse.ok) {
@@ -87,7 +90,7 @@ function SignUpForm() {
               const pendingInvitation = invitationsData.data?.find(
                 (inv: PendingInvitation) => inv.tripId === tripId && inv.status === 'PENDING'
               );
-              
+
               if (pendingInvitation) {
                 // Auto-accept the invitation
                 const acceptResponse = await fetch(`/api/invitations/${pendingInvitation.id}`, {
@@ -95,7 +98,7 @@ function SignUpForm() {
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ action: 'accept' }),
                 });
-                
+
                 if (acceptResponse.ok) {
                   // Successfully accepted, redirect to trip
                   router.push(redirectTo);
@@ -121,134 +124,194 @@ function SignUpForm() {
   };
 
   // Build sign-in link preserving redirect
-  const signInHref = redirectTo 
+  const signInHref = redirectTo
     ? `/auth/signin?redirect=${encodeURIComponent(redirectTo)}`
     : '/auth/signin';
 
   return (
-    <div className="max-w-md w-full space-y-8">
-      <div>
-        {isInvitation && (
-          <div className="mb-4 rounded-md bg-green-50 p-4 border border-green-200">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <span className="text-2xl">🎉</span>
-              </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-green-800">
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+      className="w-full max-w-md"
+    >
+      {/* Logo-mark + wordmark */}
+      <Link
+        href="/"
+        className="flex items-center justify-center gap-2.5 mb-8 group"
+      >
+        <Image
+          src="/logo-mark.svg"
+          alt=""
+          aria-hidden="true"
+          width={28}
+          height={44}
+          priority
+          className="h-10 w-auto transition-transform group-hover:-translate-y-0.5"
+        />
+        <span className="font-display font-bold text-2xl tracking-tight">
+          <span className="text-otg-sodium">Out</span>
+          <span className="text-otg-text-bright">TheGroupchat</span>
+        </span>
+      </Link>
+
+      {/* Card */}
+      <div className="card card-glass p-7 sm:p-8 relative overflow-hidden">
+        <div className="pointer-events-none absolute -top-24 -right-24 w-56 h-56 rounded-full bg-otg-sodium/15 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-32 -left-20 w-56 h-56 rounded-full bg-otg-bourbon/10 blur-3xl" />
+
+        <div className="relative">
+          {isInvitation && (
+            <div className="bg-green-50 !bg-otg-tile/10 border border-otg-tile/30 rounded-xl p-4 mb-6 flex items-start gap-3">
+              <Sparkles className="w-5 h-5 text-otg-tile flex-shrink-0 mt-0.5" aria-hidden="true" />
+              <div>
+                <p className="text-sm font-semibold text-otg-text-bright">
                   You&apos;ve been invited to a trip!
-                </h3>
-                <p className="mt-1 text-sm text-green-700">
-                  Create an account to accept your invitation and start planning together.
+                </p>
+                <p className="mt-1 text-sm text-otg-text-dim">
+                  Create an account to accept and start planning together.
                 </p>
               </div>
             </div>
+          )}
+
+          <div className="mb-6">
+            <h2 className="font-display font-bold text-3xl tracking-tight text-otg-text-bright">
+              {isInvitation ? 'Join OutTheGroupchat' : 'Create your account'}
+            </h2>
+            <p className="mt-2 text-sm text-otg-text-dim">
+              Already in?{' '}
+              <Link
+                href={signInHref}
+                className="font-medium text-otg-sodium hover:text-otg-sodium-300 transition-colors"
+              >
+                sign in to your account
+              </Link>
+            </p>
           </div>
-        )}
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          {isInvitation ? 'Join OutTheGroupchat' : 'Create your account'}
-        </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
-          Or{' '}
-          <Link
-            href={signInHref}
-            className="font-medium text-indigo-600 hover:text-indigo-500"
-          >
-            sign in to your account
-          </Link>
-        </p>
+
+          {error && (
+            <div
+              role="alert"
+              className="bg-red-50 !bg-otg-danger/10 border border-otg-danger/30 rounded-xl p-3.5 mb-5 flex items-start gap-2.5"
+            >
+              <AlertCircle className="w-5 h-5 text-otg-danger flex-shrink-0 mt-0.5" aria-hidden="true" />
+              <p className="text-sm text-otg-text-bright">{error}</p>
+            </div>
+          )}
+
+          <form className="space-y-4" onSubmit={handleSubmit}>
+            <div>
+              <label
+                htmlFor="name"
+                className="block text-sm font-medium text-otg-text-bright mb-1.5"
+              >
+                Full name
+              </label>
+              <input
+                id="name"
+                name="name"
+                type="text"
+                required
+                placeholder="Alex Morgan"
+                className="input"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-otg-text-bright mb-1.5"
+              >
+                Email
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                placeholder="you@example.com"
+                className="input"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-otg-text-bright mb-1.5"
+              >
+                Password
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                required
+                minLength={8}
+                placeholder="At least 8 characters"
+                className="input"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="confirmPassword"
+                className="block text-sm font-medium text-otg-text-bright mb-1.5"
+              >
+                Confirm password
+              </label>
+              <input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                required
+                placeholder="Repeat your password"
+                className="input"
+              />
+            </div>
+
+            <motion.button
+              whileTap={{ scale: 0.98 }}
+              type="submit"
+              disabled={isLoading}
+              className="btn btn-primary w-full text-base mt-2"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" aria-hidden="true" />
+                  Creating account...
+                </>
+              ) : (
+                'Create account'
+              )}
+            </motion.button>
+          </form>
+        </div>
       </div>
 
-      {error && (
-        <div className="rounded-md bg-red-50 p-4">
-          <div className="text-sm text-red-700">{error}</div>
-        </div>
-      )}
-
-      <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-        <div className="rounded-md shadow-sm -space-y-px">
-          <div>
-            <label htmlFor="name" className="sr-only">
-              Full name
-            </label>
-            <input
-              id="name"
-              name="name"
-              type="text"
-              required
-              className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-              placeholder="Full name"
-            />
-          </div>
-          <div>
-            <label htmlFor="email" className="sr-only">
-              Email address
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              required
-              className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-              placeholder="Email address"
-            />
-          </div>
-          <div>
-            <label htmlFor="password" className="sr-only">
-              Password
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              required
-              className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-              placeholder="Password"
-            />
-          </div>
-          <div>
-            <label htmlFor="confirmPassword" className="sr-only">
-              Confirm password
-            </label>
-            <input
-              id="confirmPassword"
-              name="confirmPassword"
-              type="password"
-              required
-              className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-              placeholder="Confirm password"
-            />
-          </div>
-        </div>
-
-        <div>
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-          >
-            {isLoading ? 'Creating account...' : 'Create account'}
-          </button>
-        </div>
-      </form>
-    </div>
+      <p className="text-center text-xs text-otg-text-dim mt-6">
+        By creating an account, you&apos;re here to actually show up.
+      </p>
+    </motion.div>
   );
 }
 
 function SignUpLoading() {
   return (
-    <div className="max-w-md w-full space-y-8 animate-pulse">
-      <div>
-        <div className="h-8 bg-gray-200 rounded w-3/4 mx-auto mb-4" />
-        <div className="h-4 bg-gray-200 rounded w-1/2 mx-auto" />
+    <div className="w-full max-w-md">
+      <div className="flex items-center justify-center gap-2.5 mb-8">
+        <div className="h-10 w-7 skeleton rounded-md" />
+        <div className="h-7 w-48 skeleton rounded-md" />
       </div>
-      <div className="space-y-4">
-        <div className="h-10 bg-gray-200 rounded" />
-        <div className="h-10 bg-gray-200 rounded" />
-        <div className="h-10 bg-gray-200 rounded" />
-        <div className="h-10 bg-gray-200 rounded" />
-        <div className="h-10 bg-gray-200 rounded" />
+      <div className="card card-glass p-7 sm:p-8 space-y-4">
+        <div className="h-8 w-3/4 skeleton rounded-md" />
+        <div className="h-4 w-1/2 skeleton rounded-md" />
+        <div className="h-12 skeleton rounded-xl" />
+        <div className="h-12 skeleton rounded-xl" />
+        <div className="h-12 skeleton rounded-xl" />
+        <div className="h-12 skeleton rounded-xl" />
+        <div className="h-12 skeleton rounded-xl" />
       </div>
     </div>
   );
@@ -256,7 +319,14 @@ function SignUpLoading() {
 
 export default function SignUpPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="relative min-h-screen flex items-center justify-center bg-otg-bg-dark px-4 py-12 sm:px-6 lg:px-8 overflow-hidden">
+      {/* Sodium-lamp ambient halos */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-[28rem] h-[28rem] bg-otg-sodium/15 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-[24rem] h-[24rem] bg-otg-bourbon/10 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 left-1/3 w-72 h-72 bg-otg-tile/10 rounded-full blur-3xl" />
+      </div>
+
       <Suspense fallback={<SignUpLoading />}>
         <SignUpForm />
       </Suspense>
