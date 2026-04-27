@@ -10,6 +10,7 @@ import {
 } from './generators/social';
 import { seedSocialDomain } from './generators/socialDomain';
 import { seedTopics } from './generators/topics';
+import { seedHeatmapFixtures } from './generators/heatmap-fixtures';
 
 const prisma = new PrismaClient();
 
@@ -85,6 +86,17 @@ async function main() {
     await seedTopics(prisma);
   } catch (err) {
     console.error('   ⚠️  Topic seed failed (non-fatal):', err);
+  }
+
+  // 10. Heatmap test fixtures (V1 Phase 4) — 3 users + Crew + Intents +
+  // SubCrew + HeatmapContribution + CheckIn so /heatmap has visible data
+  // immediately. Skips dev-only when SEED_HEATMAP_FIXTURES=false.
+  if (process.env.SEED_HEATMAP_FIXTURES !== 'false') {
+    try {
+      await seedHeatmapFixtures(prisma);
+    } catch (err) {
+      console.error('   ⚠️  Heatmap fixtures seed failed (non-fatal):', err);
+    }
   }
 
   console.log('\n' + '='.repeat(50));
