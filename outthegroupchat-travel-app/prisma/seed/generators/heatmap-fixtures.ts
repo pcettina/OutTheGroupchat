@@ -131,20 +131,16 @@ export async function seedHeatmapFixtures(prisma: PrismaClient): Promise<void> {
   ]);
 
   // Crew edges (Alice ↔ Bob, Bob ↔ Carol — NOT Alice ↔ Carol).
+  // Schema enforces `userAId < userBId` lexicographic ordering at the DB
+  // (Crew_user_order_check, see migrations/20260418120000_crew_check_constraint).
+  // requestedById is independent of A/B order.
+  const orderedPair = (a: string, b: string) =>
+    a < b ? { userAId: a, userBId: b } : { userAId: b, userBId: a };
+
   await prisma.crew.createMany({
     data: [
-      {
-        userAId: alice.id,
-        userBId: bob.id,
-        status: 'ACCEPTED',
-        requestedById: alice.id,
-      },
-      {
-        userAId: bob.id,
-        userBId: carol.id,
-        status: 'ACCEPTED',
-        requestedById: bob.id,
-      },
+      { ...orderedPair(alice.id, bob.id), status: 'ACCEPTED', requestedById: alice.id },
+      { ...orderedPair(bob.id, carol.id), status: 'ACCEPTED', requestedById: bob.id },
     ],
   });
 
