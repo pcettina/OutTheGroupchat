@@ -15,9 +15,9 @@
 
 > **⚠️ Scope change (2026-04-16):** This checklist is now STALE against the new social-meetup product. It will be rewritten in Phase 8 of `docs/REFACTOR_PLAN.md`. Trip-era checklist items below remain visible for reference but should **NOT** be used to gate launch. Readiness scores below reflect the archived trip product and are intentionally left unchanged to avoid implying progress against the new scope.
 >
-> **Target Launch:** Q2 2026 (Beta) — to be re-baselined post-pivot
-> **Current Status:** Refactoring (Phase 2 in progress — domain models added, DB migration pending)
-> **Last Updated:** 2026-04-22 (Phase 6 COMPLETE — feed rescoped, search people-first, notification types migrated, types cleanup; Phase 7 Marketing surface is next)
+> **Target Launch:** Q2 2026 (Beta) — to be re-baselined post-V1
+> **Current Status:** V1 phases 0–4b shipped (data model, intents, subcrews, coordinate, venue recs, heatmap Crew + FoF). V1 Phase 5 (privacy + edge cases) and launch-readiness audit (Sentry coverage, E2E Playwright) remain.
+> **Last Updated:** 2026-04-28 (V1 Phase 4b heatmap merged; legacy `REFACTOR_PLAN.md` superseded by `V1_IMPLEMENTATION_PLAN.md`; production Neon migration workflow active)
 
 ---
 
