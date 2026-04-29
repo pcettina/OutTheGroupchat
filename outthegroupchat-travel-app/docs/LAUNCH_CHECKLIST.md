@@ -16,8 +16,16 @@
 > **⚠️ Scope change (2026-04-16):** This checklist is now STALE against the new social-meetup product. It will be rewritten in Phase 8 of `docs/REFACTOR_PLAN.md`. Trip-era checklist items below remain visible for reference but should **NOT** be used to gate launch. Readiness scores below reflect the archived trip product and are intentionally left unchanged to avoid implying progress against the new scope.
 >
 > **Target Launch:** Q2 2026 (Beta) — to be re-baselined post-V1
-> **Current Status:** V1 phases 0–4b shipped (data model, intents, subcrews, coordinate, venue recs, heatmap Crew + FoF). V1 Phase 5 (privacy + edge cases) and launch-readiness audit (Sentry coverage, E2E Playwright) remain.
-> **Last Updated:** 2026-04-28 (V1 Phase 4b heatmap merged; legacy `REFACTOR_PLAN.md` superseded by `V1_IMPLEMENTATION_PLAN.md`; production Neon migration workflow active)
+> **Current Status:** V1 phases 0–4b shipped + V1 Phase 5 partial slice in flight on `nightly/2026-04-29` (notification preferences API ✅ + daily prompt cron ✅ + settings UI ✅). Remaining for Phase 5: per-member-intent notification dispatch and daily-prompt fan-out (matching prompts → intents → Crew members). Launch-readiness audit (Sentry coverage on V1 routes, E2E Playwright authenticated flows) still open.
+>
+> **V1 Phase 5 progress:**
+> - [x] `GET/PATCH /api/users/notification-preferences` ✅ 2026-04-29
+> - [x] `GET /api/cron/send-daily-prompts` (13:00 UTC) + `vercel.json` cron entry ✅ 2026-04-29
+> - [x] `/settings/notifications` page + `NotificationSettingsForm` component ✅ 2026-04-29
+> - [ ] Per-member-intent notification dispatch (next session)
+> - [ ] Daily-prompt fan-out: match prompts → intents/topics → Crew members (next session)
+>
+> **Last Updated:** 2026-04-29 (V1 Phase 5 partial: notification preferences + daily prompt cron + settings UI shipped on `nightly/2026-04-29`)
 
 ---
 
