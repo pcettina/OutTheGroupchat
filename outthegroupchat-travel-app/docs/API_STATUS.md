@@ -1,6 +1,6 @@
 # 📡 API & Integration Status
 
-> **Last Updated: 2026-04-22**
+> **Last Updated: 2026-04-30** — V1 Phase 1–5 shipped (intents, subcrews, daily prompt cron, notification settings). Tonight's nightly added 76 tests (intents-extended.test.ts +32, subcrews-extended.test.ts +44) and fixed TSC regression in `prisma/scripts/seed-heatmap-only.ts`.
 >
 > **Archival:** trip/activity routes moved to `src/app/api/_archive/` as of 2026-04-16 Phase 1. See REFACTOR_PLAN.md. Sections below that reference `/api/trips/*` and `/api/activities/*` reflect the pre-archive state for historical context; authoritative status for these routes is the "📦 Archived Routes" section near the bottom of this file.
 >
