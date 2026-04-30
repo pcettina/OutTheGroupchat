@@ -17,7 +17,7 @@
 >
 > **Target Launch:** Q2 2026 (Beta) — to be re-baselined post-pivot
 > **Current Status:** Refactoring (Phase 2 in progress — domain models added, DB migration pending)
-> **Last Updated:** 2026-04-22 (Phase 6 COMPLETE — feed rescoped, search people-first, notification types migrated, types cleanup; Phase 7 Marketing surface is next)
+> **Last Updated:** 2026-04-30 (V1 Phase 1–5 shipped on main: signal intent, subcrews, heatmap tiers, daily prompt cron + notification settings. Tonight's nightly: +76 tests on intents/subcrews routes, TSC regression fix in seed-heatmap-only.ts.)
 
 ---
 

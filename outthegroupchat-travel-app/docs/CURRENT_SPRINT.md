@@ -1,7 +1,25 @@
 # 🟢 Complete — Phase 6: Feed/AI/Notifications Rescope (all sessions delivered)
 
 > **Status:** Phase 6 COMPLETE as of 2026-04-22 (nightly/2026-04-22 PR #55). All 4 Phase 6 actions done: feed rescoped, AI routes added, notification types migrated, search rescoped people-first. Phase 7 (Marketing surface) is next.
-> **Test count:** ~1050 tests passing; 58 test files (+3 new: feed.test.ts, feed-extended.test.ts, notifications-rescoped.test.ts)
+> **Test count:** 1157 tests passing on `nightly/2026-04-30`; 66 test files (+2 new tonight: intents-extended.test.ts, subcrews-extended.test.ts)
+
+---
+
+## 🟢 Completed 2026-04-30 (Nightly Build nightly/2026-04-30)
+
+### Wave 1 — Tests
+- [T1] `src/__tests__/api/intents-extended.test.ts` — 32 tests covering `/api/intents/mine`, `/api/intents/crew`, `/api/intents/[id]` (PATCH, DELETE). Auth, validation, rate-limit, window/state edge cases, ownership and 500 paths.
+- [T2] `src/__tests__/api/subcrews-extended.test.ts` — 44 tests covering all 6 SubCrew routes: `mine`, `emerging`, `[id]` (GET+PATCH), `[id]/join`, `[id]/commit`, `[id]/members/me`. Auth (401), validation (400), 404/409, happy path.
+
+### Pre-wave — Maintenance
+- Fixed TSC regression in `prisma/scripts/seed-heatmap-only.ts` (dropped `.ts` extensions from import paths — were not allowed under current `tsconfig`).
+- Cleaned stale Wave-coordination TODO comments in `src/app/checkins/page.tsx` (CheckInButton was already shipped; uncommented the import + JSX and removed placeholder block).
+
+### Wave 3 — Shared Files
+- `docs/CODEMAP.md`: refreshed Last Updated + counts (72 routes, 66 test files, 1157 tests, 291 TS/TSX files).
+- `docs/API_STATUS.md`: refreshed Last Updated header.
+- `docs/LAUNCH_CHECKLIST.md`: refreshed Last Updated header.
+- `docs/CURRENT_SPRINT.md`: tonight's section added.
 
 ---
 
