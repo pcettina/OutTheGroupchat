@@ -26,7 +26,7 @@ export async function GET() {
 
     return NextResponse.json({ success: true, data: { topics } });
   } catch (error) {
-    captureException(error);
+    captureException(error, { route: '/api/topics', method: 'GET' });
     apiLogger.error({ error }, '[TOPICS_GET] Failed to list topics');
     return NextResponse.json(
       { success: false, error: 'Failed to list topics' },

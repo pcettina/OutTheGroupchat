@@ -78,7 +78,7 @@ export async function GET(req: Request) {
       retentionDays: safeRetentionDays,
     });
   } catch (error) {
-    captureException(error);
+    captureException(error, { route: '/api/cron/expire-intents', method: 'GET' });
     apiLogger.error({ context: 'CRON_EXPIRE_INTENTS', error }, 'Cron failed');
     return NextResponse.json({ error: 'Cron failed' }, { status: 500 });
   }

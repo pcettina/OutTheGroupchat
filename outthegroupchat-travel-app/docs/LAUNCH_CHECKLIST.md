@@ -16,8 +16,8 @@
 > **⚠️ Scope change (2026-04-16):** This checklist is now STALE against the new social-meetup product. It will be rewritten in Phase 8 of `docs/REFACTOR_PLAN.md`. Trip-era checklist items below remain visible for reference but should **NOT** be used to gate launch. Readiness scores below reflect the archived trip product and are intentionally left unchanged to avoid implying progress against the new scope.
 >
 > **Target Launch:** Q2 2026 (Beta) — to be re-baselined post-pivot
-> **Current Status:** Refactoring (Phase 2 in progress — domain models added, DB migration pending)
-> **Last Updated:** 2026-04-22 (Phase 6 COMPLETE — feed rescoped, search people-first, notification types migrated, types cleanup; Phase 7 Marketing surface is next)
+> **Current Status:** POST_PIVOT_STEADY_STATE — V1 surface live, nightly builds steady-state
+> **Last Updated:** 2026-05-04 (nightly/2026-05-05 — Sentry context tags added to all 14 V1 routes; 4 dead components removed: TripHistory, BadgeShowcase, PreferencesCard, FloatingShareButton; RichFeedItem refactored 717→222 lines; +128 new tests across 5 new test files)
 
 ---
 
@@ -217,6 +217,8 @@
 ### Error Tracking
 - [x] Sentry installed and configured ✅ 2026-03-10 (instrumentation-client.ts onRouterTransitionStart fixed 2026-03-20; src/lib/sentry.ts helper created 2026-03-25; needs real DSN in Vercel)
 - [x] Sentry captureException added to 19/48 routes ✅ 2026-04-16 (feed x4, notifications x2, trips/route x1, trips/[tripId] x8, auth x4)
+- [x] Sentry context tags added to all 14 V1 routes ✅ 2026-05-04 (subcrews 6: [id], join, commit, members/me, emerging, mine; intents/topics/heatmap/recommendations/expire-intents 8)
+- [x] Dead components purged ✅ 2026-05-04 (TripHistory, BadgeShowcase, PreferencesCard, FloatingShareButton removed; barrel exports cleaned)
 - [ ] Error alerts configured (pending Sentry DSN)
 - [ ] Source maps uploaded (pending Sentry DSN)
 

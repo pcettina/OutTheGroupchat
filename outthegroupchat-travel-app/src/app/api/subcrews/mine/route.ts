@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: { subCrews } });
   } catch (error) {
-    captureException(error);
+    captureException(error, { route: 'api/subcrews/mine', method: 'GET' });
     apiLogger.error({ error }, '[SUBCREW_GET_MINE] Failed to list subcrews');
     return NextResponse.json(
       { success: false, error: 'Failed to list subcrews' },

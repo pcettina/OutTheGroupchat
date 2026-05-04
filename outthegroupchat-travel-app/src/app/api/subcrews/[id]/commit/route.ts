@@ -199,7 +199,7 @@ export async function POST(request: NextRequest, context: RouteParams) {
       { status: 200 },
     );
   } catch (error) {
-    captureException(error);
+    captureException(error, { route: 'api/subcrews/[id]/commit', method: 'POST' });
     apiLogger.error({ error }, '[SUBCREW_COMMIT] Failed to commit');
     return NextResponse.json(
       { success: false, error: 'Failed to commit' },
