@@ -1,3 +1,19 @@
+/**
+ * @module lib/invitations
+ *
+ * Trip invitation processing helper. Centralises the dual-path invitation
+ * flow used by trip member endpoints:
+ *
+ *  - Registered users → create a `TripInvitation` row + in-app notification
+ *    (or extend the existing PENDING invitation's expiry).
+ *  - Unregistered emails → create / update a `PendingInvitation` row and
+ *    send an email via Resend so they can accept after sign-up.
+ *
+ * As a side effect, a trip in `PLANNING` status is transitioned to
+ * `INVITING` once at least one invitation has been processed. The function
+ * never throws on a per-email error — failures are collected in the
+ * `errors` array so the caller can return a partial-success response.
+ */
 import { prisma } from '@/lib/prisma';
 import { sendInvitationEmail, isEmailConfigured } from '@/lib/email';
 import { logger } from '@/lib/logger';
@@ -19,9 +35,24 @@ interface ProcessInvitationsParams {
 }
 
 /**
- * Process member invitation emails for a trip.
- * Handles both registered users (creates TripInvitation) and
- * unregistered emails (creates PendingInvitation + sends email).
+ * Process a batch of member invitation emails for a trip.
+ *
+ * For each email: if the address belongs to a registered user, a
+ * `TripInvitation` (+ notification) is created — or the existing PENDING
+ * invitation's expiry is refreshed. Otherwise a `PendingInvitation` is
+ * upserted and an invitation email is dispatched (best-effort). Existing
+ * trip members are reported as `skipped` errors. After processing, the
+ * trip is moved from `PLANNING` to `INVITING` if it was still in PLANNING.
+ *
+ * @param params - Invitation batch parameters
+ * @param params.tripId - Trip the invitations are scoped to
+ * @param params.tripTitle - Human-readable trip title used in emails / notifications
+ * @param params.emails - Email addresses to invite (registered or not)
+ * @param params.inviterId - User ID of the inviter (stored on PendingInvitation.invitedBy)
+ * @param params.inviterName - Inviter's display name used in invitation email copy
+ * @param params.expirationHours - Invitation lifetime in hours (default 24)
+ * @returns Partition of per-email outcomes: `invitations` for successful / queued
+ *   sends and `errors` for skipped (already-member) or failed entries. Never rejects.
  */
 export async function processInvitations({
   tripId,

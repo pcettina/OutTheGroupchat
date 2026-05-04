@@ -33,5 +33,4 @@ export { EmptyState, EmptyTrips, EmptyNotifications } from './EmptyState';
 export { Tabs, TabsList, TabsTrigger, TabsContent } from './Tabs';
 export { Switch } from './Switch';
 export { Select } from './Select';
-export { FloatingShareButton } from './FloatingShareButton';
 

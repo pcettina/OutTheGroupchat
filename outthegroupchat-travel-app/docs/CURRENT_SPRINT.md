@@ -5,6 +5,49 @@
 
 ---
 
+## Completed 2026-05-04 (Nightly Build nightly/2026-05-05)
+
+> POST_PIVOT_STEADY_STATE — no phase exits triggered. Wave 1 added 128 new tests (5 files), Wave 2 shipped 6 tasks (1 large refactor, 2 sentry sweeps, 2 docs/JSDoc tasks, 1 dead component cleanup). All TSC checks green.
+
+### Wave 1 — Tests (128 new tests, 5 new files)
+
+- [W1] `src/__tests__/api/subcrews-actions.test.ts` (30 tests) — POST `/api/subcrews/[id]/join`, POST `/api/subcrews/[id]/commit`, DELETE `/api/subcrews/[id]/members/me`
+- [W1] `src/__tests__/api/subcrews-listing.test.ts` (24 tests) — GET `/api/subcrews/emerging`, GET `/api/subcrews/mine`
+- [W1] `src/__tests__/api/intents-detail.test.ts` (41 tests) — `/api/intents/[id]` PATCH/DELETE, `/api/intents/mine`, `/api/intents/crew`
+- [W1] `src/__tests__/api/recommendations-edge.test.ts` (16 tests) — `/api/recommendations` edge cases
+- [W1] `src/__tests__/api/heatmap-edge.test.ts` (17 tests) — `/api/heatmap` edge cases
+
+### Wave 2 — Features
+
+- [L4] `src/components/feed/RichFeedItem.tsx` refactored 717 → 222 lines; 11 subcomponents extracted under `src/components/feed/rich-item/`
+- [L5] Sentry context tags added to 6 subcrews routes — `subcrews/[id]`, `[id]/join`, `[id]/commit`, `[id]/members/me`, `emerging`, `mine`
+- [L6] Sentry context tags added to 8 V1 routes — `intents/route`, `intents/[id]`, `intents/mine`, `intents/crew`, `topics`, `heatmap`, `recommendations`, `cron/expire-intents`
+- [M3] JSDoc added to `src/lib/email-meetup.ts` + `src/lib/invitations.ts`
+- [M4] 4 dead components deleted — `TripHistory.tsx`, `BadgeShowcase.tsx`, `PreferencesCard.tsx`, `FloatingShareButton.tsx`; barrel exports cleaned
+- [M5] `README.md` "Recent Updates" rewritten to reflect post-pivot status
+
+### TSC Fix (coordinator-applied)
+
+- `prisma/scripts/seed-heatmap-only.ts` — removed `.ts` extensions from imports (resolved 2 TSC errors)
+
+### Phase 3.5 — Small Task Metrics (automated)
+
+- `any` types in production code: 0 (4 hits were comments only)
+- `console.*` in production: 0
+- TODO/FIXME comments: 0
+- Files >600 lines (production): 2 (RichFeedItem dropped 717→222; profile/page.tsx still 623)
+- Test files: 86 → 91 (+5 from Wave 1)
+- API route files: 72
+
+### Metrics
+
+- Tests: ~917 baseline → ~1045 (+128 new from Wave 1)
+- Test files: 86 → 91
+- API routes: 72 (drift correction — was previously claimed 50/58)
+- Sentry coverage: +14 V1 routes instrumented this build (subcrews 6 + intents/topics/heatmap/recommendations/expire-intents 8)
+
+---
+
 ## 🟢 Completed 2026-04-22 (Nightly Build nightly/2026-04-22)
 
 ### Wave 1 — Tests

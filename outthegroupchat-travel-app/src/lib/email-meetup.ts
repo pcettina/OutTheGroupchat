@@ -1,3 +1,15 @@
+/**
+ * @module lib/email-meetup
+ *
+ * Transactional meetup email senders extracted from `lib/email.ts`. Each
+ * function wraps a Resend send call with graceful-degradation semantics:
+ * if Resend is not configured (no `RESEND_API_KEY`) or the network call
+ * fails, the error is logged via `logError` but never thrown — meetup API
+ * routes must not 500 just because email delivery is unavailable.
+ *
+ * All functions share the same notification-email layout (HTML + plain
+ * text fallback) and a meetup-detail URL pattern of `${APP_URL}/meetups/${id}`.
+ */
 import { Resend } from 'resend';
 import { logError } from '@/lib/logger';
 

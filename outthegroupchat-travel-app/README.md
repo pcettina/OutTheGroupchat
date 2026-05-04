@@ -12,9 +12,9 @@ A LinkedIn-style social network built for in-person meetups, not trip planning. 
 - **Feed** - See who's out, what's happening, and activity from your connections
 - **Real-time** - Pusher-powered live updates for check-ins, RSVPs, and notifications
 
-## Pivot Status
+## Status
 
-> **Active refactor: Phase 5 of 8.** Phase 4 (Meetups) complete — PRs #48, #49, #51. Phase 5 (Check-ins & live presence) now starting. Trip-planning code archived in `src/_archive/` (see `docs/REFACTOR_PLAN.md`). All infrastructure — auth, database, real-time, API layer — is 100% reused. No data loss; schema migrations are additive.
+> **Post-pivot: V1 product loop active (intent → subcrew → meetup), heatmap shipped (Crew + FoF tiers, PR #86/#87).** The v1 product vision (signal intent → auto-group at ≥2 Crew on same Topic → coordinate + venue recs → opt-in location visibility) is founder-locked. See `docs/PRODUCT_VISION.md` for the full spec. Trip-planning code archived in `src/_archive/`. AI surface fully removed (PR #65, 2026-04-23).
 
 ## Tech Stack
 
@@ -197,15 +197,14 @@ Built with ❤️ by the OutTheGroupchat Team
 
 ## Recent Updates
 
-- **2026-04-20:** Phase 5 session 2 complete (PR #53). Privacy settings (GET/PATCH /api/users/privacy), Pusher city broadcast on check-in, GET /api/checkins/[id] visibility gate, /checkins/[id] detail page, feed visibility filter. 994 tests passing across 51 active API routes.
-- **2026-04-16:** Product pivot to social meetup network initiated. Phase 1 complete: trip-planning surface archived to `src/_archive/` (routes, pages, components, services). README and docs updated to reflect new vision. 841 tests passing post-archive across 35 active API routes.
-- **2026-04-16:** Sentry error monitoring expanded to 19/48 API routes; beta/status migrated to Redis rate limiting; dead components removed (DestinationCard, CategoryFilter, TrendingSection, TravelBadges); 112 new tests added (1,346+ total pre-archive)
-- **2026-04-15:** Sentry instrumented on 13 routes; beta/status Redis migration; JSDoc additions across lib/api modules
-- **2026-04-14:** Zod validation added to flights, suggestions, cron routes; Sentry expanded to 18 routes on branch
-- **2026-04-13:** Sentry installed on auth and AI routes; addBreadcrumb wrapper exported from lib/sentry; structured logging complete
-- **2026-04-08:** GitHub Actions CI configured; DeleteTripModal wired; survey/vote page error handling improved
-- **2026-04-06:** Security audit score 8→9/10; JSDoc added across 14 lib/service files; discover search wired
+- **2026-04-30:** Intents/subcrews test coverage (+76 tests) plus TSC fix — strengthens v1 loop reliability.
+- **2026-04-29:** V1 Phase 5 partial — coordination + venue recommendation surfaces wired into the subcrew flow.
+- **2026-04-25:** V1 Phase 4 heatmap shipped — Crew tier (PR #86) + FoF tier (PR #87) with maplibre-gl + OpenFreeMap, R22 z=15 venue markers, R24 anchor priority 1/3/4. Contribution writers wired into commit + check-in paths.
+- **2026-04-23:** Production Neon migration workflow merged (PR #90) — automated `prisma migrate deploy` against the Neon production branch.
+- **2026-04-23:** AI surface fully removed (PR #65) — no `/api/ai/*` routes, no `@ai-sdk/*`, no `src/lib/ai`, no `src/components/ai`. Project no longer ships any LLM dependencies.
+- **2026-04-23:** CSP fix (PR #89) — allow maplibre tiles + worker, drop stale AI origins so the heatmap renders cleanly under strict CSP.
+- **2026-04-22:** Phase 7/Phase 8 launch-readiness work landed — About page, OG/Twitter cards, README rewrite, email-auth split, search cleanup, RichFeedItem refactor.
 
 ---
 
-*Last Updated: 2026-04-20 | 994+ tests passing | 51 active API routes | 0 any types | 0 console.* | Build: PASS | Pivot: Phase 5 of 8*
+*Last Updated: 2026-05-04 | 1100+ tests passing | 46 active API routes | 0 any types | 0 console.* | Build: PASS | V1 product loop active | Heatmap (Crew + FoF) shipped*
