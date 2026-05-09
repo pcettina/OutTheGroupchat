@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { logger } from '@/lib/logger';
+import { captureException } from '@/lib/sentry';
 
 const patchUserSchema = z.object({
   name: z.string().min(1).max(100).optional(),
@@ -71,6 +72,7 @@ export async function GET(
       },
     });
   } catch (error) {
+    captureException(error);
     logger.error({ error }, '[USER_GET] Failed to fetch user');
     return NextResponse.json(
       { success: false, error: 'Failed to fetch user' },
@@ -133,6 +135,7 @@ export async function PATCH(
 
     return NextResponse.json({ success: true, data: updatedUser });
   } catch (error) {
+    captureException(error);
     logger.error({ error }, '[USER_PATCH] Failed to update user');
     return NextResponse.json(
       { success: false, error: 'Failed to update user' },
