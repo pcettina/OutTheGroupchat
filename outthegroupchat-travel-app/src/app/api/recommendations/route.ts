@@ -180,7 +180,7 @@ export async function GET(request: NextRequest) {
       data: { recommendations: top, categoriesUsed: categories },
     });
   } catch (error) {
-    captureException(error);
+    captureException(error, { route: '/api/recommendations', method: 'GET' });
     apiLogger.error({ error }, '[RECOMMENDATIONS] Failed to compute recommendations');
     return NextResponse.json(
       { success: false, error: 'Failed to compute recommendations' },

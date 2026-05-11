@@ -1,3 +1,38 @@
+# 🟢 Complete — Phase 8: Launch-Readiness Re-Audit (incremental progress 2026-05-10)
+
+> **Status:** Phase 8 ongoing. Tonight's nightly (nightly/2026-05-11) advanced action #5 (E2E + integration coverage on V1 hot paths) and #6 (Sentry coverage audit). 74 new integration tests covering V1 intent/subcrew/checkin surface; Sentry extended to `/api/topics` + `/api/recommendations`. V1 Phase 4 heatmap (PR #86/#87, merged 2026-05-09) remains the most recent product surface delivery.
+> **Test count:** ~917 → ~991 Vitest tests (verified by validation phase); 86 → 90 test files; 58 live API routes
+
+---
+
+## 🟢 Completed 2026-05-10 (Nightly Build nightly/2026-05-11)
+
+### Wave 1 — Tests (74 new tests)
+
+- [L1] `src/__tests__/intents-id.test.ts` — 19 tests for `PATCH` + `DELETE /api/intents/[id]`: auth (401), rate-limit (429), Zod validation, 403 non-owner, 404 not-found, state-only updates, windowPreset changes, cityArea editing, endAt<startAt rejection, Sentry on 500
+- [L2] `src/__tests__/subcrews-coverage.test.ts` — 23 tests covering `GET /api/subcrews/mine`, `/emerging`, `/[id]`; `POST /[id]/join`, `/[id]/commit`; `PATCH /[id]/members/me`. Closes Zod-validation gaps in existing subcrew tests
+- [M1] `src/__tests__/checkins-feed.test.ts` — 14 tests for `GET /api/checkins/feed`: auth, rate limit, Prisma `where` assertions (activeUntil>now, ACCEPTED crew, visibility OR branches, no PRIVATE), Sentry path
+- [M2] `src/__tests__/intents-mine-crew.test.ts` — 18 tests (9 each) for `/api/intents/mine` + `/api/intents/crew`: state/topicId/limit filters, includeExpired flag, Crew short-circuit, 400/429/500
+
+### Wave 2 — Features / Docs
+
+- [M3] `src/app/api/topics/route.ts` + `src/app/api/recommendations/route.ts` — added contextual `captureException(err, { route, method })` on 500-class catch blocks. TSC clean.
+- [M4] `README.md` — rewrote pivot status, tagline, core loop section, Phase 0–8 status table, metrics (917 tests, 58 routes, 86 test files, 290 TS files), 2026-05-10 Recent Updates entry
+- [M5] `docs/PRODUCTION_ROADMAP.md` — bumped to v3.3, 88% readiness, added V1 Phase 4 heatmap section (PRs #86/#87), added Risk Register (resolved vs open), removed stale Supabase/OpenAI references, added Neon production migration (PR #90) reference
+- [M6] `prisma/scripts/seed-heatmap-only.ts` — fixed 2 TSC errors (TS5097) by removing `.ts` extension from imports; `npx tsc --noEmit` clean
+
+### Phase 3.5 — Small-Task Metrics (automated)
+
+- `any` types: 4 | `console.*`: 0 | TODO/FIXME: 2 | files >600 lines (production): 2 (RichFeedItem.tsx 717, profile/page.tsx 623 — both in open older PRs)
+- API routes: 58 live | test files: 86 → 90 | TS files: 290
+
+### Phase 8 progress
+
+- Action #5 (E2E + integration coverage on V1 hot paths): **PARTIAL** — +74 integration tests for intents/subcrews/checkins; Playwright authenticated flows still pending
+- Action #6 (Sentry full coverage audit): **ongoing** — `/api/topics` + `/api/recommendations` instrumented tonight
+
+---
+
 # 🟢 Complete — Phase 6: Feed/AI/Notifications Rescope (all sessions delivered)
 
 > **Status:** Phase 6 COMPLETE as of 2026-04-22 (nightly/2026-04-22 PR #55). All 4 Phase 6 actions done: feed rescoped, AI routes added, notification types migrated, search rescoped people-first. Phase 7 (Marketing surface) is next.

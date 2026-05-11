@@ -8,8 +8,8 @@
 - [x] Phase 4: Meetups core — All 3 sessions complete (2026-04-18): API routes ✅ | venue search (Places API) ✅ | meetup UI (MeetupDetail, AttendeeList, MeetupInviteModal) ✅ | RSVP ✅ | invite ✅ | Pusher real-time ✅ | MEETUP_STARTING_SOON cron ✅ (PRs #48, #49, #51)
 - [x] Phase 5: Check-ins + presence — COMPLETE 2026-04-20 (PR #53): POST /api/checkins ✅ | GET /api/checkins/feed ✅ | DELETE /api/checkins/[id] ✅ | GET /api/checkins/[id] ✅ | CheckInButton (duration picker) ✅ | LiveActivityCard ("Join me" wired) ✅ | NearbyCrewList ✅ | /checkins page ✅ | /checkins/[id] page ✅ | Privacy settings page (/settings/privacy) ✅ | /api/users/privacy ✅ | Pusher city-channel broadcast ✅ | All Phase 5 exit criteria met ✅
 - [x] Phase 6: Feed/AI/notifications rescope — COMPLETE 2026-04-22 (PR #55): Feed rescoped (meetup/checkin types, trip/activity queries removed, POST returns 410) ✅ | Search people-first (users→meetups→venues) ✅ | 9 trip notification types removed from schema ✅ | Follow marked @deprecated ✅ | types/index.ts cleaned (264 lines) ✅ | All AI routes later deleted 2026-04-23 (ops/kill-all-ai)
-- [ ] Phase 7: Marketing surface
-- [ ] Phase 8: Launch-readiness re-audit
+- [x] Phase 7: Marketing surface (PR #56, 2026-04-22)
+- [~] Phase 8: Launch-readiness re-audit (IN PROGRESS — nightly/2026-05-11 advanced action #5 (E2E + integration coverage, +74 integration tests on V1 intent/subcrew/checkin surface) and action #6 (Sentry coverage — `/api/topics` + `/api/recommendations` instrumented 2026-05-10))
 
 ---
 
@@ -17,7 +17,15 @@
 >
 > **Target Launch:** Q2 2026 (Beta) — to be re-baselined post-pivot
 > **Current Status:** Refactoring (Phase 2 in progress — domain models added, DB migration pending)
-> **Last Updated:** 2026-04-22 (Phase 6 COMPLETE — feed rescoped, search people-first, notification types migrated, types cleanup; Phase 7 Marketing surface is next)
+> **Last Updated:** 2026-05-10 (Phase 8 IN PROGRESS — nightly/2026-05-11: +74 integration tests on V1 intent/subcrew/checkin surface; Sentry instrumented on `/api/topics` + `/api/recommendations`. Remaining: Sentry DSN env, Pusher env, Resend domain, Playwright authenticated E2E flows.)
+
+### ✅ Newly closed (nightly/2026-05-11, 2026-05-10)
+- [x] Sentry on `/api/topics`
+- [x] Sentry on `/api/recommendations`
+- [x] Integration tests for `/api/intents/[id]` (PATCH/DELETE — 19)
+- [x] Integration tests for `/api/intents/mine` + `/api/intents/crew` (18)
+- [x] Integration tests for `/api/subcrews/*` (23)
+- [x] Integration tests for `/api/checkins/feed` (14)
 
 ---
 
