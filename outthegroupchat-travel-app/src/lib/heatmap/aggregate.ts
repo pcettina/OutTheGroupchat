@@ -31,22 +31,40 @@ type PrismaLike = Pick<
   'crew' | 'heatmapContribution' | 'crewRelationshipSetting' | 'intent' | 'checkIn' | 'venue' | 'user' | 'subCrewMember'
 >;
 
+/**
+ * Input to {@link aggregateContributions}. Drives both the Crew-tier and
+ * FoF-tier (R5 mutual-Crew threshold) heatmap reads.
+ */
 export interface AggregateInput {
+  /** The viewer whose heatmap is being computed. */
   viewerId: string;
+  /** Which contribution surface to read — INTEREST or PRESENCE. */
   type: HeatmapType;
+  /** `'crew'` = direct accepted Crew. `'fof'` = friends-of-friends (R5). */
   tier: 'crew' | 'fof';
+  /** Optional neighborhood narrowing for venue markers. */
   cityArea?: string;
+  /** Optional topic filter applied to INTEREST contributions. */
   topicId?: string;
+  /** Optional `WindowPreset` filter (e.g. TONIGHT, THIS_WEEK). */
   windowPreset?: WindowPreset;
   /** FoF only — minimum mutual-Crew count to include a FoF user (R5). */
   mutualThreshold?: number;
   /** FoF only — when set, R24 priority 1 (SubCrew-anchor) activates. */
   subCrewId?: string;
+  /** Test-injectable Prisma client. Defaults to the app-wide singleton. */
   prismaClient?: PrismaLike;
 }
 
+/**
+ * Output of {@link aggregateContributions}. `cells` is the per-grid-cell rollup
+ * with the R14 N>=3 anonymous floor already applied; `venueMarkers` are the
+ * R22 zoom-aware venue points (count per venue, sorted desc).
+ */
 export interface AggregateOutput {
+  /** Per-cell rollups, sorted by count desc. */
   cells: HeatmapCell[];
+  /** Venue-resolved markers for the R22 zoom-in surface. */
   venueMarkers: HeatmapVenueMarker[];
 }
 
@@ -136,6 +154,24 @@ function bucketsToCells(groups: Map<string, CellBucket>): HeatmapCell[] {
   return cells;
 }
 
+/**
+ * Aggregate `HeatmapContribution` rows into per-cell rollups + venue markers
+ * for the V1 heatmap (R14, R22, R24). Dispatches to the Crew-tier or FoF-tier
+ * branch based on `input.tier`.
+ *
+ * Crew tier: reads viewer's accepted Crew, drops contributors with
+ * `CrewRelationshipSetting.granularityMode === HIDDEN`.
+ *
+ * FoF tier (R5): reads users 1-hop via Crew with `mutualCount >=
+ * mutualThreshold`, attaches an `anchorSummary` ("via Alex") to each cell
+ * using {@link pickAnchor} (R24).
+ *
+ * Both tiers enforce the R14 N>=3 anonymous floor per cell.
+ *
+ * @param input Tier, viewer, and filter configuration.
+ * @returns Cells (anonymous floor applied) and venue markers, both sorted by
+ *   count desc. Empty arrays when no contributions are visible.
+ */
 export async function aggregateContributions(
   input: AggregateInput,
 ): Promise<AggregateOutput> {

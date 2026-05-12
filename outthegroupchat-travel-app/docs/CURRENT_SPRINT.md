@@ -1,3 +1,40 @@
+# 🟢 Nightly Build — nightly/2026-05-12 (V1 hot-path tests + aux Sentry)
+
+> **Status:** Nightly build 2026-05-11 — V1 lib coverage hardening (+101 tests on heatmap/topic/hotness/fof code), aux-route Sentry instrumentation (cron + beta/*), dead-component cleanup, search Zod tightened, JSDoc on 35 V1 lib exports.
+> **Last Updated:** 2026-05-11
+> **Test count:** ~1018 tests passing; 90 test files (+4 new: `heatmap-aggregate.test.ts` (28), `topic-classifier.test.ts` (34), `hotness-score.test.ts` (21), `fof-graph.test.ts` (18))
+
+## 🟢 Completed 2026-05-12 (Nightly Build nightly/2026-05-12)
+
+### Wave 1 — Tests
+
+- +101 tests across 4 new test files on V1 hot-path libs:
+  - `src/__tests__/lib/heatmap-aggregate.test.ts` (28) — heatmap contribution aggregation, bucketing, decay
+  - `src/__tests__/lib/topic-classifier.test.ts` (34) — intent topic classification edge cases
+  - `src/__tests__/lib/hotness-score.test.ts` (21) — hotness scoring math and time-window weighting
+  - `src/__tests__/lib/fof-graph.test.ts` (18) — friend-of-friend graph traversal
+- No new Prisma mocks required in `setup.ts` (all libs operate on pure inputs or pre-mocked layers)
+
+### Wave 2 — Features
+
+- [L4] Sentry `captureException` added to `/api/cron`, `/api/beta/initialize-password`, `/api/beta/signup`, `/api/beta/status` (wrapped in catch blocks)
+- [L5] 4 dead components deleted — `profile/TripHistory`, `profile/PreferencesCard`, `profile/BadgeShowcase`, `ui/FloatingShareButton`; barrel exports updated
+- [L6] JSDoc added to `src/lib/heatmap/*` and `src/lib/hotness/score.ts` (13 exports)
+- [M2] Fixed 2 TSC errors in `prisma/scripts/seed-heatmap-only.ts` (removed `.ts` extension from imports)
+- [M3] `/api/search` Zod enum tightened to `['all','people','meetups','venues']`; `search.test.ts` updated to match
+- [M4] JSDoc on 11 schemas in `src/lib/validations/social.ts`
+- [M5] JSDoc on 11 exports across `src/lib/intent/*` and `src/lib/subcrew/try-form.ts`
+- [M6] README refreshed with current metrics
+
+### Metrics tonight
+
+- `any` types: 4 | `console.*`: 0 | TODO/FIXME: 2
+- Files >600 lines (production): 2 (RichFeedItem 717, profile/page 623)
+- API routes (live): 59
+- Test files: 90 (86 baseline + 4 new) | TS files: 291
+
+---
+
 # 🟢 Complete — Phase 6: Feed/AI/Notifications Rescope (all sessions delivered)
 
 > **Status:** Phase 6 COMPLETE as of 2026-04-22 (nightly/2026-04-22 PR #55). All 4 Phase 6 actions done: feed rescoped, AI routes added, notification types migrated, search rescoped people-first. Phase 7 (Marketing surface) is next.

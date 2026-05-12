@@ -1,8 +1,15 @@
 # OutTheGroupchat — Social Meetup Network
 
-**The social app that wants to get you off your phone.**
+**The social media app that wants to get you off your phone.**
 
-A LinkedIn-style social network built for in-person meetups, not trip planning. Connect with people, create and RSVP to local meetups, check in live when you're out, and see who else is around — all designed to turn online connections into real-world moments.
+A meetup-centric social network built around a simple core loop: signal intent → auto-group at >=2 Crew on the same Topic → coordinate + venue recs → opt-in location visibility. Connect with people, create and RSVP to local meetups, check in live when you're out, and see who else is around — all designed to turn online connections into real-world moments.
+
+## Recent Updates (2026-05-12)
+
+- **Heatmap tier 4a + 4b shipped** (PRs #86 / #87): MapLibre + OpenFreeMap, Crew + FoF visibility tiers, R22 z=15 venue markers, R24 anchor priority 1/3/4.
+- **+101 tests added tonight** across V1 lib hot paths (heatmap, intent, hotness) — bringing Vitest count to ~1018.
+- **Sentry expanded** onto auxiliary routes (cron, beta status, aux notifications) — V1 hot paths now covered.
+- **Dead components cleaned**: TripHistory, BadgeShowcase, PreferencesCard, FloatingShareButton, email-crew.ts duplicate removed.
 
 ## Features
 
@@ -71,7 +78,7 @@ A LinkedIn-style social network built for in-person meetups, not trip planning. 
 ```
 src/
 ├── app/                    # Next.js App Router pages
-│   ├── api/               # API routes (51 active routes)
+│   ├── api/               # API routes (59 active routes)
 │   │   ├── meetups/      # Meetup CRUD + RSVP
 │   │   ├── crew/         # Crew requests
 │   │   ├── checkins/     # Live presence
@@ -197,6 +204,7 @@ Built with ❤️ by the OutTheGroupchat Team
 
 ## Recent Updates
 
+- **2026-05-12:** Heatmap tier 4a + 4b shipped (PRs #86, #87) — MapLibre + OpenFreeMap, Crew + FoF visibility tiers, R22 z=15 venue markers, R24 anchor priority 1/3/4. +101 Vitest tests across V1 lib hot paths (heatmap, intent, hotness) → ~1018 total. Sentry expanded onto auxiliary routes. Dead components removed (TripHistory, BadgeShowcase, PreferencesCard, FloatingShareButton, email-crew.ts).
 - **2026-04-20:** Phase 5 session 2 complete (PR #53). Privacy settings (GET/PATCH /api/users/privacy), Pusher city broadcast on check-in, GET /api/checkins/[id] visibility gate, /checkins/[id] detail page, feed visibility filter. 994 tests passing across 51 active API routes.
 - **2026-04-16:** Product pivot to social meetup network initiated. Phase 1 complete: trip-planning surface archived to `src/_archive/` (routes, pages, components, services). README and docs updated to reflect new vision. 841 tests passing post-archive across 35 active API routes.
 - **2026-04-16:** Sentry error monitoring expanded to 19/48 API routes; beta/status migrated to Redis rate limiting; dead components removed (DestinationCard, CategoryFilter, TrendingSection, TravelBadges); 112 new tests added (1,346+ total pre-archive)
@@ -208,4 +216,4 @@ Built with ❤️ by the OutTheGroupchat Team
 
 ---
 
-*Last Updated: 2026-04-20 | 994+ tests passing | 51 active API routes | 0 any types | 0 console.* | Build: PASS | Pivot: Phase 5 of 8*
+*Last Updated: 2026-05-11 | ~1018 tests passing | 59 active API routes | 90 test files | 291 TS files | 4 any types | 0 console.* | 2 TODO/FIXME | Files >600 lines: 2 (RichFeedItem.tsx 717, profile/page.tsx 623) | Build: PASS*

@@ -17,11 +17,22 @@
  * absent that, the rule falls back through 3 → 4.
  */
 
+/**
+ * The chosen mutual-Crew anchor for a single FoF contribution. `anchorName`
+ * may be null when the User row lacks a display name; the UI falls back to
+ * a generic "via a mutual" label in that case.
+ */
 export interface AnchorPick {
+  /** User id of the selected anchor (always a member of the viewer's Crew). */
   anchorUserId: string;
+  /** Display name for the anchor, or null when unset on the User row. */
   anchorName: string | null;
 }
 
+/**
+ * Inputs to {@link pickAnchor}. The caller pre-fetches all the data needed
+ * to apply R24's priority hierarchy without further DB queries.
+ */
 export interface PickAnchorInput {
   /** Anchor candidate ids — the FoF user's mutual-Crew with the viewer. */
   anchorIds: string[];
@@ -35,6 +46,16 @@ export interface PickAnchorInput {
   anchorNameById: Map<string, string | null>;
 }
 
+/**
+ * Pick the mutual-Crew anchor for a FoF contribution per R24's priority
+ * hierarchy: SubCrew-anchor → most-recent Crew edge → alphabetical.
+ *
+ * Pure function — no DB access. All inputs are pre-fetched by the caller
+ * (typically {@link aggregateContributions}).
+ *
+ * @param input Anchor candidates plus the lookup tables for each tiebreaker.
+ * @returns The selected anchor, or `null` when `anchorIds` is empty.
+ */
 export function pickAnchor(input: PickAnchorInput): AnchorPick | null {
   if (input.anchorIds.length === 0) return null;
 
@@ -78,8 +99,16 @@ export function pickAnchor(input: PickAnchorInput): AnchorPick | null {
   };
 }
 
-/** Build a "via Alex, Jamie + 2 more" summary string from an ordered list of
- *  anchor names. Empty input returns null so the UI can branch. */
+/**
+ * Build a "via Alex, Jamie + 2 more" summary string from an ordered list of
+ * anchor names. Empty input returns `null` so the UI can branch on absence
+ * rather than render an empty "via " prefix.
+ *
+ * @param names Anchor display names in priority order. Nulls/empties skipped.
+ * @param max Maximum number of names to render inline before "+ N more".
+ *   Defaults to 2.
+ * @returns The summary string, or `null` when no usable names remain.
+ */
 export function buildAnchorSummary(names: ReadonlyArray<string | null>, max = 2): string | null {
   const cleaned = names.filter((n): n is string => Boolean(n));
   if (cleaned.length === 0) return null;

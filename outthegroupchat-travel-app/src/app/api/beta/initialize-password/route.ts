@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { logger } from '@/lib/logger';
+import { captureException } from '@/lib/sentry';
 
 // Identifier namespace kept distinct from password-reset tokens.
 const TOKEN_IDENTIFIER = (email: string) => `beta-init:${email}`;
@@ -106,6 +107,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ token: plainToken, expires });
   } catch (error) {
+    captureException(error, { route: 'api/beta/initialize-password', method: 'GET' });
     logger.error({ err: error, context: 'BETA_INIT_TOKEN' }, 'Error issuing init token');
     return NextResponse.json(
       { error: 'Unable to issue initialization token. Please try again.' },
@@ -287,6 +289,7 @@ export async function POST(req: Request) {
       message: 'Password initialized successfully',
     });
   } catch (error) {
+    captureException(error, { route: 'api/beta/initialize-password', method: 'POST' });
     logger.error({ err: error, context: 'BETA_INIT' }, 'Error during password initialization');
     return NextResponse.json(
       { error: 'Unable to initialize password. Please try again.' },

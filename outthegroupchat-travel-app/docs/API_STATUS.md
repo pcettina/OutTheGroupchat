@@ -1,6 +1,8 @@
 # 📡 API & Integration Status
 
-> **Last Updated: 2026-04-22**
+> **Last Updated: 2026-05-11**
+>
+> **Nightly Build (nightly/2026-05-12):** Sentry `captureException` added to 4 aux routes (`/api/cron`, `/api/beta/initialize-password`, `/api/beta/signup`, `/api/beta/status`). `/api/search` Zod enum tightened to `['all','people','meetups','venues']` (removed legacy values). +101 tests on V1 lib code (heatmap aggregate, topic classifier, hotness score, fof graph). 4 dead components removed. JSDoc on 35 V1 lib exports.
 >
 > **Archival:** trip/activity routes moved to `src/app/api/_archive/` as of 2026-04-16 Phase 1. See REFACTOR_PLAN.md. Sections below that reference `/api/trips/*` and `/api/activities/*` reflect the pre-archive state for historical context; authoritative status for these routes is the "📦 Archived Routes" section near the bottom of this file.
 >
@@ -118,7 +120,7 @@ Follow model marked @deprecated (retirement deferred to Phase 7)
 | `/api/discover/search` | GET | ✅ | 🔶 | Auth guard added 2026-03-24 (was unauthenticated — security improvement); rate limiting, Zod validation ✅ |
 | `/api/discover/recommendations` | GET | ✅ | 🔶 | Auth guard added 2026-03-24; category filter, rate limiting, pino logging ✅ |
 | `/api/discover/import` | POST | ✅ | ⏳ | Rate limiting + auth guard ✅ 2026-03-24; pino logging, typed helpers, fixed empty catch blocks |
-| `/api/search` | GET | ✅ | 🔶 | Email removed from select projection (privacy fix) ✅ 2026-03-20; **rescoped 2026-04-22 (Phase 6)** — people-first ordering (users→meetups→venues), Zod enum updated to `['all','people','meetups','venues']`, trip/activity search paths removed |
+| `/api/search` | GET | ✅ | 🔶 | Email removed from select projection (privacy fix) ✅ 2026-03-20; **rescoped 2026-04-22 (Phase 6)** — people-first ordering (users→meetups→venues), Zod enum updated to `['all','people','meetups','venues']`, trip/activity search paths removed; **Zod enum re-tightened 2026-05-11** (M3 nightly/2026-05-12) — confirmed only the 4 canonical values, no legacy fallbacks |
 | `/api/geocoding` | GET | ✅ | 🔶 | Geocoding for destination search via Nominatim; Zod validation added 2026-03-21 |
 | `/api/inspiration` | GET | ✅ | 🔶 | Auth guard added 2026-03-08; Zod coerce.number on query params + POST body schema added 2026-03-22 |
 | `/api/images/search` | GET | ✅ | 🔶 | Image search via Unsplash API; requires UNSPLASH_ACCESS_KEY |
@@ -172,8 +174,8 @@ BLOCKED - Need Environment Variables:
 
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
-| `/api/cron` | GET | ✅ | N/A | Background jobs; CRON_SECRET validation hardened 2026-03-22 |
-| Sentry lib | N/A | ✅ | N/A | `src/lib/sentry.ts` created 2026-03-25 — centralized Sentry helpers (captureException, addBreadcrumb, setUser); **19/48 routes instrumented as of 2026-04-16** |
+| `/api/cron` | GET | ✅ | N/A | Background jobs; CRON_SECRET validation hardened 2026-03-22; **Sentry captureException added 2026-05-11** |
+| Sentry lib | N/A | ✅ | N/A | `src/lib/sentry.ts` created 2026-03-25 — centralized Sentry helpers (captureException, addBreadcrumb, setUser); **23+ routes instrumented as of 2026-05-11** (cron + beta/signup + beta/initialize-password + beta/status added on nightly/2026-05-12) |
 | `/api/health` | GET | ✅ | N/A | DB connectivity check, 503 on degraded ✅ 2026-03-10; response hardened 2026-03-25 (NODE_ENV + version removed for data minimization — returns {status, timestamp, database}) |
 | `/api/users/me` | GET | ✅ | 🔶 | Get current authenticated user |
 | `/api/users/me` | PATCH | ✅ | 🔶 | Update current user profile + preferences |
@@ -196,9 +198,9 @@ BLOCKED - Need Environment Variables:
 
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
-| `/api/beta/signup` | POST | ✅ | ✅ | Beta waitlist signup |
-| `/api/beta/status` | GET | ✅ | ✅ | Check beta access status; IP rate limiting added 2026-03-21; response narrowed to {exists, passwordInitialized} only (data minimization) ✅ 2026-03-22 |
-| `/api/beta/initialize-password` | POST | ✅ | ✅ | Beta user password init — now protected with N8N_API_KEY auth ✅ 2026-03-19 (was unauthenticated — account takeover vulnerability fixed) |
+| `/api/beta/signup` | POST | ✅ | ✅ | Beta waitlist signup; **Sentry captureException added 2026-05-11** |
+| `/api/beta/status` | GET | ✅ | ✅ | Check beta access status; IP rate limiting added 2026-03-21; response narrowed to {exists, passwordInitialized} only (data minimization) ✅ 2026-03-22; **Sentry captureException added 2026-05-11** |
+| `/api/beta/initialize-password` | POST | ✅ | ✅ | Beta user password init — now protected with N8N_API_KEY auth ✅ 2026-03-19 (was unauthenticated — account takeover vulnerability fixed); **Sentry captureException added 2026-05-11** |
 | `/api/newsletter/subscribe` | POST | ✅ | ✅ | Newsletter subscription; auth now required 2026-03-26 |
 
 ---
