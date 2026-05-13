@@ -17,7 +17,7 @@
 >
 > **Target Launch:** Q2 2026 (Beta) — to be re-baselined post-pivot
 > **Current Status:** Refactoring (Phase 2 in progress — domain models added, DB migration pending)
-> **Last Updated:** 2026-04-22 (Phase 6 COMPLETE — feed rescoped, search people-first, notification types migrated, types cleanup; Phase 7 Marketing surface is next)
+> **Last Updated:** 2026-05-12 (nightly/2026-05-13 — Sentry instrumented on V1 routes: intents/*, subcrews/*, heatmap, recommendations, topics, venues/search; Phase 8 #6 substantially advanced)
 
 ---
 
@@ -217,6 +217,7 @@
 ### Error Tracking
 - [x] Sentry installed and configured ✅ 2026-03-10 (instrumentation-client.ts onRouterTransitionStart fixed 2026-03-20; src/lib/sentry.ts helper created 2026-03-25; needs real DSN in Vercel)
 - [x] Sentry captureException added to 19/48 routes ✅ 2026-04-16 (feed x4, notifications x2, trips/route x1, trips/[tripId] x8, auth x4)
+- [x] Sentry instrumented on V1 routes (intents/*, subcrews/*, heatmap, recommendations, topics, venues/search) ✅ 2026-05-12 (nightly/2026-05-13 — 10 V1 routes newly instrumented, 12 catch blocks tagged; V1 surface Sentry coverage complete)
 - [ ] Error alerts configured (pending Sentry DSN)
 - [ ] Source maps uploaded (pending Sentry DSN)
 

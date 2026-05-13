@@ -414,8 +414,8 @@ Each phase targets a discrete session (or a nightly build if small). Phases are 
 2. Update `docs/PRODUCTION_ROADMAP.md` (target date, priorities, new risk register)
 3. Security audit focused on new surfaces: location data handling, Crew-request abuse prevention, meetup spam, check-in stalking mitigation (Q4 `activeUntil` is first line of defense)
 4. Rate-limit audit for new routes
-5. E2E Playwright tests for new critical paths: signup → Crew request → meetup create → RSVP → check-in
-6. Sentry coverage audit: target 100% on new routes (don't repeat the 0/48-on-main debt)
+5. E2E Playwright tests for new critical paths: signup → Crew request → meetup create → RSVP → check-in — **PENDING**
+6. Sentry coverage audit: target 100% on new routes (don't repeat the 0/48-on-main debt) — **Sentry coverage expanded to V1 surface (intents + subcrews + V1 misc) — completed 2026-05-12 (PR for nightly/2026-05-13). Sentry full audit (#6) substantially advanced; ~10 V1 routes newly instrumented.**
 
 **Exit criteria:** Updated launch checklist reflects real readiness of the new product, not the archived one.
 

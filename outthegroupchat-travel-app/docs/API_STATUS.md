@@ -1,6 +1,6 @@
 # 📡 API & Integration Status
 
-> **Last Updated: 2026-04-22**
+> **Last Updated: 2026-05-12**
 >
 > **Archival:** trip/activity routes moved to `src/app/api/_archive/` as of 2026-04-16 Phase 1. See REFACTOR_PLAN.md. Sections below that reference `/api/trips/*` and `/api/activities/*` reflect the pre-archive state for historical context; authoritative status for these routes is the "📦 Archived Routes" section near the bottom of this file.
 >
@@ -8,11 +8,13 @@
 >
 > **Phase 6 COMPLETE (2026-04-22, nightly/2026-04-22 PR #55):** Feed rescoped (meetup/checkin types, POST→410), search people-first (users→meetups→venues), notification type migration (9 old trip types removed from schema), AI routes (suggest-meetups + icebreakers). All 4 Phase 6 actions complete.
 >
-> **Last Audit:** April 2026
-> **Live API routes (post-archive):** 50 (35 base + 6 Crew + 9 Phase 4 meetup/venue/cron routes + 3 Phase 5 check-in routes + privacy route + 2 new Phase 6 AI routes: suggest-meetups, icebreakers; note: feed POST now returns 410)
+> **V1 Surface Sentry Expansion (2026-05-12, nightly/2026-05-13):** Sentry `captureException` added to /api/intents/* (4 files / 5 catch blocks), /api/subcrews/* (6 files / 7 catch blocks). /api/topics, /api/heatmap, /api/recommendations, /api/venues/search confirmed already instrumented. ~10 V1 routes newly instrumented.
+>
+> **Last Audit:** May 2026
+> **Live API routes (post-archive):** 72 total (59 active + 13 archived). Active surface includes 35 base routes + 6 Crew + 9 Phase 4 meetup/venue/cron + 3 Phase 5 check-in + privacy + 14 V1 routes (intents/subcrews/topics/heatmap/recommendations/cron-expire-intents). Feed POST now returns 410.
 > **Archived API routes (Phase 1):** 13
 > **Target:** 100% for Beta Launch (re-baselined in Phase 8)
-> **Sentry Coverage:** 19/48 routes instrumented on pre-archive branch; coverage on new live surface re-computed after Phase 2
+> **Sentry Coverage:** V1 surface fully instrumented as of 2026-05-12. Pre-archive trip-era coverage: 19/48 routes (historical, on pre-archive branch).
 
 ---
 
@@ -177,6 +179,47 @@ BLOCKED - Need Environment Variables:
 | `/api/health` | GET | ✅ | N/A | DB connectivity check, 503 on degraded ✅ 2026-03-10; response hardened 2026-03-25 (NODE_ENV + version removed for data minimization — returns {status, timestamp, database}) |
 | `/api/users/me` | GET | ✅ | 🔶 | Get current authenticated user |
 | `/api/users/me` | PATCH | ✅ | 🔶 | Update current user profile + preferences |
+
+---
+
+## 🆕 V1 APIs (Intent → SubCrew Loop)
+
+> Routes powering the V1 product vision: intent signaling → auto-grouping ≥2 Crew on same Topic → coordinate + venue recs → opt-in location visibility. See `docs/PRODUCT_VISION.md`.
+>
+> **Sentry instrumentation status (2026-05-12):** All routes below have `Sentry.captureException` on error paths ✅.
+
+### Intent APIs
+
+| Endpoint | Method | Status | Frontend Connected | Notes |
+|----------|--------|--------|-------------------|-------|
+| `/api/intents` | GET | ✅ | 🔶 | List intents (filtered by topic/window); **Sentry added 2026-05-12** |
+| `/api/intents` | POST | ✅ | 🔶 | Create an intent (topic + activeUntil); **Sentry added 2026-05-12** |
+| `/api/intents/[id]` | PATCH | ✅ | 🔶 | Update own intent; **Sentry added 2026-05-12** |
+| `/api/intents/[id]` | DELETE | ✅ | 🔶 | Cancel own intent; **Sentry added 2026-05-12** |
+| `/api/intents/mine` | GET | ✅ | 🔶 | Current user's active intents; **Sentry added 2026-05-12** |
+| `/api/intents/crew` | GET | ✅ | 🔶 | Active intents from caller's Crew; **+20 tests 2026-05-12 (intents-crew-extended.test.ts)** |
+
+### SubCrew APIs
+
+| Endpoint | Method | Status | Frontend Connected | Notes |
+|----------|--------|--------|-------------------|-------|
+| `/api/subcrews/mine` | GET | ✅ | 🔶 | Current user's SubCrew memberships; **Sentry added 2026-05-12** |
+| `/api/subcrews/emerging` | GET | ✅ | 🔶 | SubCrews forming around shared intents; **+21 tests 2026-05-12 (subcrews-emerging-extended.test.ts); Sentry added 2026-05-12** |
+| `/api/subcrews/[id]` | GET | ✅ | 🔶 | SubCrew detail; **Sentry added 2026-05-12** |
+| `/api/subcrews/[id]` | PATCH | ✅ | 🔶 | Update SubCrew (owner/member edits); **Sentry added 2026-05-12** |
+| `/api/subcrews/[id]/join` | POST | ✅ | 🔶 | Join an emerging SubCrew; **Sentry added 2026-05-12** |
+| `/api/subcrews/[id]/commit` | POST | ✅ | 🔶 | Commit to attend (locks heatmap contribution); **Sentry added 2026-05-12** |
+| `/api/subcrews/[id]/members/me` | PATCH | ✅ | 🔶 | Update own membership status (leave/RSVP toggle); **Sentry added 2026-05-12** |
+
+### V1 Misc APIs
+
+| Endpoint | Method | Status | Frontend Connected | Notes |
+|----------|--------|--------|-------------------|-------|
+| `/api/topics` | GET | ✅ | 🔶 | Topic taxonomy for intent creation; Sentry ✅ |
+| `/api/heatmap` | GET | ✅ | 🔶 | Heatmap data (Crew/FoF tiers); Sentry ✅ — see PRs #86, #87 |
+| `/api/recommendations` | GET | ✅ | 🔶 | Venue + meetup recommendations; Sentry ✅ |
+| `/api/venues/search` | GET | ✅ | ✅ | Places API venue search; Sentry ✅ |
+| `/api/cron/expire-intents` | GET | ✅ | N/A | Cron — expires intents past `activeUntil`; Sentry ✅ |
 
 ---
 

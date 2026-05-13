@@ -1,3 +1,32 @@
+# 🟢 Completed 2026-05-12 (Nightly Build nightly/2026-05-13)
+
+> **Status:** Active Phase 8 (launch-readiness re-audit). Tonight's run expanded Sentry coverage onto the V1 surface and added edge-case test coverage for two V1 routes.
+> **Test count:** ~1210 tests passing; 86 test files (+2 new: intents-crew-extended.test.ts, subcrews-emerging-extended.test.ts)
+
+### Tasks completed
+
+- [L1] `src/__tests__/api/intents-crew-extended.test.ts` (+20 tests) — `/api/intents/crew` edge cases (auth, empty Crew, expired intents, pagination, topic filter)
+- [L2] `src/__tests__/api/subcrews-emerging-extended.test.ts` (+21 tests) — `/api/subcrews/emerging` edge cases (auth, empty results, threshold logic, topic + city filters)
+- [M1] Sentry `captureException` added to 4 `/api/intents/*` route files (5 catch blocks tagged)
+- [M2] Sentry `captureException` added to 6 `/api/subcrews/*` route files (7 catch blocks tagged; switched from `@/lib/sentry` wrapper to `@sentry/nextjs` direct)
+- [M3] Fixed 2 TS5097 errors in `prisma/scripts/seed-heatmap-only.ts` (removed `.ts` import extensions)
+- [M4] Verified Sentry already wired on `/api/topics`, `/api/heatmap`, `/api/recommendations`, `/api/venues/search` (no-op task; documentation refreshed)
+
+### Metrics
+
+- Tests: ~1169 → ~1210 (+41 new tests across intents-crew + subcrews-emerging)
+- Test files: 84 → 86 (+2 new V1 edge-case files)
+- API routes documented: 58 → **72** (14 undocumented V1 routes added to API_STATUS.md)
+- TS files: 367 | `any`: 4 | `console.*`: 0 | TODO/FIXME: 2 | files >600 lines: 2 (RichFeedItem.tsx 717, profile/page.tsx 623)
+- TSC: 0 errors | Lint: 0 warnings/errors | Prisma: valid ✅
+
+### Phase 8 progress
+
+- Action #6 (Sentry full coverage audit) **substantially advanced** — ~10 V1 routes newly instrumented; V1 surface Sentry coverage now complete.
+- Action #5 (E2E Playwright authenticated flows) still pending.
+
+---
+
 # 🟢 Complete — Phase 6: Feed/AI/Notifications Rescope (all sessions delivered)
 
 > **Status:** Phase 6 COMPLETE as of 2026-04-22 (nightly/2026-04-22 PR #55). All 4 Phase 6 actions done: feed rescoped, AI routes added, notification types migrated, search rescoped people-first. Phase 7 (Marketing surface) is next.
