@@ -1,7 +1,32 @@
-# 🟢 Complete — Phase 6: Feed/AI/Notifications Rescope (all sessions delivered)
+# Current Sprint — V1 Steady-State Hardening
 
-> **Status:** Phase 6 COMPLETE as of 2026-04-22 (nightly/2026-04-22 PR #55). All 4 Phase 6 actions done: feed rescoped, AI routes added, notification types migrated, search rescoped people-first. Phase 7 (Marketing surface) is next.
-> **Test count:** ~1050 tests passing; 58 test files (+3 new: feed.test.ts, feed-extended.test.ts, notifications-rescoped.test.ts)
+> **Status (2026-05-14):** V1 Phases 0–4b shipped (intent-to-group loop, heatmap Crew + FoF tiers, venue recs). Now running steady-state nightly hygiene: test depth, refactors, Sentry coverage, cleanup.
+> **Test count (post-nightly/2026-05-14):** 1170+ tests across 68 files (+91 tonight: 40 cron extended, 29 subcrew coordination, 11 heatmap aggregate, 11 FoF graph)
+
+---
+
+## 🟢 Completed 2026-05-14 (Nightly Build nightly/2026-05-14)
+
+### Wave 1 — Tests (+91)
+- [L1] 40 tests in `src/__tests__/api/cron-routes-extended.test.ts` — covers /api/cron, /api/cron/expire-intents, /api/cron/meetup-starting-soon (auth, empty DB, bulk update branches, idempotency, Prisma rejection paths, retentionDays clamping)
+- [L2] 29 tests in `src/__tests__/api/subcrew-coordination-extended.test.ts` — commit/members/me/join edge cases (Zod failures, 429 rate limits, 500 transaction failures, expired/cancelled intents, idempotency races)
+- [M1] 11 tests added to `src/__tests__/lib/heatmap-aggregate.test.ts` (now 21 total)
+- [M2] 11 tests added to `src/__tests__/lib/heatmap-fof-graph.test.ts` (now 18 total) — cycle handling, FoF cap, cache invalidation
+
+### Wave 2 — Features & Refactors
+- [L3] `src/components/feed/RichFeedItem.tsx` 717→193 lines; extracted FeedItemTypes/Header/NewCards/LegacyCards/Engagement
+- [L4] `src/app/profile/page.tsx` 623→339 lines; extracted ProfileHeaderSection/StatsCards/BasicInfoTab/PreferencesTab/RecentCheckins
+- [L5] `/api/beta/status` migrated from in-memory Map back to Redis-backed checkRateLimit (regression from PR #38 fixed)
+- [L6] Sentry captureException added to /api/cron/route.ts + survey.service.ts (4 catch blocks instrumented)
+- [M3] Fixed 2 TS5097 errors in `prisma/scripts/seed-heatmap-only.ts` (.ts extension imports removed)
+- [M4] 5 dead components deleted: TravelStyleQuiz, WelcomeScreen, BadgeShowcase, PreferencesCard, TripHistory + barrel cleanup
+- [M5] 10 JSDoc blocks added across heatmap libs (aggregate, anchor-select, fof-graph, contribution-writer)
+- [M6] No-op — verified 0 actual `: any` annotations remain (4 grep matches were comment text)
+
+### Wave 3 — Shared Files
+- setup.ts: prisma.trip.updateMany mock added (per L1 request)
+- TSC fix in cron-routes-extended.test.ts line 562 (typing union narrowing)
+- CODEMAP.md / CURRENT_SPRINT.md / API_STATUS.md / LAUNCH_CHECKLIST.md: Last Updated → 2026-05-14, metrics refreshed
 
 ---
 

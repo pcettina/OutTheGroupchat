@@ -3,11 +3,14 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { Navigation } from '@/components/Navigation';
 import { ProfileStatsTab } from '@/components/profile';
+import { ProfileHeaderSection } from '@/components/profile/ProfileHeaderSection';
+import { ProfileStatsCards } from '@/components/profile/ProfileStatsCards';
+import { ProfileBasicInfoTab } from '@/components/profile/ProfileBasicInfoTab';
+import { ProfilePreferencesTab } from '@/components/profile/ProfilePreferencesTab';
+import { ProfileRecentCheckins } from '@/components/profile/ProfileRecentCheckins';
 import type { CheckInResponse } from '@/types/checkin';
 
 interface UserProfile {
@@ -44,12 +47,12 @@ const travelStyles = [
 ];
 
 const interestOptions = [
-  'Food & Dining', 'Nightlife', 'Nature', 'History', 'Art', 
+  'Food & Dining', 'Nightlife', 'Nature', 'History', 'Art',
   'Sports', 'Shopping', 'Photography', 'Music', 'Beach'
 ];
 
 export default function ProfilePage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -115,7 +118,7 @@ export default function ProfilePage() {
       }
       const data = await response.json();
       setProfile(data);
-    } catch (error) {
+    } catch {
       setError('Failed to load profile');
     } finally {
       setIsLoading(false);
@@ -143,7 +146,7 @@ export default function ProfilePage() {
 
       setSuccess('Profile updated successfully!');
       setTimeout(() => setSuccess(null), 3000);
-    } catch (error) {
+    } catch {
       setError('Failed to update profile');
     } finally {
       setIsSaving(false);
@@ -160,17 +163,6 @@ export default function ProfilePage() {
           : [...(prev.preferences?.interests || []), interest],
       },
     }));
-  };
-
-  const formatTimeAgo = (iso: string): string => {
-    const diffMs = Date.now() - new Date(iso).getTime();
-    const diffMins = Math.floor(diffMs / 60_000);
-    if (diffMins < 1) return 'just now';
-    if (diffMins < 60) return `${diffMins} minute${diffMins === 1 ? '' : 's'} ago`;
-    const diffHours = Math.floor(diffMins / 60);
-    if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
-    const diffDays = Math.floor(diffHours / 24);
-    return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
   };
 
   if (isLoading) {
@@ -190,104 +182,24 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950/20">
       <Navigation />
-      
+
       <main className="pt-20 pb-16">
         <div className="max-w-4xl mx-auto px-4">
-          {/* Profile Header */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="relative mb-8"
-          >
-            {/* Cover Gradient */}
-            <div className="h-48 rounded-3xl bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 relative overflow-hidden">
-              <div className="absolute inset-0 bg-black/10" />
-              <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/30 to-transparent" />
-            </div>
+          <ProfileHeaderSection
+            name={profile.name}
+            image={profile.image}
+            city={profile.city}
+            bio={profile.bio}
+            followers={profile.stats?.followers || 0}
+            following={profile.stats?.following || 0}
+          />
 
-            {/* Profile Info Overlay */}
-            <div className="relative -mt-20 px-6">
-              <div className="flex flex-col sm:flex-row items-center sm:items-end gap-4">
-                {/* Avatar */}
-                <div className="w-32 h-32 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 p-1 shadow-xl">
-                  <div className="w-full h-full rounded-xl bg-white dark:bg-slate-800 flex items-center justify-center overflow-hidden relative">
-                    {profile.image ? (
-                      <Image
-                        src={profile.image}
-                        alt={profile.name}
-                        fill
-                        style={{ objectFit: 'cover' }}
-                      />
-                    ) : (
-                      <span className="text-4xl font-bold text-emerald-500">
-                        {profile.name?.charAt(0) || '?'}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Name & Location */}
-                <div className="flex-1 text-center sm:text-left pb-2">
-                  <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-                    {profile.name || 'Anonymous'}
-                  </h1>
-                  {profile.city && (
-                    <p className="text-slate-500 dark:text-slate-400 flex items-center justify-center sm:justify-start gap-1 mt-1">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                      {profile.city}
-                    </p>
-                  )}
-                  {profile.bio && (
-                    <p className="text-slate-600 dark:text-slate-300 mt-2 max-w-md">
-                      {profile.bio}
-                    </p>
-                  )}
-                </div>
-
-                {/* Stats */}
-                <div className="flex gap-6 pb-2">
-                  <div className="text-center">
-                    <p className="text-2xl font-bold text-emerald-500">{profile.stats?.followers || 0}</p>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">Followers</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-2xl font-bold text-emerald-500">{profile.stats?.following || 0}</p>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">Following</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Stats Cards */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8"
-          >
-            {[
-              { label: 'Trips Created', value: profile.stats?.tripsCreated || 0, icon: '✈️' },
-              { label: 'Completed', value: profile.stats?.tripsCompleted || 0, icon: '🎉' },
-              { label: 'Countries', value: profile.stats?.countriesVisited || 0, icon: '🌍' },
-              { label: 'Activities', value: profile.stats?.activitiesPlanned || 0, icon: '📍' },
-            ].map((stat, i) => (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.1 + i * 0.05 }}
-                className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 shadow-sm"
-              >
-                <span className="text-2xl">{stat.icon}</span>
-                <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{stat.value}</p>
-                <p className="text-sm text-slate-500 dark:text-slate-400">{stat.label}</p>
-              </motion.div>
-            ))}
-          </motion.div>
+          <ProfileStatsCards
+            tripsCreated={profile.stats?.tripsCreated || 0}
+            tripsCompleted={profile.stats?.tripsCompleted || 0}
+            countriesVisited={profile.stats?.countriesVisited || 0}
+            activitiesPlanned={profile.stats?.activitiesPlanned || 0}
+          />
 
           {/* Tabs */}
           <motion.div
@@ -352,182 +264,39 @@ export default function ProfilePage() {
           >
             <form onSubmit={handleSubmit}>
               {activeTab === 'profile' && (
-                <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 space-y-6">
-                  <h2 className="text-xl font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                    <span>👤</span> Basic Information
-                  </h2>
-
-                  <div className="grid sm:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        Full Name
-                      </label>
-                      <input
-                        type="text"
-                        value={profile.name}
-                        onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                        className="input"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        Email
-                      </label>
-                      <input
-                        type="email"
-                        value={profile.email}
-                        disabled
-                        className="input bg-slate-50 dark:bg-slate-700 cursor-not-allowed"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        City
-                      </label>
-                      <input
-                        type="text"
-                        value={profile.city || ''}
-                        onChange={(e) => setProfile({ ...profile, city: e.target.value })}
-                        placeholder="Where are you based?"
-                        className="input"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        Travel Style
-                      </label>
-                      <select
-                        value={profile.preferences?.travelStyle || ''}
-                        onChange={(e) => setProfile({
-                          ...profile,
-                          preferences: { ...profile.preferences!, travelStyle: e.target.value },
-                        })}
-                        className="input"
-                      >
-                        <option value="">Select your style</option>
-                        {travelStyles.map((style) => (
-                          <option key={style.value} value={style.value}>
-                            {style.emoji} {style.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                      Bio
-                    </label>
-                    <textarea
-                      value={profile.bio || ''}
-                      onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-                      placeholder="Tell us about yourself and your travel experiences..."
-                      rows={3}
-                      className="input resize-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
-                      Travel Interests
-                    </label>
-                    <div className="flex flex-wrap gap-2">
-                      {interestOptions.map((interest) => (
-                        <button
-                          key={interest}
-                          type="button"
-                          onClick={() => toggleInterest(interest)}
-                          className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                            profile.preferences?.interests?.includes(interest)
-                              ? 'bg-emerald-500 text-white'
-                              : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
-                          }`}
-                        >
-                          {interest}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                <ProfileBasicInfoTab
+                  profile={profile}
+                  travelStyles={travelStyles}
+                  interestOptions={interestOptions}
+                  onNameChange={(value) => setProfile({ ...profile, name: value })}
+                  onCityChange={(value) => setProfile({ ...profile, city: value })}
+                  onBioChange={(value) => setProfile({ ...profile, bio: value })}
+                  onTravelStyleChange={(value) => setProfile({
+                    ...profile,
+                    preferences: { ...profile.preferences!, travelStyle: value },
+                  })}
+                  onToggleInterest={toggleInterest}
+                />
               )}
 
               {activeTab === 'preferences' && (
-                <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 space-y-6">
-                  <h2 className="text-xl font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                    <span>⚙️</span> Preferences
-                  </h2>
-
-                  <div className="grid sm:grid-cols-3 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        Currency
-                      </label>
-                      <select
-                        value={profile.preferences?.currency || 'USD'}
-                        onChange={(e) => setProfile({
-                          ...profile,
-                          preferences: { ...profile.preferences!, currency: e.target.value },
-                        })}
-                        className="input"
-                      >
-                        <option value="USD">USD ($)</option>
-                        <option value="EUR">EUR (€)</option>
-                        <option value="GBP">GBP (£)</option>
-                        <option value="JPY">JPY (¥)</option>
-                        <option value="AUD">AUD (A$)</option>
-                        <option value="CAD">CAD (C$)</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        Language
-                      </label>
-                      <select
-                        value={profile.preferences?.language || 'en'}
-                        onChange={(e) => setProfile({
-                          ...profile,
-                          preferences: { ...profile.preferences!, language: e.target.value },
-                        })}
-                        className="input"
-                      >
-                        <option value="en">English</option>
-                        <option value="es">Spanish</option>
-                        <option value="fr">French</option>
-                        <option value="de">German</option>
-                        <option value="it">Italian</option>
-                        <option value="pt">Portuguese</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        Timezone
-                      </label>
-                      <select
-                        value={profile.preferences?.timezone || 'UTC'}
-                        onChange={(e) => setProfile({
-                          ...profile,
-                          preferences: { ...profile.preferences!, timezone: e.target.value },
-                        })}
-                        className="input"
-                      >
-                        <option value="UTC">UTC</option>
-                        <option value="America/New_York">Eastern Time</option>
-                        <option value="America/Chicago">Central Time</option>
-                        <option value="America/Denver">Mountain Time</option>
-                        <option value="America/Los_Angeles">Pacific Time</option>
-                        <option value="Europe/London">London</option>
-                        <option value="Europe/Paris">Paris</option>
-                        <option value="Asia/Tokyo">Tokyo</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
+                <ProfilePreferencesTab
+                  currency={profile.preferences?.currency || 'USD'}
+                  language={profile.preferences?.language || 'en'}
+                  timezone={profile.preferences?.timezone || 'UTC'}
+                  onCurrencyChange={(value) => setProfile({
+                    ...profile,
+                    preferences: { ...profile.preferences!, currency: value },
+                  })}
+                  onLanguageChange={(value) => setProfile({
+                    ...profile,
+                    preferences: { ...profile.preferences!, language: value },
+                  })}
+                  onTimezoneChange={(value) => setProfile({
+                    ...profile,
+                    preferences: { ...profile.preferences!, timezone: value },
+                  })}
+                />
               )}
 
               {activeTab === 'stats' && <ProfileStatsTab />}
@@ -562,60 +331,7 @@ export default function ProfilePage() {
             </form>
           </motion.div>
 
-          {/* Recent Check-ins */}
-          {checkIns.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.45 }}
-              className="mt-8"
-            >
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                Recent Check-ins
-              </h2>
-
-              <div className="space-y-3">
-                {checkIns.map((checkIn) => {
-                  const isActive = new Date(checkIn.activeUntil) > new Date();
-                  return (
-                    <Link key={checkIn.id} href={`/checkins/${checkIn.id}`}>
-                      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-4 flex items-center gap-3 hover:border-emerald-300 dark:hover:border-emerald-600 transition-colors cursor-pointer">
-                        {/* Map pin icon */}
-                        <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center">
-                          <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                          </svg>
-                        </div>
-
-                        {/* Details */}
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-slate-900 dark:text-white truncate">
-                            {checkIn.venueName ?? 'Checked in'}
-                          </p>
-                          <p className="text-sm text-slate-500 dark:text-slate-400">
-                            {formatTimeAgo(checkIn.createdAt)}
-                          </p>
-                        </div>
-
-                        {/* Active badge */}
-                        {isActive && (
-                          <span className="flex-shrink-0 inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                            Active
-                          </span>
-                        )}
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            </motion.div>
-          )}
+          <ProfileRecentCheckins checkIns={checkIns} />
         </div>
       </main>
     </div>

@@ -136,4 +136,172 @@ describe('getFofSet', () => {
     expect(result).toHaveLength(1);
     expect(result[0].mutualCount).toBe(1);
   });
+
+  it('coerces negative mutualThreshold up to 1', async () => {
+    mockCrew.findMany
+      .mockResolvedValueOnce([{ userAId: 'v1', userBId: 'p1' }])
+      .mockResolvedValueOnce([{ userAId: 'p1', userBId: 'fof1' }]);
+
+    const result = await getFofSet({ viewerId: 'v1', mutualThreshold: -5, bypassCache: true });
+    expect(result).toHaveLength(1);
+  });
+
+  it('handles cycles in the graph without infinite loops', async () => {
+    // Triangle: v1 ↔ p1 ↔ p2 ↔ p1 (and p2 ↔ fof1, p1 ↔ fof1)
+    // Multiple edges between same anchors should not blow up; FoF stays bounded.
+    mockCrew.findMany
+      .mockResolvedValueOnce([
+        { userAId: 'v1', userBId: 'p1' },
+        { userAId: 'v1', userBId: 'p2' },
+      ])
+      .mockResolvedValueOnce([
+        { userAId: 'p1', userBId: 'p2' }, // cycle edge — both anchors, skipped
+        { userAId: 'p2', userBId: 'p1' }, // duplicate cycle edge, also skipped
+        { userAId: 'p1', userBId: 'fof1' },
+        { userAId: 'p2', userBId: 'fof1' },
+      ]);
+
+    const result = await getFofSet({ viewerId: 'v1', bypassCache: true });
+    expect(result).toHaveLength(1);
+    expect(result[0].userId).toBe('fof1');
+    expect(result[0].mutualCount).toBe(2);
+  });
+
+  it('deduplicates anchors when same anchor→FoF edge appears twice', async () => {
+    // Same edge (p1 ↔ fof1) reported twice — anchors are stored in a Set,
+    // so dedup is automatic.
+    mockCrew.findMany
+      .mockResolvedValueOnce([{ userAId: 'v1', userBId: 'p1' }])
+      .mockResolvedValueOnce([
+        { userAId: 'p1', userBId: 'fof1' },
+        { userAId: 'fof1', userBId: 'p1' }, // same edge, opposite orientation
+      ]);
+
+    const result = await getFofSet({ viewerId: 'v1', bypassCache: true });
+    expect(result).toHaveLength(1);
+    expect(result[0].mutualCount).toBe(1); // not 2
+    expect(result[0].anchorIds).toEqual(['p1']);
+  });
+
+  it('handles viewer appearing as userBId in their own Crew rows', async () => {
+    // Edge stored as (p1, v1) — viewer is userBId. Anchor extraction must
+    // still pick p1.
+    mockCrew.findMany
+      .mockResolvedValueOnce([
+        { userAId: 'p1', userBId: 'v1' },
+        { userAId: 'p2', userBId: 'v1' },
+      ])
+      .mockResolvedValueOnce([
+        { userAId: 'p1', userBId: 'fof1' },
+        { userAId: 'fof2', userBId: 'p2' },
+      ]);
+
+    const result = await getFofSet({ viewerId: 'v1', bypassCache: true });
+    expect(result).toHaveLength(2);
+    const ids = result.map((r) => r.userId).sort();
+    expect(ids).toEqual(['fof1', 'fof2']);
+  });
+
+  it('returns empty when viewer Crew exists but no FoF edges found', async () => {
+    mockCrew.findMany
+      .mockResolvedValueOnce([{ userAId: 'v1', userBId: 'p1' }])
+      .mockResolvedValueOnce([]); // p1 has no other edges
+
+    const result = await getFofSet({ viewerId: 'v1', bypassCache: true });
+    expect(result).toEqual([]);
+  });
+
+  it('returns empty when all FoF edges are Crew-Crew (no candidates)', async () => {
+    // p1 and p2 are both viewer's Crew; only edge between them is a direct
+    // Crew-Crew edge (skipped).
+    mockCrew.findMany
+      .mockResolvedValueOnce([
+        { userAId: 'v1', userBId: 'p1' },
+        { userAId: 'v1', userBId: 'p2' },
+      ])
+      .mockResolvedValueOnce([{ userAId: 'p1', userBId: 'p2' }]);
+
+    const result = await getFofSet({ viewerId: 'v1', bypassCache: true });
+    expect(result).toEqual([]);
+  });
+
+  it('uses injected prismaClient when provided', async () => {
+    const customCrew = { findMany: vi.fn() };
+    customCrew.findMany
+      .mockResolvedValueOnce([{ userAId: 'v1', userBId: 'p1' }])
+      .mockResolvedValueOnce([{ userAId: 'p1', userBId: 'fof1' }]);
+
+    const customClient = { crew: customCrew } as unknown as Parameters<typeof getFofSet>[0]['prismaClient'];
+
+    const result = await getFofSet({
+      viewerId: 'v1',
+      prismaClient: customClient,
+      bypassCache: true,
+    });
+
+    expect(result).toHaveLength(1);
+    expect(customCrew.findMany).toHaveBeenCalledTimes(2);
+    // Default prisma mock should not have been touched.
+    expect(mockCrew.findMany).not.toHaveBeenCalled();
+  });
+
+  it('bypassCache=true skips cache read but still writes', async () => {
+    mockCrew.findMany
+      .mockResolvedValueOnce([{ userAId: 'v1', userBId: 'p1' }])
+      .mockResolvedValueOnce([{ userAId: 'p1', userBId: 'fof1' }])
+      // Second bypass call still hits DB
+      .mockResolvedValueOnce([{ userAId: 'v1', userBId: 'p1' }])
+      .mockResolvedValueOnce([{ userAId: 'p1', userBId: 'fof1' }]);
+
+    await getFofSet({ viewerId: 'v1', bypassCache: true });
+    await getFofSet({ viewerId: 'v1', bypassCache: true });
+
+    expect(mockCrew.findMany).toHaveBeenCalledTimes(4);
+  });
+
+  it('different viewerIds use separate cache entries', async () => {
+    mockCrew.findMany
+      .mockResolvedValueOnce([{ userAId: 'v1', userBId: 'p1' }])
+      .mockResolvedValueOnce([{ userAId: 'p1', userBId: 'fof1' }])
+      .mockResolvedValueOnce([{ userAId: 'v2', userBId: 'p1' }])
+      .mockResolvedValueOnce([{ userAId: 'p1', userBId: 'fof1' }]);
+
+    const r1 = await getFofSet({ viewerId: 'v1' });
+    const r2 = await getFofSet({ viewerId: 'v2' });
+
+    expect(r1).toHaveLength(1);
+    expect(r2).toHaveLength(1);
+    expect(mockCrew.findMany).toHaveBeenCalledTimes(4);
+  });
+
+  it('cache invalidation via __resetFofCacheForTests forces re-fetch', async () => {
+    mockCrew.findMany
+      .mockResolvedValueOnce([{ userAId: 'v1', userBId: 'p1' }])
+      .mockResolvedValueOnce([{ userAId: 'p1', userBId: 'fof1' }])
+      .mockResolvedValueOnce([{ userAId: 'v1', userBId: 'p1' }])
+      .mockResolvedValueOnce([{ userAId: 'p1', userBId: 'fof1' }]);
+
+    await getFofSet({ viewerId: 'v1' });
+    expect(mockCrew.findMany).toHaveBeenCalledTimes(2);
+
+    __resetFofCacheForTests();
+
+    await getFofSet({ viewerId: 'v1' });
+    expect(mockCrew.findMany).toHaveBeenCalledTimes(4);
+  });
+
+  it('caps result set at 200 entries', async () => {
+    // 1 anchor with 250 FoF candidates — result must be capped at 200.
+    const fofEdges = Array.from({ length: 250 }, (_, i) => ({
+      userAId: 'p1',
+      userBId: `fof${i}`,
+    }));
+
+    mockCrew.findMany
+      .mockResolvedValueOnce([{ userAId: 'v1', userBId: 'p1' }])
+      .mockResolvedValueOnce(fofEdges);
+
+    const result = await getFofSet({ viewerId: 'v1', bypassCache: true });
+    expect(result).toHaveLength(200);
+  });
 });

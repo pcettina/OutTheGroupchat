@@ -22,6 +22,11 @@ import { prisma as defaultPrisma } from '@/lib/prisma';
 
 type PrismaLike = Pick<typeof defaultPrisma, 'crew'>;
 
+/**
+ * One row in the FoF set returned by {@link getFofSet} — a candidate
+ * friend-of-friend, the count of mutual Crew shared with the viewer, and
+ * the ids of those mutual-Crew anchors (consumed by anchor selection).
+ */
 export interface FofEntry {
   userId: string;
   mutualCount: number;
@@ -63,11 +68,29 @@ function writeCache(key: string, value: FofEntry[]): void {
   }
 }
 
-/** Test-only — clear the FoF cache between runs. */
+/**
+ * Test-only — clear the in-memory FoF cache between runs so cached entries
+ * from a prior test don't leak into the next assertion.
+ */
 export function __resetFofCacheForTests(): void {
   fofCache.clear();
 }
 
+/**
+ * Compute the FoF set for a viewer — users who share at least
+ * `mutualThreshold` accepted-Crew edges with the viewer, excluding the
+ * viewer and anyone already in their direct Crew. Result is capped at 200
+ * entries (sorted by mutualCount desc) and cached for 60s per
+ * `viewerId:mutualThreshold` key.
+ *
+ * @param opts.viewerId The viewing user's id.
+ * @param opts.mutualThreshold Minimum mutual-Crew count to qualify (>=1).
+ *   Defaults to 1.
+ * @param opts.prismaClient Optional Prisma client override (test/seam).
+ * @param opts.bypassCache When true, skip cache reads — used by tests.
+ * @returns The (possibly empty) FoF entries; cache is updated as a
+ *   side-effect so subsequent calls within the TTL hit memory.
+ */
 export async function getFofSet(opts: {
   viewerId: string;
   mutualThreshold?: number;

@@ -31,6 +31,11 @@ import { getNeighborhoodCentroid } from '@/lib/intent/neighborhoods';
 
 type PrismaLike = Pick<typeof defaultPrisma, 'heatmapContribution' | 'venue'>;
 
+/**
+ * The slice of an `Intent` row needed to build an INTEREST contribution.
+ * The caller (SubCrew commit route) selects exactly these fields so the
+ * writer doesn't pull the full Intent record.
+ */
 export interface IntentForContribution {
   id: string;
   venueId: string | null;
@@ -40,6 +45,11 @@ export interface IntentForContribution {
   expiresAt: Date;
 }
 
+/**
+ * The slice of a `CheckIn` row needed to build a PRESENCE contribution.
+ * `latitude`/`longitude` may be inline on the CheckIn or `null` (in which
+ * case the writer falls back to the joined Venue's lat/lng).
+ */
 export interface CheckInForContribution {
   id: string;
   venueId: string | null;
