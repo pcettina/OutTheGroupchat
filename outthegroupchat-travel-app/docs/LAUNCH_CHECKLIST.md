@@ -8,16 +8,16 @@
 - [x] Phase 4: Meetups core — All 3 sessions complete (2026-04-18): API routes ✅ | venue search (Places API) ✅ | meetup UI (MeetupDetail, AttendeeList, MeetupInviteModal) ✅ | RSVP ✅ | invite ✅ | Pusher real-time ✅ | MEETUP_STARTING_SOON cron ✅ (PRs #48, #49, #51)
 - [x] Phase 5: Check-ins + presence — COMPLETE 2026-04-20 (PR #53): POST /api/checkins ✅ | GET /api/checkins/feed ✅ | DELETE /api/checkins/[id] ✅ | GET /api/checkins/[id] ✅ | CheckInButton (duration picker) ✅ | LiveActivityCard ("Join me" wired) ✅ | NearbyCrewList ✅ | /checkins page ✅ | /checkins/[id] page ✅ | Privacy settings page (/settings/privacy) ✅ | /api/users/privacy ✅ | Pusher city-channel broadcast ✅ | All Phase 5 exit criteria met ✅
 - [x] Phase 6: Feed/AI/notifications rescope — COMPLETE 2026-04-22 (PR #55): Feed rescoped (meetup/checkin types, trip/activity queries removed, POST returns 410) ✅ | Search people-first (users→meetups→venues) ✅ | 9 trip notification types removed from schema ✅ | Follow marked @deprecated ✅ | types/index.ts cleaned (264 lines) ✅ | All AI routes later deleted 2026-04-23 (ops/kill-all-ai)
-- [ ] Phase 7: Marketing surface
-- [ ] Phase 8: Launch-readiness re-audit
+- [x] Phase 7: Marketing surface — COMPLETE 2026-04-22 (PR #56): About page ✅ | OG/Twitter Card metadata refreshed ✅ | README rewrite ✅ | email-auth.ts split ✅ | search type enum cleaned ✅ | RichFeedItem refactor (717→337) ✅
+- [~] Phase 8: Launch-readiness re-audit — IN PROGRESS: AI surface fully removed (PR #65) ✅ | Neon migrated from Supabase ✅ | heatmap shipped (Crew + FoF tiers, PRs #86/#87) ✅ | Production Neon migration workflow (PR #90) ✅ | E2E Playwright authenticated flows ⏳ | Sentry full coverage audit ⏳
 
 ---
 
 > **⚠️ Scope change (2026-04-16):** This checklist is now STALE against the new social-meetup product. It will be rewritten in Phase 8 of `docs/REFACTOR_PLAN.md`. Trip-era checklist items below remain visible for reference but should **NOT** be used to gate launch. Readiness scores below reflect the archived trip product and are intentionally left unchanged to avoid implying progress against the new scope.
 >
 > **Target Launch:** Q2 2026 (Beta) — to be re-baselined post-pivot
-> **Current Status:** POST_PIVOT_STEADY_STATE — V1 surface live, nightly builds steady-state
-> **Last Updated:** 2026-05-04 (nightly/2026-05-05 — Sentry context tags added to all 14 V1 routes; 4 dead components removed: TripHistory, BadgeShowcase, PreferencesCard, FloatingShareButton; RichFeedItem refactored 717→222 lines; +128 new tests across 5 new test files)
+> **Current Status:** Refactoring (Phase 2 in progress — domain models added, DB migration pending)
+> **Last Updated:** 2026-05-08 (Phase 7 COMPLETE; Phase 8 IN PROGRESS — AI removed, Neon migrated, heatmap shipped; remaining: E2E Playwright + Sentry coverage audit)
 
 ---
 
