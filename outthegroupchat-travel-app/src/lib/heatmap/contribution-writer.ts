@@ -32,8 +32,9 @@ import { getNeighborhoodCentroid } from '@/lib/intent/neighborhoods';
 type PrismaLike = Pick<typeof defaultPrisma, 'heatmapContribution' | 'venue'>;
 
 /**
- * Minimal Intent shape required to build an INTEREST contribution. Passed
- * by the SubCrew commit route after it has loaded the Intent row.
+ * The slice of an `Intent` row needed to build an INTEREST contribution.
+ * The caller (SubCrew commit route) selects exactly these fields so the
+ * writer doesn't pull the full Intent record.
  */
 export interface IntentForContribution {
   /** Source Intent id — copied into `HeatmapContribution.sourceId`. */
@@ -51,8 +52,9 @@ export interface IntentForContribution {
 }
 
 /**
- * Minimal CheckIn shape required to build a PRESENCE contribution. Passed
- * by `POST /api/checkins` after it has created the CheckIn row.
+ * The slice of a `CheckIn` row needed to build a PRESENCE contribution.
+ * `latitude`/`longitude` may be inline on the CheckIn or `null` (in which
+ * case the writer falls back to the joined Venue's lat/lng).
  */
 export interface CheckInForContribution {
   /** Source CheckIn id — copied into `HeatmapContribution.sourceId`. */

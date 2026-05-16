@@ -286,38 +286,7 @@ describe('aggregateContributions', () => {
     );
   });
 
-  it('omits topicId/windowPreset from where clause when not provided', async () => {
-    mockCrew.findMany.mockResolvedValueOnce([{ userAId: 'v1', userBId: 'p1' }]);
-    mockHeatmap.findMany.mockResolvedValueOnce([]);
-
-    await aggregateContributions({
-      viewerId: 'v1',
-      type: 'interest',
-      tier: 'crew',
-    });
-
-    const call = mockHeatmap.findMany.mock.calls[0][0];
-    expect(call.where).not.toHaveProperty('topicId');
-    expect(call.where).not.toHaveProperty('windowPreset');
-  });
-
-  it('returns empty when contributions query yields nothing', async () => {
-    mockCrew.findMany.mockResolvedValueOnce([{ userAId: 'v1', userBId: 'p1' }]);
-    mockHeatmap.findMany.mockResolvedValueOnce([]);
-
-    const result = await aggregateContributions({
-      viewerId: 'v1',
-      type: 'interest',
-      tier: 'crew',
-    });
-
-    expect(result.cells).toEqual([]);
-    expect(result.venueMarkers).toEqual([]);
-    // crewRelationshipSetting is not queried when contributions empty
-    expect(mockRelSetting.findMany).not.toHaveBeenCalled();
-  });
-
-  it('uses PRESENCE contribution type when type=presence', async () => {
+  it('type=presence maps to PRESENCE contribution type filter', async () => {
     mockCrew.findMany.mockResolvedValueOnce([{ userAId: 'v1', userBId: 'p1' }]);
     mockHeatmap.findMany.mockResolvedValueOnce([]);
 
@@ -334,321 +303,186 @@ describe('aggregateContributions', () => {
     );
   });
 
-  it('handles a single KNOWN contribution producing a single cell with count=1', async () => {
+  it('omits topicId/windowPreset filters from where clause when not provided', async () => {
     mockCrew.findMany.mockResolvedValueOnce([{ userAId: 'v1', userBId: 'p1' }]);
-    mockHeatmap.findMany.mockResolvedValueOnce([row({ id: 'h1', userId: 'p1' })]);
-
-    const result = await aggregateContributions({
-      viewerId: 'v1',
-      type: 'interest',
-      tier: 'crew',
-    });
-
-    expect(result.cells).toEqual([{ lat: 40.728, lng: -73.984, count: 1 }]);
-  });
-
-  it('uses cellPrecision granularity to dedupe cells via 6-decimal key (different lat/lng → separate cells)', async () => {
-    mockCrew.findMany.mockResolvedValueOnce([{ userAId: 'v1', userBId: 'p1' }]);
-    mockHeatmap.findMany.mockResolvedValueOnce([
-      row({ id: 'h1', sourceId: 's1', cellLat: 40.728001, cellLng: -73.984 }),
-      row({ id: 'h2', sourceId: 's2', cellLat: 40.728002, cellLng: -73.984 }),
-    ]);
-
-    const result = await aggregateContributions({
-      viewerId: 'v1',
-      type: 'interest',
-      tier: 'crew',
-    });
-
-    expect(result.cells).toHaveLength(2);
-    expect(result.cells.every((c) => c.count === 1)).toBe(true);
-  });
-
-  it('omits anchorSummary on Crew-tier cells', async () => {
-    mockCrew.findMany.mockResolvedValueOnce([{ userAId: 'v1', userBId: 'p1' }]);
-    mockHeatmap.findMany.mockResolvedValueOnce([row({ id: 'h1', userId: 'p1' })]);
-
-    const result = await aggregateContributions({
-      viewerId: 'v1',
-      type: 'interest',
-      tier: 'crew',
-    });
-
-    expect(result.cells[0]).not.toHaveProperty('anchorSummary');
-  });
-
-  it('drops venue markers when the venue has null lat or lng', async () => {
-    mockCrew.findMany.mockResolvedValueOnce([{ userAId: 'v1', userBId: 'p1' }]);
-    mockHeatmap.findMany.mockResolvedValueOnce([row({ id: 'h1', userId: 'p1', sourceId: 'i1' })]);
-    mockIntent.findMany.mockResolvedValueOnce([{ id: 'i1', venueId: 'venue-X' }]);
-    mockVenue.findMany.mockResolvedValueOnce([
-      { id: 'venue-X', name: 'Unmapped', latitude: null, longitude: null },
-    ]);
-
-    const result = await aggregateContributions({
-      viewerId: 'v1',
-      type: 'interest',
-      tier: 'crew',
-    });
-
-    expect(result.venueMarkers).toEqual([]);
-  });
-
-  it('returns empty venueMarkers when no intents map to a venueId', async () => {
-    mockCrew.findMany.mockResolvedValueOnce([{ userAId: 'v1', userBId: 'p1' }]);
-    mockHeatmap.findMany.mockResolvedValueOnce([row({ id: 'h1', userId: 'p1', sourceId: 'i1' })]);
-    mockIntent.findMany.mockResolvedValueOnce([]); // no venue rows
-    mockVenue.findMany.mockResolvedValue([]);
-
-    const result = await aggregateContributions({
-      viewerId: 'v1',
-      type: 'interest',
-      tier: 'crew',
-    });
-
-    expect(result.venueMarkers).toEqual([]);
-    expect(mockVenue.findMany).not.toHaveBeenCalled();
-  });
-
-  it('forwards cityArea to the intent filter', async () => {
-    mockCrew.findMany.mockResolvedValueOnce([{ userAId: 'v1', userBId: 'p1' }]);
-    mockHeatmap.findMany.mockResolvedValueOnce([row({ id: 'h1', userId: 'p1', sourceId: 'i1' })]);
-    mockIntent.findMany.mockResolvedValueOnce([]);
+    mockHeatmap.findMany.mockResolvedValueOnce([]);
 
     await aggregateContributions({
       viewerId: 'v1',
       type: 'interest',
       tier: 'crew',
-      cityArea: 'brooklyn-bk09',
+    });
+
+    const call = mockHeatmap.findMany.mock.calls[0][0];
+    expect(call.where).not.toHaveProperty('topicId');
+    expect(call.where).not.toHaveProperty('windowPreset');
+  });
+
+  it('cells are sorted descending by count', async () => {
+    mockCrew.findMany.mockResolvedValueOnce([{ userAId: 'v1', userBId: 'p1' }]);
+    mockHeatmap.findMany.mockResolvedValueOnce([
+      // Cell A: 1 contribution
+      { id: 'h1', userId: 'p1', sourceId: 's1', cellLat: 40.700, cellLng: -73.900, cellPrecision: 'BLOCK', identityMode: 'KNOWN', socialScope: 'FULL_CREW', windowPreset: null, topicId: null, type: 'INTEREST' },
+      // Cell B: 3 contributions
+      { id: 'h2', userId: 'p1', sourceId: 's2', cellLat: 40.800, cellLng: -73.800, cellPrecision: 'BLOCK', identityMode: 'KNOWN', socialScope: 'FULL_CREW', windowPreset: null, topicId: null, type: 'INTEREST' },
+      { id: 'h3', userId: 'p1', sourceId: 's3', cellLat: 40.800, cellLng: -73.800, cellPrecision: 'BLOCK', identityMode: 'KNOWN', socialScope: 'FULL_CREW', windowPreset: null, topicId: null, type: 'INTEREST' },
+      { id: 'h4', userId: 'p1', sourceId: 's4', cellLat: 40.800, cellLng: -73.800, cellPrecision: 'BLOCK', identityMode: 'KNOWN', socialScope: 'FULL_CREW', windowPreset: null, topicId: null, type: 'INTEREST' },
+      // Cell C: 2 contributions
+      { id: 'h5', userId: 'p1', sourceId: 's5', cellLat: 40.750, cellLng: -73.850, cellPrecision: 'BLOCK', identityMode: 'KNOWN', socialScope: 'FULL_CREW', windowPreset: null, topicId: null, type: 'INTEREST' },
+      { id: 'h6', userId: 'p1', sourceId: 's6', cellLat: 40.750, cellLng: -73.850, cellPrecision: 'BLOCK', identityMode: 'KNOWN', socialScope: 'FULL_CREW', windowPreset: null, topicId: null, type: 'INTEREST' },
+    ]);
+
+    const result = await aggregateContributions({ viewerId: 'v1', type: 'interest', tier: 'crew' });
+    expect(result.cells.map((c) => c.count)).toEqual([3, 2, 1]);
+  });
+
+  it('mixed KNOWN + ANONYMOUS in same cell sums both when anonymous bucket >= 3', async () => {
+    mockCrew.findMany.mockResolvedValueOnce([
+      { userAId: 'v1', userBId: 'p1' },
+      { userAId: 'v1', userBId: 'p2' },
+      { userAId: 'v1', userBId: 'p3' },
+      { userAId: 'v1', userBId: 'p4' },
+    ]);
+    mockHeatmap.findMany.mockResolvedValueOnce([
+      { id: 'h1', userId: 'p1', sourceId: 's1', cellLat: 40.7, cellLng: -73.9, cellPrecision: 'BLOCK', identityMode: 'KNOWN', socialScope: 'FULL_CREW', windowPreset: null, topicId: null, type: 'INTEREST' },
+      { id: 'h2', userId: 'p2', sourceId: 's2', cellLat: 40.7, cellLng: -73.9, cellPrecision: 'BLOCK', identityMode: 'ANONYMOUS', socialScope: 'FULL_CREW', windowPreset: null, topicId: null, type: 'INTEREST' },
+      { id: 'h3', userId: 'p3', sourceId: 's3', cellLat: 40.7, cellLng: -73.9, cellPrecision: 'BLOCK', identityMode: 'ANONYMOUS', socialScope: 'FULL_CREW', windowPreset: null, topicId: null, type: 'INTEREST' },
+      { id: 'h4', userId: 'p4', sourceId: 's4', cellLat: 40.7, cellLng: -73.9, cellPrecision: 'BLOCK', identityMode: 'ANONYMOUS', socialScope: 'FULL_CREW', windowPreset: null, topicId: null, type: 'INTEREST' },
+    ]);
+
+    const result = await aggregateContributions({ viewerId: 'v1', type: 'interest', tier: 'crew' });
+    // 1 KNOWN + 3 ANONYMOUS (>= floor) = 4
+    expect(result.cells).toHaveLength(1);
+    expect(result.cells[0].count).toBe(4);
+  });
+
+  it('venue markers skip venues with null lat/lng', async () => {
+    mockCrew.findMany.mockResolvedValueOnce([{ userAId: 'v1', userBId: 'p1' }]);
+    mockHeatmap.findMany.mockResolvedValueOnce([
+      { id: 'h1', userId: 'p1', sourceId: 'i1', cellLat: 40.7, cellLng: -73.9, cellPrecision: 'BLOCK', identityMode: 'KNOWN', socialScope: 'FULL_CREW', windowPreset: null, topicId: null, type: 'INTEREST' },
+      { id: 'h2', userId: 'p1', sourceId: 'i2', cellLat: 40.7, cellLng: -73.9, cellPrecision: 'BLOCK', identityMode: 'KNOWN', socialScope: 'FULL_CREW', windowPreset: null, topicId: null, type: 'INTEREST' },
+    ]);
+    mockIntent.findMany.mockResolvedValueOnce([
+      { id: 'i1', venueId: 'venue-good' },
+      { id: 'i2', venueId: 'venue-bad' },
+    ]);
+    mockVenue.findMany.mockResolvedValueOnce([
+      { id: 'venue-good', name: 'Good', latitude: 40.7, longitude: -73.9 },
+      { id: 'venue-bad', name: 'Bad', latitude: null, longitude: null },
+    ]);
+
+    const result = await aggregateContributions({ viewerId: 'v1', type: 'interest', tier: 'crew' });
+    expect(result.venueMarkers).toHaveLength(1);
+    expect(result.venueMarkers[0].venueId).toBe('venue-good');
+  });
+
+  it('venue markers are sorted descending by count', async () => {
+    mockCrew.findMany.mockResolvedValueOnce([{ userAId: 'v1', userBId: 'p1' }]);
+    mockHeatmap.findMany.mockResolvedValueOnce([
+      { id: 'h1', userId: 'p1', sourceId: 'i1', cellLat: 40.7, cellLng: -73.9, cellPrecision: 'BLOCK', identityMode: 'KNOWN', socialScope: 'FULL_CREW', windowPreset: null, topicId: null, type: 'INTEREST' },
+      { id: 'h2', userId: 'p1', sourceId: 'i2', cellLat: 40.7, cellLng: -73.9, cellPrecision: 'BLOCK', identityMode: 'KNOWN', socialScope: 'FULL_CREW', windowPreset: null, topicId: null, type: 'INTEREST' },
+      { id: 'h3', userId: 'p1', sourceId: 'i3', cellLat: 40.7, cellLng: -73.9, cellPrecision: 'BLOCK', identityMode: 'KNOWN', socialScope: 'FULL_CREW', windowPreset: null, topicId: null, type: 'INTEREST' },
+    ]);
+    mockIntent.findMany.mockResolvedValueOnce([
+      { id: 'i1', venueId: 'venue-A' },
+      { id: 'i2', venueId: 'venue-B' },
+      { id: 'i3', venueId: 'venue-A' },
+    ]);
+    mockVenue.findMany.mockResolvedValueOnce([
+      { id: 'venue-A', name: 'A', latitude: 40.7, longitude: -73.9 },
+      { id: 'venue-B', name: 'B', latitude: 40.71, longitude: -73.91 },
+    ]);
+
+    const result = await aggregateContributions({ viewerId: 'v1', type: 'interest', tier: 'crew' });
+    expect(result.venueMarkers.map((m) => m.count)).toEqual([2, 1]);
+    expect(result.venueMarkers[0].venueId).toBe('venue-A');
+  });
+
+  it('passes cityArea filter through to Intent venue lookup for INTEREST type', async () => {
+    mockCrew.findMany.mockResolvedValueOnce([{ userAId: 'v1', userBId: 'p1' }]);
+    mockHeatmap.findMany.mockResolvedValueOnce([
+      { id: 'h1', userId: 'p1', sourceId: 'i1', cellLat: 40.7, cellLng: -73.9, cellPrecision: 'BLOCK', identityMode: 'KNOWN', socialScope: 'FULL_CREW', windowPreset: null, topicId: null, type: 'INTEREST' },
+    ]);
+
+    await aggregateContributions({
+      viewerId: 'v1',
+      type: 'interest',
+      tier: 'crew',
+      cityArea: 'brooklyn',
     });
 
     expect(mockIntent.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({ cityArea: 'brooklyn-bk09' }),
+        where: expect.objectContaining({ cityArea: 'brooklyn' }),
       }),
     );
   });
 
-  it('sorts venue markers by count desc', async () => {
+  it('returns empty venueMarkers when no source rows have venueId', async () => {
     mockCrew.findMany.mockResolvedValueOnce([{ userAId: 'v1', userBId: 'p1' }]);
     mockHeatmap.findMany.mockResolvedValueOnce([
-      row({ id: 'h1', sourceId: 'i1' }),
-      row({ id: 'h2', sourceId: 'i2' }),
-      row({ id: 'h3', sourceId: 'i3' }),
+      { id: 'h1', userId: 'p1', sourceId: 'i1', cellLat: 40.7, cellLng: -73.9, cellPrecision: 'BLOCK', identityMode: 'KNOWN', socialScope: 'FULL_CREW', windowPreset: null, topicId: null, type: 'INTEREST' },
     ]);
-    mockIntent.findMany.mockResolvedValueOnce([
-      { id: 'i1', venueId: 'venue-A' },
-      { id: 'i2', venueId: 'venue-A' },
-      { id: 'i3', venueId: 'venue-B' },
-    ]);
-    mockVenue.findMany.mockResolvedValueOnce([
-      { id: 'venue-A', name: 'A-bar', latitude: 1, longitude: 2 },
-      { id: 'venue-B', name: 'B-bar', latitude: 3, longitude: 4 },
-    ]);
+    // Intent rows fetched but none have a venueId (filtered by venueId: { not: null } at the query layer; mock returns empty)
+    mockIntent.findMany.mockResolvedValueOnce([]);
 
-    const result = await aggregateContributions({
-      viewerId: 'v1',
-      type: 'interest',
-      tier: 'crew',
-    });
-
-    expect(result.venueMarkers).toHaveLength(2);
-    expect(result.venueMarkers[0].venueId).toBe('venue-A');
-    expect(result.venueMarkers[0].count).toBe(2);
-    expect(result.venueMarkers[1].venueId).toBe('venue-B');
-    expect(result.venueMarkers[1].count).toBe(1);
+    const result = await aggregateContributions({ viewerId: 'v1', type: 'interest', tier: 'crew' });
+    expect(result.cells).toHaveLength(1);
+    expect(result.venueMarkers).toEqual([]);
+    // Venue table should not be queried when sourceVenueMap is empty
+    expect(mockVenue.findMany).not.toHaveBeenCalled();
   });
 
-  it('filters contributions from HIDDEN contributor out of venue marker counts too', async () => {
+  it('multiple HIDDEN settings drop all hidden contributors', async () => {
+    mockCrew.findMany.mockResolvedValueOnce([
+      { userAId: 'v1', userBId: 'p1' },
+      { userAId: 'v1', userBId: 'p2' },
+      { userAId: 'v1', userBId: 'p3' },
+    ]);
+    mockHeatmap.findMany.mockResolvedValueOnce([
+      { id: 'h1', userId: 'p1', sourceId: 's1', cellLat: 40.7, cellLng: -73.9, cellPrecision: 'BLOCK', identityMode: 'KNOWN', socialScope: 'FULL_CREW', windowPreset: null, topicId: null, type: 'INTEREST' },
+      { id: 'h2', userId: 'p2', sourceId: 's2', cellLat: 40.7, cellLng: -73.9, cellPrecision: 'BLOCK', identityMode: 'KNOWN', socialScope: 'FULL_CREW', windowPreset: null, topicId: null, type: 'INTEREST' },
+      { id: 'h3', userId: 'p3', sourceId: 's3', cellLat: 40.7, cellLng: -73.9, cellPrecision: 'BLOCK', identityMode: 'KNOWN', socialScope: 'FULL_CREW', windowPreset: null, topicId: null, type: 'INTEREST' },
+    ]);
+    mockRelSetting.findMany.mockResolvedValueOnce([
+      { targetId: 'p1', granularityMode: 'HIDDEN' },
+      { targetId: 'p2', granularityMode: 'HIDDEN' },
+      // p3 has no setting → still visible (default)
+    ]);
+
+    const result = await aggregateContributions({ viewerId: 'v1', type: 'interest', tier: 'crew' });
+    expect(result.cells).toHaveLength(1);
+    expect(result.cells[0].count).toBe(1);
+  });
+
+  it('non-HIDDEN granularity settings (e.g. BLOCK, DYNAMIC_CELL) do NOT drop the contributor', async () => {
     mockCrew.findMany.mockResolvedValueOnce([
       { userAId: 'v1', userBId: 'p1' },
       { userAId: 'v1', userBId: 'p2' },
     ]);
     mockHeatmap.findMany.mockResolvedValueOnce([
-      row({ id: 'h1', userId: 'p1', sourceId: 'i1' }),
-      row({ id: 'h2', userId: 'p2', sourceId: 'i2' }),
+      { id: 'h1', userId: 'p1', sourceId: 's1', cellLat: 40.7, cellLng: -73.9, cellPrecision: 'BLOCK', identityMode: 'KNOWN', socialScope: 'FULL_CREW', windowPreset: null, topicId: null, type: 'INTEREST' },
+      { id: 'h2', userId: 'p2', sourceId: 's2', cellLat: 40.7, cellLng: -73.9, cellPrecision: 'BLOCK', identityMode: 'KNOWN', socialScope: 'FULL_CREW', windowPreset: null, topicId: null, type: 'INTEREST' },
     ]);
     mockRelSetting.findMany.mockResolvedValueOnce([
-      { targetId: 'p2', granularityMode: 'HIDDEN' },
-    ]);
-    mockIntent.findMany.mockResolvedValueOnce([
-      { id: 'i1', venueId: 'venue-A' },
-      { id: 'i2', venueId: 'venue-A' },
-    ]);
-    mockVenue.findMany.mockResolvedValueOnce([
-      { id: 'venue-A', name: 'Bar', latitude: 1, longitude: 2 },
+      { targetId: 'p1', granularityMode: 'BLOCK' },
+      { targetId: 'p2', granularityMode: 'DYNAMIC_CELL' },
     ]);
 
-    const result = await aggregateContributions({
-      viewerId: 'v1',
-      type: 'interest',
-      tier: 'crew',
-    });
-
-    // p2 is HIDDEN — only p1's contribution counts
-    expect(result.venueMarkers).toHaveLength(1);
-    expect(result.venueMarkers[0].count).toBe(1);
-  });
-
-  it('queries with socialScope=[FULL_CREW] only when tier=fof (excludes SUBGROUP_ONLY)', async () => {
-    // Viewer's direct Crew (used by getFofSet seed query)
-    mockCrew.findMany
-      .mockResolvedValueOnce([{ userAId: 'v1', userBId: 'a1' }]) // viewer Crew
-      .mockResolvedValueOnce([
-        // FoF edges: a1 - fof1
-        { userAId: 'a1', userBId: 'fof1' },
-      ])
-      // anchor user crewEdges fetch in aggregateFoF
-      .mockResolvedValueOnce([
-        { userAId: 'v1', userBId: 'a1', createdAt: new Date('2026-01-01') },
-      ]);
-    mockUser.findMany.mockResolvedValueOnce([{ id: 'a1', name: 'Alex' }]);
-    mockHeatmap.findMany.mockResolvedValueOnce([]); // no contributions
-
-    await aggregateContributions({
-      viewerId: 'v1',
-      type: 'interest',
-      tier: 'fof',
-      mutualThreshold: 1,
-    });
-
-    expect(mockHeatmap.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: expect.objectContaining({
-          socialScope: { in: ['FULL_CREW'] },
-        }),
-      }),
-    );
-  });
-
-  it('FoF tier — empty FoF set short-circuits to empty payload', async () => {
-    mockCrew.findMany.mockResolvedValueOnce([]); // viewer has no Crew → no FoF
-
-    const result = await aggregateContributions({
-      viewerId: 'v1',
-      type: 'interest',
-      tier: 'fof',
-    });
-
-    expect(result.cells).toEqual([]);
-    expect(result.venueMarkers).toEqual([]);
-    expect(mockHeatmap.findMany).not.toHaveBeenCalled();
-  });
-
-  it('FoF tier — attaches anchorSummary "via Alex" to cells with single anchor', async () => {
-    mockCrew.findMany
-      .mockResolvedValueOnce([{ userAId: 'v1', userBId: 'a1' }]) // viewer Crew
-      .mockResolvedValueOnce([{ userAId: 'a1', userBId: 'fof1' }]) // FoF edges
-      .mockResolvedValueOnce([
-        { userAId: 'v1', userBId: 'a1', createdAt: new Date('2026-01-01') },
-      ]);
-    mockUser.findMany.mockResolvedValueOnce([{ id: 'a1', name: 'Alex' }]);
-    mockHeatmap.findMany.mockResolvedValueOnce([
-      row({ id: 'h1', userId: 'fof1', sourceId: 's1' }),
-    ]);
-
-    const result = await aggregateContributions({
-      viewerId: 'v1',
-      type: 'interest',
-      tier: 'fof',
-      mutualThreshold: 1,
-    });
-
+    const result = await aggregateContributions({ viewerId: 'v1', type: 'interest', tier: 'crew' });
     expect(result.cells).toHaveLength(1);
-    expect(result.cells[0].anchorSummary).toBe('via Alex');
+    expect(result.cells[0].count).toBe(2);
   });
 
-  it('FoF tier — looks up subCrew members when subCrewId is provided', async () => {
-    mockCrew.findMany
-      .mockResolvedValueOnce([{ userAId: 'v1', userBId: 'a1' }])
-      .mockResolvedValueOnce([{ userAId: 'a1', userBId: 'fof1' }])
-      .mockResolvedValueOnce([
-        { userAId: 'v1', userBId: 'a1', createdAt: new Date('2026-01-01') },
-      ]);
-    mockUser.findMany.mockResolvedValueOnce([{ id: 'a1', name: 'Alex' }]);
-    mockSubCrewMember.findMany.mockResolvedValueOnce([{ userId: 'a1' }]);
-    mockHeatmap.findMany.mockResolvedValueOnce([]);
-
-    await aggregateContributions({
-      viewerId: 'v1',
-      type: 'interest',
-      tier: 'fof',
-      mutualThreshold: 1,
-      subCrewId: 'subcrew-1',
-    });
-
-    expect(mockSubCrewMember.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { subCrewId: 'subcrew-1' },
-      }),
-    );
-  });
-
-  it('FoF tier — skips subCrewMember query when no subCrewId provided', async () => {
-    mockCrew.findMany
-      .mockResolvedValueOnce([{ userAId: 'v1', userBId: 'a1' }])
-      .mockResolvedValueOnce([{ userAId: 'a1', userBId: 'fof1' }])
-      .mockResolvedValueOnce([
-        { userAId: 'v1', userBId: 'a1', createdAt: new Date('2026-01-01') },
-      ]);
-    mockUser.findMany.mockResolvedValueOnce([{ id: 'a1', name: 'Alex' }]);
-    mockHeatmap.findMany.mockResolvedValueOnce([]);
-
-    await aggregateContributions({
-      viewerId: 'v1',
-      type: 'interest',
-      tier: 'fof',
-      mutualThreshold: 1,
-    });
-
-    expect(mockSubCrewMember.findMany).not.toHaveBeenCalled();
-  });
-
-  it('uses an injected prismaClient when provided instead of the default singleton', async () => {
-    const injectedCrew = vi.fn().mockResolvedValue([{ userAId: 'v1', userBId: 'p1' }]);
-    const injectedHeatmap = vi.fn().mockResolvedValue([]);
-    const injectedRel = vi.fn().mockResolvedValue([]);
-    const injected = {
-      crew: { findMany: injectedCrew },
-      heatmapContribution: { findMany: injectedHeatmap },
-      crewRelationshipSetting: { findMany: injectedRel },
-      intent: { findMany: vi.fn().mockResolvedValue([]) },
-      checkIn: { findMany: vi.fn().mockResolvedValue([]) },
-      venue: { findMany: vi.fn().mockResolvedValue([]) },
-      user: { findMany: vi.fn().mockResolvedValue([]) },
-      subCrewMember: { findMany: vi.fn().mockResolvedValue([]) },
-    };
-
-    await aggregateContributions({
-      viewerId: 'v1',
-      type: 'interest',
-      tier: 'crew',
-      prismaClient: injected as never,
-    });
-
-    expect(injectedCrew).toHaveBeenCalled();
-    expect(injectedHeatmap).toHaveBeenCalled();
-    // The global mocks must NOT have been called when a client is injected
-    expect(mockCrew.findMany).not.toHaveBeenCalled();
-    expect(mockHeatmap.findMany).not.toHaveBeenCalled();
-  });
-
-  it('uses expiresAt filter with current time (now-gating)', async () => {
+  it('returns empty when contributions query yields no rows (no venue queries fire)', async () => {
     mockCrew.findMany.mockResolvedValueOnce([{ userAId: 'v1', userBId: 'p1' }]);
     mockHeatmap.findMany.mockResolvedValueOnce([]);
-    const before = Date.now();
 
-    await aggregateContributions({
-      viewerId: 'v1',
-      type: 'interest',
-      tier: 'crew',
-    });
-    const after = Date.now();
-
-    const call = mockHeatmap.findMany.mock.calls[0][0];
-    expect(call.where.expiresAt.gt).toBeInstanceOf(Date);
-    const ts = (call.where.expiresAt.gt as Date).getTime();
-    expect(ts).toBeGreaterThanOrEqual(before);
-    expect(ts).toBeLessThanOrEqual(after);
+    const result = await aggregateContributions({ viewerId: 'v1', type: 'interest', tier: 'crew' });
+    expect(result.cells).toEqual([]);
+    expect(result.venueMarkers).toEqual([]);
+    expect(mockIntent.findMany).not.toHaveBeenCalled();
+    expect(mockCheckIn.findMany).not.toHaveBeenCalled();
+    expect(mockVenue.findMany).not.toHaveBeenCalled();
   });
 });

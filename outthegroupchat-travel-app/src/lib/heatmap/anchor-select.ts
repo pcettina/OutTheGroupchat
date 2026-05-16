@@ -18,9 +18,8 @@
  */
 
 /**
- * The chosen mutual-Crew anchor for a single FoF contribution. `anchorName`
- * may be null when the User row lacks a display name; the UI falls back to
- * a generic "via a mutual" label in that case.
+ * Result of {@link pickAnchor} — the chosen anchor user id and its display
+ * name (null when the user record has no name set).
  */
 export interface AnchorPick {
   /** User id of the selected anchor (always a member of the viewer's Crew). */
@@ -30,8 +29,9 @@ export interface AnchorPick {
 }
 
 /**
- * Inputs to {@link pickAnchor}. The caller pre-fetches all the data needed
- * to apply R24's priority hierarchy without further DB queries.
+ * Inputs to {@link pickAnchor}. Caller is responsible for pre-fetching the
+ * mutual-Crew anchor candidates and the lookup maps used by priorities 1, 3,
+ * and 4 of R24's hierarchy.
  */
 export interface PickAnchorInput {
   /** Anchor candidate ids — the FoF user's mutual-Crew with the viewer. */
@@ -47,14 +47,13 @@ export interface PickAnchorInput {
 }
 
 /**
- * Pick the mutual-Crew anchor for a FoF contribution per R24's priority
- * hierarchy: SubCrew-anchor → most-recent Crew edge → alphabetical.
+ * Pick the single mutual-Crew anchor whose name attaches to a FoF cell.
+ * Walks R24's priority hierarchy: SubCrew member (priority 1) → most-recent
+ * Crew edge (priority 3) → alphabetical fallback (priority 4). Priority 2
+ * (recent interaction) is deferred for v1.
  *
- * Pure function — no DB access. All inputs are pre-fetched by the caller
- * (typically {@link aggregateContributions}).
- *
- * @param input Anchor candidates plus the lookup tables for each tiebreaker.
- * @returns The selected anchor, or `null` when `anchorIds` is empty.
+ * @param input Anchor candidates plus the lookup maps used by each priority.
+ * @returns The chosen anchor, or `null` when `anchorIds` is empty.
  */
 export function pickAnchor(input: PickAnchorInput): AnchorPick | null {
   if (input.anchorIds.length === 0) return null;
@@ -101,13 +100,13 @@ export function pickAnchor(input: PickAnchorInput): AnchorPick | null {
 
 /**
  * Build a "via Alex, Jamie + 2 more" summary string from an ordered list of
- * anchor names. Empty input returns `null` so the UI can branch on absence
- * rather than render an empty "via " prefix.
+ * anchor names. Null entries are dropped before slicing.
  *
- * @param names Anchor display names in priority order. Nulls/empties skipped.
- * @param max Maximum number of names to render inline before "+ N more".
- *   Defaults to 2.
- * @returns The summary string, or `null` when no usable names remain.
+ * @param names Anchor display names (nulls allowed and filtered).
+ * @param max Maximum names to inline before collapsing the remainder into
+ *   a "+ N more" suffix. Defaults to 2.
+ * @returns The formatted summary, or `null` when no usable names remain so
+ *   the UI can branch on absence.
  */
 export function buildAnchorSummary(names: ReadonlyArray<string | null>, max = 2): string | null {
   const cleaned = names.filter((n): n is string => Boolean(n));

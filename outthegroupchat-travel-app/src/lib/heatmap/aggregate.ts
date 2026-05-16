@@ -32,8 +32,10 @@ type PrismaLike = Pick<
 >;
 
 /**
- * Input to {@link aggregateContributions}. Drives both the Crew-tier and
- * FoF-tier (R5 mutual-Crew threshold) heatmap reads.
+ * Inputs to {@link aggregateContributions}. Carries the viewer identity,
+ * tier selector (`crew` vs `fof`), and optional filter axes (city area,
+ * topic, window preset). FoF-only fields (`mutualThreshold`, `subCrewId`)
+ * are ignored on the Crew tier.
  */
 export interface AggregateInput {
   /** The viewer whose heatmap is being computed. */
@@ -57,9 +59,9 @@ export interface AggregateInput {
 }
 
 /**
- * Output of {@link aggregateContributions}. `cells` is the per-grid-cell rollup
- * with the R14 N>=3 anonymous floor already applied; `venueMarkers` are the
- * R22 zoom-aware venue points (count per venue, sorted desc).
+ * Output of {@link aggregateContributions} — heatmap cells (sorted by count
+ * desc) and venue markers (sorted by count desc, only emitted when the
+ * underlying contribution sources resolve to a Venue with lat/lng).
  */
 export interface AggregateOutput {
   /** Per-cell rollups, sorted by count desc. */
@@ -155,22 +157,15 @@ function bucketsToCells(groups: Map<string, CellBucket>): HeatmapCell[] {
 }
 
 /**
- * Aggregate `HeatmapContribution` rows into per-cell rollups + venue markers
- * for the V1 heatmap (R14, R22, R24). Dispatches to the Crew-tier or FoF-tier
- * branch based on `input.tier`.
+ * Top-level read entry point for `GET /api/heatmap`. Branches on
+ * `input.tier` to either {@link aggregateCrew} (viewer's accepted Crew) or
+ * {@link aggregateFoF} (mutual-Crew friends-of-friends). Both branches
+ * apply the R14 N>=3 anonymous floor inside {@link bucketsToCells} and
+ * derive venue markers from contribution source rows.
  *
- * Crew tier: reads viewer's accepted Crew, drops contributors with
- * `CrewRelationshipSetting.granularityMode === HIDDEN`.
- *
- * FoF tier (R5): reads users 1-hop via Crew with `mutualCount >=
- * mutualThreshold`, attaches an `anchorSummary` ("via Alex") to each cell
- * using {@link pickAnchor} (R24).
- *
- * Both tiers enforce the R14 N>=3 anonymous floor per cell.
- *
- * @param input Tier, viewer, and filter configuration.
- * @returns Cells (anonymous floor applied) and venue markers, both sorted by
- *   count desc. Empty arrays when no contributions are visible.
+ * @param input Aggregation parameters — viewer, tier, optional filters.
+ * @returns Cells (sorted desc by count) and venue markers; both empty when
+ *   the viewer has no Crew (Crew tier) or no qualifying FoF (FoF tier).
  */
 export async function aggregateContributions(
   input: AggregateInput,

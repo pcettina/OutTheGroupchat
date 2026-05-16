@@ -1,97 +1,32 @@
-# 🟢 Completed 2026-05-12 (Nightly Build nightly/2026-05-13)
+# Current Sprint — V1 Steady-State Hardening
 
-> **Status:** Active Phase 8 (launch-readiness re-audit). Tonight's run expanded Sentry coverage onto the V1 surface and added edge-case test coverage for two V1 routes.
-> **Test count:** ~1210 tests passing; 86 test files (+2 new: intents-crew-extended.test.ts, subcrews-emerging-extended.test.ts)
-
-### Tasks completed
-
-- [L1] `src/__tests__/api/intents-crew-extended.test.ts` (+20 tests) — `/api/intents/crew` edge cases (auth, empty Crew, expired intents, pagination, topic filter)
-- [L2] `src/__tests__/api/subcrews-emerging-extended.test.ts` (+21 tests) — `/api/subcrews/emerging` edge cases (auth, empty results, threshold logic, topic + city filters)
-- [M1] Sentry `captureException` added to 4 `/api/intents/*` route files (5 catch blocks tagged)
-- [M2] Sentry `captureException` added to 6 `/api/subcrews/*` route files (7 catch blocks tagged; switched from `@/lib/sentry` wrapper to `@sentry/nextjs` direct)
-- [M3] Fixed 2 TS5097 errors in `prisma/scripts/seed-heatmap-only.ts` (removed `.ts` import extensions)
-- [M4] Verified Sentry already wired on `/api/topics`, `/api/heatmap`, `/api/recommendations`, `/api/venues/search` (no-op task; documentation refreshed)
-
-### Metrics
-
-- Tests: ~1169 → ~1210 (+41 new tests across intents-crew + subcrews-emerging)
-- Test files: 84 → 86 (+2 new V1 edge-case files)
-- API routes documented: 58 → **72** (14 undocumented V1 routes added to API_STATUS.md)
-- TS files: 367 | `any`: 4 | `console.*`: 0 | TODO/FIXME: 2 | files >600 lines: 2 (RichFeedItem.tsx 717, profile/page.tsx 623)
-- TSC: 0 errors | Lint: 0 warnings/errors | Prisma: valid ✅
-
-### Phase 8 progress
-
-- Action #6 (Sentry full coverage audit) **substantially advanced** — ~10 V1 routes newly instrumented; V1 surface Sentry coverage now complete.
-- Action #5 (E2E Playwright authenticated flows) still pending.
+> **Status (2026-05-14):** V1 Phases 0–4b shipped (intent-to-group loop, heatmap Crew + FoF tiers, venue recs). Now running steady-state nightly hygiene: test depth, refactors, Sentry coverage, cleanup.
+> **Test count (post-nightly/2026-05-14):** 1170+ tests across 68 files (+91 tonight: 40 cron extended, 29 subcrew coordination, 11 heatmap aggregate, 11 FoF graph)
 
 ---
 
-# 🟢 Complete — Phase 6: Feed/AI/Notifications Rescope (all sessions delivered)
+## 🟢 Completed 2026-05-14 (Nightly Build nightly/2026-05-14)
 
-> **Status:** Phase 6 COMPLETE as of 2026-04-22 (nightly/2026-04-22 PR #55). All 4 Phase 6 actions done: feed rescoped, AI routes added, notification types migrated, search rescoped people-first. Phase 7 (Marketing surface) is next.
-> **Test count:** 1157 tests passing on `nightly/2026-04-30`; 66 test files (+2 new tonight: intents-extended.test.ts, subcrews-extended.test.ts)
+### Wave 1 — Tests (+91)
+- [L1] 40 tests in `src/__tests__/api/cron-routes-extended.test.ts` — covers /api/cron, /api/cron/expire-intents, /api/cron/meetup-starting-soon (auth, empty DB, bulk update branches, idempotency, Prisma rejection paths, retentionDays clamping)
+- [L2] 29 tests in `src/__tests__/api/subcrew-coordination-extended.test.ts` — commit/members/me/join edge cases (Zod failures, 429 rate limits, 500 transaction failures, expired/cancelled intents, idempotency races)
+- [M1] 11 tests added to `src/__tests__/lib/heatmap-aggregate.test.ts` (now 21 total)
+- [M2] 11 tests added to `src/__tests__/lib/heatmap-fof-graph.test.ts` (now 18 total) — cycle handling, FoF cap, cache invalidation
 
----
-
-## 🟢 Completed 2026-04-30 (Nightly Build nightly/2026-04-30)
-
-### Wave 1 — Tests
-- [T1] `src/__tests__/api/intents-extended.test.ts` — 32 tests covering `/api/intents/mine`, `/api/intents/crew`, `/api/intents/[id]` (PATCH, DELETE). Auth, validation, rate-limit, window/state edge cases, ownership and 500 paths.
-- [T2] `src/__tests__/api/subcrews-extended.test.ts` — 44 tests covering all 6 SubCrew routes: `mine`, `emerging`, `[id]` (GET+PATCH), `[id]/join`, `[id]/commit`, `[id]/members/me`. Auth (401), validation (400), 404/409, happy path.
-
-### Pre-wave — Maintenance
-- Fixed TSC regression in `prisma/scripts/seed-heatmap-only.ts` (dropped `.ts` extensions from import paths — were not allowed under current `tsconfig`).
-- Cleaned stale Wave-coordination TODO comments in `src/app/checkins/page.tsx` (CheckInButton was already shipped; uncommented the import + JSX and removed placeholder block).
+### Wave 2 — Features & Refactors
+- [L3] `src/components/feed/RichFeedItem.tsx` 717→193 lines; extracted FeedItemTypes/Header/NewCards/LegacyCards/Engagement
+- [L4] `src/app/profile/page.tsx` 623→339 lines; extracted ProfileHeaderSection/StatsCards/BasicInfoTab/PreferencesTab/RecentCheckins
+- [L5] `/api/beta/status` migrated from in-memory Map back to Redis-backed checkRateLimit (regression from PR #38 fixed)
+- [L6] Sentry captureException added to /api/cron/route.ts + survey.service.ts (4 catch blocks instrumented)
+- [M3] Fixed 2 TS5097 errors in `prisma/scripts/seed-heatmap-only.ts` (.ts extension imports removed)
+- [M4] 5 dead components deleted: TravelStyleQuiz, WelcomeScreen, BadgeShowcase, PreferencesCard, TripHistory + barrel cleanup
+- [M5] 10 JSDoc blocks added across heatmap libs (aggregate, anchor-select, fof-graph, contribution-writer)
+- [M6] No-op — verified 0 actual `: any` annotations remain (4 grep matches were comment text)
 
 ### Wave 3 — Shared Files
-- `docs/CODEMAP.md`: refreshed Last Updated + counts (72 routes, 66 test files, 1157 tests, 291 TS/TSX files).
-- `docs/API_STATUS.md`: refreshed Last Updated header.
-- `docs/LAUNCH_CHECKLIST.md`: refreshed Last Updated header.
-- `docs/CURRENT_SPRINT.md`: tonight's section added.
-
----
-
-## Completed 2026-05-04 (Nightly Build nightly/2026-05-05)
-
-> POST_PIVOT_STEADY_STATE — no phase exits triggered. Wave 1 added 128 new tests (5 files), Wave 2 shipped 6 tasks (1 large refactor, 2 sentry sweeps, 2 docs/JSDoc tasks, 1 dead component cleanup). All TSC checks green.
-
-### Wave 1 — Tests (128 new tests, 5 new files)
-
-- [W1] `src/__tests__/api/subcrews-actions.test.ts` (30 tests) — POST `/api/subcrews/[id]/join`, POST `/api/subcrews/[id]/commit`, DELETE `/api/subcrews/[id]/members/me`
-- [W1] `src/__tests__/api/subcrews-listing.test.ts` (24 tests) — GET `/api/subcrews/emerging`, GET `/api/subcrews/mine`
-- [W1] `src/__tests__/api/intents-detail.test.ts` (41 tests) — `/api/intents/[id]` PATCH/DELETE, `/api/intents/mine`, `/api/intents/crew`
-- [W1] `src/__tests__/api/recommendations-edge.test.ts` (16 tests) — `/api/recommendations` edge cases
-- [W1] `src/__tests__/api/heatmap-edge.test.ts` (17 tests) — `/api/heatmap` edge cases
-
-### Wave 2 — Features
-
-- [L4] `src/components/feed/RichFeedItem.tsx` refactored 717 → 222 lines; 11 subcomponents extracted under `src/components/feed/rich-item/`
-- [L5] Sentry context tags added to 6 subcrews routes — `subcrews/[id]`, `[id]/join`, `[id]/commit`, `[id]/members/me`, `emerging`, `mine`
-- [L6] Sentry context tags added to 8 V1 routes — `intents/route`, `intents/[id]`, `intents/mine`, `intents/crew`, `topics`, `heatmap`, `recommendations`, `cron/expire-intents`
-- [M3] JSDoc added to `src/lib/email-meetup.ts` + `src/lib/invitations.ts`
-- [M4] 4 dead components deleted — `TripHistory.tsx`, `BadgeShowcase.tsx`, `PreferencesCard.tsx`, `FloatingShareButton.tsx`; barrel exports cleaned
-- [M5] `README.md` "Recent Updates" rewritten to reflect post-pivot status
-
-### TSC Fix (coordinator-applied)
-
-- `prisma/scripts/seed-heatmap-only.ts` — removed `.ts` extensions from imports (resolved 2 TSC errors)
-
-### Phase 3.5 — Small Task Metrics (automated)
-
-- `any` types in production code: 0 (4 hits were comments only)
-- `console.*` in production: 0
-- TODO/FIXME comments: 0
-- Files >600 lines (production): 2 (RichFeedItem dropped 717→222; profile/page.tsx still 623)
-- Test files: 86 → 91 (+5 from Wave 1)
-- API route files: 72
-
-### Metrics
-
-- Tests: ~917 baseline → ~1045 (+128 new from Wave 1)
-- Test files: 86 → 91
-- API routes: 72 (drift correction — was previously claimed 50/58)
-- Sentry coverage: +14 V1 routes instrumented this build (subcrews 6 + intents/topics/heatmap/recommendations/expire-intents 8)
+- setup.ts: prisma.trip.updateMany mock added (per L1 request)
+- TSC fix in cron-routes-extended.test.ts line 562 (typing union narrowing)
+- CODEMAP.md / CURRENT_SPRINT.md / API_STATUS.md / LAUNCH_CHECKLIST.md: Last Updated → 2026-05-14, metrics refreshed
 
 ---
 

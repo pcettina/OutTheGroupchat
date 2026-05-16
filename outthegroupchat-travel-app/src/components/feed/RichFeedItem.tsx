@@ -6,21 +6,41 @@ import { formatDistanceToNow } from 'date-fns';
 import { MediaGallery } from './MediaGallery';
 import { CommentThread } from './CommentThread';
 import { ShareModal } from './ShareModal';
-import { sanitizeText, sanitizeUrl, sanitizeRouteSegment } from './rich-item/sanitize';
-import { typeConfig } from './rich-item/types';
-import type { RichFeedItemProps } from './rich-item/types';
-import { MeetupCreatedCard } from './rich-item/MeetupCreatedCard';
-import { CheckInPostedCard } from './rich-item/CheckInPostedCard';
-import { CrewFormedCard } from './rich-item/CrewFormedCard';
-import { MeetupAttendedCard } from './rich-item/MeetupAttendedCard';
-import { PostCreatedCard } from './rich-item/PostCreatedCard';
-import { TripCard } from './rich-item/TripCard';
-import { ActivityCard } from './rich-item/ActivityCard';
-import { FeedItemHeader } from './rich-item/FeedItemHeader';
-import { EngagementBar } from './rich-item/EngagementBar';
+import { FeedItemHeader } from './FeedItemHeader';
+import {
+  MeetupCreatedCard,
+  CheckInPostedCard,
+  CrewFormedCard,
+  MeetupAttendedCard,
+  PostCreatedCard,
+} from './FeedItemNewCards';
+import { TripCard, ActivityCard } from './FeedItemLegacyCards';
+import { EngagementSummary, EngagementBar } from './FeedItemEngagement';
+import {
+  sanitizeRouteSegment,
+  sanitizeText,
+  sanitizeUrl,
+  typeConfig,
+  type RichFeedItemProps,
+} from './FeedItemTypes';
 
-// Re-export public types for backward compatibility
-export type { RichFeedItemProps } from './rich-item/types';
+// Re-export types for backward compatibility with any external consumers
+export type {
+  RichFeedItemProps,
+  FeedItemType,
+  MediaItem,
+  Reaction,
+  Comment,
+  FeedUser,
+  TripPayload,
+  ActivityPayload,
+  MeetupPayload,
+  CheckInPayload,
+  CrewPayload,
+  PostPayload,
+} from './FeedItemTypes';
+
+// ─── Main component ───────────────────────────────────────────────────────────
 
 export function RichFeedItem({
   id,
@@ -44,6 +64,11 @@ export function RichFeedItem({
   onShare,
   onSave,
 }: RichFeedItemProps) {
+  // onComment and onShare are part of the public API (preserved for downstream
+  // wiring) but the component currently surfaces share via a modal and routes
+  // comments through CommentThread. Reference them so lint doesn't complain.
+  void onComment;
+  void onShare;
   const [showComments, setShowComments] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [localComments] = useState(comments);
@@ -55,9 +80,7 @@ export function RichFeedItem({
 
   const timeAgo = formatDistanceToNow(new Date(timestamp), { addSuffix: true });
 
-  // Sanitize user-supplied values used in hrefs and image src attributes
-  const safeUserId = sanitizeRouteSegment(user.id);
-  const safeUserImage = sanitizeUrl(user.image);
+  // Sanitize values needed by the parent component for ShareModal data
   const safeUserName = sanitizeText(user.name);
   const safeTripId = trip ? sanitizeRouteSegment(trip.id) : '';
   const safeTripCoverImage = trip ? sanitizeUrl(trip.coverImage) : '';
@@ -66,7 +89,6 @@ export function RichFeedItem({
   const safeTripCountry = trip ? sanitizeText(trip.destination.country) : '';
   const safeActivityName = activity ? sanitizeText(activity.name) : '';
   const safeActivityDescription = activity ? sanitizeText(activity.description) : '';
-  const safeContent = sanitizeText(content);
 
   const handleSave = () => {
     setSaved(!saved);
@@ -90,63 +112,25 @@ export function RichFeedItem({
       animate={{ opacity: 1, y: 0 }}
       className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden"
     >
-      {/* Header */}
       <FeedItemHeader
-        safeUserId={safeUserId}
-        safeUserImage={safeUserImage}
-        safeUserName={safeUserName}
-        configIcon={config.icon}
-        configAction={config.action}
+        user={user}
+        type={type}
         timeAgo={timeAgo}
         saved={saved}
         onSave={handleSave}
-        safeContent={safeContent}
+        content={content}
       />
 
-      {/* ── New feed type cards ────────────────────────────────────────────── */}
+      {/* New feed type cards */}
+      {type === 'meetup_created' && meetup && <MeetupCreatedCard meetup={meetup} />}
+      {type === 'check_in_posted' && checkIn && <CheckInPostedCard checkIn={checkIn} />}
+      {type === 'crew_formed' && crew && <CrewFormedCard crew={crew} />}
+      {type === 'meetup_attended' && meetup && <MeetupAttendedCard meetup={meetup} />}
+      {type === 'post_created' && post && <PostCreatedCard post={post} />}
 
-      {type === 'meetup_created' && meetup && (
-        <MeetupCreatedCard meetup={meetup} />
-      )}
-
-      {type === 'check_in_posted' && checkIn && (
-        <CheckInPostedCard checkIn={checkIn} />
-      )}
-
-      {type === 'crew_formed' && crew && (
-        <CrewFormedCard crew={crew} />
-      )}
-
-      {type === 'meetup_attended' && meetup && (
-        <MeetupAttendedCard meetup={meetup} />
-      )}
-
-      {type === 'post_created' && post && (
-        <PostCreatedCard post={post} />
-      )}
-
-      {/* ── Legacy: Trip Card ─────────────────────────────────────────────── */}
-      {trip && (
-        <TripCard
-          safeTripId={safeTripId}
-          safeTripCoverImage={safeTripCoverImage}
-          safeTripTitle={safeTripTitle}
-          safeTripCity={safeTripCity}
-          safeTripCountry={safeTripCountry}
-          startDate={trip.startDate}
-          endDate={trip.endDate}
-          status={trip.status}
-        />
-      )}
-
-      {/* ── Legacy: Activity Card ─────────────────────────────────────────── */}
-      {activity && (
-        <ActivityCard
-          activity={activity}
-          safeActivityName={safeActivityName}
-          safeActivityDescription={safeActivityDescription}
-        />
-      )}
+      {/* Legacy cards */}
+      {trip && <TripCard trip={trip} />}
+      {activity && <ActivityCard activity={activity} />}
 
       {/* Media Gallery */}
       {media.length > 0 && (
@@ -155,34 +139,20 @@ export function RichFeedItem({
         </div>
       )}
 
-      {/* Engagement Summary */}
-      {(totalReactions > 0 || localComments.length > 0) && (
-        <div className="px-4 py-2 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-          <div className="flex items-center gap-1">
-            {reactions.slice(0, 3).map((r) => (
-              <span key={r.emoji} className="text-sm">{r.emoji}</span>
-            ))}
-            {totalReactions > 0 && <span className="ml-1">{totalReactions}</span>}
-          </div>
-          {localComments.length > 0 && (
-            <button
-              onClick={() => setShowComments(!showComments)}
-              className="hover:underline"
-            >
-              {localComments.length} {localComments.length === 1 ? 'comment' : 'comments'}
-            </button>
-          )}
-        </div>
-      )}
+      <EngagementSummary
+        reactions={reactions}
+        totalReactions={totalReactions}
+        commentCount={localComments.length}
+        onToggleComments={() => setShowComments(!showComments)}
+      />
 
-      {/* Engagement Bar */}
       <EngagementBar
         itemId={id}
-        isTrip={!!trip}
+        itemType={trip ? 'trip' : 'activity'}
         reactions={reactions}
         userReaction={userReaction}
-        onReact={(emoji) => onReact?.(emoji)}
-        onUnreact={() => onUnreact?.()}
+        onReact={onReact}
+        onUnreact={onUnreact}
         onToggleComments={() => setShowComments(!showComments)}
         onShare={() => setShowShareModal(true)}
       />

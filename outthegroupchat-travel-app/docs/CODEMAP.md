@@ -1,8 +1,6 @@
 # OutTheGroupchat — Full Codemap
 
-> Auto-generated 2026-03-10. Last updated 2026-05-12 (nightly/2026-05-13 — V1 surface Sentry coverage expanded; codemap drift corrected against actual repo state). Main stats: **72 API routes (59 active + 13 archived), 86 vitest-active test files, ~1210 tests passing, 367 TS/TSX files**. Comprehensive reference for agents and developers.
->
-> **New V1 test files added 2026-05-12:** `src/__tests__/api/intents-crew-extended.test.ts` (+20), `src/__tests__/api/subcrews-emerging-extended.test.ts` (+21).
+> Auto-generated 2026-03-10. Last updated 2026-05-14 (nightly/2026-05-14 — Wave 1 added 91 tests, Wave 2 refactored RichFeedItem 717→193 + profile/page 623→339, Sentry on cron/route + survey.service, beta/status migrated back to Redis, 5 dead components deleted, 10 heatmap JSDoc blocks added). Main stats: 59 API routes, 68 vitest-active test files, 1170+ tests passing, 290 TS/TSX files. Comprehensive reference for agents and developers.
 >
 > **🔀 Pivot in progress:** See `docs/REFACTOR_PLAN.md`. Trip-planning surface archived under `_archive/` directories as of Phase 1 (2026-04-16). See [Archived surface (Phase 1)](#archived-surface-phase-1) section below and `src/_archive/README.md` for the preservation scheme.
 >
