@@ -10,6 +10,23 @@ import { PrismaAdapter } from '@auth/prisma-adapter';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 
+/**
+ * Default landing surface for newly-signed-in users in v1.
+ * /trips and /dashboard were removed during the meetup pivot, so any signIn()
+ * that does not specify a callbackUrl must land here instead.
+ */
+export const POST_SIGNIN_DEFAULT_PATH = '/heatmap';
+
+/**
+ * Routes that existed pre-pivot but have been removed. If a stale link or
+ * client cache hands these to NextAuth as a callbackUrl, fall back to the v1
+ * default rather than 404'ing the user.
+ */
+const REMOVED_LEGACY_PATHS = new Set<string>([
+  '/trips',
+  '/dashboard',
+]);
+
 declare module 'next-auth' {
   interface Session {
     user: {
@@ -88,6 +105,43 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      // Bare baseUrl with no destination → land on the v1 default surface.
+      // Pre-pivot this fell through to "/" which then loaded the marketing
+      // home, but real users reported a brief 404 flash because callers were
+      // still hard-coding "/trips". Centralize the fallback here.
+      if (url === baseUrl || url === `${baseUrl}/`) {
+        return `${baseUrl}${POST_SIGNIN_DEFAULT_PATH}`;
+      }
+
+      // Same-origin relative path (e.g. "/intents", "/heatmap?city=nyc").
+      // Reject protocol-relative URLs ("//evil.example.com") — these start
+      // with "/" but would resolve to a third-party origin.
+      if (url.startsWith('/') && !url.startsWith('//')) {
+        const path = url.split('?')[0];
+        if (REMOVED_LEGACY_PATHS.has(path)) {
+          return `${baseUrl}${POST_SIGNIN_DEFAULT_PATH}`;
+        }
+        return `${baseUrl}${url}`;
+      }
+
+      // Same-origin absolute URL.
+      try {
+        const parsed = new URL(url);
+        if (parsed.origin === baseUrl) {
+          if (REMOVED_LEGACY_PATHS.has(parsed.pathname)) {
+            return `${baseUrl}${POST_SIGNIN_DEFAULT_PATH}`;
+          }
+          return url;
+        }
+      } catch {
+        // Fall through to default
+      }
+
+      // Cross-origin, protocol-relative, or malformed → never honor
+      // (open-redirect guard).
+      return `${baseUrl}${POST_SIGNIN_DEFAULT_PATH}`;
+    },
     async session({ token, session }) {
       if (token) {
         session.user.id = token.id;
