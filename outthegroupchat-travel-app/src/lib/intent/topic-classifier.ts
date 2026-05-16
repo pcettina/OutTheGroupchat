@@ -37,6 +37,10 @@ function escapeRegExp(s: string): string {
  *   positives like "drinks" matching inside "rundrinks".
  *
  * Exported for unit testing — callers should prefer `classifyIntentText`.
+ *
+ * @param text Raw user-typed input to scan.
+ * @param keyword Single keyword or phrase to test against `text`.
+ * @returns `true` when the keyword is present per the matching rules above.
  */
 export function matchesKeyword(text: string, keyword: string): boolean {
   const lowerText = text.toLowerCase();
@@ -58,6 +62,8 @@ export function matchesKeyword(text: string, keyword: string): boolean {
  *
  * @param rawText Free-text input from the Intent capture form.
  * @param prismaClient A Prisma client (or test stub) exposing the `topic` delegate.
+ * @returns A `ClassifyResult` with the best-matched `topicId` (or null) and the
+ *          subset of that topic's keywords that hit the input.
  */
 export async function classifyIntentText(
   rawText: string,

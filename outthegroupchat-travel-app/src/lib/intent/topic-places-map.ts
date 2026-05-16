@@ -40,6 +40,11 @@ export async function getPlacesCategoriesForTopic(
  * Google Places Text Search endpoint. Falls back to the topic slug when no
  * categories are mapped, and to a generic location-only query when no
  * categories are present at all.
+ *
+ * @param categories Google Places category strings (first one is used as the subject).
+ * @param cityAreaDisplay Human-readable area/neighborhood display string, or null
+ *                        when no city area is associated with the query.
+ * @returns A text-search query string ready for the Places API.
  */
 export function buildPlacesQuery(
   categories: string[],

@@ -17,7 +17,7 @@
 >
 > **Target Launch:** Q2 2026 (Beta) — to be re-baselined post-pivot
 > **Current Status:** Refactoring (Phase 2 in progress — domain models added, DB migration pending)
-> **Last Updated:** 2026-04-22 (Phase 6 COMPLETE — feed rescoped, search people-first, notification types migrated, types cleanup; Phase 7 Marketing surface is next)
+> **Last Updated:** 2026-05-16 (POST_PIVOT_STEADY_STATE — V1 routes live; nightly/2026-05-16 added 172 tests, 3 file refactors, V1_API_ROUTES.md, JSDoc on src/lib/intent/*, README rewrites)
 
 ---
 

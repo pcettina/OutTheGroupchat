@@ -16,6 +16,8 @@ import { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 
+vi.setConfig({ testTimeout: 20000 });
+
 vi.mock('@/lib/rate-limit', () => ({
   apiRateLimiter: null,
   aiRateLimiter: null,
@@ -26,10 +28,6 @@ vi.mock('@/lib/rate-limit', () => ({
   getRateLimitHeaders: vi.fn().mockReturnValue({}),
 }));
 
-import { POST as POST_INTENT } from '@/app/api/intents/route';
-import { GET as GET_MINE } from '@/app/api/intents/mine/route';
-import { GET as GET_CREW } from '@/app/api/intents/crew/route';
-import { PATCH as PATCH_INTENT, DELETE as DELETE_INTENT } from '@/app/api/intents/[id]/route';
 import { checkRateLimit } from '@/lib/rate-limit';
 
 // ---------------------------------------------------------------------------
@@ -47,6 +45,13 @@ const mockPrismaIntent = prisma.intent as unknown as {
 };
 const mockPrismaTopic = prisma.topic as unknown as { findMany: MockFn };
 const mockPrismaCrew = prisma.crew as unknown as { findMany: MockFn };
+const mockPrismaSubCrew = prisma.subCrew as unknown as {
+  findFirst: MockFn;
+  create: MockFn;
+};
+const mockPrismaNotification = prisma.notification as unknown as {
+  createMany: MockFn;
+};
 const mockGetServerSession = vi.mocked(getServerSession);
 const mockCheckRateLimit = vi.mocked(checkRateLimit);
 
@@ -114,7 +119,17 @@ beforeEach(() => {
 describe('POST /api/intents', () => {
   it('401 when unauthenticated', async () => {
     mockGetServerSession.mockResolvedValueOnce(null);
-    const res = await POST_INTENT(
+    const { POST } = await import('@/app/api/intents/route');
+    const res = await POST(
+      makePostReq({ rawText: 'drinks', windowPreset: 'EVENING' }),
+    );
+    expect(res.status).toBe(401);
+  });
+
+  it('401 when session has no user id', async () => {
+    mockGetServerSession.mockResolvedValueOnce({ user: {}, expires: '2099-01-01' });
+    const { POST } = await import('@/app/api/intents/route');
+    const res = await POST(
       makePostReq({ rawText: 'drinks', windowPreset: 'EVENING' }),
     );
     expect(res.status).toBe(401);
@@ -123,7 +138,8 @@ describe('POST /api/intents', () => {
   it('429 when rate-limited', async () => {
     mockGetServerSession.mockResolvedValueOnce(sessionFor());
     mockCheckRateLimit.mockResolvedValueOnce(RL_FAIL);
-    const res = await POST_INTENT(
+    const { POST } = await import('@/app/api/intents/route');
+    const res = await POST(
       makePostReq({ rawText: 'drinks', windowPreset: 'EVENING' }),
     );
     expect(res.status).toBe(429);
@@ -136,20 +152,70 @@ describe('POST /api/intents', () => {
       headers: { 'Content-Type': 'application/json' },
       body: 'not-json',
     });
-    const res = await POST_INTENT(req);
+    const { POST } = await import('@/app/api/intents/route');
+    const res = await POST(req);
     expect(res.status).toBe(400);
   });
 
   it('400 on validation failure (missing windowPreset)', async () => {
     mockGetServerSession.mockResolvedValueOnce(sessionFor());
-    const res = await POST_INTENT(makePostReq({ rawText: 'drinks' }));
+    const { POST } = await import('@/app/api/intents/route');
+    const res = await POST(makePostReq({ rawText: 'drinks' }));
+    expect(res.status).toBe(400);
+  });
+
+  it('400 when neither rawText nor topicId supplied', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
+    const { POST } = await import('@/app/api/intents/route');
+    const res = await POST(makePostReq({ windowPreset: 'EVENING' }));
+    expect(res.status).toBe(400);
+  });
+
+  it('400 when windowPreset is not a valid enum value', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
+    const { POST } = await import('@/app/api/intents/route');
+    const res = await POST(
+      makePostReq({ rawText: 'drinks', windowPreset: 'LUNCHTIME' }),
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it('400 when dayOffset exceeds MAX_DAY_OFFSET', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
+    const { POST } = await import('@/app/api/intents/route');
+    const res = await POST(
+      makePostReq({
+        topicId: TOPIC_DRINKS.id,
+        windowPreset: 'EVENING',
+        dayOffset: 99,
+      }),
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it('400 when rawText exceeds 280 chars', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
+    const { POST } = await import('@/app/api/intents/route');
+    const res = await POST(
+      makePostReq({ rawText: 'x'.repeat(281), windowPreset: 'EVENING' }),
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it('400 when topicId is not a valid cuid', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
+    const { POST } = await import('@/app/api/intents/route');
+    const res = await POST(
+      makePostReq({ topicId: 'not-a-cuid', windowPreset: 'EVENING' }),
+    );
     expect(res.status).toBe(400);
   });
 
   it('422 needsTopicPicker when classifier returns no match', async () => {
     mockGetServerSession.mockResolvedValueOnce(sessionFor());
     mockPrismaTopic.findMany.mockResolvedValueOnce([TOPIC_DRINKS]);
-    const res = await POST_INTENT(
+    const { POST } = await import('@/app/api/intents/route');
+    const res = await POST(
       makePostReq({ rawText: 'thinking about taxes', windowPreset: 'EVENING' }),
     );
     expect(res.status).toBe(422);
@@ -161,8 +227,10 @@ describe('POST /api/intents', () => {
     mockGetServerSession.mockResolvedValueOnce(sessionFor());
     mockPrismaTopic.findMany.mockResolvedValueOnce([TOPIC_DRINKS]);
     mockPrismaIntent.create.mockResolvedValueOnce(fakeIntent());
+    mockPrismaCrew.findMany.mockResolvedValueOnce([]);
 
-    const res = await POST_INTENT(
+    const { POST } = await import('@/app/api/intents/route');
+    const res = await POST(
       makePostReq({ rawText: 'drinks tonight', windowPreset: 'EVENING' }),
     );
 
@@ -181,8 +249,10 @@ describe('POST /api/intents', () => {
   it('201 creates Intent when explicit topicId is supplied (skips classifier)', async () => {
     mockGetServerSession.mockResolvedValueOnce(sessionFor());
     mockPrismaIntent.create.mockResolvedValueOnce(fakeIntent());
+    mockPrismaCrew.findMany.mockResolvedValueOnce([]);
 
-    const res = await POST_INTENT(
+    const { POST } = await import('@/app/api/intents/route');
+    const res = await POST(
       makePostReq({
         topicId: TOPIC_DRINKS.id,
         windowPreset: 'NIGHT',
@@ -193,6 +263,43 @@ describe('POST /api/intents', () => {
     expect(res.status).toBe(201);
     expect(mockPrismaTopic.findMany).not.toHaveBeenCalled();
   });
+
+  it('201 persists cityArea and venueId when supplied', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
+    mockPrismaIntent.create.mockResolvedValueOnce(
+      fakeIntent({ cityArea: 'Mission', venueId: 'clv1234567890venue00001' }),
+    );
+    mockPrismaCrew.findMany.mockResolvedValueOnce([]);
+
+    const { POST } = await import('@/app/api/intents/route');
+    const res = await POST(
+      makePostReq({
+        topicId: TOPIC_DRINKS.id,
+        windowPreset: 'EVENING',
+        cityArea: 'Mission',
+        venueId: 'clv1234567890venue00001',
+      }),
+    );
+
+    expect(res.status).toBe(201);
+    const createCall = mockPrismaIntent.create.mock.calls[0][0];
+    expect(createCall.data.cityArea).toBe('Mission');
+    expect(createCall.data.venueId).toBe('clv1234567890venue00001');
+  });
+
+  it('500 when prisma.intent.create throws', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
+    mockPrismaIntent.create.mockRejectedValueOnce(new Error('db down'));
+
+    const { POST } = await import('@/app/api/intents/route');
+    const res = await POST(
+      makePostReq({
+        topicId: TOPIC_DRINKS.id,
+        windowPreset: 'EVENING',
+      }),
+    );
+    expect(res.status).toBe(500);
+  });
 });
 
 // ===========================================================================
@@ -201,15 +308,25 @@ describe('POST /api/intents', () => {
 describe('GET /api/intents/mine', () => {
   it('401 when unauthenticated', async () => {
     mockGetServerSession.mockResolvedValueOnce(null);
-    const res = await GET_MINE(makeGetReq('/api/intents/mine'));
+    const { GET } = await import('@/app/api/intents/mine/route');
+    const res = await GET(makeGetReq('/api/intents/mine'));
     expect(res.status).toBe(401);
+  });
+
+  it('429 when rate-limited', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
+    mockCheckRateLimit.mockResolvedValueOnce(RL_FAIL);
+    const { GET } = await import('@/app/api/intents/mine/route');
+    const res = await GET(makeGetReq('/api/intents/mine'));
+    expect(res.status).toBe(429);
   });
 
   it('200 returns caller live intents', async () => {
     mockGetServerSession.mockResolvedValueOnce(sessionFor());
     mockPrismaIntent.findMany.mockResolvedValueOnce([fakeIntent()]);
 
-    const res = await GET_MINE(makeGetReq('/api/intents/mine'));
+    const { GET } = await import('@/app/api/intents/mine/route');
+    const res = await GET(makeGetReq('/api/intents/mine'));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.data.intents).toHaveLength(1);
@@ -224,11 +341,46 @@ describe('GET /api/intents/mine', () => {
     mockGetServerSession.mockResolvedValueOnce(sessionFor());
     mockPrismaIntent.findMany.mockResolvedValueOnce([]);
 
-    const res = await GET_MINE(makeGetReq('/api/intents/mine', { includeExpired: 'true' }));
+    const { GET } = await import('@/app/api/intents/mine/route');
+    const res = await GET(makeGetReq('/api/intents/mine', { includeExpired: 'true' }));
     expect(res.status).toBe(200);
 
     const where = mockPrismaIntent.findMany.mock.calls[0][0].where;
     expect(where.expiresAt).toBeUndefined();
+  });
+
+  it('200 with state filter narrows the query', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
+    mockPrismaIntent.findMany.mockResolvedValueOnce([]);
+
+    const { GET } = await import('@/app/api/intents/mine/route');
+    const res = await GET(makeGetReq('/api/intents/mine', { state: 'COMMITTED' }));
+    expect(res.status).toBe(200);
+
+    const where = mockPrismaIntent.findMany.mock.calls[0][0].where;
+    expect(where.state).toBe('COMMITTED');
+  });
+
+  it('400 on invalid state query value', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
+    const { GET } = await import('@/app/api/intents/mine/route');
+    const res = await GET(makeGetReq('/api/intents/mine', { state: 'BOGUS' }));
+    expect(res.status).toBe(400);
+  });
+
+  it('400 on invalid limit (out of bounds)', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
+    const { GET } = await import('@/app/api/intents/mine/route');
+    const res = await GET(makeGetReq('/api/intents/mine', { limit: '500' }));
+    expect(res.status).toBe(400);
+  });
+
+  it('500 when prisma throws', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
+    mockPrismaIntent.findMany.mockRejectedValueOnce(new Error('db down'));
+    const { GET } = await import('@/app/api/intents/mine/route');
+    const res = await GET(makeGetReq('/api/intents/mine'));
+    expect(res.status).toBe(500);
   });
 });
 
@@ -238,8 +390,17 @@ describe('GET /api/intents/mine', () => {
 describe('GET /api/intents/crew', () => {
   it('401 when unauthenticated', async () => {
     mockGetServerSession.mockResolvedValueOnce(null);
-    const res = await GET_CREW(makeGetReq('/api/intents/crew'));
+    const { GET } = await import('@/app/api/intents/crew/route');
+    const res = await GET(makeGetReq('/api/intents/crew'));
     expect(res.status).toBe(401);
+  });
+
+  it('429 when rate-limited', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
+    mockCheckRateLimit.mockResolvedValueOnce(RL_FAIL);
+    const { GET } = await import('@/app/api/intents/crew/route');
+    const res = await GET(makeGetReq('/api/intents/crew'));
+    expect(res.status).toBe(429);
   });
 
   it('200 returns Crew intents (excluding caller)', async () => {
@@ -253,7 +414,8 @@ describe('GET /api/intents/crew', () => {
       fakeIntent({ userId: 'user-3' }),
     ]);
 
-    const res = await GET_CREW(makeGetReq('/api/intents/crew'));
+    const { GET } = await import('@/app/api/intents/crew/route');
+    const res = await GET(makeGetReq('/api/intents/crew'));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.data.intents).toHaveLength(2);
@@ -268,12 +430,52 @@ describe('GET /api/intents/crew', () => {
     mockGetServerSession.mockResolvedValueOnce(sessionFor());
     mockPrismaCrew.findMany.mockResolvedValueOnce([]);
 
-    const res = await GET_CREW(makeGetReq('/api/intents/crew'));
+    const { GET } = await import('@/app/api/intents/crew/route');
+    const res = await GET(makeGetReq('/api/intents/crew'));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.data.intents).toEqual([]);
     // Should short-circuit before querying intents
     expect(mockPrismaIntent.findMany).not.toHaveBeenCalled();
+  });
+
+  it('200 with topicId narrows the query', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
+    mockPrismaCrew.findMany.mockResolvedValueOnce([
+      { userAId: 'user-1', userBId: 'user-2' },
+    ]);
+    mockPrismaIntent.findMany.mockResolvedValueOnce([]);
+
+    const { GET } = await import('@/app/api/intents/crew/route');
+    const res = await GET(
+      makeGetReq('/api/intents/crew', { topicId: TOPIC_DRINKS.id }),
+    );
+    expect(res.status).toBe(200);
+
+    const where = mockPrismaIntent.findMany.mock.calls[0][0].where;
+    expect(where.topicId).toBe(TOPIC_DRINKS.id);
+  });
+
+  it('400 on invalid topicId (not a cuid)', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
+    const { GET } = await import('@/app/api/intents/crew/route');
+    const res = await GET(makeGetReq('/api/intents/crew', { topicId: 'nope' }));
+    expect(res.status).toBe(400);
+  });
+
+  it('400 on out-of-range limit', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
+    const { GET } = await import('@/app/api/intents/crew/route');
+    const res = await GET(makeGetReq('/api/intents/crew', { limit: '0' }));
+    expect(res.status).toBe(400);
+  });
+
+  it('500 when crew lookup throws', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
+    mockPrismaCrew.findMany.mockRejectedValueOnce(new Error('db boom'));
+    const { GET } = await import('@/app/api/intents/crew/route');
+    const res = await GET(makeGetReq('/api/intents/crew'));
+    expect(res.status).toBe(500);
   });
 });
 
@@ -283,10 +485,45 @@ describe('GET /api/intents/crew', () => {
 describe('PATCH /api/intents/[id]', () => {
   const params = { params: { id: 'intent-xyz' } };
 
+  it('401 when unauthenticated', async () => {
+    mockGetServerSession.mockResolvedValueOnce(null);
+    const { PATCH } = await import('@/app/api/intents/[id]/route');
+    const res = await PATCH(makePatchReq({ state: 'COMMITTED' }), params);
+    expect(res.status).toBe(401);
+  });
+
+  it('429 when rate-limited', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
+    mockCheckRateLimit.mockResolvedValueOnce(RL_FAIL);
+    const { PATCH } = await import('@/app/api/intents/[id]/route');
+    const res = await PATCH(makePatchReq({ state: 'COMMITTED' }), params);
+    expect(res.status).toBe(429);
+  });
+
+  it('400 on invalid JSON body', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
+    const req = new NextRequest('http://localhost/api/intents/x', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: 'oops',
+    });
+    const { PATCH } = await import('@/app/api/intents/[id]/route');
+    const res = await PATCH(req, params);
+    expect(res.status).toBe(400);
+  });
+
+  it('400 when body is empty object (no fields to update)', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
+    const { PATCH } = await import('@/app/api/intents/[id]/route');
+    const res = await PATCH(makePatchReq({}), params);
+    expect(res.status).toBe(400);
+  });
+
   it('404 when intent missing', async () => {
     mockGetServerSession.mockResolvedValueOnce(sessionFor());
     mockPrismaIntent.findUnique.mockResolvedValueOnce(null);
-    const res = await PATCH_INTENT(makePatchReq({ state: 'COMMITTED' }), params);
+    const { PATCH } = await import('@/app/api/intents/[id]/route');
+    const res = await PATCH(makePatchReq({ state: 'COMMITTED' }), params);
     expect(res.status).toBe(404);
   });
 
@@ -299,7 +536,8 @@ describe('PATCH /api/intents/[id]', () => {
       startAt: null,
       endAt: null,
     });
-    const res = await PATCH_INTENT(makePatchReq({ state: 'COMMITTED' }), params);
+    const { PATCH } = await import('@/app/api/intents/[id]/route');
+    const res = await PATCH(makePatchReq({ state: 'COMMITTED' }), params);
     expect(res.status).toBe(403);
   });
 
@@ -314,7 +552,8 @@ describe('PATCH /api/intents/[id]', () => {
     });
     mockPrismaIntent.update.mockResolvedValueOnce(fakeIntent({ state: 'COMMITTED' }));
 
-    const res = await PATCH_INTENT(makePatchReq({ state: 'COMMITTED' }), params);
+    const { PATCH } = await import('@/app/api/intents/[id]/route');
+    const res = await PATCH(makePatchReq({ state: 'COMMITTED' }), params);
     expect(res.status).toBe(200);
     const updateCall = mockPrismaIntent.update.mock.calls[0][0];
     expect(updateCall.data.state).toBe('COMMITTED');
@@ -333,7 +572,8 @@ describe('PATCH /api/intents/[id]', () => {
     });
     mockPrismaIntent.update.mockResolvedValueOnce(fakeIntent());
 
-    const res = await PATCH_INTENT(
+    const { PATCH } = await import('@/app/api/intents/[id]/route');
+    const res = await PATCH(
       makePatchReq({ windowPreset: 'NIGHT', dayOffset: 1 }),
       params,
     );
@@ -341,6 +581,51 @@ describe('PATCH /api/intents/[id]', () => {
     const updateCall = mockPrismaIntent.update.mock.calls[0][0];
     expect(updateCall.data.windowPreset).toBe('NIGHT');
     expect(updateCall.data.expiresAt).toBeInstanceOf(Date);
+  });
+
+  it('200 updates cityArea without recomputing window', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
+    mockPrismaIntent.findUnique.mockResolvedValueOnce({
+      userId: 'user-1',
+      windowPreset: 'EVENING',
+      dayOffset: 0,
+      startAt: null,
+      endAt: null,
+    });
+    mockPrismaIntent.update.mockResolvedValueOnce(
+      fakeIntent({ cityArea: 'SoMa' }),
+    );
+
+    const { PATCH } = await import('@/app/api/intents/[id]/route');
+    const res = await PATCH(makePatchReq({ cityArea: 'SoMa' }), params);
+    expect(res.status).toBe(200);
+    const updateCall = mockPrismaIntent.update.mock.calls[0][0];
+    expect(updateCall.data.cityArea).toBe('SoMa');
+    expect(updateCall.data.windowPreset).toBeUndefined();
+    expect(updateCall.data.expiresAt).toBeUndefined();
+  });
+
+  it('400 when dayOffset is out of range', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
+    const { PATCH } = await import('@/app/api/intents/[id]/route');
+    const res = await PATCH(makePatchReq({ dayOffset: -1 }), params);
+    expect(res.status).toBe(400);
+  });
+
+  it('500 when prisma.intent.update throws', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
+    mockPrismaIntent.findUnique.mockResolvedValueOnce({
+      userId: 'user-1',
+      windowPreset: 'EVENING',
+      dayOffset: 0,
+      startAt: null,
+      endAt: null,
+    });
+    mockPrismaIntent.update.mockRejectedValueOnce(new Error('db boom'));
+
+    const { PATCH } = await import('@/app/api/intents/[id]/route');
+    const res = await PATCH(makePatchReq({ state: 'COMMITTED' }), params);
+    expect(res.status).toBe(500);
   });
 });
 
@@ -350,17 +635,34 @@ describe('PATCH /api/intents/[id]', () => {
 describe('DELETE /api/intents/[id]', () => {
   const params = { params: { id: 'intent-xyz' } };
 
+  it('401 when unauthenticated', async () => {
+    mockGetServerSession.mockResolvedValueOnce(null);
+    const { DELETE } = await import('@/app/api/intents/[id]/route');
+    const res = await DELETE(makeDeleteReq(), params);
+    expect(res.status).toBe(401);
+  });
+
+  it('429 when rate-limited', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
+    mockCheckRateLimit.mockResolvedValueOnce(RL_FAIL);
+    const { DELETE } = await import('@/app/api/intents/[id]/route');
+    const res = await DELETE(makeDeleteReq(), params);
+    expect(res.status).toBe(429);
+  });
+
   it('404 when intent missing', async () => {
     mockGetServerSession.mockResolvedValueOnce(sessionFor());
     mockPrismaIntent.findUnique.mockResolvedValueOnce(null);
-    const res = await DELETE_INTENT(makeDeleteReq(), params);
+    const { DELETE } = await import('@/app/api/intents/[id]/route');
+    const res = await DELETE(makeDeleteReq(), params);
     expect(res.status).toBe(404);
   });
 
   it('403 when caller is not the owner', async () => {
     mockGetServerSession.mockResolvedValueOnce(sessionFor('user-1'));
     mockPrismaIntent.findUnique.mockResolvedValueOnce({ userId: 'user-2' });
-    const res = await DELETE_INTENT(makeDeleteReq(), params);
+    const { DELETE } = await import('@/app/api/intents/[id]/route');
+    const res = await DELETE(makeDeleteReq(), params);
     expect(res.status).toBe(403);
   });
 
@@ -373,12 +675,22 @@ describe('DELETE /api/intents/[id]', () => {
       expiresAt: expiredAt,
     });
 
-    const res = await DELETE_INTENT(makeDeleteReq(), params);
+    const { DELETE } = await import('@/app/api/intents/[id]/route');
+    const res = await DELETE(makeDeleteReq(), params);
     expect(res.status).toBe(200);
     const updateCall = mockPrismaIntent.update.mock.calls[0][0];
     expect(updateCall.data.expiresAt).toBeInstanceOf(Date);
-    // expiresAt should be ≈ now (within 5 seconds)
+    // expiresAt should be ~now (within 5 seconds)
     const drift = Math.abs(updateCall.data.expiresAt.getTime() - Date.now());
     expect(drift).toBeLessThan(5000);
+  });
+
+  it('500 when prisma.intent.update throws', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
+    mockPrismaIntent.findUnique.mockResolvedValueOnce({ userId: 'user-1' });
+    mockPrismaIntent.update.mockRejectedValueOnce(new Error('db boom'));
+    const { DELETE } = await import('@/app/api/intents/[id]/route');
+    const res = await DELETE(makeDeleteReq(), params);
+    expect(res.status).toBe(500);
   });
 });
