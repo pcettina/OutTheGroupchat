@@ -1,37 +1,29 @@
-# 🟢 Nightly Build — nightly/2026-05-12 (V1 hot-path tests + aux Sentry)
+# 🟢 Completed 2026-05-12 (Nightly Build nightly/2026-05-13)
 
-> **Status:** Nightly build 2026-05-11 — V1 lib coverage hardening (+101 tests on heatmap/topic/hotness/fof code), aux-route Sentry instrumentation (cron + beta/*), dead-component cleanup, search Zod tightened, JSDoc on 35 V1 lib exports.
-> **Last Updated:** 2026-05-11
-> **Test count:** ~1018 tests passing; 90 test files (+4 new: `heatmap-aggregate.test.ts` (28), `topic-classifier.test.ts` (34), `hotness-score.test.ts` (21), `fof-graph.test.ts` (18))
+> **Status:** Active Phase 8 (launch-readiness re-audit). Tonight's run expanded Sentry coverage onto the V1 surface and added edge-case test coverage for two V1 routes.
+> **Test count:** ~1210 tests passing; 86 test files (+2 new: intents-crew-extended.test.ts, subcrews-emerging-extended.test.ts)
 
-## 🟢 Completed 2026-05-12 (Nightly Build nightly/2026-05-12)
+### Tasks completed
 
-### Wave 1 — Tests
+- [L1] `src/__tests__/api/intents-crew-extended.test.ts` (+20 tests) — `/api/intents/crew` edge cases (auth, empty Crew, expired intents, pagination, topic filter)
+- [L2] `src/__tests__/api/subcrews-emerging-extended.test.ts` (+21 tests) — `/api/subcrews/emerging` edge cases (auth, empty results, threshold logic, topic + city filters)
+- [M1] Sentry `captureException` added to 4 `/api/intents/*` route files (5 catch blocks tagged)
+- [M2] Sentry `captureException` added to 6 `/api/subcrews/*` route files (7 catch blocks tagged; switched from `@/lib/sentry` wrapper to `@sentry/nextjs` direct)
+- [M3] Fixed 2 TS5097 errors in `prisma/scripts/seed-heatmap-only.ts` (removed `.ts` import extensions)
+- [M4] Verified Sentry already wired on `/api/topics`, `/api/heatmap`, `/api/recommendations`, `/api/venues/search` (no-op task; documentation refreshed)
 
-- +101 tests across 4 new test files on V1 hot-path libs:
-  - `src/__tests__/lib/heatmap-aggregate.test.ts` (28) — heatmap contribution aggregation, bucketing, decay
-  - `src/__tests__/lib/topic-classifier.test.ts` (34) — intent topic classification edge cases
-  - `src/__tests__/lib/hotness-score.test.ts` (21) — hotness scoring math and time-window weighting
-  - `src/__tests__/lib/fof-graph.test.ts` (18) — friend-of-friend graph traversal
-- No new Prisma mocks required in `setup.ts` (all libs operate on pure inputs or pre-mocked layers)
+### Metrics
 
-### Wave 2 — Features
+- Tests: ~1169 → ~1210 (+41 new tests across intents-crew + subcrews-emerging)
+- Test files: 84 → 86 (+2 new V1 edge-case files)
+- API routes documented: 58 → **72** (14 undocumented V1 routes added to API_STATUS.md)
+- TS files: 367 | `any`: 4 | `console.*`: 0 | TODO/FIXME: 2 | files >600 lines: 2 (RichFeedItem.tsx 717, profile/page.tsx 623)
+- TSC: 0 errors | Lint: 0 warnings/errors | Prisma: valid ✅
 
-- [L4] Sentry `captureException` added to `/api/cron`, `/api/beta/initialize-password`, `/api/beta/signup`, `/api/beta/status` (wrapped in catch blocks)
-- [L5] 4 dead components deleted — `profile/TripHistory`, `profile/PreferencesCard`, `profile/BadgeShowcase`, `ui/FloatingShareButton`; barrel exports updated
-- [L6] JSDoc added to `src/lib/heatmap/*` and `src/lib/hotness/score.ts` (13 exports)
-- [M2] Fixed 2 TSC errors in `prisma/scripts/seed-heatmap-only.ts` (removed `.ts` extension from imports)
-- [M3] `/api/search` Zod enum tightened to `['all','people','meetups','venues']`; `search.test.ts` updated to match
-- [M4] JSDoc on 11 schemas in `src/lib/validations/social.ts`
-- [M5] JSDoc on 11 exports across `src/lib/intent/*` and `src/lib/subcrew/try-form.ts`
-- [M6] README refreshed with current metrics
+### Phase 8 progress
 
-### Metrics tonight
-
-- `any` types: 4 | `console.*`: 0 | TODO/FIXME: 2
-- Files >600 lines (production): 2 (RichFeedItem 717, profile/page 623)
-- API routes (live): 59
-- Test files: 90 (86 baseline + 4 new) | TS files: 291
+- Action #6 (Sentry full coverage audit) **substantially advanced** — ~10 V1 routes newly instrumented; V1 surface Sentry coverage now complete.
+- Action #5 (E2E Playwright authenticated flows) still pending.
 
 ---
 

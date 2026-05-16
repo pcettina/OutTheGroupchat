@@ -30,8 +30,8 @@ import {
 } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
+import * as Sentry from '@sentry/nextjs';
 import { apiLogger } from '@/lib/logger';
-import { captureException } from '@/lib/sentry';
 import { apiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 import { buildInterestContributionData } from '@/lib/heatmap/contribution-writer';
 
@@ -199,7 +199,7 @@ export async function POST(request: NextRequest, context: RouteParams) {
       { status: 200 },
     );
   } catch (error) {
-    captureException(error, { route: 'api/subcrews/[id]/commit', method: 'POST' });
+    Sentry.captureException(error, { tags: { route: 'api/subcrews/[id]/commit', method: 'POST' } });
     apiLogger.error({ error }, '[SUBCREW_COMMIT] Failed to commit');
     return NextResponse.json(
       { success: false, error: 'Failed to commit' },

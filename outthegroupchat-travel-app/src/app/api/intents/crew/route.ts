@@ -15,6 +15,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { z } from 'zod';
+import * as Sentry from '@sentry/nextjs';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { apiLogger } from '@/lib/logger';
@@ -106,7 +107,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: { intents } });
   } catch (error) {
-    captureException(error, { route: '/api/intents/crew', method: 'GET' });
+    Sentry.captureException(error, {
+      tags: { route: 'api/intents/crew', method: 'GET' },
+    });
+    captureException(error);
     apiLogger.error({ error }, '[INTENT_GET_CREW] Failed to list crew intents');
     return NextResponse.json(
       { success: false, error: 'Failed to list crew intents' },

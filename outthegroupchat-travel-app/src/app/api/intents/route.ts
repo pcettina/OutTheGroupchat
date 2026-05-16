@@ -13,6 +13,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { z } from 'zod';
 import { WindowPreset } from '@prisma/client';
+import * as Sentry from '@sentry/nextjs';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { apiLogger } from '@/lib/logger';
@@ -165,7 +166,10 @@ export async function POST(request: NextRequest) {
       { status: 201 },
     );
   } catch (error) {
-    captureException(error, { route: '/api/intents', method: 'POST' });
+    Sentry.captureException(error, {
+      tags: { route: 'api/intents', method: 'POST' },
+    });
+    captureException(error);
     apiLogger.error({ error }, '[INTENT_POST] Failed to create intent');
     return NextResponse.json(
       { success: false, error: 'Failed to create intent' },
