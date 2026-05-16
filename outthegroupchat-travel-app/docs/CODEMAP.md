@@ -1,6 +1,6 @@
 # OutTheGroupchat — Full Codemap
 
-> Auto-generated 2026-03-10. Last updated 2026-05-08 (Phase 8 launch-readiness re-audit; heatmap Crew + FoF tiers shipped, AI surface removed, Neon migrated). Main stats: 72 API routes, 86 test files, 1081 tests passing, 367 TS/TSX files. Comprehensive reference for agents and developers.
+> Auto-generated 2026-03-10. Last updated 2026-05-09 (Nightly Build). Branch stats: **72 API route files** (59 live + 13 archived), **86 vitest-active test files**, **1081 tests passing**, **367 TS/TSX files**. Sentry coverage on live routes: **44 / 59 (74.6%)** — see `docs/SENTRY_COVERAGE_AUDIT.md`. Comprehensive reference for agents and developers.
 >
 > **🔀 Pivot in progress:** See `docs/REFACTOR_PLAN.md`. Trip-planning surface archived under `_archive/` directories as of Phase 1 (2026-04-16). See [Archived surface (Phase 1)](#archived-surface-phase-1) section below and `src/_archive/README.md` for the preservation scheme.
 >
