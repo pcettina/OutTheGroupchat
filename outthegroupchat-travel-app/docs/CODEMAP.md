@@ -1,6 +1,6 @@
 # OutTheGroupchat — Full Codemap
 
-> Auto-generated 2026-03-10. Last updated 2026-05-10 (nightly/2026-05-10: `.gitattributes` LF normalization + Sentry on `geocoding`/`health`; TSC regression re-fixed in `seed-heatmap-only.ts` — same fix as PR #102/#103, both still unmerged). Branch stats: 59 live API routes (13 archived) / 64 vitest-active test files / **1081 tests passing** / 291 TS-TSX (excl. archive) / Sentry **41/59 (69.5%)** on this branch (44/59 once PR #103's V1 hot-path additions land). Comprehensive reference for agents and developers.
+> Auto-generated 2026-03-10. Last updated 2026-05-10 (nightly/2026-05-11 — Phase 8 launch-readiness, V1 Phase 4 heatmap merged on 2026-05-09 via PR #86/#87). Main stats: 58 live API routes, 90 vitest test files, ~991 tests passing, 290 TS/TSX files. Comprehensive reference for agents and developers.
 >
 > **🔀 Pivot in progress:** See `docs/REFACTOR_PLAN.md`. Trip-planning surface archived under `_archive/` directories as of Phase 1 (2026-04-16). See [Archived surface (Phase 1)](#archived-surface-phase-1) section below and `src/_archive/README.md` for the preservation scheme.
 >
@@ -34,7 +34,18 @@ Full-stack Next.js 14 collaborative travel planning app. Groups plan trips toget
 **App root:** `outthegroupchat-travel-app/`
 **Source:** `outthegroupchat-travel-app/src/`
 **Stats (post-Phase-6-complete, 2026-04-22):** 50 live API routes (35 base + 6 Crew routes + 9 Phase 4 meetup/venue/cron routes + 3 Phase 5 check-in routes + privacy route + 2 Phase 6 AI routes: suggest-meetups, icebreakers; 13 archived in Phase 1; feed POST now 410) | live component groups: auth, feed (rescoped to meetup/checkin types, tabs updated), social (incl. `CrewButton`, `CrewRequestCard`, `CrewList`), meetups (incl. `MeetupCard`, `MeetupList`, `CreateMeetupModal`, `RSVPButton`, `VenuePicker`, `AttendeeList`, `MeetupInviteModal`), checkins (incl. `CheckInButton`, `LiveActivityCard`, `NearbyCrewList`), discover, notifications, profile (incl. Recent Check-ins section), search, settings (incl. `PrivacySettingsForm`), onboarding, ai, ui, accessibility + Navigation (incl. privacy link) | live pages: /, /auth/*, /profile, `/profile/[userId]`, /feed, /discover, /inspiration, /notifications, /search, /settings, `/settings/privacy`, /onboarding, /privacy, /terms, `/crew`, `/crew/requests`, `/meetups`, `/meetups/new`, `/meetups/[id]`, `/checkins`, `/checkins/[id]` | middleware: auth-protects `/profile/:path*`, `/crew/:path*`, `/meetups/:path*`, `/checkins/:path*`, `/settings/:path*`, `/api/checkins/*`, plus select `/api/*` paths
-**Test Health (2026-05-04):** 91 live test files (+5 from nightly/2026-05-05: subcrews-actions.test.ts, subcrews-listing.test.ts, intents-detail.test.ts, recommendations-edge.test.ts, heatmap-edge.test.ts) | ~1045 tests passing (+128 from Wave 1) | 0 TSC errors | RichFeedItem.tsx refactored 717→222 lines (11 subcomponents extracted under `src/components/feed/rich-item/`); 14 V1 routes (subcrews 6 + intents/topics/heatmap/recommendations/expire-intents 8) gained Sentry context tags this build
+**Test Health (2026-05-10):** 90 live test files (+4 tonight: intents-id.test.ts, subcrews-coverage.test.ts, checkins-feed.test.ts, intents-mine-crew.test.ts) | ~991 tests passing | 0 TSC errors | Phase 8 IN PROGRESS: nightly/2026-05-11 advanced action #5 (E2E + integration coverage) and #6 (Sentry coverage — `/api/topics`, `/api/recommendations` instrumented). V1 Phase 4 heatmap shipped 2026-05-09 (PR #86/#87)
+
+**Codebase Health metrics (2026-05-10):** `any` types: 4 | `console.*`: 0 | TODO/FIXME: 2 | files >600 lines: 2 (RichFeedItem.tsx 717, profile/page.tsx 623) | API routes: 58 | test files: 90 | TS files: 290
+
+**New test files (2026-05-10):**
+
+| File | Tests | Covers |
+|------|-------|--------|
+| `src/__tests__/intents-id.test.ts` | 19 | `PATCH` + `DELETE /api/intents/[id]` |
+| `src/__tests__/subcrews-coverage.test.ts` | 23 | `/api/subcrews/{mine,emerging,[id],[id]/join,[id]/commit,[id]/members/me}` |
+| `src/__tests__/checkins-feed.test.ts` | 14 | `GET /api/checkins/feed` (auth, rate-limit, where-clause, Sentry) |
+| `src/__tests__/intents-mine-crew.test.ts` | 18 | `GET /api/intents/mine` + `GET /api/intents/crew` |
 
 ---
 

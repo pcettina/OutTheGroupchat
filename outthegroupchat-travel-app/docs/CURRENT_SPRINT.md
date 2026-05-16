@@ -1,35 +1,35 @@
-# 🟢 V1 Implementation — Phases 0–4b on main + Phase 5 partial slice (2026-04-29)
+# 🟢 Complete — Phase 8: Launch-Readiness Re-Audit (incremental progress 2026-05-10)
 
-> **Active plan:** `docs/V1_IMPLEMENTATION_PLAN.md` (intent → group → coordinate → heatmap loop). REFACTOR_PLAN.md is superseded.
-> **Shipped on main as of 2026-04-28:**
-> - V1 Phase 0 (data model foundation) — PR #76
-> - V1 Phase 3a (coordinate + commit + 3-axis privacy) — PR #83
-> - V1 Phase 3b (venue recommendations) — PR #84
-> - V1 Phase 4a (heatmap Crew tier) — PR #86
-> - V1 Phase 4b (heatmap FoF tier + threshold slider) — PR #87, #88
-> - Production Neon migration workflow — PR #90
-> - Heatmap test fixtures + standalone seed runner — PR #91, #92
-> **In flight (nightly/2026-04-29, PR pending):**
-> - V1 Phase 5 partial — notification preferences API, daily prompt cron (13:00 UTC), settings UI
-> **Remaining:** V1 Phase 5 session 2 (per-member-intent dispatch + daily-prompt fan-out), launch-readiness audit (Sentry coverage on V1 routes, E2E Playwright authenticated flows).
-> **Main stats (2026-04-29):** 74 API routes (61 live + 13 archived), 66 test files, 290 TS/TSX, 0 TSC errors, 0 lint warnings; 1110 tests passing.
+> **Status:** Phase 8 ongoing. Tonight's nightly (nightly/2026-05-11) advanced action #5 (E2E + integration coverage on V1 hot paths) and #6 (Sentry coverage audit). 74 new integration tests covering V1 intent/subcrew/checkin surface; Sentry extended to `/api/topics` + `/api/recommendations`. V1 Phase 4 heatmap (PR #86/#87, merged 2026-05-09) remains the most recent product surface delivery.
+> **Test count:** ~917 → ~991 Vitest tests (verified by validation phase); 86 → 90 test files; 58 live API routes
 
 ---
 
-## 🟢 Completed 2026-04-29 (Nightly Build nightly/2026-04-29)
+## 🟢 Completed 2026-05-10 (Nightly Build nightly/2026-05-11)
 
-V1 Phase 5 partial slice — notifications surface bootstrapped:
+### Wave 1 — Tests (74 new tests)
 
-- **W2-A** `src/app/api/users/notification-preferences/route.ts` — GET + PATCH for current user's `NotificationPreference` rows
-- **W2-B** `src/app/api/cron/send-daily-prompts/route.ts` — daily prompt cron (13:00 UTC); uses `Notification.type='SYSTEM'` with `data.source='DAILY_PROMPT'` discriminator (no schema enum addition needed); `vercel.json` updated with cron schedule + maxDuration
-- **W2-C** `src/app/settings/notifications/page.tsx` + `src/components/settings/NotificationSettingsForm.tsx` — settings UI for notification preferences
-- **W1-A** `src/__tests__/api/notification-preferences.test.ts` — 19 passing tests
-- **W1-B** `src/__tests__/api/cron-send-daily-prompts.test.ts` — 10 passing tests
-- **W3** `src/__tests__/setup.ts` — added `notificationPreference` model mock (findMany/findUnique/findFirst/upsert/create/update/updateMany/delete/deleteMany/count)
+- [L1] `src/__tests__/intents-id.test.ts` — 19 tests for `PATCH` + `DELETE /api/intents/[id]`: auth (401), rate-limit (429), Zod validation, 403 non-owner, 404 not-found, state-only updates, windowPreset changes, cityArea editing, endAt<startAt rejection, Sentry on 500
+- [L2] `src/__tests__/subcrews-coverage.test.ts` — 23 tests covering `GET /api/subcrews/mine`, `/emerging`, `/[id]`; `POST /[id]/join`, `/[id]/commit`; `PATCH /[id]/members/me`. Closes Zod-validation gaps in existing subcrew tests
+- [M1] `src/__tests__/checkins-feed.test.ts` — 14 tests for `GET /api/checkins/feed`: auth, rate limit, Prisma `where` assertions (activeUntil>now, ACCEPTED crew, visibility OR branches, no PRIVATE), Sentry path
+- [M2] `src/__tests__/intents-mine-crew.test.ts` — 18 tests (9 each) for `/api/intents/mine` + `/api/intents/crew`: state/topicId/limit filters, includeExpired flag, Crew short-circuit, 400/429/500
 
-**Test delta:** +29 tests (1081 → 1110). **Test files:** +2 (64 → 66). **Routes:** +2 (72 → 74; 59 live → 61 live).
+### Wave 2 — Features / Docs
 
-**Deferred to Phase 5 session 2:** per-member-intent notification dispatch and the daily-prompt fan-out (matching prompts to intents/topics + sending to each member of relevant Crews).
+- [M3] `src/app/api/topics/route.ts` + `src/app/api/recommendations/route.ts` — added contextual `captureException(err, { route, method })` on 500-class catch blocks. TSC clean.
+- [M4] `README.md` — rewrote pivot status, tagline, core loop section, Phase 0–8 status table, metrics (917 tests, 58 routes, 86 test files, 290 TS files), 2026-05-10 Recent Updates entry
+- [M5] `docs/PRODUCTION_ROADMAP.md` — bumped to v3.3, 88% readiness, added V1 Phase 4 heatmap section (PRs #86/#87), added Risk Register (resolved vs open), removed stale Supabase/OpenAI references, added Neon production migration (PR #90) reference
+- [M6] `prisma/scripts/seed-heatmap-only.ts` — fixed 2 TSC errors (TS5097) by removing `.ts` extension from imports; `npx tsc --noEmit` clean
+
+### Phase 3.5 — Small-Task Metrics (automated)
+
+- `any` types: 4 | `console.*`: 0 | TODO/FIXME: 2 | files >600 lines (production): 2 (RichFeedItem.tsx 717, profile/page.tsx 623 — both in open older PRs)
+- API routes: 58 live | test files: 86 → 90 | TS files: 290
+
+### Phase 8 progress
+
+- Action #5 (E2E + integration coverage on V1 hot paths): **PARTIAL** — +74 integration tests for intents/subcrews/checkins; Playwright authenticated flows still pending
+- Action #6 (Sentry full coverage audit): **ongoing** — `/api/topics` + `/api/recommendations` instrumented tonight
 
 ---
 

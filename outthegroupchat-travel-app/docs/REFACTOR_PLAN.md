@@ -410,14 +410,16 @@ Each phase targets a discrete session (or a nightly build if small). Phases are 
 ### Phase 8 — Launch-readiness re-audit (1 session)
 **Objective:** Re-baseline the launch checklist against new scope.
 **Actions:**
-1. Rewrite `docs/LAUNCH_CHECKLIST.md` with meetup-centric milestones
-2. Update `docs/PRODUCTION_ROADMAP.md` (target date, priorities, new risk register)
-3. Security audit focused on new surfaces: location data handling, Crew-request abuse prevention, meetup spam, check-in stalking mitigation (Q4 `activeUntil` is first line of defense)
-4. Rate-limit audit for new routes
-5. E2E Playwright tests for new critical paths: signup → Crew request → meetup create → RSVP → check-in
-6. Sentry coverage audit: target 100% on new routes (don't repeat the 0/48-on-main debt)
+1. [x] Rewrite `docs/LAUNCH_CHECKLIST.md` with meetup-centric milestones
+2. [x] Update `docs/PRODUCTION_ROADMAP.md` (target date, priorities, new risk register) — refreshed to v3.3 on 2026-05-10
+3. [x] Security audit focused on new surfaces: location data handling, Crew-request abuse prevention, meetup spam, check-in stalking mitigation (Q4 `activeUntil` is first line of defense)
+4. [x] Rate-limit audit for new routes
+5. [~] E2E Playwright tests for new critical paths: signup → Crew request → meetup create → RSVP → check-in — **PARTIAL** — nightly/2026-05-11 added 74 integration tests for `/api/intents/[id]`, `/api/intents/mine`, `/api/intents/crew`, `/api/subcrews/*`, `/api/checkins/feed`. Playwright authenticated flows still pending.
+6. [~] Sentry coverage audit: target 100% on new routes (don't repeat the 0/48-on-main debt) — **ongoing** — `/api/topics` + `/api/recommendations` instrumented 2026-05-10; estimated ~52/58 live routes covered.
 
 **Exit criteria:** Updated launch checklist reflects real readiness of the new product, not the archived one.
+
+> *Last refactor-plan update: 2026-05-10 (nightly build) — Phase 8 actions #5/#6 marked partial/ongoing per tonight's progress; phase definitions unchanged.*
 
 ---
 

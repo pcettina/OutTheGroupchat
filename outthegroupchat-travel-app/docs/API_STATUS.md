@@ -1,6 +1,6 @@
 # 📡 API & Integration Status
 
-> **Last Updated: 2026-05-04**
+> **Last Updated: 2026-05-10**
 >
 > **Archival:** trip/activity routes moved to `src/app/api/_archive/` as of 2026-04-16 Phase 1. See REFACTOR_PLAN.md. Sections below that reference `/api/trips/*` and `/api/activities/*` reflect the pre-archive state for historical context; authoritative status for these routes is the "📦 Archived Routes" section near the bottom of this file.
 >
@@ -8,13 +8,15 @@
 >
 > **Phase 6 COMPLETE (2026-04-22, nightly/2026-04-22 PR #55):** Feed rescoped (meetup/checkin types, POST→410), search people-first (users→meetups→venues), notification type migration (9 old trip types removed from schema), AI routes (suggest-meetups + icebreakers). All 4 Phase 6 actions complete.
 >
-> **V1 (intent → subcrew → topics → heatmap → recommendations) routes documented (2026-05-04):** 14 V1 routes (intents 4 + subcrews 6 + topics + heatmap + recommendations + cron/expire-intents) added to this file with Sentry coverage marked true. Sentry context tags wired into all 14 V1 routes via Wave 2 of nightly/2026-05-05 build.
+> **V1 Phase 4 heatmap COMPLETE (2026-05-09, PR #86/#87):** Crew + FoF tier contributions wired through commit/checkin events; OpenFreeMap + MapLibre rendering; R22/R24 anchor priorities live.
+>
+> **Nightly 2026-05-10 (PR #TBD, branch nightly/2026-05-11):** Sentry instrumentation extended to `/api/topics` + `/api/recommendations`. +74 integration tests covering intents sub-routes, subcrews sub-routes, and checkins/feed. README + PRODUCTION_ROADMAP refreshed for launch-readiness baseline.
 >
 > **Last Audit:** May 2026
-> **Live API routes (post-archive):** 72 (35 base + 6 Crew + 9 Phase 4 meetup/venue/cron routes + 3 Phase 5 check-in routes + privacy route + 2 Phase 6 AI routes (later deleted) + 14 V1 routes; note: feed POST returns 410)
+> **Live API routes (post-archive):** 58 (auth 7 + beta 3 + checkins 3 + crew 5 + cron 3 + discover 3 + feed 4 + meetups 4 + venues 1 + intents 4 + subcrews 6 + topics 1 + recommendations 1 + heatmap 1 + notifications 2 + users 3 + invitations 2 + profile 1 + search 1 + inspiration 1 + images/search 1 + geocoding 1 + health 1 + newsletter 1 + pusher/auth 1)
 > **Archived API routes (Phase 1):** 13
 > **Target:** 100% for Beta Launch (re-baselined in Phase 8)
-> **Sentry Coverage:** 14 V1 routes newly instrumented 2026-05-04 (subcrews 6 + intents/topics/heatmap/recommendations/expire-intents 8); pre-V1 instrumentation totals retained from prior audit
+> **Sentry Coverage:** ~52/58 live routes instrumented after 2026-05-10 nightly (topics + recommendations added tonight)
 
 ---
 
@@ -384,7 +386,7 @@ Phase 4 closed with Session 3. Next: Phase 5 (Check-ins & live presence).
 |----------|--------|--------|-------|
 | `/api/checkins` | POST | ✅ | Create check-in (`activeUntilMinutes` override 30–720; default 360=6h); `CREW_CHECKED_IN_NEARBY` notification dispatched; Pusher city-channel broadcast |
 | `/api/checkins` | GET | ✅ | Get own check-ins |
-| `/api/checkins/feed` | GET | ✅ | Crew's recent check-ins (`WHERE activeUntil > now()`), visibility-scoped |
+| `/api/checkins/feed` | GET | ✅ | Crew's recent check-ins (`WHERE activeUntil > now()`), visibility-scoped; **integration tests added 2026-05-10 (14 tests)** |
 | `/api/checkins/[id]` | GET | ✅ | Check-in detail with visibility gate; Phase 5 Session 2, 2026-04-20 |
 | `/api/checkins/[id]` | DELETE | ✅ | Cancel own check-in (soft: sets `activeUntil = now()`) |
 | `/api/users/privacy` | GET | ✅ | Get check-in privacy settings; Phase 5 Session 2, 2026-04-20 |
@@ -392,50 +394,25 @@ Phase 4 closed with Session 3. Next: Phase 5 (Check-ins & live presence).
 
 ---
 
-## 🚀 V1 Routes — Intent → Subcrew → Topics → Heatmap → Recommendations (documented 2026-05-04)
+## 🎯 V1 Intent / Crew-Grouping Routes
 
-> Implemented across V1 phases (2026-04-24 onward); previously undocumented in API_STATUS. **Sentry context tags wired into all 14 V1 routes 2026-05-04** (nightly/2026-05-05 PR build, Wave 2 L5 + L6).
-
-### Intents (4 routes)
-
-| Endpoint | Method | Status | Sentry | Notes |
-|----------|--------|--------|--------|-------|
-| `/api/intents` | GET | ✅ Live | ✅ | List own intents |
-| `/api/intents` | POST | ✅ Live | ✅ | Create intent |
-| `/api/intents/[id]` | PATCH | ✅ Live | ✅ | Update intent (owner only) |
-| `/api/intents/[id]` | DELETE | ✅ Live | ✅ | Delete intent (owner only) |
-| `/api/intents/mine` | GET | ✅ Live | ✅ | Caller's intents — used by intent detail/management UI |
-| `/api/intents/crew` | GET | ✅ Live | ✅ | Crew-visible intents — feeds emerging-Subcrew detection |
-
-### Topics (1 route)
-
-| Endpoint | Method | Status | Sentry | Notes |
-|----------|--------|--------|--------|-------|
-| `/api/topics` | GET | ✅ Live | ✅ | Catalog of canonical Topic taxonomy |
-
-### Subcrews (6 routes)
-
-| Endpoint | Method | Status | Sentry | Notes |
-|----------|--------|--------|--------|-------|
-| `/api/subcrews/[id]` | GET | ✅ Live | ✅ | Subcrew detail |
-| `/api/subcrews/[id]/join` | POST | ✅ Live | ✅ | Join an emerging Subcrew |
-| `/api/subcrews/[id]/commit` | POST | ✅ Live | ✅ | Commit (lock-in) Subcrew membership; transitions emerging → committed |
-| `/api/subcrews/[id]/members/me` | DELETE | ✅ Live | ✅ | Leave a Subcrew |
-| `/api/subcrews/emerging` | GET | ✅ Live | ✅ | List emerging Subcrews (≥2 Crew on same Topic threshold) |
-| `/api/subcrews/mine` | GET | ✅ Live | ✅ | Caller's Subcrew memberships |
-
-### Heatmap & Recommendations (2 routes)
-
-| Endpoint | Method | Status | Sentry | Notes |
-|----------|--------|--------|--------|-------|
-| `/api/heatmap` | GET | ✅ Live | ✅ | Crew/FoF tier contribution heatmap (Phase 4 v1, PR #86 + #87) |
-| `/api/recommendations` | GET | ✅ Live | ✅ | Venue/topic recommendations from intents + check-ins |
-
-### Cron (1 route)
-
-| Endpoint | Method | Status | Sentry | Notes |
-|----------|--------|--------|--------|-------|
-| `/api/cron/expire-intents` | GET | ✅ Live | ✅ | Background job — expires intents past `activeUntil`; CRON_SECRET-guarded |
+| Endpoint | Method | Status | Tests | Notes |
+|----------|--------|--------|-------|-------|
+| `/api/intents` | POST, GET | ✅ | yes | Create / list intents; topic+window+optional cityArea |
+| `/api/intents/[id]` | PATCH | ✅ | **yes — 11 tests (2026-05-10)** | Edit own intent (state/window/cityArea); Zod-validated; rate-limited; Sentry on 500 |
+| `/api/intents/[id]` | DELETE | ✅ | **yes — 8 tests (2026-05-10)** | Soft-cancel own intent; 401/403/404 paths |
+| `/api/intents/mine` | GET | ✅ | **yes — 9 tests (2026-05-10)** | Caller's intents; filter by state/topicId/limit/includeExpired |
+| `/api/intents/crew` | GET | ✅ | **yes — 9 tests (2026-05-10)** | Cross-Crew intents for caller; short-circuits if no Crew |
+| `/api/subcrews/mine` | GET | ✅ | **yes — 2026-05-10** | Caller's subcrews |
+| `/api/subcrews/emerging` | GET | ✅ | **yes — 2026-05-10** | Auto-formed ≥2-Crew subcrews on a topic |
+| `/api/subcrews/[id]` | GET | ✅ | **yes — 2026-05-10** | Subcrew detail |
+| `/api/subcrews/[id]/join` | POST | ✅ | **yes — 2026-05-10** | Opt-in join |
+| `/api/subcrews/[id]/commit` | POST | ✅ | **yes — 2026-05-10** | Commit attendance (writes heatmap contribution) |
+| `/api/subcrews/[id]/members/me` | PATCH | ✅ | **yes — 2026-05-10** | Update own membership state |
+| `/api/topics` | GET | ✅ | — | Discover topics; **Sentry captureException added 2026-05-10 (nightly)** |
+| `/api/recommendations` | GET | ✅ | — | Venue/topic recommendations; **Sentry captureException added 2026-05-10 (nightly)** |
+| `/api/heatmap` | GET | ✅ | yes | V1 Phase 4 — Crew + FoF tier contributions (PR #86/#87, 2026-05-09) |
+| `/api/cron/expire-intents` | GET | ✅ | yes | Cron — expire intents past `endAt` |
 
 ---
 
@@ -478,4 +455,6 @@ All routes below were moved to `src/app/api/_archive/` on **2026-04-16** as part
 
 *Review and update after each API change.*
 
-*Last Updated: 2026-03-26 - /api/ai/search GET+POST fully implemented (semantic search, destinations branch); /api/newsletter/subscribe now requires auth; /api/auth/signup, /api/auth/reset-password, /api/auth/verify-email: rate limiting now first operation; 153 new tests tonight (1156 total, 56 test files); dead components (NotificationCenter.tsx, SharePreview.tsx) removed; JSDoc added to costs.ts; README updated. Also includes 2026-03-29 changes: /api/ai/chat Zod strengthened + JSON.parse safety; /api/ai/recommend Zod GET params + JSON.parse safety; /api/ai/suggest-activities + generate-itinerary JSON.parse safety; /api/notifications/[notificationId] Zod params (cuid) + bugfix (read was hardcoded true); JSDoc added to src/lib/geocoding.ts; N8N docs deprecated*
+*Last Updated: 2026-05-10 (nightly/2026-05-11) — Sentry instrumentation added to `/api/topics` and `/api/recommendations`; +74 integration tests covering `/api/intents/[id]` (PATCH/DELETE — 19), `/api/intents/mine` + `/api/intents/crew` (9 each), six `/api/subcrews/*` sub-routes (23), and `/api/checkins/feed` (14). Tested-route count moves to ~52/58. No new routes; README + PRODUCTION_ROADMAP refreshed.*
+
+*Previous: 2026-03-26 - /api/ai/search GET+POST fully implemented (semantic search, destinations branch); /api/newsletter/subscribe now requires auth; /api/auth/signup, /api/auth/reset-password, /api/auth/verify-email: rate limiting now first operation; 153 new tests tonight (1156 total, 56 test files); dead components (NotificationCenter.tsx, SharePreview.tsx) removed; JSDoc added to costs.ts; README updated. Also includes 2026-03-29 changes: /api/ai/chat Zod strengthened + JSON.parse safety; /api/ai/recommend Zod GET params + JSON.parse safety; /api/ai/suggest-activities + generate-itinerary JSON.parse safety; /api/notifications/[notificationId] Zod params (cuid) + bugfix (read was hardcoded true); JSDoc added to src/lib/geocoding.ts; N8N docs deprecated*
