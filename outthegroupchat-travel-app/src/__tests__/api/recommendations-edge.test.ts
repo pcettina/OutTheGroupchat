@@ -281,7 +281,12 @@ describe('GET /api/recommendations — edge cases', () => {
     expect(res.status).toBe(500);
     const body = await res.json();
     expect(body.error).toBe('Failed to compute recommendations');
-    expect(mockCaptureException).toHaveBeenCalledWith(dbError);
+    // Sentry capture gained route/method context tags during V1 Sentry coverage
+    // sweep — assert the error reaches Sentry, allow optional tag context.
+    expect(mockCaptureException).toHaveBeenCalledWith(
+      dbError,
+      expect.objectContaining({ route: '/api/recommendations' }),
+    );
   });
 
   it('500 + Sentry capture when prisma.venue.findMany rejects in DB fallback', async () => {
@@ -293,6 +298,9 @@ describe('GET /api/recommendations — edge cases', () => {
 
     const res = await GET(makeReq());
     expect(res.status).toBe(500);
-    expect(mockCaptureException).toHaveBeenCalledWith(dbError);
+    expect(mockCaptureException).toHaveBeenCalledWith(
+      dbError,
+      expect.objectContaining({ route: '/api/recommendations' }),
+    );
   });
 });

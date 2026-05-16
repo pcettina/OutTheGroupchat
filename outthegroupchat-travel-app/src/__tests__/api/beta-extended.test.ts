@@ -224,9 +224,10 @@ describe('GET /api/beta/status — extended edge cases', () => {
     const body = await res.json();
     expect(body.error).toMatch(/too many requests/i);
 
-    // checkRateLimit must be called with the per-IP identifier prefix
-    expect(checkRateLimit).toHaveBeenCalledWith(
-      expect.anything(),
+    // checkRateLimit must be called with the per-IP identifier prefix.
+    // First arg (the limiter instance) is null in CI where UPSTASH_* env vars
+    // are unset — assert only the identifier, which is the test's real intent.
+    expect(vi.mocked(checkRateLimit).mock.calls[0]?.[1]).toBe(
       'beta-status:192.168.99.1',
     );
   });
@@ -237,8 +238,7 @@ describe('GET /api/beta/status — extended edge cases', () => {
     const res = await betaStatusGET(req);
     expect(res.status).toBe(200);
 
-    expect(checkRateLimit).toHaveBeenCalledWith(
-      expect.anything(),
+    expect(vi.mocked(checkRateLimit).mock.calls[0]?.[1]).toBe(
       'beta-status:10.0.0.5',
     );
   });
@@ -249,8 +249,7 @@ describe('GET /api/beta/status — extended edge cases', () => {
     const res = await betaStatusGET(req);
     expect(res.status).toBe(200);
 
-    expect(checkRateLimit).toHaveBeenCalledWith(
-      expect.anything(),
+    expect(vi.mocked(checkRateLimit).mock.calls[0]?.[1]).toBe(
       'beta-status:anonymous',
     );
   });
