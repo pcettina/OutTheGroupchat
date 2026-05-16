@@ -1,35 +1,37 @@
-# 🟢 Complete — Phase 8: Launch-Readiness Re-Audit (incremental progress 2026-05-10)
+# 🟢 Nightly Build — nightly/2026-05-12 (V1 hot-path tests + aux Sentry)
 
-> **Status:** Phase 8 ongoing. Tonight's nightly (nightly/2026-05-11) advanced action #5 (E2E + integration coverage on V1 hot paths) and #6 (Sentry coverage audit). 74 new integration tests covering V1 intent/subcrew/checkin surface; Sentry extended to `/api/topics` + `/api/recommendations`. V1 Phase 4 heatmap (PR #86/#87, merged 2026-05-09) remains the most recent product surface delivery.
-> **Test count:** ~917 → ~991 Vitest tests (verified by validation phase); 86 → 90 test files; 58 live API routes
+> **Status:** Nightly build 2026-05-11 — V1 lib coverage hardening (+101 tests on heatmap/topic/hotness/fof code), aux-route Sentry instrumentation (cron + beta/*), dead-component cleanup, search Zod tightened, JSDoc on 35 V1 lib exports.
+> **Last Updated:** 2026-05-11
+> **Test count:** ~1018 tests passing; 90 test files (+4 new: `heatmap-aggregate.test.ts` (28), `topic-classifier.test.ts` (34), `hotness-score.test.ts` (21), `fof-graph.test.ts` (18))
 
----
+## 🟢 Completed 2026-05-12 (Nightly Build nightly/2026-05-12)
 
-## 🟢 Completed 2026-05-10 (Nightly Build nightly/2026-05-11)
+### Wave 1 — Tests
 
-### Wave 1 — Tests (74 new tests)
+- +101 tests across 4 new test files on V1 hot-path libs:
+  - `src/__tests__/lib/heatmap-aggregate.test.ts` (28) — heatmap contribution aggregation, bucketing, decay
+  - `src/__tests__/lib/topic-classifier.test.ts` (34) — intent topic classification edge cases
+  - `src/__tests__/lib/hotness-score.test.ts` (21) — hotness scoring math and time-window weighting
+  - `src/__tests__/lib/fof-graph.test.ts` (18) — friend-of-friend graph traversal
+- No new Prisma mocks required in `setup.ts` (all libs operate on pure inputs or pre-mocked layers)
 
-- [L1] `src/__tests__/intents-id.test.ts` — 19 tests for `PATCH` + `DELETE /api/intents/[id]`: auth (401), rate-limit (429), Zod validation, 403 non-owner, 404 not-found, state-only updates, windowPreset changes, cityArea editing, endAt<startAt rejection, Sentry on 500
-- [L2] `src/__tests__/subcrews-coverage.test.ts` — 23 tests covering `GET /api/subcrews/mine`, `/emerging`, `/[id]`; `POST /[id]/join`, `/[id]/commit`; `PATCH /[id]/members/me`. Closes Zod-validation gaps in existing subcrew tests
-- [M1] `src/__tests__/checkins-feed.test.ts` — 14 tests for `GET /api/checkins/feed`: auth, rate limit, Prisma `where` assertions (activeUntil>now, ACCEPTED crew, visibility OR branches, no PRIVATE), Sentry path
-- [M2] `src/__tests__/intents-mine-crew.test.ts` — 18 tests (9 each) for `/api/intents/mine` + `/api/intents/crew`: state/topicId/limit filters, includeExpired flag, Crew short-circuit, 400/429/500
+### Wave 2 — Features
 
-### Wave 2 — Features / Docs
+- [L4] Sentry `captureException` added to `/api/cron`, `/api/beta/initialize-password`, `/api/beta/signup`, `/api/beta/status` (wrapped in catch blocks)
+- [L5] 4 dead components deleted — `profile/TripHistory`, `profile/PreferencesCard`, `profile/BadgeShowcase`, `ui/FloatingShareButton`; barrel exports updated
+- [L6] JSDoc added to `src/lib/heatmap/*` and `src/lib/hotness/score.ts` (13 exports)
+- [M2] Fixed 2 TSC errors in `prisma/scripts/seed-heatmap-only.ts` (removed `.ts` extension from imports)
+- [M3] `/api/search` Zod enum tightened to `['all','people','meetups','venues']`; `search.test.ts` updated to match
+- [M4] JSDoc on 11 schemas in `src/lib/validations/social.ts`
+- [M5] JSDoc on 11 exports across `src/lib/intent/*` and `src/lib/subcrew/try-form.ts`
+- [M6] README refreshed with current metrics
 
-- [M3] `src/app/api/topics/route.ts` + `src/app/api/recommendations/route.ts` — added contextual `captureException(err, { route, method })` on 500-class catch blocks. TSC clean.
-- [M4] `README.md` — rewrote pivot status, tagline, core loop section, Phase 0–8 status table, metrics (917 tests, 58 routes, 86 test files, 290 TS files), 2026-05-10 Recent Updates entry
-- [M5] `docs/PRODUCTION_ROADMAP.md` — bumped to v3.3, 88% readiness, added V1 Phase 4 heatmap section (PRs #86/#87), added Risk Register (resolved vs open), removed stale Supabase/OpenAI references, added Neon production migration (PR #90) reference
-- [M6] `prisma/scripts/seed-heatmap-only.ts` — fixed 2 TSC errors (TS5097) by removing `.ts` extension from imports; `npx tsc --noEmit` clean
+### Metrics tonight
 
-### Phase 3.5 — Small-Task Metrics (automated)
-
-- `any` types: 4 | `console.*`: 0 | TODO/FIXME: 2 | files >600 lines (production): 2 (RichFeedItem.tsx 717, profile/page.tsx 623 — both in open older PRs)
-- API routes: 58 live | test files: 86 → 90 | TS files: 290
-
-### Phase 8 progress
-
-- Action #5 (E2E + integration coverage on V1 hot paths): **PARTIAL** — +74 integration tests for intents/subcrews/checkins; Playwright authenticated flows still pending
-- Action #6 (Sentry full coverage audit): **ongoing** — `/api/topics` + `/api/recommendations` instrumented tonight
+- `any` types: 4 | `console.*`: 0 | TODO/FIXME: 2
+- Files >600 lines (production): 2 (RichFeedItem 717, profile/page 623)
+- API routes (live): 59
+- Test files: 90 (86 baseline + 4 new) | TS files: 291
 
 ---
 

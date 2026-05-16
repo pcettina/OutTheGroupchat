@@ -17,15 +17,7 @@
 >
 > **Target Launch:** Q2 2026 (Beta) — to be re-baselined post-pivot
 > **Current Status:** Refactoring (Phase 2 in progress — domain models added, DB migration pending)
-> **Last Updated:** 2026-05-10 (Phase 8 IN PROGRESS — nightly/2026-05-11: +74 integration tests on V1 intent/subcrew/checkin surface; Sentry instrumented on `/api/topics` + `/api/recommendations`. Remaining: Sentry DSN env, Pusher env, Resend domain, Playwright authenticated E2E flows.)
-
-### ✅ Newly closed (nightly/2026-05-11, 2026-05-10)
-- [x] Sentry on `/api/topics`
-- [x] Sentry on `/api/recommendations`
-- [x] Integration tests for `/api/intents/[id]` (PATCH/DELETE — 19)
-- [x] Integration tests for `/api/intents/mine` + `/api/intents/crew` (18)
-- [x] Integration tests for `/api/subcrews/*` (23)
-- [x] Integration tests for `/api/checkins/feed` (14)
+> **Last Updated:** 2026-05-11 (nightly/2026-05-12 — Sentry on 4 aux routes (cron + beta/signup + beta/initialize-password + beta/status), +101 V1 hot-path tests, dead-component cleanup, search Zod re-tightened, JSDoc on 35 V1 lib exports)
 
 ---
 
@@ -116,15 +108,121 @@ These are the gates that must close before V1 beta launch.
 
 ### 8.6 UI/UX
 
-- [x] Skeleton loaders on data-fetching pages
-- [x] Loading spinners on actions
-- [x] Optimistic updates where appropriate
-- [x] Empty states for feed, notifications, crew list
-- [x] Global error boundary (`global-error.tsx`)
-- [x] Friendly 404 (`not-found.tsx`) and 500 (`error.tsx`) pages
-- [x] Mobile-first responsive design
-- [x] Touch targets ≥ 44px
-- [x] Skip links + ARIA patterns
+7. [x] Guard /api/auth/demo behind DEMO_MODE env var ✅ 2026-03-22
+   File: src/app/api/auth/demo/route.ts (hardcoded password removed; requires DEMO_MODE=true)
+
+8. [x] Strip email from unauthenticated public trip responses ✅ 2026-03-25
+   File: src/app/api/trips/[tripId]/route.ts (email removed from public GET)
+
+9. [x] Remove NODE_ENV/version from /api/health (data minimization) ✅ 2026-03-25
+   File: src/app/api/health/route.ts (response shape narrowed to {status, timestamp, database})
+```
+
+### Security Headers
+- [x] Add security headers to next.config.js ✅ 2026-03-10
+- [x] HSTS enabled ✅ 2026-03-10
+- [x] X-Frame-Options set ✅ 2026-03-10
+- [x] Content-Security-Policy defined ✅ 2026-03-10
+
+---
+
+## 🧪 PHASE 4: Testing
+
+### Unit Tests
+- [x] Service layer tests ✅ 2026-03-23 (recommendation.service.test.ts TSC errors fixed; all tests passing)
+- [x] Utility function tests (email, geocoding, invitations, rate-limit) ✅ 2026-03-11
+- [x] API route tests (trips 30, voting 10, survey 11, feed 12) ✅ 2026-03-10
+- [x] API route tests (auth/signup, notifications, profile) ✅ 2026-03-11
+- [x] API route tests (trips-suggestions 23, trips-flights 26, trips-members 29) ✅ 2026-03-20 — total: 382 tests across 22 files
+- [x] API route tests (verify-email 9, pusher-auth 14, trips-members POST +12) ✅ 2026-03-21 — total: ~577 tests across 31 files
+- [x] API route tests (signup 15, trips-tripid 20, ai-chat+recommend 24, tripid-invitations 14, tripid-recommendations 11) ✅ 2026-03-22 — total: ~661 tests across 37 files
+- [x] API route tests (ai-search 12, discover ~20, images-search 10, newsletter 10, geocoding-api 12) + lib tests (recommendation.service) ✅ 2026-03-23 — total: 746 tests across 42 files
+- [x] API route tests (trips-voting 50, trips-invitations 33, pusher-feed-social 38, trips-itinerary 43) ✅ 2026-03-23 — total: 910+ tests across 46 files
+- [x] API route tests (trips-itinerary +21, auth-demo 13, cron 10, discover-search 12) + discover.test.ts auth fixes ✅ 2026-03-24 — total: 924 tests across 49 files
+- [x] API route tests (invitations-post 18, ai-get-methods 16, beta-extended 21, users-follow 24) ✅ 2026-03-25 — total: 1003 tests across 53 files
+- [x] Service tests + API tests (recommendation.service 45, survey.service 36, geocoding-images 32, inspiration +39) ✅ 2026-03-26 — total: 1156 tests across 56 files
+- [x] API route tests (ai-generate-itinerary 31, ai-suggest-activities 25, discover-import 21) ✅ 2026-03-29
+- [x] API route tests (feed-extended 42, notifications-extended 33, health 14, trips-survey-voting-extended 23) ✅ 2026-04-16 — total: **1346 tests across 63 files**
+
+### Integration Tests
+- [ ] Auth flow tests
+- [x] Trip CRUD tests ✅ 2026-03-10
+- [x] Database operation tests (covered via API mocks) ✅ 2026-03-10
+
+### E2E Tests (Critical Flows)
+- [x] Auth flow E2E spec created (Playwright) ✅ 2026-03-23 — e2e/auth-flow.spec.ts
+- [ ] User signup → trip creation → invite flow
+- [ ] Survey completion flow
+- [ ] Voting flow
+
+### Manual Testing Checklist
+```bash
+□ Sign up with new account
+□ Sign in with existing account
+□ Create a new trip
+□ View trip details
+□ Invite a member (link-based)
+□ View feed
+□ Navigate all pages
+□ Test on mobile browser
+□ Test on multiple browsers
+```
+
+---
+
+## 📊 PHASE 5: Monitoring & Observability
+
+### Error Tracking
+- [x] Sentry installed and configured ✅ 2026-03-10 (instrumentation-client.ts onRouterTransitionStart fixed 2026-03-20; src/lib/sentry.ts helper created 2026-03-25; needs real DSN in Vercel)
+- [x] Sentry captureException added to 19/48 routes ✅ 2026-04-16 (feed x4, notifications x2, trips/route x1, trips/[tripId] x8, auth x4)
+- [x] Sentry captureException added to aux routes ✅ 2026-05-11 (cron + beta/signup + beta/initialize-password + beta/status — nightly/2026-05-12)
+- [x] Dead-component cleanup pass ✅ 2026-05-11 (profile/TripHistory, profile/PreferencesCard, profile/BadgeShowcase, ui/FloatingShareButton removed)
+- [ ] Error alerts configured (pending Sentry DSN)
+- [ ] Source maps uploaded (pending Sentry DSN)
+
+### Performance
+- [x] Vercel Analytics enabled ✅ 2026-03-16
+- [ ] Core Web Vitals monitoring
+- [ ] API response time tracking
+
+### Uptime
+- [ ] Uptime monitoring (BetterStack/Checkly)
+- [ ] Status page created
+- [ ] Alert channels configured (Slack/Email)
+
+### Logging
+- [x] Structured logging implemented (pino via @/lib/logger) ✅ 2026-03-09
+- [ ] Log aggregation configured
+- [ ] Debug logs removed from production (in progress: 59 → target ~20)
+
+---
+
+## 🎨 PHASE 6: UI/UX Polish
+
+### Loading States
+- [x] Skeleton loaders on all data-fetching pages ✅ Dec 17
+- [x] Loading spinners on actions ✅ Dec 17
+- [x] Optimistic updates where appropriate ✅ Dec 17
+
+### Empty States
+- [x] No trips empty state ✅ Dec 17
+- [x] No notifications empty state ✅ Dec 17
+- [ ] No search results state
+
+### Error States
+- [x] Global error boundary ✅ 2026-03-13 (global-error.tsx)
+- [x] Friendly 404 page ✅ 2026-03-13 (not-found.tsx)
+- [x] Friendly 500 page ✅ 2026-03-13 (error.tsx)
+- [ ] Form validation errors inline
+
+### Responsive Design
+- [x] All pages tested on mobile ✅ Dec 17
+- [x] Touch targets 44px minimum ✅ Dec 17
+- [x] Mobile navigation working ✅ Dec 17
+
+### Accessibility
+- [x] Skip links implemented
+- [x] ARIA patterns in place
 - [ ] Keyboard navigation tested
 - [ ] Screen reader smoke pass
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
+import { captureException } from '@/lib/sentry';
 
 // Force dynamic rendering — this route reads request.url query params
 export const dynamic = 'force-dynamic';
@@ -93,6 +94,7 @@ export async function GET(req: NextRequest) {
       passwordInitialized: user.passwordInitialized,
     });
   } catch (error) {
+    captureException(error, { route: 'api/beta/status', method: 'GET' });
     logger.error({ err: error, context: 'BETA_STATUS' }, 'Error checking beta status');
     return NextResponse.json(
       { error: 'Unable to check status' },

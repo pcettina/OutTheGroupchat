@@ -2,17 +2,14 @@
 
 **The social media app that wants to get you off your phone.**
 
-A meetup-centric social network organized around a single loop: signal what you want to do, get auto-grouped with Crew members who want the same thing, coordinate a venue, and (opt-in) share live presence on a privacy-tiered heatmap. Online intent → in-person time together.
+A meetup-centric social network built around a simple core loop: signal intent → auto-group at >=2 Crew on the same Topic → coordinate + venue recs → opt-in location visibility. Connect with people, create and RSVP to local meetups, check in live when you're out, and see who else is around — all designed to turn online connections into real-world moments.
 
-## The core loop
+## Recent Updates (2026-05-12)
 
-1. **Signal intent** — pick a Topic (drinks, run, coffee, brunch, etc.) and a time window.
-2. **Auto-group into a Subcrew** — when ≥2 Crew members hold overlapping Intents on the same Topic, a Subcrew surfaces.
-3. **Coordinate** — Subcrew picks a time, gets venue recommendations (Google Places + OTG "currently hot" signal).
-4. **Commit + go** — each member picks per-event location visibility (social scope × spatial granularity × identity mode) before contributing to any heatmap.
-5. **Check in** — live presence broadcasts to Crew (or Subcrew, or nobody) based on the visibility spec.
-
-See `docs/PRODUCT_VISION.md` for the canonical v1 spec.
+- **Heatmap tier 4a + 4b shipped** (PRs #86 / #87): MapLibre + OpenFreeMap, Crew + FoF visibility tiers, R22 z=15 venue markers, R24 anchor priority 1/3/4.
+- **+101 tests added tonight** across V1 lib hot paths (heatmap, intent, hotness) — bringing Vitest count to ~1018.
+- **Sentry expanded** onto auxiliary routes (cron, beta status, aux notifications) — V1 hot paths now covered.
+- **Dead components cleaned**: TripHistory, BadgeShowcase, PreferencesCard, FloatingShareButton, email-crew.ts duplicate removed.
 
 ## Features
 
@@ -95,7 +92,7 @@ Trip-planning code is archived in `src/_archive/` (see `docs/REFACTOR_PLAN.md`).
 ```
 src/
 ├── app/                    # Next.js App Router pages
-│   ├── api/               # API routes (58 active routes)
+│   ├── api/               # API routes (59 active routes)
 │   │   ├── meetups/      # Meetup CRUD + RSVP
 │   │   ├── crew/         # Crew requests
 │   │   ├── checkins/     # Live presence
@@ -231,7 +228,7 @@ Built with ❤️ by the OutTheGroupchat Team
 
 ## Recent Updates
 
-- **2026-05-10:** V1 Phase 4 heatmap shipped (Crew tier + FoF tier, PRs #86/#87), production Neon migration workflow live (PR #90), heatmap seed fixtures + standalone runner (PRs #91/#92). Phase 8 launch-readiness re-audit underway.
+- **2026-05-12:** Heatmap tier 4a + 4b shipped (PRs #86, #87) — MapLibre + OpenFreeMap, Crew + FoF visibility tiers, R22 z=15 venue markers, R24 anchor priority 1/3/4. +101 Vitest tests across V1 lib hot paths (heatmap, intent, hotness) → ~1018 total. Sentry expanded onto auxiliary routes. Dead components removed (TripHistory, BadgeShowcase, PreferencesCard, FloatingShareButton, email-crew.ts).
 - **2026-04-20:** Phase 5 session 2 complete (PR #53). Privacy settings (GET/PATCH /api/users/privacy), Pusher city broadcast on check-in, GET /api/checkins/[id] visibility gate, /checkins/[id] detail page, feed visibility filter. 994 tests passing across 51 active API routes.
 - **2026-04-16:** Product pivot to social meetup network initiated. Phase 1 complete: trip-planning surface archived to `src/_archive/` (routes, pages, components, services). README and docs updated to reflect new vision. 841 tests passing post-archive across 35 active API routes.
 - **2026-04-16:** Sentry error monitoring expanded to 19/48 API routes; beta/status migrated to Redis rate limiting; dead components removed (DestinationCard, CategoryFilter, TrendingSection, TravelBadges); 112 new tests added (1,346+ total pre-archive)
@@ -243,4 +240,4 @@ Built with ❤️ by the OutTheGroupchat Team
 
 ---
 
-*Last Updated: 2026-05-10 | 917+ tests passing | 58 active API routes | 86 test files | 290 TS files | files >600 lines: 2 | 0 any types | 0 console.* | Build: PASS | Pivot: Phase 8 of 8 (launch-readiness re-audit)*
+*Last Updated: 2026-05-11 | ~1018 tests passing | 59 active API routes | 90 test files | 291 TS files | 4 any types | 0 console.* | 2 TODO/FIXME | Files >600 lines: 2 (RichFeedItem.tsx 717, profile/page.tsx 623) | Build: PASS*

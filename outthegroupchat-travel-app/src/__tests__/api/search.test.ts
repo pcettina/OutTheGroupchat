@@ -52,31 +52,6 @@ const MOCK_VENUE = {
   category: 'Bar',
 };
 
-const MOCK_TRIP = {
-  id: 'trip-search-001',
-  title: 'Chicago Weekend',
-  description: 'Quick trip to Chicago',
-  destination: { city: 'Chicago', country: 'USA' },
-  startDate: new Date('2026-07-01'),
-  endDate: new Date('2026-07-03'),
-  status: 'PLANNING',
-  isPublic: true,
-  owner: { id: 'user-search-001', name: 'Search Tester', image: null },
-  _count: { members: 2 },
-};
-
-const MOCK_ACTIVITY = {
-  id: 'activity-search-001',
-  name: 'Chicago Architecture Boat Tour',
-  description: 'See Chicago from the river',
-  category: 'Sightseeing',
-  location: { city: 'Chicago' },
-  cost: 45,
-  priceRange: 'MODERATE',
-  trip: { id: 'trip-search-001', title: 'Chicago Weekend', destination: { city: 'Chicago' } },
-  _count: { savedBy: 12, ratings: 8 },
-};
-
 function makeRequest(path: string): Request {
   return new Request(`http://localhost:3000${path}`, { method: 'GET' });
 }
@@ -159,7 +134,7 @@ describe('GET /api/search — short query handling', () => {
 
     expect(res.status).toBe(200);
     expect(body.success).toBe(true);
-    expect(body.data).toEqual({ trips: [], activities: [], users: [], meetups: [], venues: [] });
+    expect(body.data).toEqual({ users: [], meetups: [], venues: [] });
     expect(vi.mocked(prisma.user.findMany)).not.toHaveBeenCalled();
     expect(vi.mocked(prisma.meetup.findMany)).not.toHaveBeenCalled();
     expect(vi.mocked(prisma.venue.findMany)).not.toHaveBeenCalled();
@@ -170,7 +145,7 @@ describe('GET /api/search — short query handling', () => {
     const body = await parseJson(res);
 
     expect(res.status).toBe(200);
-    expect(body.data).toEqual({ trips: [], activities: [], users: [], meetups: [], venues: [] });
+    expect(body.data).toEqual({ users: [], meetups: [], venues: [] });
     expect(vi.mocked(prisma.user.findMany)).not.toHaveBeenCalled();
   });
 
@@ -196,12 +171,10 @@ describe('GET /api/search — type=all (people-first ordering)', () => {
     mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
   });
 
-  it('returns users, meetups, venues, trips, and activities with people-first key order', async () => {
+  it('returns users, meetups, and venues with people-first key order', async () => {
     vi.mocked(prisma.user.findMany).mockResolvedValueOnce([MOCK_USER as never]);
     vi.mocked(prisma.meetup.findMany).mockResolvedValueOnce([MOCK_MEETUP as never]);
     vi.mocked(prisma.venue.findMany).mockResolvedValueOnce([MOCK_VENUE as never]);
-    vi.mocked(prisma.trip.findMany).mockResolvedValueOnce([MOCK_TRIP as never]);
-    vi.mocked(prisma.activity.findMany).mockResolvedValueOnce([MOCK_ACTIVITY as never]);
 
     const res = await GET(makeRequest('/api/search?q=chicago'));
     const body = await parseJson(res);
@@ -211,8 +184,8 @@ describe('GET /api/search — type=all (people-first ordering)', () => {
     expect(body.data.users).toHaveLength(1);
     expect(body.data.meetups).toHaveLength(1);
     expect(body.data.venues).toHaveLength(1);
-    expect(body.data.trips).toHaveLength(1);
-    expect(body.data.activities).toHaveLength(1);
+    expect(body.data.trips).toBeUndefined();
+    expect(body.data.activities).toBeUndefined();
   });
 
   it('people-first: response keys appear with users before meetups', async () => {
@@ -302,25 +275,19 @@ describe('GET /api/search — type=people', () => {
 });
 
 // ===========================================================================
-// type=users
+// Legacy types removed (users/trips/activities) — should 400 via Zod
 // ===========================================================================
-describe('GET /api/search — type=users', () => {
+describe('GET /api/search — legacy types rejected', () => {
   beforeEach(() => {
     mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
   });
 
-  it('only queries users when type=users', async () => {
-    vi.mocked(prisma.user.findMany).mockResolvedValueOnce([MOCK_USER as never]);
-
+  it('returns 400 when type=users (legacy — canonical is people)', async () => {
     const res = await GET(makeRequest('/api/search?q=chicago&type=users'));
     const body = await parseJson(res);
 
-    expect(res.status).toBe(200);
-    expect(body.data.users).toHaveLength(1);
-    expect(body.data.trips).toBeUndefined();
-    expect(body.data.meetups).toBeUndefined();
-    expect(vi.mocked(prisma.trip.findMany)).not.toHaveBeenCalled();
-    expect(vi.mocked(prisma.meetup.findMany)).not.toHaveBeenCalled();
+    expect(res.status).toBe(400);
+    expect(body.error).toBe('Invalid query parameters');
   });
 });
 
@@ -390,67 +357,35 @@ describe('GET /api/search — type=venues', () => {
 });
 
 // ===========================================================================
-// type=trips
+// Legacy trip-domain types (trips/activities) rejected by Zod
 // ===========================================================================
-describe('GET /api/search — type=trips', () => {
+describe('GET /api/search — trips legacy type rejected', () => {
   beforeEach(() => {
     mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
   });
 
-  it('only queries trips when type=trips', async () => {
-    vi.mocked(prisma.trip.findMany).mockResolvedValueOnce([MOCK_TRIP as never]);
-
+  it('returns 400 when type=trips (legacy)', async () => {
     const res = await GET(makeRequest('/api/search?q=chicago&type=trips'));
     const body = await parseJson(res);
 
-    expect(res.status).toBe(200);
-    expect(body.data.trips).toHaveLength(1);
-    expect(body.data.users).toBeUndefined();
-    expect(body.data.meetups).toBeUndefined();
-    expect(vi.mocked(prisma.user.findMany)).not.toHaveBeenCalled();
-    expect(vi.mocked(prisma.meetup.findMany)).not.toHaveBeenCalled();
-    expect(vi.mocked(prisma.activity.findMany)).not.toHaveBeenCalled();
-  });
-
-  it('passes session user id to trip query for access control', async () => {
-    vi.mocked(prisma.trip.findMany).mockResolvedValueOnce([]);
-
-    await GET(makeRequest('/api/search?q=chicago&type=trips'));
-
-    expect(vi.mocked(prisma.trip.findMany)).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: expect.objectContaining({
-          AND: expect.objectContaining({
-            OR: expect.arrayContaining([
-              expect.objectContaining({ ownerId: MOCK_SESSION.user.id }),
-            ]),
-          }),
-        }),
-      })
-    );
+    expect(res.status).toBe(400);
+    expect(body.error).toBe('Invalid query parameters');
+    expect(vi.mocked(prisma.trip.findMany)).not.toHaveBeenCalled();
   });
 });
 
-// ===========================================================================
-// type=activities
-// ===========================================================================
-describe('GET /api/search — type=activities', () => {
+describe('GET /api/search — activities legacy type rejected', () => {
   beforeEach(() => {
     mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
   });
 
-  it('only queries activities when type=activities', async () => {
-    vi.mocked(prisma.activity.findMany).mockResolvedValueOnce([MOCK_ACTIVITY as never]);
-
+  it('returns 400 when type=activities (legacy)', async () => {
     const res = await GET(makeRequest('/api/search?q=tour&type=activities'));
     const body = await parseJson(res);
 
-    expect(res.status).toBe(200);
-    expect(body.data.activities).toHaveLength(1);
-    expect(body.data.trips).toBeUndefined();
-    expect(body.data.users).toBeUndefined();
-    expect(vi.mocked(prisma.trip.findMany)).not.toHaveBeenCalled();
-    expect(vi.mocked(prisma.user.findMany)).not.toHaveBeenCalled();
+    expect(res.status).toBe(400);
+    expect(body.error).toBe('Invalid query parameters');
+    expect(vi.mocked(prisma.activity.findMany)).not.toHaveBeenCalled();
   });
 });
 

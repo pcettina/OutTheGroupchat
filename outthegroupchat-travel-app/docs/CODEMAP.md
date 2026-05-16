@@ -1,6 +1,6 @@
 # OutTheGroupchat — Full Codemap
 
-> Auto-generated 2026-03-10. Last updated 2026-05-10 (nightly/2026-05-11 — Phase 8 launch-readiness, V1 Phase 4 heatmap merged on 2026-05-09 via PR #86/#87). Main stats: 58 live API routes, 90 vitest test files, ~991 tests passing, 290 TS/TSX files. Comprehensive reference for agents and developers.
+> Auto-generated 2026-03-10. Last updated 2026-05-11 (nightly/2026-05-12 — +101 tests on V1 hot-path libs, aux-route Sentry, dead-component cleanup, search Zod tightened). Main stats: 59 live API routes, 90 vitest-active test files, ~1018 tests passing, 291 TS/TSX files. Comprehensive reference for agents and developers.
 >
 > **🔀 Pivot in progress:** See `docs/REFACTOR_PLAN.md`. Trip-planning surface archived under `_archive/` directories as of Phase 1 (2026-04-16). See [Archived surface (Phase 1)](#archived-surface-phase-1) section below and `src/_archive/README.md` for the preservation scheme.
 >
@@ -46,6 +46,8 @@ Full-stack Next.js 14 collaborative travel planning app. Groups plan trips toget
 | `src/__tests__/subcrews-coverage.test.ts` | 23 | `/api/subcrews/{mine,emerging,[id],[id]/join,[id]/commit,[id]/members/me}` |
 | `src/__tests__/checkins-feed.test.ts` | 14 | `GET /api/checkins/feed` (auth, rate-limit, where-clause, Sentry) |
 | `src/__tests__/intents-mine-crew.test.ts` | 18 | `GET /api/intents/mine` + `GET /api/intents/crew` |
+
+**Test Health (2026-05-11, nightly/2026-05-12):** 90 live test files (+4 new V1 lib test files: `heatmap-aggregate.test.ts` (28), `topic-classifier.test.ts` (34), `hotness-score.test.ts` (21), `fof-graph.test.ts` (18)) | ~1018 tests passing | 0 TSC errors | Aux-route Sentry instrumentation added (cron + beta/signup + beta/initialize-password + beta/status); search Zod enum re-tightened; 4 dead components removed (profile/TripHistory, profile/PreferencesCard, profile/BadgeShowcase, ui/FloatingShareButton); JSDoc on 35 V1 lib exports across `src/lib/heatmap/*`, `src/lib/hotness/score.ts`, `src/lib/validations/social.ts`, `src/lib/intent/*`, `src/lib/subcrew/try-form.ts`; 59 live API routes; 291 TS files.
 
 ---
 

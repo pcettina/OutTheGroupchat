@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logError, apiLogger } from '@/lib/logger';
+import { captureException } from '@/lib/sentry';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -201,6 +202,7 @@ export async function GET(req: Request) {
       results,
     });
   } catch (error) {
+    captureException(error, { route: 'api/cron', method: 'GET' });
     logError('CRON', error);
     return NextResponse.json(
       { success: false, error: 'Cron job failed' },
