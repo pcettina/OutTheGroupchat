@@ -1,4 +1,4 @@
-# 🟢 V1 Implementation — Phases 0–4b shipped on main (2026-04-28)
+# 🟢 V1 Implementation — Phases 0–4b on main + Phase 5 partial slice (2026-04-29)
 
 > **Active plan:** `docs/V1_IMPLEMENTATION_PLAN.md` (intent → group → coordinate → heatmap loop). REFACTOR_PLAN.md is superseded.
 > **Shipped on main as of 2026-04-28:**
@@ -9,8 +9,27 @@
 > - V1 Phase 4b (heatmap FoF tier + threshold slider) — PR #87, #88
 > - Production Neon migration workflow — PR #90
 > - Heatmap test fixtures + standalone seed runner — PR #91, #92
-> **Remaining:** V1 Phase 5 (privacy + edge cases), launch-readiness audit (Sentry coverage on V1 routes, E2E Playwright authenticated flows).
-> **Main stats (2026-04-28):** 72 API routes (59 live + 13 archived), 64 test files, 290 TS/TSX, 0 TSC errors, 0 lint warnings.
+> **In flight (nightly/2026-04-29, PR pending):**
+> - V1 Phase 5 partial — notification preferences API, daily prompt cron (13:00 UTC), settings UI
+> **Remaining:** V1 Phase 5 session 2 (per-member-intent dispatch + daily-prompt fan-out), launch-readiness audit (Sentry coverage on V1 routes, E2E Playwright authenticated flows).
+> **Main stats (2026-04-29):** 74 API routes (61 live + 13 archived), 66 test files, 290 TS/TSX, 0 TSC errors, 0 lint warnings; 1110 tests passing.
+
+---
+
+## 🟢 Completed 2026-04-29 (Nightly Build nightly/2026-04-29)
+
+V1 Phase 5 partial slice — notifications surface bootstrapped:
+
+- **W2-A** `src/app/api/users/notification-preferences/route.ts` — GET + PATCH for current user's `NotificationPreference` rows
+- **W2-B** `src/app/api/cron/send-daily-prompts/route.ts` — daily prompt cron (13:00 UTC); uses `Notification.type='SYSTEM'` with `data.source='DAILY_PROMPT'` discriminator (no schema enum addition needed); `vercel.json` updated with cron schedule + maxDuration
+- **W2-C** `src/app/settings/notifications/page.tsx` + `src/components/settings/NotificationSettingsForm.tsx` — settings UI for notification preferences
+- **W1-A** `src/__tests__/api/notification-preferences.test.ts` — 19 passing tests
+- **W1-B** `src/__tests__/api/cron-send-daily-prompts.test.ts` — 10 passing tests
+- **W3** `src/__tests__/setup.ts` — added `notificationPreference` model mock (findMany/findUnique/findFirst/upsert/create/update/updateMany/delete/deleteMany/count)
+
+**Test delta:** +29 tests (1081 → 1110). **Test files:** +2 (64 → 66). **Routes:** +2 (72 → 74; 59 live → 61 live).
+
+**Deferred to Phase 5 session 2:** per-member-intent notification dispatch and the daily-prompt fan-out (matching prompts to intents/topics + sending to each member of relevant Crews).
 
 ---
 

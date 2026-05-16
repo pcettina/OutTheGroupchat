@@ -1,6 +1,6 @@
 # 📡 API & Integration Status
 
-> **Last Updated: 2026-04-22**
+> **Last Updated: 2026-04-29**
 >
 > **Archival:** trip/activity routes moved to `src/app/api/_archive/` as of 2026-04-16 Phase 1. See REFACTOR_PLAN.md. Sections below that reference `/api/trips/*` and `/api/activities/*` reflect the pre-archive state for historical context; authoritative status for these routes is the "📦 Archived Routes" section near the bottom of this file.
 >
@@ -9,7 +9,9 @@
 > **Phase 6 COMPLETE (2026-04-22, nightly/2026-04-22 PR #55):** Feed rescoped (meetup/checkin types, POST→410), search people-first (users→meetups→venues), notification type migration (9 old trip types removed from schema), AI routes (suggest-meetups + icebreakers). All 4 Phase 6 actions complete.
 >
 > **Last Audit:** April 2026
-> **Live API routes (post-archive):** 50 (35 base + 6 Crew + 9 Phase 4 meetup/venue/cron routes + 3 Phase 5 check-in routes + privacy route + 2 new Phase 6 AI routes: suggest-meetups, icebreakers; note: feed POST now returns 410)
+> **Live API routes (post-archive):** 61 (50 prior + V1 Phase 5 partial 2026-04-29: notification-preferences GET+PATCH, send-daily-prompts cron; plus prior V1 Phase 0–4b additions)
+>
+> **V1 Phase 5 partial (2026-04-29):** notification preferences API + daily prompt cron + settings UI shipped. Per-member-intent dispatch deferred to next session.
 > **Archived API routes (Phase 1):** 13
 > **Target:** 100% for Beta Launch (re-baselined in Phase 8)
 > **Sentry Coverage:** 19/48 routes instrumented on pre-archive branch; coverage on new live surface re-computed after Phase 2
@@ -91,6 +93,8 @@ COMPLETED ✅ Dec 17:
 | `/api/notifications` | GET | ✅ | ✅ | **Data structure verified** ✅ Dec 17; Zod pagination params improved 2026-03-22; **Sentry added 2026-04-16** |
 | `/api/notifications` | PATCH | ✅ | ✅ | Mark as read; **Sentry added 2026-04-16** |
 | `/api/notifications/[id]` | PATCH | ✅ | ✅ | Mark individual notification read; Zod validation added 2026-03-13; Zod params (cuid), JSON.parse safety, bugfix (read field was hardcoded true) 2026-03-29; **Sentry added 2026-04-16** |
+| `/api/users/notification-preferences` | GET | ✅ | ✅ | Get current user's NotificationPreference rows; **Implemented 2026-04-29 (V1 Phase 5 partial)** |
+| `/api/users/notification-preferences` | PATCH | ✅ | ✅ | Upsert NotificationPreference rows for the current user; **Implemented 2026-04-29 (V1 Phase 5 partial)** |
 
 ### Notification Issues to Fix
 ```
@@ -358,6 +362,7 @@ EMAIL_FROM=             # Email sender (onboarding@resend.dev) ✅
 | `/api/meetups/[id]/invite` | POST | ✅ | Invite Crew members; dispatches invite emails + broadcasts `meetup:updated` + per-user notification (Session 2, 2026-04-18) |
 | `/api/venues/search` | GET | ✅ | Venue search — DB-first with Google Places API fallback + auto-caching when `GOOGLE_PLACES_API_KEY` set; Session 3, 2026-04-18 |
 | `/api/cron/meetup-starting-soon` | GET | ✅ | Cron — `MEETUP_STARTING_SOON` reminder dispatch (email + notification + Pusher) for GOING attendees within T-55–65min; idempotent; Session 3, 2026-04-18 |
+| `/api/cron/send-daily-prompts` | GET | ✅ | Cron — daily prompt dispatch (13:00 UTC) using `Notification.type='SYSTEM'` with `data.source='DAILY_PROMPT'` discriminator; vercel.json schedule + maxDuration set; **Implemented 2026-04-29 (V1 Phase 5 partial)** |
 
 ### Phase 4 — Pusher Channels & Events (Live 2026-04-18)
 
