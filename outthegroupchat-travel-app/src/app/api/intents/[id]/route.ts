@@ -175,7 +175,7 @@ export async function PATCH(request: NextRequest, context: RouteParams) {
 
     return NextResponse.json({ success: true, data: updated });
   } catch (error) {
-    captureException(error);
+    captureException(error, { route: '/api/intents/[id]', method: 'PATCH' });
     apiLogger.error({ error }, '[INTENT_PATCH] Failed to update intent');
     return NextResponse.json(
       { success: false, error: 'Failed to update intent' },
@@ -229,7 +229,7 @@ export async function DELETE(request: NextRequest, context: RouteParams) {
 
     return NextResponse.json({ success: true, data: expired });
   } catch (error) {
-    captureException(error);
+    captureException(error, { route: '/api/intents/[id]', method: 'DELETE' });
     apiLogger.error({ error }, '[INTENT_DELETE] Failed to expire intent');
     return NextResponse.json(
       { success: false, error: 'Failed to expire intent' },

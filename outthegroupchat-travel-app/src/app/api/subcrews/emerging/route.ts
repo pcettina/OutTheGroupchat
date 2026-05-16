@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: { subCrews } });
   } catch (error) {
-    captureException(error);
+    captureException(error, { route: 'api/subcrews/emerging', method: 'GET' });
     apiLogger.error({ error }, '[SUBCREW_EMERGING] Failed to list emerging subcrews');
     return NextResponse.json(
       { success: false, error: 'Failed to list emerging subcrews' },

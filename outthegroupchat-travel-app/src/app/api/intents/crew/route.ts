@@ -106,7 +106,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: { intents } });
   } catch (error) {
-    captureException(error);
+    captureException(error, { route: '/api/intents/crew', method: 'GET' });
     apiLogger.error({ error }, '[INTENT_GET_CREW] Failed to list crew intents');
     return NextResponse.json(
       { success: false, error: 'Failed to list crew intents' },

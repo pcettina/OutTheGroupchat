@@ -79,7 +79,7 @@ export async function PATCH(request: NextRequest, context: RouteParams) {
 
     return NextResponse.json({ success: true, data: updated });
   } catch (error) {
-    captureException(error);
+    captureException(error, { route: 'api/subcrews/[id]/members/me', method: 'PATCH' });
     apiLogger.error({ error }, '[SUBCREW_MEMBER_ME_PATCH] Failed to update member');
     return NextResponse.json(
       { success: false, error: 'Failed to update member' },

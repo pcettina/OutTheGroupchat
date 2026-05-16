@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
     try {
       formation = await tryFormSubCrew(intent, prisma);
     } catch (err) {
-      captureException(err);
+      captureException(err, { route: '/api/intents', method: 'POST', stage: 'tryFormSubCrew', intentId: intent.id });
       apiLogger.error(
         { err, intentId: intent.id },
         '[INTENT_POST] tryFormSubCrew failed (non-fatal)',
@@ -165,7 +165,7 @@ export async function POST(request: NextRequest) {
       { status: 201 },
     );
   } catch (error) {
-    captureException(error);
+    captureException(error, { route: '/api/intents', method: 'POST' });
     apiLogger.error({ error }, '[INTENT_POST] Failed to create intent');
     return NextResponse.json(
       { success: false, error: 'Failed to create intent' },

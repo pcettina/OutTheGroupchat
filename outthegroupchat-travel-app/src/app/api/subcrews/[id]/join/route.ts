@@ -133,7 +133,7 @@ export async function POST(request: NextRequest, context: RouteParams) {
       { status: 201 },
     );
   } catch (error) {
-    captureException(error);
+    captureException(error, { route: 'api/subcrews/[id]/join', method: 'POST' });
     apiLogger.error({ error }, '[SUBCREW_JOIN] Failed to join subcrew');
     return NextResponse.json(
       { success: false, error: 'Failed to join subcrew' },
