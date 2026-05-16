@@ -1,6 +1,6 @@
 # OutTheGroupchat — Full Codemap
 
-> Auto-generated 2026-03-10. Last updated 2026-04-27 (V1 Phase 4b heatmap shipped on main; PRs #86, #88, #89, #90, #91, #92 merged). Main stats: 72 API routes, 64 vitest-active test files (86 total on disk inc. archived), 1081 tests passing, 367 TS/TSX files. Comprehensive reference for agents and developers.
+> Auto-generated 2026-03-10. Last updated 2026-04-28 (V1 phases 0–4b shipped on main: data model, intent system, subcrew formation, coordinate flow, venue recs, heatmap Crew + FoF tiers — PRs #76, #83, #84, #86, #87, #92). Main stats: 72 API routes (59 live + 13 archived), 64 vitest test files, 290 TS/TSX files. Comprehensive reference for agents and developers.
 >
 > **🔀 Pivot in progress:** See `docs/REFACTOR_PLAN.md`. Trip-planning surface archived under `_archive/` directories as of Phase 1 (2026-04-16). See [Archived surface (Phase 1)](#archived-surface-phase-1) section below and `src/_archive/README.md` for the preservation scheme.
 >

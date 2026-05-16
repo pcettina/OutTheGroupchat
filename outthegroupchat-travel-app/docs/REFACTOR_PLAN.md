@@ -1,7 +1,7 @@
 # OutTheGroupchat — Scope Pivot & Refactor Plan
 
-> **Status:** Active — Phase 5 COMPLETE (2026-04-20, PR #53); Phase 6 ✅ COMPLETE (2026-04-22, PR #55): all 4 actions done — feed rescoped, AI routes added, notification types migrated, search people-first. Phase 7 (Marketing surface) is next.
-> **Created:** 2026-04-16 | **Last updated:** 2026-04-22
+> **Status:** SUPERSEDED — Pivot phases 0–7 complete (2026-04-22, PR #55, #56). Phase 8 (launch-readiness re-audit) was rolled into the V1 product plan on 2026-04-24. **Active planning doc is now `docs/V1_IMPLEMENTATION_PLAN.md`** (intent → group → coordinate → heatmap loop). Phases 0–4b of the V1 plan have shipped (PRs #76, #83, #84, #86, #87). This document is retained as historical reference for the pivot from trip-planning to the Crew/meetup graph.
+> **Created:** 2026-04-16 | **Last updated:** 2026-04-28
 > **Purpose:** Canonical planning doc for the pivot from group-trip-planning app → meetup-focused social network with a persistent `Crew` graph. All future refactor sessions reference this document.
 > **Decision:** Refactor in place (not rebuild). Trip-planning infrastructure is archived but preserved for potential future reactivation.
 

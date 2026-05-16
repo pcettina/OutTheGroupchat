@@ -1,3 +1,19 @@
+# 🟢 V1 Implementation — Phases 0–4b shipped on main (2026-04-28)
+
+> **Active plan:** `docs/V1_IMPLEMENTATION_PLAN.md` (intent → group → coordinate → heatmap loop). REFACTOR_PLAN.md is superseded.
+> **Shipped on main as of 2026-04-28:**
+> - V1 Phase 0 (data model foundation) — PR #76
+> - V1 Phase 3a (coordinate + commit + 3-axis privacy) — PR #83
+> - V1 Phase 3b (venue recommendations) — PR #84
+> - V1 Phase 4a (heatmap Crew tier) — PR #86
+> - V1 Phase 4b (heatmap FoF tier + threshold slider) — PR #87, #88
+> - Production Neon migration workflow — PR #90
+> - Heatmap test fixtures + standalone seed runner — PR #91, #92
+> **Remaining:** V1 Phase 5 (privacy + edge cases), launch-readiness audit (Sentry coverage on V1 routes, E2E Playwright authenticated flows).
+> **Main stats (2026-04-28):** 72 API routes (59 live + 13 archived), 64 test files, 290 TS/TSX, 0 TSC errors, 0 lint warnings.
+
+---
+
 # 🟢 Complete — Phase 6: Feed/AI/Notifications Rescope (all sessions delivered)
 
 > **Status:** Phase 6 COMPLETE as of 2026-04-22 (nightly/2026-04-22 PR #55). All 4 Phase 6 actions done: feed rescoped, AI routes added, notification types migrated, search rescoped people-first. Phase 7 (Marketing surface) is next.
