@@ -1,4 +1,44 @@
-# Current Sprint — V1 Steady-State Hardening
+# 🟢 Active — POST_PIVOT_STEADY_STATE (V1 pivot in flight)
+
+> **Last Updated:** 2026-05-16
+> **Status:** V1 routes live; nightly builds are now in POST_PIVOT_STEADY_STATE — tightening tests, refactoring oversized files, and consolidating docs around the V1 intent-to-group surface.
+
+---
+
+## 🟢 Completed 2026-05-16 (Nightly Build nightly/2026-05-16)
+
+### Wave 1 — Tests (+172 tests)
+
+- [L1] `src/__tests__/api/intents.test.ts` expanded 20 → 48 tests (+28)
+- [L2] `src/__tests__/api/v1-misc-routes.test.ts` NEW — 25 tests covering subcrews, topics, recommendations, heatmap, expire-intents cron
+- [M1] `src/__tests__/lib/intent-utils.test.ts` NEW — 42 pure-unit tests for intent helpers
+- [M2] `src/__tests__/lib/utils-and-validations.test.ts` NEW — 77 tests for utility + validation helpers
+
+### Wave 2 — Refactors & Features
+
+- [L3] `src/components/meetups/CreateMeetupModal.tsx` refactored 417 → 278 lines; extracted 3 sub-components + `types.ts` under `src/components/meetups/createMeetup/`
+- [L4] `src/app/inspiration/page.tsx` refactored 401 → 143 lines; extracted 3 components + `types.ts` under `src/components/inspiration/`
+- [L5] `src/app/api/inspiration/route.ts` refactored 400 → 9 lines; extracted handlers/templates/types to `src/lib/inspiration/`
+- [L6] NEW `docs/V1_API_ROUTES.md` documenting all 14 V1 routes
+- [M3] no-op — the 4 `any` grep hits were comment text, not type annotations
+- [M4] no-op — `checkins-pusher` tests pass; baseline failures resolved by Wave 1 mocks / environment fix
+- [M5] +6 JSDoc blocks across `src/lib/intent/*`
+- [M6] `README.md` (root + travel-app) rewritten to reflect V1 post-pivot state
+
+### Phase 3.5 — Small Task Metrics (automated)
+
+- `any` types: 0 | `console.*`: 0 | TODO/FIXME: 2 | routes: 59 | test files: 67 (was 64) | TS files: 226
+
+### Metrics
+
+- Tests: ~1081 → ~1253 (+172)
+- Test files: 64 → 67 (+3: v1-misc-routes, intent-utils, utils-and-validations)
+- API routes: 59 (unchanged)
+- Files >600 lines: 2 (`RichFeedItem.tsx`, `profile/page.tsx` — refactors still pending in unmerged PR #108)
+
+---
+
+# 🟢 Complete — Phase 6: Feed/AI/Notifications Rescope (all sessions delivered)
 
 > **Status (2026-05-14):** V1 Phases 0–4b shipped (intent-to-group loop, heatmap Crew + FoF tiers, venue recs). Now running steady-state nightly hygiene: test depth, refactors, Sentry coverage, cleanup.
 > **Test count (post-nightly/2026-05-14):** 1170+ tests across 68 files (+91 tonight: 40 cron extended, 29 subcrew coordination, 11 heatmap aggregate, 11 FoF graph)

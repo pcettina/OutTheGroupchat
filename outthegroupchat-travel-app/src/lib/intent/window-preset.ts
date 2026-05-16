@@ -75,7 +75,7 @@ export interface WindowRange {
  * @param dayOffset Number of days from `now` (0 = today, 7 = a week out). Clamped
  *                  by the route layer; passed through here unchanged.
  * @param now Reference instant; defaults to current time. Tests pass a fixed Date.
- * @returns A {@link WindowRange} expressed in server-local time.
+ * @returns A WindowRange with concrete `startAt` and `endAt` Date instances.
  */
 export function computeWindowRange(
   preset: WindowPreset,
@@ -103,7 +103,7 @@ export function computeWindowRange(
  *
  * @param endAt The window's end instant (either computed from a preset or supplied
  *              by the client as an explicit override).
- * @returns A new `Date` representing `endAt + EXPIRY_BUFFER_HOURS`.
+ * @returns A new Date offset by `EXPIRY_BUFFER_HOURS` past `endAt`.
  */
 export function computeExpiresAt(endAt: Date): Date {
   const expires = new Date(endAt);
@@ -116,16 +116,10 @@ export function computeExpiresAt(endAt: Date): Date {
  * client-supplied overrides when present and falling back to the preset
  * default otherwise. Throws if `endAt` precedes `startAt` after resolution.
  *
- * This is the single entry point used by the Intent POST route — it bundles
- * R3 (window-preset/dayOffset resolution) with R12 (expiresAt buffer).
- *
- * @param args.preset The WindowPreset chosen by the user.
- * @param args.dayOffset Days from `now` (0..7 per R3).
- * @param args.startAtOverride Optional explicit start instant; preferred when present.
- * @param args.endAtOverride Optional explicit end instant; preferred when present.
- * @param args.now Reference instant for the preset fallback; defaults to current time.
+ * @param args Object with `preset`, `dayOffset`, optional `startAtOverride` /
+ *             `endAtOverride`, and optional `now` reference instant.
  * @returns The resolved `{ startAt, endAt, expiresAt }` triple.
- * @throws `Error` when the resolved `endAt` is not strictly after `startAt`.
+ * @throws {Error} When the resolved `endAt` is not strictly after `startAt`.
  */
 export function resolveIntentWindow(args: {
   preset: WindowPreset;

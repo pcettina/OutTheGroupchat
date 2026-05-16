@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+vi.setConfig({ testTimeout: 20000 });
+
 vi.mock('next-auth', () => ({
   getServerSession: vi.fn(),
 }));

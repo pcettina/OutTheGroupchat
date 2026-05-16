@@ -1,6 +1,8 @@
 # OutTheGroupchat — Full Codemap
 
-> Auto-generated 2026-03-10. Last updated 2026-05-14 (nightly/2026-05-14 — Wave 1 added 91 tests, Wave 2 refactored RichFeedItem 717→193 + profile/page 623→339, Sentry on cron/route + survey.service, beta/status migrated back to Redis, 5 dead components deleted, 10 heatmap JSDoc blocks added). Main stats: 59 API routes, 68 vitest-active test files, 1170+ tests passing, 290 TS/TSX files. Comprehensive reference for agents and developers.
+> Auto-generated 2026-03-10. Last updated 2026-05-16 (POST_PIVOT_STEADY_STATE — V1 routes live, nightly refactors + test backfill ongoing). Main stats: 59 API routes (excluding `_archive`), 67 vitest-active test files, ~1253 tests passing, 226 TS files. Comprehensive reference for agents and developers.
+>
+> **2026-05-16 additions:** New directories `src/components/meetups/createMeetup/` (CreateMeetupModal split), `src/components/inspiration/` (inspiration page split), and `src/lib/inspiration/` (inspiration handlers extracted from the route). Files >600 lines: 2 — `RichFeedItem.tsx` and `profile/page.tsx` (refactors land in unmerged PR #108).
 >
 > **🔀 Pivot in progress:** See `docs/REFACTOR_PLAN.md`. Trip-planning surface archived under `_archive/` directories as of Phase 1 (2026-04-16). See [Archived surface (Phase 1)](#archived-surface-phase-1) section below and `src/_archive/README.md` for the preservation scheme.
 >

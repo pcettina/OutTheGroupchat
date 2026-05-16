@@ -17,7 +17,7 @@
 >
 > **Target Launch:** Q2 2026 (Beta) — to be re-baselined post-pivot
 > **Current Status:** Refactoring (Phase 2 in progress — domain models added, DB migration pending)
-> **Last Updated:** 2026-05-14 (nightly/2026-05-14 — Sentry coverage on cron/route + survey.service; beta/status restored to Redis limiter; +91 tests; RichFeedItem & profile/page refactored under 500 lines)
+> **Last Updated:** 2026-05-16 (POST_PIVOT_STEADY_STATE — V1 routes live; nightly/2026-05-16 added 172 tests, 3 file refactors, V1_API_ROUTES.md, JSDoc on src/lib/intent/*, README rewrites)
 
 ---
 

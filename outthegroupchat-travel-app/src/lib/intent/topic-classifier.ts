@@ -61,9 +61,9 @@ function escapeRegExp(s: string): string {
  *
  * Exported for unit testing — callers should prefer `classifyIntentText`.
  *
- * @param text Free-text user input to scan (will be lowercased internally).
- * @param keyword The keyword to test for (case-insensitive).
- * @returns `true` if the keyword is present in `text` under the rules above.
+ * @param text Raw user-typed input to scan.
+ * @param keyword Single keyword or phrase to test against `text`.
+ * @returns `true` when the keyword is present per the matching rules above.
  */
 export function matchesKeyword(text: string, keyword: string): boolean {
   const lowerText = text.toLowerCase();
@@ -91,8 +91,8 @@ export function matchesKeyword(text: string, keyword: string): boolean {
  * @param rawText Free-text input from the Intent capture form. Empty/whitespace
  *                inputs short-circuit to a null result.
  * @param prismaClient A Prisma client (or test stub) exposing the `topic` delegate.
- * @returns A {@link ClassifyResult} containing the resolved `topicId` (or `null`)
- *          and the subset of keywords that matched.
+ * @returns A `ClassifyResult` with the best-matched `topicId` (or null) and the
+ *          subset of that topic's keywords that hit the input.
  */
 export async function classifyIntentText(
   rawText: string,

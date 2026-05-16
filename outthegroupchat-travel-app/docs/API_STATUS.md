@@ -1,6 +1,25 @@
 # 📡 API & Integration Status
 
-> **Last Updated: 2026-05-14** (nightly/2026-05-14: Sentry added to /api/cron/route.ts; /api/beta/status migrated back to Redis checkRateLimit after regression — full V1 surface now using shared limiter)
+> **Last Updated: 2026-05-16**
+>
+> **V1 Routes (see V1_API_ROUTES.md):** The V1 pivot added 14 new routes covering intent-to-group, sub-crew formation, topics, recommendations, heatmap, and cron-expiry. Full route reference in `docs/V1_API_ROUTES.md`. Summary:
+>
+> - `/api/intents` — `POST`, `GET`
+> - `/api/intents/[id]` — `PATCH`, `DELETE`
+> - `/api/intents/crew` — `GET`
+> - `/api/intents/mine` — `GET`
+> - `/api/subcrews/emerging` — `GET`
+> - `/api/subcrews/mine` — `GET`
+> - `/api/subcrews/[id]` — `GET`, `PATCH`
+> - `/api/subcrews/[id]/commit` — `POST`
+> - `/api/subcrews/[id]/join` — `POST`
+> - `/api/subcrews/[id]/members/me` — `PATCH`
+> - `/api/topics` — `GET`
+> - `/api/recommendations` — `GET`
+> - `/api/heatmap` — `GET`
+> - `/api/cron/expire-intents` — `GET`
+>
+> **Live API routes (post-V1):** 59 (excluding `_archive`)
 >
 > **Archival:** trip/activity routes moved to `src/app/api/_archive/` as of 2026-04-16 Phase 1. See REFACTOR_PLAN.md. Sections below that reference `/api/trips/*` and `/api/activities/*` reflect the pre-archive state for historical context; authoritative status for these routes is the "📦 Archived Routes" section near the bottom of this file.
 >
