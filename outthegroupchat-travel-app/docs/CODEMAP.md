@@ -1,6 +1,6 @@
 # OutTheGroupchat — Full Codemap
 
-> Auto-generated 2026-03-10. Last updated 2026-05-06 (V1 Phase 4 heatmap shipped: PR #86/#87/#88; production Neon migration workflow live; nightly PR backlog #94–#99 pending merge). Main stats: 59 API routes, 64 vitest-active test files, 1081 tests passing, 291 TS/TSX files. Comprehensive reference for agents and developers.
+> Auto-generated 2026-03-10. Last updated 2026-05-07 (V1 Phase 4 heatmap shipped — Crew + FoF tiers, PRs #86 & #87; standalone heatmap seed runner added PR #92). Main stats: 72 API routes, 64 vitest-active test files, 1081 tests passing, 367 TS/TSX files. Comprehensive reference for agents and developers.
 >
 > **🔀 Pivot in progress:** See `docs/REFACTOR_PLAN.md`. Trip-planning surface archived under `_archive/` directories as of Phase 1 (2026-04-16). See [Archived surface (Phase 1)](#archived-surface-phase-1) section below and `src/_archive/README.md` for the preservation scheme.
 >
