@@ -232,11 +232,7 @@ function SignInForm() {
           </Link>
         </p>
       </div>
-
-      <p className="text-center text-xs text-otg-text-dim mt-6">
-        Real plans with real people. Tonight.
-      </p>
-    </motion.div>
+    </div>
   )
 }
 

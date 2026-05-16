@@ -61,12 +61,10 @@ export function RichFeedItem({
   isSaved = false,
   onReact,
   onUnreact,
+  onComment,
   onShare,
   onSave,
 }: RichFeedItemProps) {
-  // onComment and onShare are part of the public API (preserved for downstream
-  // wiring) but the component currently surfaces share via a modal and routes
-  // comments through CommentThread. Reference them so lint doesn't complain.
   void onComment;
   void onShare;
   const [showComments, setShowComments] = useState(false);

@@ -40,22 +40,21 @@ vi.mock('bcryptjs', () => ({
   compare: vi.fn(),
 }));
 
-const { authOptions, POST_SIGNIN_DEFAULT_PATH } = await vi.importActual<
-  typeof import('@/lib/auth')
->('@/lib/auth');
-
 const BASE_URL = 'https://outthegroupchat.com';
 
 type RedirectArgs = { url: string; baseUrl: string };
 type RedirectFn = (args: RedirectArgs) => Promise<string> | string;
 
 let redirect: RedirectFn;
+let POST_SIGNIN_DEFAULT_PATH: string;
 
-beforeAll(() => {
-  if (!authOptions.callbacks?.redirect) {
+beforeAll(async () => {
+  const authModule = await vi.importActual<typeof import('@/lib/auth')>('@/lib/auth');
+  POST_SIGNIN_DEFAULT_PATH = authModule.POST_SIGNIN_DEFAULT_PATH;
+  if (!authModule.authOptions.callbacks?.redirect) {
     throw new Error('authOptions.callbacks.redirect is not defined');
   }
-  redirect = authOptions.callbacks.redirect as RedirectFn;
+  redirect = authModule.authOptions.callbacks.redirect as RedirectFn;
 });
 
 describe('authOptions.callbacks.redirect', () => {

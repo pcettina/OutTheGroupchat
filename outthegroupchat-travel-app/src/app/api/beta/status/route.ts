@@ -5,6 +5,7 @@ import { Redis } from '@upstash/redis';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
+import { captureException } from '@/lib/sentry';
 
 // Force dynamic rendering — this route reads request.url query params
 export const dynamic = 'force-dynamic';
