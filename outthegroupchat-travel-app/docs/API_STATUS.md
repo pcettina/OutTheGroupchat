@@ -1,6 +1,8 @@
 # 📡 API & Integration Status
 
-> **Last Updated: 2026-04-22**
+> **Last Updated: 2026-05-16**
+>
+> **Nightly 2026-05-17 update:** +5 lib test files merged (sanitize, validations/social, subcrew/window-adjacency, api-middleware, costs/utils) totalling +286 tests. SECURITY_AUDIT, FUTURE_IMPLEMENTATION, IMPLEMENTATION_STACK, CODEMAP, and N8N docs refreshed to 2026-05-16. 3 dead profile components removed (BadgeShowcase, PreferencesCard, TripHistory). `prisma/scripts/seed-heatmap-only.ts` TSC errors fixed. `notifications/[notificationId]` confirmed to already have full Zod input validation (no change needed).
 >
 > **Archival:** trip/activity routes moved to `src/app/api/_archive/` as of 2026-04-16 Phase 1. See REFACTOR_PLAN.md. Sections below that reference `/api/trips/*` and `/api/activities/*` reflect the pre-archive state for historical context; authoritative status for these routes is the "📦 Archived Routes" section near the bottom of this file.
 >

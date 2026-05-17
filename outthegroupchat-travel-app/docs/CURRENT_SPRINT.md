@@ -2,6 +2,41 @@
 
 > **Status:** Phase 6 COMPLETE as of 2026-04-22 (nightly/2026-04-22 PR #55). All 4 Phase 6 actions done: feed rescoped, AI routes added, notification types migrated, search rescoped people-first. Phase 7 (Marketing surface) is next.
 > **Test count:** ~1050 tests passing; 58 test files (+3 new: feed.test.ts, feed-extended.test.ts, notifications-rescoped.test.ts)
+> **Last Updated:** 2026-05-16
+
+---
+
+## 🟢 Completed 2026-05-17 (Nightly Build nightly/2026-05-17)
+
+### Wave 1 — Tests (+286 tests across 5 new lib test files)
+
+- [L1] `src/__tests__/lib/sanitize.test.ts` — 93 tests covering all 8 exports of `src/lib/sanitize.ts`
+- [L2] `src/__tests__/lib/validations-social.test.ts` — 87 tests covering 12 Zod schemas in `src/lib/validations/social.ts`
+- [L3] `src/__tests__/lib/subcrew-window-adjacency.test.ts` — 30 tests covering 3 functions in `src/lib/subcrew/window-adjacency.ts`
+- [M1] `src/__tests__/lib/api-middleware.test.ts` — 40 tests covering all 8 exports of `src/lib/api-middleware.ts` (4 NODE_ENV TSC errors fixed via `vi.stubEnv`)
+- [M2] `src/__tests__/lib/costs.test.ts` — 36 tests covering `src/lib/utils/costs.ts`
+
+### Wave 2 — Features / Refactors / Docs
+
+- [L4] `docs/SECURITY_AUDIT.md` refreshed (54d → 0d stale, score adjusted 9→8/10, V1 Crew/meetup/checkin routes audited)
+- [L5] `docs/FUTURE_IMPLEMENTATION.md` + `docs/IMPLEMENTATION_STACK.md` refreshed (52d → 0d stale)
+- [L6] `docs/CODEMAP.md` body rewritten (counts corrected, V1 surface documented)
+- [M3] `prisma/scripts/seed-heatmap-only.ts` — 2 TSC errors fixed (dropped `.ts` extensions on relative imports)
+- [M4] Audit-only no-op: `src/app/api/notifications/[notificationId]/route.ts` already has full Zod input validation; security agent flag was stale
+- [M5] Deleted dead profile components: `BadgeShowcase.tsx`, `PreferencesCard.tsx`, `TripHistory.tsx`; `src/components/profile/index.ts` updated
+- [M6] `docs/N8N_BETA_NEWSLETTER_INTEGRATION.md` + `docs/N8N_DEPLOYMENT_CHECKLIST.md` refreshed
+
+### Phase 3.5 — Small Task Metrics (automated)
+
+- `any` types: 4 (comment-text only) | `console.*`: 0 | TODO/FIXME: 2 | files >600 lines (production): 2 (RichFeedItem 717, profile/page 623)
+- Live API routes: 59 | Live test files: 74 (69 prior + 5 new) | TS files: ~290
+
+### Metrics
+
+- Tests: +286 (5 new lib test files)
+- Test files: 86 prior → 91 (+5 new lib test files)
+- API routes: 59 (no change)
+- Doc freshness: SECURITY_AUDIT, FUTURE_IMPLEMENTATION, IMPLEMENTATION_STACK, CODEMAP, N8N docs all current to 2026-05-16
 
 ---
 

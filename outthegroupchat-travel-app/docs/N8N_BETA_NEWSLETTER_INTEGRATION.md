@@ -1,21 +1,23 @@
 # n8n Beta Signup & Newsletter Integration Guide
 
-> ⚠️ **DEPRECATED (2026-03-29)**: The API endpoints described in this document (`/api/beta/signup`, `/api/newsletter/subscribe`, `/api/beta/initialize-password`, `/api/beta/status`) were implemented and exist in the codebase. However, the N8N workflow automation side was never configured — `N8N_API_KEY` is not set in Vercel production and no n8n workflows were deployed. The newsletter subscription route (`/api/newsletter/subscribe`) has since been updated with Zod validation, rate limiting, and `getServerSession` auth in ways that diverge from the code shown here. This document is preserved for historical reference. For the current newsletter route implementation, read the source directly at `src/app/api/newsletter/subscribe/route.ts`.
+> ⚠️ **DEPRECATED (2026-03-29, re-verified 2026-05-16)**: The API endpoints described in this document (`/api/beta/signup`, `/api/newsletter/subscribe`, `/api/beta/initialize-password`, `/api/beta/status`) are still implemented and live in the codebase on `main`. However, the N8N workflow automation side has still never been configured — `N8N_API_KEY` is not set in Vercel production and no n8n workflows are deployed. The newsletter subscription route (`/api/newsletter/subscribe`) requires Zod validation, IP-based rate limiting, **and** an authenticated NextAuth session in addition to the API key. This document is preserved for historical/onboarding reference. For the current newsletter route implementation, read the source directly at `src/app/api/newsletter/subscribe/route.ts`.
 
-> **Last Updated:** 2026-03-26
-> **Status:** ✅ **IMPLEMENTED** - Option 1 (Separate Beta Endpoint) — N8N workflows never configured; `N8N_API_KEY` not set in Vercel production
+> **Refresh note (2026-05-16):** Verified that all four routes still exist on `main` with the env var name `N8N_API_KEY`. Removed stale Supabase references (the project migrated to Neon PostgreSQL on 2026-04-17). Confirmed no AI features are referenced here (AI fully removed in PR #65, 2026-04-23). N8N integration status is unchanged — endpoints implemented, workflows never wired, `N8N_API_KEY` still missing in Vercel. TODO before this can go live: (1) set `N8N_API_KEY` in Vercel for Production + Preview, (2) confirm beta/newsletter Prisma fields are present on the Neon production DB, (3) build and deploy the actual n8n workflows.
+
+> **Last Updated:** 2026-05-16
+> **Status:** ⏳ **NOT WIRED** — API endpoints exist, but `N8N_API_KEY` is not set in Vercel production and no n8n workflows are deployed. Option 1 (Separate Beta Endpoint) chosen as the integration model.
 > **Purpose:** Connect n8n workflows for beta signups and newsletter subscriptions to user database
 
 ## ✅ Implementation Status
 
-**Option 1 has been implemented** - All API endpoints have been created and the codebase is ready for n8n integration.
+**Option 1 has been implemented in the codebase** — all four API endpoints exist on `main`. The integration is **not live in production** because `N8N_API_KEY` has not been set in Vercel and no n8n workflows are configured.
 
 ### Next Steps:
-1. ✅ **Code Implementation Complete** - All endpoints created
-2. ⏳ **Run Prisma migration** - See [Deployment Checklist](./N8N_DEPLOYMENT_CHECKLIST.md)
-3. ⏳ **Set `N8N_API_KEY` environment variable** - See [Deployment Checklist](./N8N_DEPLOYMENT_CHECKLIST.md)
+1. ✅ **Code Implementation Complete** - All four endpoints present on `main` (verified 2026-05-16)
+2. ⏳ **Confirm Prisma migration applied on Neon production** - the beta/newsletter fields should be live in the Neon DB; verify via `prisma migrate status` against the production `DATABASE_URL`
+3. ⏳ **Set `N8N_API_KEY` environment variable in Vercel** - See [Deployment Checklist](./N8N_DEPLOYMENT_CHECKLIST.md). Still missing as of 2026-05-16.
 4. ⏳ **Deploy to Vercel** - See [Deployment Checklist](./N8N_DEPLOYMENT_CHECKLIST.md) for full guide
-5. ⏳ **Configure n8n workflows** - Use endpoints below after deployment
+5. ⏳ **Configure n8n workflows** - Use endpoints below after the API key is set
 
 📋 **See [N8N_DEPLOYMENT_CHECKLIST.md](./N8N_DEPLOYMENT_CHECKLIST.md) for complete deployment instructions**
 
@@ -945,6 +947,6 @@ For issues or questions:
 
 ---
 
-**Last Updated:** 2026-03-26
-**Version:** 1.2 - Auth requirement added to `/api/newsletter/subscribe` ✅; N8N workflows not deployed (deprecated)
+**Last Updated:** 2026-05-16
+**Version:** 1.3 — Refresh pass: re-verified routes against current source, removed Supabase references (project on Neon since 2026-04-17), confirmed AI surfaces are out of scope (removed in PR #65, 2026-04-23). Status unchanged: API endpoints exist on `main`, `N8N_API_KEY` still missing in Vercel production, no n8n workflows wired.
 

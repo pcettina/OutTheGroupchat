@@ -17,7 +17,7 @@
 >
 > **Target Launch:** Q2 2026 (Beta) — to be re-baselined post-pivot
 > **Current Status:** Refactoring (Phase 2 in progress — domain models added, DB migration pending)
-> **Last Updated:** 2026-04-22 (Phase 6 COMPLETE — feed rescoped, search people-first, notification types migrated, types cleanup; Phase 7 Marketing surface is next)
+> **Last Updated:** 2026-05-16 (Nightly 2026-05-17: +286 lib tests across 5 new files; doc refresh sweep — partially complete: SECURITY_AUDIT, FUTURE_IMPLEMENTATION, IMPLEMENTATION_STACK, N8N docs, CODEMAP all current as of 2026-05-16. Remaining: TEST_CASES, UPGRADE_PLAN, PRODUCTION_ROADMAP, agents/*_GUIDE)
 
 ---
 

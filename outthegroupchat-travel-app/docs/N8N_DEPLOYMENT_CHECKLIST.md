@@ -1,10 +1,12 @@
 # n8n Integration - Deployment Checklist
 
-> ⚠️ **DEPRECATED (2026-03-29)**: This checklist describes deployment steps for an N8N workflow integration that was never completed. The API endpoints exist in the codebase but `N8N_API_KEY` has not been set in Vercel production and no n8n workflows have been configured. The Prisma migration for beta/newsletter fields (`betaSignupDate`, `newsletterSubscribed`, `newsletterSubscribedAt`, `passwordInitialized`, `betaLaunchEmailSent`) may or may not have been applied to the production database. This document is preserved for historical reference. Completing this integration remains a future enhancement option.
+> ⚠️ **DEPRECATED (2026-03-29, re-verified 2026-05-16)**: This checklist describes deployment steps for an N8N workflow integration that was never completed. The API endpoints (`/api/beta/signup`, `/api/newsletter/subscribe`, `/api/beta/initialize-password`, `/api/beta/status`) still exist in the codebase on `main`, but `N8N_API_KEY` has not been set in Vercel production and no n8n workflows have been configured. The Prisma migration for beta/newsletter fields (`betaSignupDate`, `newsletterSubscribed`, `newsletterSubscribedAt`, `passwordInitialized`, `betaLaunchEmailSent`) needs to be verified against the current Neon production database. This document is preserved for historical reference and as a runbook for whoever picks up the integration.
 
-> **Last Updated:** 2026-03-29 (originally December 2025)
+> **Refresh note (2026-05-16):** Removed Supabase references — the project migrated to Neon PostgreSQL on 2026-04-17 (no more Supabase pooler URL on port 6543; Neon serves both pooled and direct connections via `DATABASE_URL` / `DIRECT_URL`). Verified the env var name is still `N8N_API_KEY` against `src/app/api/beta/signup/route.ts` and `src/app/api/newsletter/subscribe/route.ts`. Status unchanged: integration is still not wired. TODO before going live: (1) set `N8N_API_KEY` in Vercel, (2) verify beta/newsletter Prisma fields exist on the Neon production DB, (3) actually build the n8n workflows.
+
+> **Last Updated:** 2026-05-16
 > **Purpose:** Step-by-step guide to complete n8n integration setup and deploy to Vercel
-> **Status:** Not deployed — API endpoints exist but N8N_API_KEY missing in Vercel production; n8n workflows not configured
+> **Status:** Not deployed — API endpoints exist on `main`, `N8N_API_KEY` missing in Vercel production, n8n workflows not configured
 
 ---
 
@@ -33,7 +35,7 @@ npx prisma generate
 **What this does:**
 - Adds `betaSignupDate`, `newsletterSubscribed`, `newsletterSubscribedAt`, `passwordInitialized`, `betaLaunchEmailSent` to User table
 
-**Note:** The Prisma schema uses `@@map("users")` to map the `User` model to the `users` table in the database (the table was renamed from `"User"` to `users` in Supabase).
+**Note:** The Prisma schema uses `@@map("users")` to map the `User` model to the `users` table in the database. The project runs on Neon PostgreSQL (migrated from Supabase on 2026-04-17). Use the `DATABASE_URL` from Vercel for the pooled (PgBouncer) connection and `DIRECT_URL` for migrations.
 
 ---
 
@@ -236,7 +238,7 @@ Your n8n HTTP Request URLs will be:
 
 **Error: "Database connection failed"**
 - **Solution:** Check your `DATABASE_URL` in `.env` file
-- Ensure you're using Supabase pooler URL (port 6543)
+- Project uses Neon PostgreSQL — `DATABASE_URL` should be the pooled (PgBouncer) connection string, and `DIRECT_URL` should be the direct connection for migrations
 
 **Error: "Migration failed"**
 - **Solution:** Check if fields already exist in database
@@ -330,8 +332,10 @@ Once deployed, you'll have:
 
 ---
 
-**Last Updated:** 2026-03-26
-**Next Step:** Complete migration → Deploy → Configure n8n workflows (integration not yet started)
+**Last Updated:** 2026-05-16
+**Next Step:** Verify Neon production schema has the beta/newsletter fields → set `N8N_API_KEY` in Vercel → build n8n workflows (integration still not started as of 2026-05-16)
 
-> **Note (2026-03-26):** `/api/newsletter/subscribe` now requires an authenticated session in addition to the API key. See [N8N_BETA_NEWSLETTER_INTEGRATION.md](./N8N_BETA_NEWSLETTER_INTEGRATION.md) for updated workflow guidance.
+> **Note (still applies, re-verified 2026-05-16):** `/api/newsletter/subscribe` requires an authenticated NextAuth session in addition to the `x-api-key` header. It also runs IP-based rate limiting via Upstash Redis before the session check. See [N8N_BETA_NEWSLETTER_INTEGRATION.md](./N8N_BETA_NEWSLETTER_INTEGRATION.md) for updated workflow guidance.
+
+> **Note (2026-05-16):** The OutTheGroupchat product has fully removed all AI features (PR #65, 2026-04-23). No n8n workflow should depend on `/api/ai/*` routes — they no longer exist. `OPENAI_API_KEY` and `ANTHROPIC_API_KEY` are no longer consumed by the app.
 
