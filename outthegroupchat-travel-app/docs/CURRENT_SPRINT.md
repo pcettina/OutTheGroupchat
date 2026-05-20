@@ -1,3 +1,51 @@
+# 🟡 In Progress — Phase 8: Launch-Readiness Re-Audit
+
+> **Status:** Phase 8 active. Nightly 2026-05-19 → branch nightly/2026-05-20 made significant progress on the V1 rate-limit + Sentry surface and refreshed five major docs. Remaining gaps: Sentry DSN in Vercel production, Pusher production env, full E2E Playwright authenticated flows, checkins-pusher test flakes.
+> **Last Updated:** 2026-05-19
+> **Test count:** ~1107 tests passing; 65 test files (live, excludes _archive)
+> **Live API routes:** 53 | **Files >600 lines (live):** 2
+
+---
+
+## 🟢 Completed 2026-05-19 (Nightly Build → nightly/2026-05-20 branch)
+
+### Wave 1 — Tests
+
+- [M1] `src/__tests__/recommendations.test.ts` — **+26 tests** covering `/api/recommendations` (auth gating, Zod validation, ranking, error paths, rate-limit)
+
+### Wave 2 — Features
+
+- [L2] Added rate-limit guard to `/api/topics` (was the last V1 route missing one). Other 8 V1 routes (subcrews/*, heatmap, recommendations) already had both rate-limit + Sentry confirmed.
+- [L1] No-op — `/api/intents` routes already had rate-limit + Sentry (audit confirmed)
+- [M2] No-op — heatmap test already exists at `src/__tests__/api/heatmap.test.ts` (13 tests)
+
+### Wave 2 — Docs
+
+- [M3] `docs/PRODUCTION_ROADMAP.md` refreshed (v3.3, 2026-05-19)
+- [M4] `docs/TEST_CASES.md` full rewrite (2026-05-19)
+- [M5] 4 agent guides refreshed: CODE_CHECKING, FRONTEND, SOCIAL_ENGAGEMENT, PLANNING
+
+### Wave 2 — Small Tasks
+
+- [S1] Deleted dead profile components: `TripHistory.tsx`, `BadgeShowcase.tsx`, `PreferencesCard.tsx` + barrel updated
+- [S2] `README.md` accuracy fixes — route count 51→53, pivot status updated, component dirs added
+- [S3] Fixed 2 TSC errors in `prisma/scripts/seed-heatmap-only.ts` (removed `.ts` extensions from imports)
+- [S4] Added JSDoc to `src/lib/email.ts` exports (`isEmailConfigured`, `sendInvitationEmail`, `sendNotificationEmail`)
+- [S5] `docs/UPGRADE_PLAN.md` refreshed (versions + Recent Changes section)
+
+### Phase 3.5 — Small Task Metrics (automated)
+
+- `any` types: 4 | `console.*`: 0 | TODO/FIXME: 2 | files >600 lines (live, excluding _archive): 2
+
+### Metrics
+
+- Tests: 1081 → ~1107 (+26 from recommendations.test.ts)
+- Test files: 64 → 65 (live, excludes _archive)
+- API routes: 53 live
+- V1 surface rate-limit + Sentry coverage: ~52/53 (only `/api/auth/[...nextauth]` outside scope)
+
+---
+
 # 🟢 Complete — Phase 6: Feed/AI/Notifications Rescope (all sessions delivered)
 
 > **Status:** Phase 6 COMPLETE as of 2026-04-22 (nightly/2026-04-22 PR #55). All 4 Phase 6 actions done: feed rescoped, AI routes added, notification types migrated, search rescoped people-first. Phase 7 (Marketing surface) is next.

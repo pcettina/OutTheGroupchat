@@ -1,9 +1,9 @@
 # 🔍 Code Checking Agent Guide
 
 ## Mission Statement
-> "A social network that not just showcases experiences, but helps you build them."
+> "The social media app that wants to get you off your phone."
 
-**Your Role:** Ensure code quality, security, and maintainability as the platform scales.
+**Your Role:** Ensure code quality, security, and maintainability of the V1 intent-to-group meetup network (Crew → Intent → SubCrew → Meetup) as it approaches launch.
 
 ---
 
@@ -25,7 +25,9 @@ npm run lint
 rm -rf .next && npm run build
 ```
 
-> **Known issue:** Always run `rm -rf .next` before `npm run build`. Stale cache causes ENOENT errors (confirmed 2026-03-10, 2026-03-13, 2026-03-16).
+> **Known issue:** Always run `rm -rf .next` before `npm run build`. Stale cache causes ENOENT errors (recurring throughout 2026-03 nightly builds).
+>
+> **TSC tooling:** For per-agent verification during nightly waves, use `npx tsc --noEmit` (cheap, no Next compile, no .next writes). Reserve full `npm run build` for the final validation phase.
 
 ---
 
@@ -61,17 +63,17 @@ export async function GET(req: Request) {
 
 ### 2. Authorization Bypass (IDOR)
 ```typescript
-// ❌ BAD: No ownership check
-const trip = await prisma.trip.findUnique({ where: { id: tripId } });
+// ❌ BAD: No membership check on a Meetup
+const meetup = await prisma.meetup.findUnique({ where: { id: meetupId } });
 
-// ✅ GOOD: Check ownership/membership
-const trip = await prisma.trip.findFirst({
+// ✅ GOOD: Check Crew/SubCrew membership or host
+const meetup = await prisma.meetup.findFirst({
   where: {
-    id: tripId,
+    id: meetupId,
     OR: [
-      { ownerId: session.user.id },
-      { members: { some: { userId: session.user.id } } },
-      { isPublic: true }
+      { hostId: session.user.id },
+      { attendees: { some: { userId: session.user.id } } },
+      { subCrew: { members: { some: { userId: session.user.id } } } }
     ]
   }
 });
@@ -80,13 +82,14 @@ const trip = await prisma.trip.findFirst({
 ### 3. Unvalidated Input
 ```typescript
 // ❌ BAD: Raw input usage
-const { title, description } = await req.json();
-await prisma.trip.create({ data: { title, description } });
+const { topicId, note } = await req.json();
+await prisma.intent.create({ data: { topicId, note } });
 
 // ✅ GOOD: Zod validation
 const schema = z.object({
-  title: z.string().min(1).max(200),
-  description: z.string().max(2000).optional(),
+  topicId: z.string().cuid(),
+  note: z.string().max(280).optional(),
+  activeUntil: z.string().datetime().optional(),
 });
 const result = schema.safeParse(await req.json());
 if (!result.success) {
@@ -97,27 +100,27 @@ if (!result.success) {
 ### 4. Type Assertion Abuse
 ```typescript
 // ❌ BAD: Unsafe type casting
-destination: destination as any,
-budget: budget as any,
+metadata: metadata as any,
+location: location as any,
 
 // ✅ GOOD: Proper typing
-destination: destination as Prisma.InputJsonValue,
+metadata: metadata as Prisma.InputJsonValue,
 // OR use satisfies
-const validData = data satisfies TripCreateInput;
+const validData = data satisfies MeetupCreateInput;
 ```
 
 ### 5. N+1 Query Patterns
 ```typescript
 // ❌ BAD: Query in loop
-for (const trip of trips) {
-  const members = await prisma.tripMember.findMany({
-    where: { tripId: trip.id }
+for (const subCrew of subCrews) {
+  const members = await prisma.subCrewMember.findMany({
+    where: { subCrewId: subCrew.id }
   });
 }
 
 // ✅ GOOD: Use includes or batch
-const trips = await prisma.trip.findMany({
-  include: { members: true }
+const subCrews = await prisma.subCrew.findMany({
+  include: { members: { include: { user: true } } }
 });
 ```
 
@@ -160,31 +163,20 @@ const trips = await prisma.trip.findMany({
 
 ---
 
-## 🔧 Known Issues to Fix
+## 🔧 Known Issues / Open Blockers (2026-05-19)
 
-### Critical (Block deployment)
-```typescript
-// File: src/lib/auth.ts
-// Issue: DB query on every JWT callback
-const dbUser = await prisma.user.findFirst(); // ← Add trigger check
+### Production env gaps (non-code; tracked in CLAUDE.md)
+- Sentry DSN not set in Vercel production (code instrumented on 47/59 routes, but no events flow)
+- Pusher env vars missing in production (real-time intent/SubCrew/meetup events disabled)
+- Resend domain not verified (auth + meetup emails bounce)
+- `DEMO_MODE=false` — set to `true` to enable demo auth endpoint
 
-// File: prisma/schema.prisma
-// Issue: Typo in field name
-oderId   String   // ← Should be "orderId"
-```
+### Test / mock cleanliness
+- See `MOCK PATTERNS` below — many nightly test failures trace back to mock state leakage across tests.
 
-> **Resolved (2026-03-23):** In-memory rate limiting replaced with Redis-backed `@upstash/ratelimit` in `src/lib/rate-limit.ts`. Applied to 8+ routes.
-
-### High Priority
-```typescript
-// File: src/app/api/search/route.ts
-// Issue: Email exposed in search
-{ email: { contains: query, mode: 'insensitive' } } // ← Remove
-
-// File: src/app/api/trips/[tripId]/invitations/route.ts
-// Issue: Placeholder user creation abuse
-user = await prisma.user.create({ data: { email } }); // ← Remove
-```
+> **Resolved (2026-03-23):** In-memory rate limiting replaced with Redis-backed `@upstash/ratelimit` in `src/lib/rate-limit.ts`. All 46 live API routes are now rate-limited.
+>
+> **Resolved (2026-04-23):** AI surface fully removed (PR #65) — no `@ai-sdk/*`, no `ai` dep, no `/api/ai/*`, no `src/lib/ai`, no `src/components/ai`. Do not flag AI-removal as a bug; do not propose reintroducing AI without explicit user direction.
 
 ---
 
@@ -219,21 +211,58 @@ src/
 ## 🧪 Testing Requirements
 
 ### Unit Tests Required For:
-- [ ] Business logic in `lib/` services
+- [ ] Business logic in `lib/` services (e.g. `src/lib/subcrew-formation.ts`, `src/lib/intent-lifecycle.ts`)
 - [ ] Utility functions
 - [ ] Zod schemas (edge cases)
-- [ ] AI prompt builders
 
 ### Integration Tests Required For:
 - [ ] API routes (happy path + error cases)
 - [ ] Auth flows
+- [ ] Crew accept/reject + bidirectional pairing
+- [ ] Intent → SubCrew auto-formation (≥2 Crew on same Topic)
+- [ ] Meetup RSVP + invite + check-in
 - [ ] Database operations
 
-### E2E Tests Required For:
-- [ ] User signup/signin
-- [ ] Trip creation flow
-- [ ] Invitation acceptance
-- [ ] Voting flow
+### E2E Tests Required For (Phase 8 Action #5):
+- [ ] User signup / email verification / signin
+- [ ] Send + accept Crew request (mutual pairing)
+- [ ] Signal Intent → see SubCrew form when threshold hit
+- [ ] Create Meetup from SubCrew → RSVP → check-in
+
+---
+
+## 🧷 Mock Patterns (Vitest)
+
+These patterns are load-bearing for the nightly pipeline. Violating them is the most common cause of flaky test failures.
+
+### `vi.resetAllMocks()` vs `vi.clearAllMocks()`
+- `clearAllMocks()` only resets call history. It does **NOT** flush queued `mockResolvedValueOnce` / `mockReturnValueOnce` values.
+- Use `vi.resetAllMocks()` in `beforeEach` when there is any chance of mock-queue leakage between tests (which is most of the time for API route tests).
+- **Caveat:** `resetAllMocks()` ALSO wipes factory-level `mockResolvedValue` defaults set inside `vi.mock(...)` factories. After `resetAllMocks()`, you must re-arm any default behavior (e.g. `checkRateLimit` is the classic example — re-set it in `beforeEach` or every post-auth test returns 500).
+
+### `mockResolvedValueOnce` discipline
+- Use `mockResolvedValueOnce` (queue) for happy-path test setup, not `mockResolvedValue` (sticky), so one test's setup cannot bleed into the next.
+- If you set a sticky default in a factory, re-arm it after `resetAllMocks()`.
+
+### Sentry mock approach
+- A global `vi.mock('@/lib/sentry')` is registered in `src/__tests__/setup.ts`. It stubs `logError`, `captureException`, `addBreadcrumb`, `setUser`.
+- For error-path tests, assert via `vi.mocked(logError).toHaveBeenCalled()` or the spy on the specific export your route uses.
+- `src/lib/sentry.ts` exports `addBreadcrumb` as a wrapper — do not import `addBreadcrumb` directly from `@sentry/nextjs` in route code (it bypasses the mock and breaks TSC in test files).
+
+### Prisma mock type-cast pitfalls
+- When Wave 1 test agents create `vi.mocked(prisma.X)`, methods not in the inferred intersection type (often `create`, `createMany`, `count`) must be cast:
+  ```ts
+  (prisma.meetupInvite as unknown as { createMany: ReturnType<typeof vi.fn> })
+    .createMany.mockResolvedValueOnce({ count: 3 });
+  ```
+- Static class methods mocked via `vi.mock()` factory: `vi.mocked(Service.prototype.method)` may not have `mockResolvedValueOnce`. Use:
+  ```ts
+  (Service.prototype.method as unknown as { mockResolvedValueOnce: Function })
+    .mockResolvedValueOnce(...);
+  ```
+
+### `NextRequest` vs `Request` in tests
+- Routes that read headers via the rate limiter must use `NextRequest`. Test helpers for those routes must construct `new NextRequest(url)`, NOT `new Request(url)`. The `/api/beta/status` route is the canonical example.
 
 ---
 
@@ -309,8 +338,8 @@ return NextResponse.json({
 | TypeScript Coverage | 100% | ~98% |
 | Any Types | 0 | 0 ✅ |
 | Console Statements | 0 (prod) | 0 ✅ |
-| Test Coverage | >80% | 865+ tests passing (45 files) ✅ |
-| API Routes | 48 | 48 ✅ |
+| Test Coverage | >80% | ~950+ Vitest passing on main (post-2026-05-19 nightly) ✅ |
+| API Routes | ~46 live | 46 ✅ (post-AI removal + V1 routes) |
 | Cyclomatic Complexity | <10 | Varies |
 | Bundle Size | <500KB | TBD |
 
@@ -365,14 +394,14 @@ These patterns should automatically fail code review:
    - [ ] Proper error handling
    - [ ] Good naming
 
-4. **Social Feature Alignment**
-   - [ ] Generates shareable content?
-   - [ ] Supports collaboration?
-   - [ ] Integrates with feed?
+4. **V1 Alignment**
+   - [ ] Respects the Crew / Intent / SubCrew / Meetup model
+   - [ ] Drives toward IRL meetup (not just on-app engagement)
+   - [ ] Doesn't reintroduce trip-planning surface or AI routes
 
 ---
 
 *Quality is not negotiable. Every line of code should serve the mission.*
 
-*Last Updated: 2026-03-24*
+*Last Updated: 2026-05-19*
 

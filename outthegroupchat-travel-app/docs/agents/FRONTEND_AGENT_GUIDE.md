@@ -1,38 +1,35 @@
 # 🎨 Frontend Development Agent Guide
 
 ## Mission Statement
-> "A social network that not just showcases experiences, but helps you build them."
+> "The social media app that wants to get you off your phone."
 
-**Your Role:** Create beautiful, engaging interfaces that make sharing experiences and planning trips feel magical.
+**Your Role:** Create interfaces that get users *out* of the app and into real meetups — surfacing Crew, signaling Intent, joining SubCrews, and showing up at a Venue.
 
 ---
 
 ## 🎯 Design Philosophy
 
-### 1. Social-First Interactions
-Every screen should encourage connection:
-- Show who else is involved
-- Make sharing obvious and delightful
-- Celebrate group achievements
-- Show activity and engagement
+### 1. Intent → Meetup Loop, Visualized
+Every screen should help the user move along the loop:
+- Signal Intent (one-tap from Topic catalog)
+- See your Crew light up on the heatmap
+- Auto-form SubCrew when ≥2 Crew share a Topic
+- Coordinate → confirm Venue → check-in IRL
 
-### 2. Experience-Building Focus
-Make planning feel like an experience itself:
-- Progressive disclosure (not overwhelming)
-- AI assistance should feel conversational
-- Gamify the planning process
-- Celebrate milestones
+### 2. Off-Phone, On-Time
+The app exists to end the session. Surface the action that gets the user out the door (RSVP, venue map, check-in) before anything else. Avoid endless feeds, infinite scroll, or doomscrolly affordances.
 
 ### 3. Mobile-First, Always
-60%+ of social usage is mobile:
+60%+ of usage is mobile:
 - Touch-friendly targets (44px min)
 - Swipe gestures where appropriate
 - Optimized for thumb zones
 - Fast loading on slow connections
+- The heatmap (`src/components/heatmap/`) is the only "rich" surface — keep everything else tight
 
 ---
 
-## 🛠️ Tech Stack
+## 🛠️ Tech Stack (current 2026-05-19)
 
 ```typescript
 // Core
@@ -46,12 +43,20 @@ Framer Motion (animations)
 CSS Variables (theming)
 
 // State
-TanStack Query (server state)
+TanStack Query (server state, where used)
 React Context (UI state)
 URL State (filters, pagination)
 
-// Components (to add)
-Radix UI (accessible primitives)
+// Real-time
+Pusher (Crew accept, Intent broadcast, SubCrew formation, Meetup RSVP, check-in)
+
+// Maps / heatmap
+maplibre-gl + OpenFreeMap tiles (free, no API key)
+Used by `src/components/heatmap/HeatmapMap.tsx` for Crew / FoF tiers,
+contribution-driven, z=15 venue markers, anchor priorities 1/3/4
+
+// Upgrades on the radar (see docs/UPGRADE_PLAN.md)
+// next 14→16, react 18→19, prisma 5→7 — not yet executed
 ```
 
 ---
@@ -119,65 +124,82 @@ Radix UI (accessible primitives)
 
 ---
 
+## 📂 Component Directory Map (V1)
+
+```
+src/components/
+├── heatmap/         HeatmapMap, HeatmapView, MutualThresholdSlider (maplibre-gl)
+├── intents/         IntentChip, IntentCreateForm, IntentList, IntentPromptCard
+├── subcrews/        EmergingSubCrewCard, ImInButton, SubCrewCard,
+│                    SubCrewCoordinationPanel, RecommendationsList
+├── meetups/         MeetupCard, MeetupList, CreateMeetupModal, RSVPButton, VenuePicker
+├── checkins/        CheckInButton, LiveActivityCard, NearbyCrewList
+├── privacy/         PrivacyPickerModal (location visibility opt-in)
+├── feed/            RichFeedItem (+ extracted FeedItemHeader / Actions / LegacyCards / Types)
+├── notifications/   Notification surface (V1 NotificationType pruned)
+├── profile/         Profile surface incl. ProfileCheckinsSection
+├── auth/            Sign-in / sign-up / verify / reset
+├── discover/        People-first discovery (search, nearby)
+├── onboarding/      First-run flow
+├── inspiration/     (legacy, scoped down)
+├── search/          Search UI
+├── settings/        Account + privacy settings
+├── social/          Cross-cutting social bits (avatar stacks etc.)
+├── ui/              Reusable primitives
+├── accessibility/   A11y helpers
+├── Navigation.tsx   App nav (Heatmap, Intents, SubCrews, Meetups, Check-ins, Profile)
+└── _archive/        Trip-planning UI parked here (do NOT import from prod)
+```
+
+---
+
 ## 🧩 Component Patterns
 
 ### Card Component
 ```tsx
-// Social-aware card with engagement metrics
-interface TripCardProps {
-  trip: Trip;
-  showEngagement?: boolean;
-  onShare?: () => void;
+// Crew-aware SubCrew card with momentum metrics
+interface SubCrewCardProps {
+  subCrew: SubCrewSummary;
+  showMomentum?: boolean;
+  onJoin?: () => void;
 }
 
-export function TripCard({ trip, showEngagement = true, onShare }: TripCardProps) {
+export function SubCrewCard({ subCrew, showMomentum = true, onJoin }: SubCrewCardProps) {
   return (
     <motion.div
       whileHover={{ y: -4 }}
       className="group relative bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden"
     >
-      {/* Cover Image */}
-      <div className="aspect-[16/9] relative">
-        <Image src={trip.coverImage} alt={trip.title} fill className="object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-        
-        {/* Status Badge */}
-        <StatusBadge status={trip.status} className="absolute top-3 left-3" />
-        
-        {/* Share Button */}
-        <button
-          onClick={onShare}
-          className="absolute top-3 right-3 p-2 rounded-full bg-white/20 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"
-        >
-          <ShareIcon className="w-4 h-4 text-white" />
-        </button>
-      </div>
-      
-      {/* Content */}
       <div className="p-4">
-        <h3 className="font-semibold text-slate-900">{trip.title}</h3>
-        <p className="text-sm text-slate-500">{trip.destination.city}, {trip.destination.country}</p>
-        
-        {/* Engagement */}
-        {showEngagement && (
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold text-slate-900">{subCrew.topic.label}</h3>
+          <TopicEmoji topic={subCrew.topic} />
+        </div>
+        <p className="text-sm text-slate-500">
+          {subCrew.memberCount} Crew · {subCrew.cityLabel}
+        </p>
+
+        {showMomentum && (
           <div className="mt-3 flex items-center gap-4 text-sm text-slate-500">
             <span className="flex items-center gap-1">
               <UsersIcon className="w-4 h-4" />
-              {trip.memberCount}
+              {subCrew.imInCount} I'm in
             </span>
             <span className="flex items-center gap-1">
-              <HeartIcon className="w-4 h-4" />
-              {trip.likeCount}
-            </span>
-            <span className="flex items-center gap-1">
-              <ChatIcon className="w-4 h-4" />
-              {trip.commentCount}
+              <ClockIcon className="w-4 h-4" />
+              {formatRelativeTime(subCrew.formedAt)}
             </span>
           </div>
         )}
-        
-        {/* Avatar Stack */}
-        <AvatarStack users={trip.members} max={4} className="mt-3" />
+
+        <AvatarStack users={subCrew.members} max={4} className="mt-3" />
+
+        <button
+          onClick={onJoin}
+          className="mt-4 w-full rounded-full bg-emerald-600 text-white py-2 text-sm font-medium"
+        >
+          I'm in
+        </button>
       </div>
     </motion.div>
   );
@@ -186,18 +208,19 @@ export function TripCard({ trip, showEngagement = true, onShare }: TripCardProps
 
 ### Feed Item Component
 ```tsx
-// Dynamic feed item based on type
+// Dynamic feed item based on V1 surface (Intent / SubCrew / Meetup / Check-in)
+// Canonical implementation lives in src/components/feed/RichFeedItem.tsx
 export function FeedItem({ item }: { item: FeedItemType }) {
   const renderContent = () => {
     switch (item.type) {
-      case 'trip_created':
-        return <TripCreatedCard trip={item.trip} />;
-      case 'activity_added':
-        return <ActivityCard activity={item.activity} />;
-      case 'member_joined':
-        return <MemberJoinedCard member={item.user} trip={item.trip} />;
-      case 'review_posted':
-        return <ReviewCard review={item.review} />;
+      case 'INTENT_SIGNALED':
+        return <IntentSignaledCard intent={item.intent} />;
+      case 'SUBCREW_FORMED':
+        return <SubCrewFormedCard subCrew={item.subCrew} />;
+      case 'MEETUP_CREATED':
+        return <MeetupCreatedCard meetup={item.meetup} />;
+      case 'CREW_CHECKED_IN_NEARBY':
+        return <CheckinNearbyCard checkin={item.checkin} />;
       default:
         return null;
     }
@@ -247,41 +270,40 @@ export function FeedItem({ item }: { item: FeedItemType }) {
 }
 ```
 
-### AI Chat Component Pattern
+### Intent Signal Pattern
 ```tsx
-// Floating AI assistant with context awareness
-export function AIAssistant({ context }: { context?: TripContext }) {
-  const [isOpen, setIsOpen] = useState(false);
-  
+// One-tap "I want to do X tonight/this weekend" — the V1 primary action.
+// Hits POST /api/intents. SubCrew auto-formation runs server-side when
+// ≥2 Crew members share the same Topic.
+export function IntentChip({ topic, onSignaled }: { topic: Topic; onSignaled?: () => void }) {
+  const [pending, setPending] = useState(false);
+
   return (
-    <>
-      {/* Floating Action Button */}
-      <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg"
-      >
-        <SparklesIcon className="w-6 h-6" />
-      </motion.button>
-      
-      {/* Chat Panel */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="fixed bottom-24 right-6 z-50 w-96 h-[32rem] bg-white rounded-2xl shadow-2xl flex flex-col"
-          >
-            {/* Chat implementation */}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </>
+    <motion.button
+      whileTap={{ scale: 0.95 }}
+      disabled={pending}
+      onClick={async () => {
+        setPending(true);
+        try {
+          const res = await fetch('/api/intents', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ topicId: topic.id })
+          });
+          if (res.ok) onSignaled?.();
+        } finally {
+          setPending(false);
+        }
+      }}
+      className="px-4 py-2 rounded-full bg-emerald-600 text-white text-sm font-medium disabled:opacity-50"
+    >
+      {topic.emoji} {topic.label}
+    </motion.button>
   );
 }
 ```
+
+> **AI removed (2026-04-23, PR #65):** Do NOT propose AI chat / itinerary / recommendation components. There is no `src/components/ai`, no `/api/ai/*`, no `@ai-sdk/*`. Reintroducing requires explicit founder sign-off.
 
 ---
 
@@ -376,14 +398,16 @@ const item = {
 
 ### Server Components (Default)
 ```tsx
-// app/trips/page.tsx
-async function TripsPage() {
-  const trips = await prisma.trip.findMany({
-    where: { isPublic: true },
+// app/subcrews/page.tsx
+async function SubCrewsPage() {
+  const session = await getServerSession(authOptions);
+  const subCrews = await prisma.subCrew.findMany({
+    where: { members: { some: { userId: session!.user.id } } },
+    include: { topic: true, members: { include: { user: true } } },
     take: 20
   });
-  
-  return <TripGrid trips={trips} />;
+
+  return <SubCrewGrid subCrews={subCrews} />;
 }
 ```
 
@@ -391,39 +415,33 @@ async function TripsPage() {
 ```tsx
 'use client';
 
-function InteractiveTrip({ tripId }: { tripId: string }) {
+function ImInButton({ subCrewId }: { subCrewId: string }) {
   const { data, isLoading } = useQuery({
-    queryKey: ['trip', tripId],
-    queryFn: () => fetch(`/api/trips/${tripId}`).then(r => r.json())
+    queryKey: ['subcrew', subCrewId],
+    queryFn: () => fetch(`/api/subcrews/${subCrewId}`).then(r => r.json())
   });
-  
-  // ... interactive UI
+
+  // ... I'm in / coordination UI
 }
 ```
 
 ### Optimistic Updates
 ```tsx
-const likeMutation = useMutation({
-  mutationFn: (tripId: string) => fetch(`/api/trips/${tripId}/like`, { method: 'POST' }),
-  onMutate: async (tripId) => {
-    // Cancel outgoing refetches
-    await queryClient.cancelQueries(['trip', tripId]);
-    
-    // Snapshot previous value
-    const previous = queryClient.getQueryData(['trip', tripId]);
-    
-    // Optimistically update
-    queryClient.setQueryData(['trip', tripId], (old: Trip) => ({
+const rsvpMutation = useMutation({
+  mutationFn: (meetupId: string) =>
+    fetch(`/api/meetups/${meetupId}/rsvp`, { method: 'POST', body: JSON.stringify({ status: 'YES' }) }),
+  onMutate: async (meetupId) => {
+    await queryClient.cancelQueries(['meetup', meetupId]);
+    const previous = queryClient.getQueryData(['meetup', meetupId]);
+    queryClient.setQueryData(['meetup', meetupId], (old: Meetup) => ({
       ...old,
-      likeCount: old.likeCount + 1,
-      isLiked: true
+      attendeeCount: old.attendeeCount + 1,
+      myRsvp: 'YES'
     }));
-    
     return { previous };
   },
-  onError: (err, tripId, context) => {
-    // Rollback on error
-    queryClient.setQueryData(['trip', tripId], context?.previous);
+  onError: (err, meetupId, context) => {
+    queryClient.setQueryData(['meetup', meetupId], context?.previous);
   }
 });
 ```
@@ -436,7 +454,7 @@ const likeMutation = useMutation({
 ```tsx
 // Modal
 <div role="dialog" aria-modal="true" aria-labelledby="modal-title">
-  <h2 id="modal-title">Create Trip</h2>
+  <h2 id="modal-title">Create Meetup</h2>
 </div>
 
 // Live regions for updates
@@ -491,29 +509,26 @@ Before submitting any component:
 
 ---
 
-## 🎯 Priority UI Features
+## 🎯 Priority UI Work (Phase 8 launch readiness, 2026-05-19)
 
-### Sprint 1
-- [ ] Rich feed with media
-- [ ] Reaction/like system
-- [ ] Share cards with previews
-- [ ] Improved AI chat UI
+### In flight
+- [ ] RichFeedItem final size reduction (717→199 trajectory, now ~199 on nightly branch)
+- [ ] Heatmap polish — Crew tier (R22) + FoF tier; venue markers at z=15; anchor priority 1/3/4 wired (priority 2 deferred)
+- [ ] PrivacyPickerModal — location visibility opt-in across check-in / heatmap entry points
 
-### Sprint 2
-- [ ] Profile redesign
-- [ ] Trip detail page overhaul
-- [ ] Voting UI improvements
-- [ ] Notification center
+### Next
+- [ ] SubCrew coordination panel — clearer "who's in, when, where" state
+- [ ] Meetup detail page — RSVP-first hierarchy, venue map embed
+- [ ] Onboarding — get user to first Crew + first Intent inside 90 seconds
 
-### Sprint 3
-- [ ] Discovery/explore page
-- [ ] Search with filters
-- [ ] Settings pages
-- [ ] Onboarding flow
+### Out of scope (do not propose)
+- AI chat / suggestions UI (removed PR #65)
+- Trip planner / itinerary / wizard UI (archived to `src/components/_archive/`)
+- Stories, reactions beyond like, gamification badges — explicitly cut from V1
 
 ---
 
-*Make every interaction feel like the start of an adventure.*
+*Make every interaction the shortest path out of the app.*
 
-*Last Updated: 2026-03-26*
+*Last Updated: 2026-05-19*
 

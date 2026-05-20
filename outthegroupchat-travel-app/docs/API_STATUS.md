@@ -1,6 +1,6 @@
 # 📡 API & Integration Status
 
-> **Last Updated: 2026-04-22**
+> **Last Updated: 2026-05-19**
 >
 > **Archival:** trip/activity routes moved to `src/app/api/_archive/` as of 2026-04-16 Phase 1. See REFACTOR_PLAN.md. Sections below that reference `/api/trips/*` and `/api/activities/*` reflect the pre-archive state for historical context; authoritative status for these routes is the "📦 Archived Routes" section near the bottom of this file.
 >
@@ -8,11 +8,14 @@
 >
 > **Phase 6 COMPLETE (2026-04-22, nightly/2026-04-22 PR #55):** Feed rescoped (meetup/checkin types, POST→410), search people-first (users→meetups→venues), notification type migration (9 old trip types removed from schema), AI routes (suggest-meetups + icebreakers). All 4 Phase 6 actions complete.
 >
-> **Last Audit:** April 2026
-> **Live API routes (post-archive):** 50 (35 base + 6 Crew + 9 Phase 4 meetup/venue/cron routes + 3 Phase 5 check-in routes + privacy route + 2 new Phase 6 AI routes: suggest-meetups, icebreakers; note: feed POST now returns 410)
+> **Phase 8 Nightly (2026-05-19, nightly/2026-05-20):** Rate-limit added to `/api/topics` (last V1 route missing it). Rate-limit + Sentry coverage now ~52/53 routes (only `/api/auth/[...nextauth]` outside scope — handled by NextAuth itself). New test coverage: `/api/recommendations` (+26 tests). Dead profile components (TripHistory, BadgeShowcase, PreferencesCard) deleted. Docs refresh: PRODUCTION_ROADMAP, TEST_CASES, 4 agent guides, UPGRADE_PLAN, README.
+>
+> **Last Audit:** May 2026
+> **Live API routes (post-archive):** 53 (Phase 6 baseline 50 + V1 surface: intents, subcrews, topics, heatmap, recommendations)
 > **Archived API routes (Phase 1):** 13
 > **Target:** 100% for Beta Launch (re-baselined in Phase 8)
-> **Sentry Coverage:** 19/48 routes instrumented on pre-archive branch; coverage on new live surface re-computed after Phase 2
+> **Sentry Coverage:** ~52/53 live routes instrumented as of 2026-05-19 (only `/api/auth/[...nextauth]` outside scope)
+> **Rate-Limit Coverage:** ~52/53 live routes (V1 surface complete after `/api/topics` patched 2026-05-19)
 
 ---
 

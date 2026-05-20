@@ -1,35 +1,36 @@
 # 🗺️ Planning Agent Guide
 
 ## Mission Statement
-> "A social network that not just showcases experiences, but helps you build them."
+> "The social media app that wants to get you off your phone."
 
-**Your Role:** Architect features that balance social engagement with practical trip planning utility.
+**Your Role:** Architect V1 features that move users along the Crew → Intent → SubCrew → Meetup loop. Keep the surface small, ship to launch.
 
 ---
 
 ## 🎯 Core Planning Principles
 
-### 1. Social-First Architecture
-Every feature should answer: **"How does this help users share or collaborate?"**
+### 1. V1 Loop Alignment
+Every feature should answer: **"Which step of Crew → Intent → SubCrew → Meetup does this advance?"**
 
 ```
-✅ GOOD: "Users can share their itinerary with friends for feedback"
-❌ BAD: "Users can create an itinerary" (no social element)
+✅ GOOD: "Let users batch-signal Intent across multiple Topics in one tap"
+❌ BAD: "Add an itinerary builder for confirmed Meetups" (out of V1 scope)
 ```
 
-### 2. Experience Building Focus
-Prioritize features that CREATE experiences, not just document them.
+### 2. IRL Conversion Bias
+Prefer features that move users toward an in-person meetup. Treat on-app retention as a cost, not a goal.
 
 ```
-✅ GOOD: "AI suggests activities based on group preferences"
-❌ BAD: "Users can manually add activities" (passive)
+✅ GOOD: "RSVP nudge 1h before Meetup with a one-tap directions handoff"
+❌ BAD: "Threaded comments on past Meetups to drive re-engagement"
 ```
 
-### 3. Group Dynamics
-Always consider multi-user scenarios:
-- How do decisions get made?
-- What happens with disagreements?
-- How is consensus built?
+### 3. Crew-First Privacy
+Default all new visibility surfaces to Crew-only. Anything broader must be explicit user opt-in via `PrivacyPickerModal`.
+
+### 4. Don't Reintroduce Removed Surface
+- AI was fully removed PR #65 (2026-04-23). No `@ai-sdk/*`, no `/api/ai/*`, no `src/lib/ai`, no `src/components/ai`.
+- Trip planning is archived to `src/_archive/trips/`. Do not propose features that resurrect it without explicit founder direction.
 
 ---
 
@@ -40,24 +41,27 @@ Use this for every new feature:
 ```markdown
 ## Feature: [Name]
 
-### Social Value
-- How does this enable sharing?
-- How does this foster connection?
-- What content does this generate for the feed?
+### V1 Loop Step
+- Which of {Crew, Intent, SubCrew, Meetup, Check-in} does this serve?
+- Does it shorten time-to-Meetup or improve match quality?
 
-### Experience Building Value
-- Does this help plan better trips?
-- Does AI enhance this feature?
-- What decisions does this help make?
+### IRL Conversion Value
+- Does this raise Intent → SubCrew rate, SubCrew → Meetup rate,
+  or Meetup → check-in rate?
+- Does it shorten median session length while preserving conversion?
+
+### Privacy Posture
+- Default visibility tier? (Crew-only unless justified)
+- What opt-in surface (PrivacyPickerModal?) gates broader visibility?
 
 ### User Stories
 1. As a [role], I want to [action] so that [outcome]
 
 ### Technical Requirements
-- Database changes needed
+- Database changes needed (does the schema need a new model, or can it extend Intent/SubCrew/Meetup?)
 - API endpoints required
-- Real-time requirements
-- AI integration points
+- Real-time requirements (Pusher channel? Existing channel or new?)
+- Notification types touched (V1 set is pruned — don't add without need)
 
 ### Success Metrics
 - Engagement: [metric]
@@ -78,103 +82,104 @@ Use this for every new feature:
 ## 🏗️ Architecture Decisions
 
 ### Current Tech Stack (Respect These)
-- **Frontend:** Next.js 14 App Router
-- **Database:** PostgreSQL + Prisma
-- **Auth:** NextAuth.js
-- **Real-time:** Pusher (configured, env vars missing in production)
-- **Styling:** TailwindCSS + Framer Motion
-- **Monitoring:** Sentry (infrastructure in `src/lib/sentry.ts` — awaiting DSN env var in Vercel)
+- **Frontend:** Next.js 14 App Router, React 18, TypeScript strict
+- **Database:** PostgreSQL (Neon via Vercel Marketplace) + Prisma 5
+- **Auth:** NextAuth.js with Prisma adapter
+- **Real-time:** Pusher (env vars missing in prod — gates several V1 surfaces)
+- **Styling:** TailwindCSS 3.4 + Framer Motion
+- **Maps:** maplibre-gl + OpenFreeMap tiles (no API key)
+- **Rate limiting:** Upstash Redis (`@upstash/ratelimit`), 46/46 live routes covered
+- **Monitoring:** Sentry (`src/lib/sentry.ts`) — 47/59 routes instrumented; DSN missing in Vercel prod
+- **Email:** Resend (domain not yet verified in prod)
+- **Per-PR DB:** Neon branch-per-PR with `prisma migrate deploy`
 
-### Recommended Additions for Social Scale
-1. **Redis** - Caching, rate limiting, sessions (Upstash already wired for rate limiting)
-2. **CDN** - Cloudinary/Uploadcare for media
-3. **Search** - Algolia or Elasticsearch
-4. **Analytics** - Mixpanel or Amplitude
-5. **Monitoring** - Sentry (code in place via `src/lib/sentry.ts`; needs `SENTRY_DSN` in Vercel) + Vercel Analytics
+### Upgrades on the radar (`docs/UPGRADE_PLAN.md`)
+- next 14 → 16
+- react 18 → 19
+- prisma 5 → 7
+- 11 major package upgrades total — not executed yet
+
+### Don't add new infra without justification
+The V1 launch surface is intentionally small. Resist proposing CDNs, search services, analytics SaaS, or new vendor integrations unless they unblock a specific Phase 8 action.
 
 ---
 
 ## 📊 Data Models to Understand
 
-### Core Social Graph
+### Core V1 Graph
 ```
-User ─┬─ follows ──→ User
-      ├─ owns ──→ Trip ─┬─ has ──→ Activity
-      ├─ memberOf ──→ Trip    ├─ has ──→ Survey
-      └─ saves ──→ Activity   └─ has ──→ Vote
+User ─┬─ crewWith ──↔ User                (mutual, accepted)
+      ├─ signals ──→ Intent ──→ Topic
+      ├─ memberOf ──→ SubCrew ──→ Topic
+      ├─ hosts/attends ──→ Meetup ──→ Venue
+      └─ checksInAt ──→ Venue
 ```
 
-### Content Creation Flow
+### Primary user journey
 ```
-User creates Trip
+Sign up + verify email
   ↓
-Invites Friends (TripMember)
+Build Crew (mutual; both sides accept once)
   ↓
-AI generates Survey
+Signal Intent on a Topic (one tap, scoped to window + city)
   ↓
-Members respond (SurveyResponse)
+SubCrew auto-forms when ≥2 Crew share the same Topic
   ↓
-AI analyzes → Suggests Activities
+SubCrew picks Venue + time → Meetup
   ↓
-Group votes (VotingSession)
+RSVP → starting-soon reminder → check-in IRL
   ↓
-AI generates Itinerary
-  ↓
-Trip happens → Content shared (Feed)
+Contribution writes back to heatmap + trust → better future matches
 ```
+
+### Notes on legacy models
+`Trip`, `TripMember`, `Activity`, `Survey`, `VotingSession`, `Follow` are kept in the schema (some `@deprecated`) but are not part of the V1 loop. `Follow` is superseded by Crew. The `Poll` surface from `TripSurvey` may be repurposed inside SubCrew coordination — see `docs/REFACTOR_PLAN.md` §2.3.
 
 ---
 
-## 🎯 Planning Priorities (Next 90 Days)
+## 🎯 Planning Priorities — Phase 8: Launch Readiness (2026-05-19)
 
-### Phase 1: Social Foundation (Weeks 1-4)
-**Goal:** Make sharing feel natural and rewarding
+The V1 loop is built. Phase 8 closes the gap between "works in dev" and "shippable to beta users." See `docs/REFACTOR_PLAN.md` and `docs/LAUNCH_CHECKLIST.md` for the canonical tracker.
 
-| Feature | Purpose | Estimate |
-|---------|---------|----------|
-| Media Uploads | Rich content for feed | 5 days |
-| Reactions System | Engagement mechanics | 3 days |
-| Share Cards | Beautiful link previews | 3 days |
-| User Mentions | @user tagging | 4 days |
+### Phase 8 actions
+| # | Action | Status |
+|---|--------|--------|
+| 1 | NotificationType pruned to V1 set | ✅ |
+| 2 | Marketing surface (About page, OG tags, README, email-auth split) | ✅ |
+| 3 | Dead component cleanup + 600-line file size ceilings | ✅ |
+| 4 | Rate-limit + Sentry instrumentation audit (47/59 routes) | ✅ |
+| 5 | E2E Playwright authenticated flows (Crew accept, Intent → SubCrew, Meetup RSVP, check-in) | 🟡 IN PROGRESS |
+| 6 | Sentry full coverage audit (47/59 → 59/59) | 🟡 IN PROGRESS |
 
-### Phase 2: Experience Building (Weeks 5-8)
-**Goal:** AI-powered collaborative planning
+### Production env gaps (must close before launch)
+- Sentry DSN in Vercel prod
+- Pusher env vars in Vercel prod (real-time SubCrew / RSVP / check-in disabled without them)
+- Resend domain verification (auth + Meetup emails currently bounce)
+- `DEMO_MODE=true` for the demo auth endpoint
 
-| Feature | Purpose | Estimate |
-|---------|---------|----------|
-| Group AI Chat | Multi-user + AI sessions | 8 days |
-| Smart Suggestions | Context-aware AI | 5 days |
-| Conflict Resolution | Handle disagreements | 4 days |
-| Budget Optimizer | AI cost analysis | 5 days |
-
-### Phase 3: Growth Mechanics (Weeks 9-12)
-**Goal:** Viral loops and retention
-
-| Feature | Purpose | Estimate |
-|---------|---------|----------|
-| Trip Templates | Shareable trip blueprints | 5 days |
-| Achievements | Gamification layer | 4 days |
-| Recommendations | Friend suggestions | 4 days |
-| Trending | Discovery algorithm | 5 days |
+### Post-V1 (do not ship before launch)
+- Heatmap anchor priority 2 polish (deferred — priority 1/3/4 shipped)
+- prisma 5 → 7, next 14 → 16, react 18 → 19 upgrades (see `docs/UPGRADE_PLAN.md`)
+- Any reintroduction of trip-planning or AI surface
 
 ---
 
 ## ⚠️ Anti-Patterns to Avoid
 
-### 1. Feature Creep Without Social
-Don't add features that don't connect to social graph.
+### 1. Reintroducing removed surface
+AI (PR #65) and trip planning (`src/_archive/trips/`) are intentionally out. Don't propose them without explicit founder direction.
 
-### 2. Solo-First Design
-Every feature should work BETTER with groups, not just work alone.
+### 2. Engagement-for-its-own-sake
+Threaded comments, reactions ladders, stories, gamification badges — all explicitly cut from V1. The goal is to *end* sessions in a meetup, not to extend them.
 
-### 3. Passive Content
-Avoid "read-only" features. Everything should invite action.
+### 3. New vendor / infra without justification
+The V1 launch surface is small. New SaaS dependencies need a clear Phase 8 unblock.
 
-### 4. Complex Onboarding
-New users should create or join a trip within 2 minutes.
+### 4. Bypassing Crew-first privacy
+Don't default new visibility surfaces to public or FoF without a PrivacyPickerModal gate.
 
-### 5. Hidden Social Actions
-Make sharing, inviting, and connecting obvious and easy.
+### 5. Complex onboarding
+First-run flow must get a user to their first Crew + first Intent in under 90 seconds.
 
 ---
 
@@ -182,35 +187,34 @@ Make sharing, inviting, and connecting obvious and easy.
 
 Before any feature is approved:
 
-- [ ] Connects to social graph (follows, shares, comments)
-- [ ] Generates feed-worthy content
-- [ ] Works better with AI assistance
-- [ ] Has clear group dynamics
-- [ ] Includes real-time elements
-- [ ] Mobile-friendly by design
-- [ ] Has measurable success metrics
-- [ ] Doesn't duplicate existing functionality
-- [ ] Scales to 100K+ users
-- [ ] Respects privacy/security principles
+- [ ] Advances a step in Crew → Intent → SubCrew → Meetup → Check-in
+- [ ] Raises (or at minimum preserves) Intent→SubCrew, SubCrew→Meetup, or Meetup→check-in rates
+- [ ] Default Crew-only visibility, with opt-in gate for broader tiers
+- [ ] Doesn't reintroduce removed surface (AI, trip planning)
+- [ ] Mobile-first by design
+- [ ] Has measurable success metric (and an anti-engagement guardrail)
+- [ ] Real-time path uses an existing Pusher channel where possible
+- [ ] Respects rate-limit + Sentry conventions
+- [ ] Fits within Phase 8 — or is explicitly tagged post-V1
 
 ---
 
-## 🔮 Long-Term Vision
+## 🔮 Long-Term Vision (post-V1)
 
-### Year 1: Community
-- 10K active users
-- 50K trips created
-- Strong social engagement
+### Beta launch (Phase 8 close)
+- All actions #5–#6 complete
+- All four prod env gaps closed (Sentry, Pusher, Resend, demo)
+- E2E green in CI
 
-### Year 2: Platform
-- Creator tools
-- API for partners
-- Booking integrations
+### V1.1 — Densify
+- More cities seeded; Topic catalog expanded
+- Heatmap anchor priority 2 polish
+- Onboarding tuning to <60s time-to-first-Intent
 
-### Year 3: Ecosystem
-- Travel brand partnerships
-- User-generated content marketplace
-- International expansion
+### V2 (subject to founder direction)
+- Reactivate trip planning as a Crew sub-feature
+- Reconsider AI-assisted Topic/Venue suggestions (founder sign-off required)
+- Partner / venue integrations
 
 ---
 
@@ -234,7 +238,7 @@ Before any feature is approved:
 
 ---
 
-*Remember: We're not building a trip planner. We're building a social network for experiences.*
+*Remember: we're not building a trip planner. We're building the loop that signals Intent and ends with you walking into a venue with your Crew.*
 
-*Last Updated: 2026-03-26*
+*Last Updated: 2026-05-19*
 

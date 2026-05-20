@@ -13,14 +13,33 @@ const DEFAULT_FROM = process.env.EMAIL_FROM || 'OutTheGroupchat <noreply@outtheg
 const APP_URL = process.env.NEXTAUTH_URL || 'https://outthegroupchat.com';
 
 /**
- * Check if email service is configured
+ * @description Check whether the Resend email service has been initialized with an API key.
+ * Used as a guard before attempting to send any transactional email so callers can
+ * fail fast (or no-op) when the `RESEND_API_KEY` environment variable is missing.
+ *
+ * @returns `true` if the Resend client is configured and ready to send mail; `false` otherwise.
  */
 export function isEmailConfigured(): boolean {
   return !!resend;
 }
 
 /**
- * Send a trip invitation email to a non-registered user
+ * @description Send a trip invitation email to a (typically non-registered) user, prompting
+ * them to sign up and join the named trip. Renders both HTML and plain-text bodies,
+ * validates the recipient address, and surfaces detailed errors via the structured logger.
+ *
+ * @param params Email parameters.
+ * @param params.to Recipient email address. Must match a basic RFC-style email regex.
+ * @param params.tripTitle Human-readable title of the trip to display in subject + body.
+ * @param params.inviterName Display name of the inviting user, used in subject + greeting.
+ * @param params.tripId Trip ID embedded in the signup `redirect` query param so the
+ *   invitee lands on the trip after creating an account.
+ * @param params.expiresAt Optional invitation expiry date; if provided, a human-readable
+ *   "expires on..." line is rendered in the email.
+ *
+ * @returns Promise resolving to `{ success, messageId?, error? }`. `success: true` is
+ *   only returned when Resend confirms a message ID; any validation, transport, or
+ *   configuration failure yields `success: false` with a human-readable `error`.
  */
 export async function sendInvitationEmail(params: {
   to: string;
@@ -131,7 +150,23 @@ export async function sendInvitationEmail(params: {
 }
 
 /**
- * Send a notification email (generic)
+ * @description Send a generic transactional notification email with a title, body message,
+ * and optional call-to-action button. Used as the underlying primitive for many
+ * application notifications (crew updates, mentions, follow-ups, etc.) so callers
+ * don't have to hand-craft HTML/text every time.
+ *
+ * @param params Email parameters.
+ * @param params.to Recipient email address.
+ * @param params.subject Subject line as it will appear in the inbox.
+ * @param params.title Large heading rendered at the top of the email body.
+ * @param params.message Main body copy (single paragraph) rendered under the title.
+ * @param params.actionUrl Optional URL for the CTA button. If omitted (or `actionText`
+ *   is omitted), no button is rendered.
+ * @param params.actionText Optional label for the CTA button. Required alongside
+ *   `actionUrl` for the button to appear in the HTML body.
+ *
+ * @returns Promise resolving to `{ success, messageId?, error? }`. Returns `success: false`
+ *   with an explanatory `error` when Resend is unconfigured or the send fails.
  */
 export async function sendNotificationEmail(params: {
   to: string;

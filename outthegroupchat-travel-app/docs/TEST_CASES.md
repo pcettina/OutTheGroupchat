@@ -2,935 +2,250 @@
 
 ## Overview
 
-This document outlines the test cases needed to validate the OutTheGroupchat platform. Tests are organized by type and priority.
+This document captures the live test landscape for the OutTheGroupchat platform (Phase 8 launch-readiness, V1 intent-to-group product). It records suite counts, mock hygiene rules, V1-specific test patterns, and the Phase 8 testing priorities that nightly builds should keep advancing.
+
+**Domain note:** OutTheGroupchat is a meetup-centric social network. All trip-planning routes (trips, itinerary, voting, surveys, AI itinerary generation) have been archived to `src/_archive/` and the corresponding test patterns removed from this document. AI surface was removed entirely on 2026-04-23 (PR #65) — no `/api/ai/*` routes, no embeddings or rate-limit-the-LLM patterns remain.
+
+---
+
+## Current Suite (2026-05-19)
+
+| Metric | Value |
+|--------|-------|
+| Total passing tests | **1081** (live, excluding `_archive`) |
+| Test files | **64** |
+| Lint / TSC / Build | 0 / 0 / ✅ |
+| Known flakes | 2 (`checkins-pusher.test.ts` parallel-load — under investigation) |
+
+### Layout
+
+```
+src/__tests__/
+├── api/           (49 files) — Next.js route handler tests
+├── lib/           (14 files) — pure-lib unit tests (heatmap, intent, subcrew, sanitize, validations, etc.)
+├── services/      (empty — service tests moved into lib/api as appropriate)
+├── integration/   (empty — multi-route flows live under api/)
+├── _archive/      (excluded from `npm test` — trip-domain legacy)
+├── recommendations.test.ts
+└── setup.ts
+```
+
+`src/_archive/` is excluded from the Vitest include glob and from coverage. Do not add new tests there.
 
 ---
 
 ## Testing Stack
 
-> **Status (2026-03-24):** Vitest and Playwright are already installed and configured. 865+ tests passing across 45 test files.
+- **Vitest** (jsdom env, globals, `src/__tests__/setup.ts`) — unit + route-handler tests
+- **Playwright** (chromium) — E2E smoke (`e2e/smoke.spec.ts`); authenticated flows not yet implemented
+- **MSW** — available but rarely used; most route tests mock `prisma`, Pusher, Sentry, email senders directly in `setup.ts`
 
 ```bash
-# Install testing dependencies (already in package.json — run npm install)
-npm install -D vitest @testing-library/react @testing-library/jest-dom
-npm install -D @playwright/test
-npm install -D msw  # Mock Service Worker for API mocking
-
-# Install Playwright browsers for E2E tests
-npx playwright install chromium
-```
-
-### Configuration Files Needed
-
-**`vitest.config.ts`**
-```typescript
-import { defineConfig } from 'vitest/config';
-import react from '@vitejs/plugin-react';
-import path from 'path';
-
-export default defineConfig({
-  plugins: [react()],
-  test: {
-    environment: 'jsdom',
-    setupFiles: ['./tests/setup.ts'],
-    globals: true,
-  },
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-    },
-  },
-});
-```
-
-**`playwright.config.ts`**
-```typescript
-import { defineConfig } from '@playwright/test';
-
-export default defineConfig({
-  testDir: './tests/e2e',
-  fullyParallel: true,
-  retries: process.env.CI ? 2 : 0,
-  webServer: {
-    command: 'npm run dev',
-    port: 3000,
-    reuseExistingServer: !process.env.CI,
-  },
-});
+npm test                 # full Vitest run
+npm test -- <pattern>    # filtered run
+npm run test:e2e         # Playwright smoke
 ```
 
 ---
 
-## Unit Tests
+## Mock Hygiene Rules (load-bearing)
 
-### 1. Services Layer
+These rules are derived from real flakes observed in the nightly pipeline. Violating them produces 500 responses, env-leak failures, or queue-state bleed between tests.
 
-#### Survey Service (`src/services/survey.service.ts`)
+### 1. `vi.resetAllMocks()` in `beforeEach` — required for rate-limited routes
+
+Factory-level `mockResolvedValue` (such as `checkRateLimit` in `setup.ts`) is wiped by `vi.resetAllMocks()`. Any test that exercises a rate-limited route must **re-arm `checkRateLimit`** in `beforeEach`, or every post-auth assertion will 500 with "rate limit check returned undefined." See `feedback_rate_limit_mock_reset.md` in memory and the canonical pattern in `src/__tests__/api/feed.test.ts`.
 
 ```typescript
-// tests/unit/services/survey.service.test.ts
+import { checkRateLimit } from '@/lib/rate-limit';
 
-describe('SurveyService', () => {
-  describe('parseSurveyData', () => {
-    it('should parse empty responses correctly', () => {
-      const result = parseSurveyData([]);
-      expect(result.totalResponses).toBe(0);
-      expect(result.responseRate).toBe(0);
-    });
-
-    it('should calculate budget analysis from responses', () => {
-      const responses = [
-        { answers: { budget: 500 } },
-        { answers: { budget: 1000 } },
-        { answers: { budget: 750 } },
-      ];
-      const result = analyzeBudgets(responses);
-      expect(result.min).toBe(500);
-      expect(result.max).toBe(1000);
-      expect(result.groupOptimal).toBeCloseTo(750);
-    });
-
-    it('should handle missing budget answers', () => {
-      const responses = [
-        { answers: {} },
-        { answers: { budget: 500 } },
-      ];
-      const result = analyzeBudgets(responses);
-      expect(result.min).toBe(500);
-    });
-  });
-
-  describe('analyzeDatePreferences', () => {
-    it('should find optimal date range', () => {
-      const responses = [
-        { answers: { dates: { start: '2025-07-01', end: '2025-07-05' } } },
-        { answers: { dates: { start: '2025-07-03', end: '2025-07-07' } } },
-      ];
-      const result = analyzeDatePreferences(responses);
-      // Should find overlapping dates
-      expect(new Date(result.optimalRange.start)).toBeInstanceOf(Date);
-    });
-
-    it('should handle non-overlapping dates', () => {
-      const responses = [
-        { answers: { dates: { start: '2025-07-01', end: '2025-07-05' } } },
-        { answers: { dates: { start: '2025-08-01', end: '2025-08-05' } } },
-      ];
-      const result = analyzeDatePreferences(responses);
-      expect(result.optimalRange).toBeDefined();
-    });
-  });
-
-  describe('analyzeActivityPreferences', () => {
-    it('should rank activities by popularity', () => {
-      const responses = [
-        { answers: { activities: ['hiking', 'food', 'beach'] } },
-        { answers: { activities: ['food', 'hiking', 'shopping'] } },
-        { answers: { activities: ['food', 'beach', 'nightlife'] } },
-      ];
-      const result = analyzeActivityPreferences(responses);
-      expect(result[0].activity).toBe('food');
-    });
-  });
+beforeEach(() => {
+  vi.resetAllMocks();
+  vi.mocked(checkRateLimit).mockResolvedValue({ allowed: true, remaining: 100, resetAt: Date.now() + 60_000 });
 });
 ```
 
-#### Recommendation Service (`src/services/recommendation.service.ts`)
+`vi.clearAllMocks()` alone does **not** flush `mockResolvedValueOnce` queues; prefer `vi.resetAllMocks()` whenever queue state could leak.
+
+### 2. `mockResolvedValueOnce` only — never `mockResolvedValue` for per-call shaping
+
+Use `mockResolvedValueOnce` for any prisma / service mock that needs a specific return for a specific call. `mockResolvedValue` leaks across tests and survives `clearAllMocks`. The only valid `mockResolvedValue` calls are the "default happy path" arms inside `beforeEach` (rate limit, session, etc.).
+
+### 3. Env-at-module-load routes need `vi.stubEnv` + `vi.resetModules` + dynamic import
+
+Routes that read `process.env` at module-import time (e.g. `cron`, `beta/status`, anything gated by `DEMO_MODE` or `CRON_SECRET`) cannot be tested with top-level static imports. Pattern:
 
 ```typescript
-// tests/unit/services/recommendation.service.test.ts
+beforeEach(() => {
+  vi.resetModules();
+  vi.stubEnv('CRON_SECRET', 'test-secret');
+});
 
-describe('RecommendationService', () => {
-  describe('generateTripRecommendations', () => {
-    it('should generate recommendations from survey analysis', () => {
-      const analysis = {
-        budgetAnalysis: { groupOptimal: 1000, min: 500, max: 1500 },
-        dateAnalysis: { optimalRange: { start: new Date(), end: new Date() } },
-        locationPreferences: [{ location: 'Nashville', score: 10 }],
-        activityPreferences: [{ activity: 'music', score: 10 }],
-      };
-      
-      const result = generateTripRecommendations(analysis, []);
-      expect(result).toHaveProperty('destinations');
-      expect(result).toHaveProperty('suggestedBudget');
-    });
-  });
-
-  describe('calculateTripBudget', () => {
-    it('should calculate per-person budget correctly', () => {
-      const result = calculateTripBudget(3000, 6);
-      expect(result.perPerson).toBe(500);
-    });
-  });
+it('rejects missing auth header', async () => {
+  const { GET } = await import('@/app/api/cron/route');
+  const res = await GET(new NextRequest('http://x/api/cron'));
+  expect(res.status).toBe(401);
 });
 ```
 
-### 2. AI Layer
+Without `vi.resetModules()` the route keeps the env value from whichever test imported it first.
 
-#### Client (`src/lib/ai/client.ts`)
+### 4. `NextRequest` (not `Request`) for routes that read headers
 
-```typescript
-// tests/unit/lib/ai/client.test.ts
+The rate limiter pulls `x-forwarded-for` / `x-real-ip` off the request. Routes wired to rate-limit (including `beta/status`) must be tested with `new NextRequest(url)` not `new Request(url)` or the test crashes inside `headers.get(...)`.
 
-describe('AI Client', () => {
-  describe('checkRateLimit', () => {
-    it('should allow requests under limit', () => {
-      const result = checkRateLimit('user-1', 5, 60000);
-      expect(result).toBe(true);
-    });
+### 5. Static class method mocks need a double-cast for `mockResolvedValueOnce`
 
-    it('should block requests over limit', () => {
-      const userId = 'user-rate-limit-test';
-      // Make 5 requests
-      for (let i = 0; i < 5; i++) {
-        checkRateLimit(userId, 5, 60000);
-      }
-      // 6th should fail
-      const result = checkRateLimit(userId, 5, 60000);
-      expect(result).toBe(false);
-    });
-  });
-
-  describe('estimateTokens', () => {
-    it('should estimate tokens for text', () => {
-      const text = 'This is a test string with some words.';
-      const result = estimateTokens(text);
-      expect(result).toBeGreaterThan(0);
-      expect(result).toBeLessThan(20);
-    });
-  });
-
-  describe('estimateCost', () => {
-    it('should calculate GPT-4o cost correctly', () => {
-      const result = estimateCost(1000, 500, 'gpt-4o');
-      expect(result).toBeGreaterThan(0);
-    });
-  });
-});
-```
-
-#### Embeddings (`src/lib/ai/embeddings.ts`)
+For service classes mocked with `vi.mock()` factories, `vi.mocked(Service.prototype.method)` does not always expose `mockResolvedValueOnce`. Use:
 
 ```typescript
-// tests/unit/lib/ai/embeddings.test.ts
-
-describe('Embeddings', () => {
-  describe('cosineSimilarity', () => {
-    it('should return 1 for identical vectors', () => {
-      const vec = [1, 2, 3, 4, 5];
-      const result = cosineSimilarity(vec, vec);
-      expect(result).toBeCloseTo(1);
-    });
-
-    it('should return 0 for orthogonal vectors', () => {
-      const vec1 = [1, 0, 0];
-      const vec2 = [0, 1, 0];
-      const result = cosineSimilarity(vec1, vec2);
-      expect(result).toBeCloseTo(0);
-    });
-
-    it('should throw for different length vectors', () => {
-      expect(() => cosineSimilarity([1, 2], [1, 2, 3])).toThrow();
-    });
-  });
-
-  describe('InMemoryVectorStore', () => {
-    it('should add and search items', async () => {
-      const store = new InMemoryVectorStore();
-      await store.add({ id: '1', text: 'Beach vacation in Miami' });
-      await store.add({ id: '2', text: 'Mountain hiking in Colorado' });
-      
-      const results = await store.search('beach', 1);
-      expect(results[0].item.id).toBe('1');
-    });
-  });
-
-  describe('buildActivityText', () => {
-    it('should combine activity fields', () => {
-      const activity = {
-        name: 'Broadway Bar Crawl',
-        description: 'Live music experience',
-        category: 'NIGHTLIFE',
-      };
-      const result = buildActivityText(activity);
-      expect(result).toContain('Broadway Bar Crawl');
-      expect(result).toContain('Live music');
-    });
-  });
-});
+(SurveyService.prototype.getActiveSurvey as unknown as { mockResolvedValueOnce: Function })
+  .mockResolvedValueOnce(fakeSurvey);
 ```
 
-### 3. Components
+### 6. Mock type cast must list every method the test touches
 
-#### TripCard (`src/components/trips/TripCard.tsx`)
+When a Wave 1 test agent writes `vi.mocked(prisma.crew)`, TypeScript may not include `create` or `createMany` in the intersection type. The mock cast must enumerate every method the test calls, or `tsc --noEmit` fails. Common omissions: `create`, `createMany`, `deleteMany`.
 
-```typescript
-// tests/unit/components/TripCard.test.tsx
+### 7. Sentry is globally mocked in `setup.ts`
 
-import { render, screen } from '@testing-library/react';
-import TripCard from '@/components/trips/TripCard';
-
-describe('TripCard', () => {
-  const mockTrip = {
-    id: 'trip-1',
-    title: 'Nashville Adventure',
-    description: 'Fun trip with friends',
-    destination: { city: 'Nashville', country: 'USA' },
-    startDate: new Date('2025-07-01'),
-    endDate: new Date('2025-07-05'),
-    status: 'PLANNING' as const,
-    _count: { members: 4 },
-  };
-
-  it('should render trip title', () => {
-    render(<TripCard trip={mockTrip} />);
-    expect(screen.getByText('Nashville Adventure')).toBeInTheDocument();
-  });
-
-  it('should show destination', () => {
-    render(<TripCard trip={mockTrip} />);
-    expect(screen.getByText(/Nashville, USA/)).toBeInTheDocument();
-  });
-
-  it('should display member count', () => {
-    render(<TripCard trip={mockTrip} />);
-    expect(screen.getByText('4 members')).toBeInTheDocument();
-  });
-
-  it('should show status badge', () => {
-    render(<TripCard trip={mockTrip} />);
-    expect(screen.getByText('Planning')).toBeInTheDocument();
-  });
-
-  it('should link to trip detail page', () => {
-    render(<TripCard trip={mockTrip} />);
-    const link = screen.getByRole('link');
-    expect(link).toHaveAttribute('href', '/trips/trip-1');
-  });
-});
-```
-
-#### QuestionRenderer (`src/components/surveys/QuestionRenderer.tsx`)
-
-```typescript
-// tests/unit/components/QuestionRenderer.test.tsx
-
-import { render, screen, fireEvent } from '@testing-library/react';
-import QuestionRenderer from '@/components/surveys/QuestionRenderer';
-
-describe('QuestionRenderer', () => {
-  describe('SingleChoice', () => {
-    it('should render all options', () => {
-      const question = {
-        id: 'q1',
-        type: 'single_choice' as const,
-        question: 'Pick one',
-        required: true,
-        options: ['Option A', 'Option B', 'Option C'],
-      };
-      
-      render(<QuestionRenderer question={question} value="" onChange={() => {}} />);
-      
-      expect(screen.getByText('Option A')).toBeInTheDocument();
-      expect(screen.getByText('Option B')).toBeInTheDocument();
-      expect(screen.getByText('Option C')).toBeInTheDocument();
-    });
-
-    it('should call onChange when option selected', () => {
-      const onChange = vi.fn();
-      const question = {
-        id: 'q1',
-        type: 'single_choice' as const,
-        question: 'Pick one',
-        required: true,
-        options: ['Option A', 'Option B'],
-      };
-      
-      render(<QuestionRenderer question={question} value="" onChange={onChange} />);
-      fireEvent.click(screen.getByText('Option A'));
-      
-      expect(onChange).toHaveBeenCalledWith('Option A');
-    });
-  });
-
-  describe('BudgetSlider', () => {
-    it('should render with min/max values', () => {
-      const question = {
-        id: 'budget',
-        type: 'budget' as const,
-        question: 'Your budget?',
-        required: true,
-        min: 500,
-        max: 2000,
-      };
-      
-      render(<QuestionRenderer question={question} value={1000} onChange={() => {}} />);
-      
-      expect(screen.getByText('$500')).toBeInTheDocument();
-      expect(screen.getByText('$2,000')).toBeInTheDocument();
-    });
-  });
-});
-```
+Do not re-mock `@/lib/sentry` per file. After PR #38, `setup.ts` ships a global `vi.mock('@/lib/sentry')`. Tests asserting Sentry calls should import and spy on `logError` / `captureException` directly — error-path assertions flip to `toHaveBeenCalledTimes(1)` once a route gains Sentry coverage.
 
 ---
 
-## Integration Tests
+## V1 Test Patterns (intent-to-group loop)
 
-### API Routes
+V1 introduced four test surfaces that did not exist in the trip-domain era. Each has its own mock pattern.
 
-#### Trips API
+### Heatmap aggregation (`src/__tests__/lib/heatmap-*.test.ts`)
 
-```typescript
-// tests/integration/api/trips.test.ts
+Five suites cover the heatmap pipeline:
 
-import { createMocks } from 'node-mocks-http';
-import { GET, POST } from '@/app/api/trips/route';
+- `heatmap-contribution-writer.test.ts` — writes `HeatmapContribution` rows on commit + checkin
+- `heatmap-aggregate.test.ts` — Crew-tier cell aggregation, z=15 venue priority
+- `heatmap-aggregate-fof.test.ts` — friend-of-friend tier aggregation
+- `heatmap-fof-graph.test.ts` — FoF graph build with reachability cap
+- `heatmap-anchor-select.test.ts` — R24 anchor priority (1 = venue, 3 = subcrew, 4 = topic)
 
-describe('/api/trips', () => {
-  describe('GET', () => {
-    it('should return 401 without authentication', async () => {
-      const { req, res } = createMocks({ method: 'GET' });
-      const response = await GET(req);
-      expect(response.status).toBe(401);
-    });
+Pattern: build a synthetic contribution set, call the aggregator, assert cell counts and anchor selection. Database access is fully mocked; the algorithms themselves are deterministic given a seed.
 
-    it('should return user trips when authenticated', async () => {
-      // Mock session
-      const { req, res } = createMocks({ method: 'GET' });
-      // ... mock authentication
-      const response = await GET(req);
-      expect(response.status).toBe(200);
-      const data = await response.json();
-      expect(data).toHaveProperty('data');
-    });
-  });
+### Intent + subcrew flows (`src/__tests__/api/intents.test.ts`, `subcrews.test.ts`, `subcrew-coordination.test.ts`, `topics.test.ts`)
 
-  describe('POST', () => {
-    it('should create a trip with valid data', async () => {
-      const { req, res } = createMocks({
-        method: 'POST',
-        body: {
-          title: 'Test Trip',
-          destination: { city: 'Miami', country: 'USA' },
-          startDate: '2025-07-01',
-          endDate: '2025-07-05',
-        },
-      });
-      
-      const response = await POST(req);
-      expect(response.status).toBe(201);
-    });
+V1 intent classifier (`intent-classifier.test.ts`) routes free-text "what are you up to" into a Topic ID. The intent → subcrew formation flow is tested end-to-end at the route level, with `prisma.intent` / `prisma.subcrew` mocked. Key invariants tested:
 
-    it('should reject invalid trip data', async () => {
-      const { req, res } = createMocks({
-        method: 'POST',
-        body: {
-          title: '', // Invalid: empty title
-        },
-      });
-      
-      const response = await POST(req);
-      expect(response.status).toBe(400);
-    });
-  });
-});
-```
+- `POST /api/intents` issues an intent with a TTL (clamped to [30min, 12h])
+- `cron-expire-intents` purges expired intents and dissolves orphaned subcrews
+- `subcrew-try-form` only fires when ≥2 Crew share the same active Topic
+- `subcrew-cell-anonymize` redacts user identity once the subcrew enters a public cell
 
-#### AI API
+### Crew lex-order constraint (`src/__tests__/api/crew.test.ts`)
 
-```typescript
-// tests/integration/api/ai.test.ts
+The `Crew` table enforces `userIdA < userIdB` lexicographically to dedupe both directions of the relationship. Any test that constructs a crew row must order the IDs before insertion or the unique constraint test fails. Seed fixtures and the standalone heatmap runner (PR #92) now respect this constraint — copy that pattern when adding new crew test fixtures.
 
-describe('/api/ai/generate-itinerary', () => {
-  it('should generate itinerary for valid trip', async () => {
-    // This test requires mocking the AI service
-    const response = await fetch('/api/ai/generate-itinerary', {
-      method: 'POST',
-      body: JSON.stringify({ tripId: 'test-trip-id' }),
-    });
-    
-    expect(response.status).toBe(200);
-    const data = await response.json();
-    expect(data.data.itinerary).toHaveProperty('days');
-  });
+### Window-adjacency (`src/__tests__/lib/subcrew-window-adjacency.test.ts`)
 
-  it('should rate limit excessive requests', async () => {
-    // Make many requests quickly
-    const responses = await Promise.all(
-      Array(15).fill(null).map(() =>
-        fetch('/api/ai/generate-itinerary', {
-          method: 'POST',
-          body: JSON.stringify({ tripId: 'test-trip-id' }),
-        })
-      )
-    );
-    
-    const rateLimited = responses.some(r => r.status === 429);
-    expect(rateLimited).toBe(true);
-  });
-});
-```
-
-### Database Operations
-
-```typescript
-// tests/integration/db/trips.test.ts
-
-import { prisma } from '@/lib/prisma';
-
-describe('Trip Database Operations', () => {
-  const testUser = {
-    email: 'test@example.com',
-    name: 'Test User',
-  };
-
-  let userId: string;
-  let tripId: string;
-
-  beforeAll(async () => {
-    const user = await prisma.user.create({ data: testUser });
-    userId = user.id;
-  });
-
-  afterAll(async () => {
-    await prisma.trip.deleteMany({ where: { ownerId: userId } });
-    await prisma.user.delete({ where: { id: userId } });
-  });
-
-  it('should create a trip', async () => {
-    const trip = await prisma.trip.create({
-      data: {
-        title: 'Test Trip',
-        destination: { city: 'Test', country: 'USA' },
-        startDate: new Date(),
-        endDate: new Date(),
-        ownerId: userId,
-      },
-    });
-    
-    tripId = trip.id;
-    expect(trip.title).toBe('Test Trip');
-  });
-
-  it('should add members to trip', async () => {
-    await prisma.tripMember.create({
-      data: {
-        tripId,
-        userId,
-        role: 'OWNER',
-      },
-    });
-
-    const members = await prisma.tripMember.findMany({
-      where: { tripId },
-    });
-    
-    expect(members).toHaveLength(1);
-  });
-
-  it('should cascade delete trip data', async () => {
-    await prisma.trip.delete({ where: { id: tripId } });
-    
-    const members = await prisma.tripMember.findMany({
-      where: { tripId },
-    });
-    
-    expect(members).toHaveLength(0);
-  });
-});
-```
+Subcrews "merge" when two adjacent time windows overlap. Tests cover the window-coalescing math directly; do not depend on prisma here.
 
 ---
 
-## End-to-End Tests
+## Phase 8 Testing Priorities
 
-### Critical User Flows
+Phase 8 (launch-readiness re-audit) is in progress. The remaining test-shaped work:
 
-```typescript
-// tests/e2e/trips.spec.ts
+### P0 — E2E Playwright authenticated flows
 
-import { test, expect } from '@playwright/test';
+`e2e/smoke.spec.ts` is anonymous-only. We need authenticated coverage for:
 
-test.describe('Trip Creation Flow', () => {
-  test.beforeEach(async ({ page }) => {
-    // Login
-    await page.goto('/');
-    await page.click('text=Sign In');
-    await page.fill('input[name="email"]', 'alex@demo.com');
-    await page.fill('input[name="password"]', 'demo123');
-    await page.click('button[type="submit"]');
-    await page.waitForURL('/trips');
-  });
+- **Crew flow:** sign in → request Crew → accept on second account → confirm reciprocal Crew visible
+- **Meetup flow:** sign in → create Meetup at a venue → invite Crew → RSVP from second account → verify Pusher event delivery
+- **Check-in flow:** sign in → check in with `CREW` visibility → confirm second Crew sees it on `/checkins`, non-Crew does not
 
-  test('should create a new trip', async ({ page }) => {
-    // Navigate to new trip
-    await page.click('text=New Trip');
-    await page.waitForURL('/trips/new');
-    
-    // Step 1: Basics
-    await page.fill('input[name="title"]', 'E2E Test Trip');
-    await page.fill('textarea[name="description"]', 'Testing trip creation');
-    await page.click('text=Continue');
-    
-    // Step 2: Destination
-    await page.fill('input[placeholder="Nashville"]', 'Austin');
-    await page.fill('input[placeholder="USA"]', 'USA');
-    await page.click('text=Continue');
-    
-    // Step 3: Dates
-    await page.fill('input[name="startDate"]', '2025-07-01');
-    await page.fill('input[name="endDate"]', '2025-07-05');
-    await page.click('text=Continue');
-    
-    // Step 4: Details
-    await page.fill('input[placeholder="2500"]', '2000');
-    await page.click('text=Create Trip');
-    
-    // Verify redirect to trip page
-    await expect(page).toHaveURL(/\/trips\/[\w-]+/);
-    await expect(page.locator('h1')).toContainText('E2E Test Trip');
-  });
+Use `playwright-config.ts` storage state for the second account. Block this on `DEMO_MODE=true` being available in CI.
 
-  test('should view trip details', async ({ page }) => {
-    await page.click('.trip-card >> nth=0');
-    await expect(page.locator('[data-testid="trip-header"]')).toBeVisible();
-  });
-});
+### P1 — Sentry coverage validation
 
-test.describe('Survey Flow', () => {
-  test('should complete a trip survey', async ({ page }) => {
-    await page.goto('/trips/test-trip-id/survey');
-    
-    // Answer questions
-    await page.click('text=Sept 15-18');
-    await page.click('text=Next');
-    
-    // Budget slider
-    await page.fill('input[type="range"]', '800');
-    await page.click('text=Next');
-    
-    // Ranking (move items)
-    await page.click('[data-testid="move-up-1"]');
-    await page.click('text=Submit Survey');
-    
-    // Verify completion
-    await expect(page.locator('text=Survey submitted')).toBeVisible();
-  });
-});
+Sentry is now wired into 47/59 live routes (per nightly 2026-05-17). The remaining 12 routes need coverage. We need a dedicated audit test (or codemod) that fails CI when a new route under `src/app/api/` is added without a `logError` / `captureException` import. The `sentry-routes.test.ts` and `sentry-spy-assertions.test.ts` patterns from PR #37/#38 are the templates.
 
-test.describe('Voting Flow', () => {
-  test('should cast a vote', async ({ page }) => {
-    await page.goto('/trips/test-trip-id/vote');
-    
-    // Select an option
-    await page.click('[data-testid="voting-option-1"]');
-    
-    // Submit vote
-    await page.click('text=Submit Vote');
-    
-    // Verify results shown
-    await expect(page.locator('[data-testid="voting-results"]')).toBeVisible();
-  });
-});
-```
+### P1 — Quarantine or root-cause the 2 checkins-pusher flakes
 
-### Authentication Flow
+`src/__tests__/api/checkins-pusher.test.ts` has two tests that fail intermittently under parallel load. Reproduction is unreliable. Current options:
 
-```typescript
-// tests/e2e/auth.spec.ts
+1. Mark with `.concurrent.skip` until root-caused
+2. Add explicit Pusher mock reset in `beforeEach`
+3. Move to a dedicated single-threaded shard
 
-import { test, expect } from '@playwright/test';
+No fix has landed yet; the flakes are the only reason the 2026-05-17 build reads 1365/1367.
 
-test.describe('Authentication', () => {
-  test('should show login page', async ({ page }) => {
-    await page.goto('/');
-    await page.click('text=Sign In');
-    await expect(page.locator('form')).toBeVisible();
-  });
+### P2 — Coverage gaps flagged in recent nightlies
 
-  test('should login with valid credentials', async ({ page }) => {
-    await page.goto('/api/auth/signin');
-    await page.fill('input[name="email"]', 'alex@demo.com');
-    await page.fill('input[name="password"]', 'demo123');
-    await page.click('button[type="submit"]');
-    
-    await page.waitForURL('/trips');
-    await expect(page.locator('text=Your Trips')).toBeVisible();
-  });
-
-  test('should reject invalid credentials', async ({ page }) => {
-    await page.goto('/api/auth/signin');
-    await page.fill('input[name="email"]', 'wrong@email.com');
-    await page.fill('input[name="password"]', 'wrongpassword');
-    await page.click('button[type="submit"]');
-    
-    await expect(page.locator('text=Invalid')).toBeVisible();
-  });
-
-  test('should logout successfully', async ({ page }) => {
-    // Login first
-    await page.goto('/api/auth/signin');
-    await page.fill('input[name="email"]', 'alex@demo.com');
-    await page.fill('input[name="password"]', 'demo123');
-    await page.click('button[type="submit"]');
-    await page.waitForURL('/trips');
-    
-    // Logout
-    await page.click('[data-testid="user-menu"]');
-    await page.click('text=Sign Out');
-    
-    await expect(page.locator('text=Sign In')).toBeVisible();
-  });
-});
-```
-
-### AI Features
-
-```typescript
-// tests/e2e/ai.spec.ts
-
-import { test, expect } from '@playwright/test';
-
-test.describe('AI Features', () => {
-  test.beforeEach(async ({ page }) => {
-    // Login and navigate to a trip
-    await page.goto('/trips/test-trip-id');
-  });
-
-  test('should generate AI itinerary', async ({ page }) => {
-    await page.click('text=Itinerary');
-    await page.click('text=Generate with AI');
-    
-    // Wait for generation (may take time)
-    await expect(page.locator('[data-testid="itinerary-days"]'))
-      .toBeVisible({ timeout: 30000 });
-    
-    // Verify days exist
-    await expect(page.locator('[data-testid="itinerary-day"]'))
-      .toHaveCount.greaterThan(0);
-  });
-
-  test('should chat with AI assistant', async ({ page }) => {
-    await page.click('text=Chat');
-    
-    await page.fill('input[placeholder="Ask about your trip..."]', 
-      'What are the best restaurants in Nashville?');
-    await page.click('button[type="submit"]');
-    
-    // Wait for response
-    await expect(page.locator('[data-testid="ai-response"]'))
-      .toBeVisible({ timeout: 20000 });
-  });
-});
-```
+- Heatmap renderer (client component) has no unit tests
+- `RichFeedItem.tsx` (717 lines, open in refactor PRs) needs subcomponent tests once split
+- `/profile/page.tsx` (623 lines) same
 
 ---
 
 ## Test Data Fixtures
 
-```typescript
-// tests/fixtures/trips.ts
+Live fixtures sit under `prisma/seed-*.ts` and are imported into test setup as needed:
 
-export const mockTrips = [
-  {
-    id: 'trip-1',
-    title: 'Nashville Summer Adventure',
-    description: 'Long weekend in Music City',
-    destination: { city: 'Nashville', country: 'USA' },
-    startDate: new Date('2025-07-04'),
-    endDate: new Date('2025-07-07'),
-    status: 'PLANNING',
-    budget: { total: 2500, currency: 'USD' },
-  },
-  {
-    id: 'trip-2',
-    title: 'Austin Music & BBQ',
-    description: 'SXSW vibes without the crowds',
-    destination: { city: 'Austin', country: 'USA' },
-    startDate: new Date('2025-09-15'),
-    endDate: new Date('2025-09-18'),
-    status: 'SURVEYING',
-    budget: { total: 2000, currency: 'USD' },
-  },
-];
+- `prisma/seed-heatmap.ts` — 3 users, Crew triad (lex-ordered), Intents, HeatmapContributions
+- `prisma/seed-heatmap-only.ts` — standalone runner (no full reset; PR #92)
+- `src/__tests__/setup.ts` — global prisma mock, Sentry mock, Pusher mock, email senders mock, `checkRateLimit` factory mock
 
-export const mockUsers = [
-  {
-    id: 'user-1',
-    email: 'alex@demo.com',
-    name: 'Alex Johnson',
-    preferences: {
-      travelStyle: 'adventure',
-      interests: ['hiking', 'photography', 'food'],
-    },
-  },
-  {
-    id: 'user-2',
-    email: 'jordan@demo.com',
-    name: 'Jordan Smith',
-    preferences: {
-      travelStyle: 'relaxation',
-      interests: ['beach', 'sports', 'nightlife'],
-    },
-  },
-];
-
-export const mockSurvey = {
-  id: 'survey-1',
-  tripId: 'trip-2',
-  title: 'Austin Trip Preferences',
-  status: 'ACTIVE',
-  questions: [
-    {
-      id: 'availability',
-      type: 'multiple_choice',
-      question: 'When are you available?',
-      required: true,
-      options: ['Sept 15-18', 'Sept 22-25', 'Oct 1-4'],
-    },
-    {
-      id: 'budget',
-      type: 'budget',
-      question: "What's your budget?",
-      required: true,
-      min: 300,
-      max: 1500,
-    },
-  ],
-};
-```
+Avoid inline fixtures over ~20 lines — promote into `prisma/seed-*.ts` so the heatmap and intent suites can reuse them.
 
 ---
 
 ## Running Tests
 
-### NPM Scripts
-
-Add to `package.json`:
-
-```json
-{
-  "scripts": {
-    "test": "vitest",
-    "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage",
-    "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui",
-    "test:all": "npm run test && npm run test:e2e"
-  }
-}
-```
-
-### Commands
-
 ```bash
-# Run unit tests
-npm run test
-
-# Run tests with UI
-npm run test:ui
-
-# Run tests with coverage
-npm run test:coverage
-
-# Run E2E tests
-npm run test:e2e
-
-# Run E2E tests with Playwright UI
-npm run test:e2e:ui
-
-# Run all tests
-npm run test:all
+npm test                       # full suite
+npm test -- crew               # filter by pattern
+npm test -- --reporter=verbose # full output
+npm run test:e2e               # Playwright (chromium)
+npm run lint                   # ESLint
+npx tsc --noEmit              # type check (faster than full build for test-only changes)
 ```
+
+For the nightly pipeline pattern (Wave 1 / Wave 2 / Wave 3, mock cast checks, shared-file reservation), see `MEMORY.md` and `docs/agents/CODE_CHECKING_AGENT_GUIDE.md`.
 
 ---
 
 ## CI/CD Integration
 
-### GitHub Actions Workflow
+`.github/workflows/ci.yml` runs on every push and PR:
 
-```yaml
-# .github/workflows/test.yml
+1. `npm ci`
+2. `npx tsc --noEmit`
+3. `npm run lint`
+4. `npm test`
+5. `npx playwright install chromium --with-deps && npm run test:e2e`
 
-name: Tests
+Failure on any step blocks the PR. The Playwright step uploads `playwright-report/` on failure.
 
-on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main]
+Per-PR Neon branches apply `prisma migrate deploy` before the test step. Note two known gotchas (per memory `feedback_neon_pr_workflow_gotchas.md`):
 
-jobs:
-  unit-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      
-      - run: npm ci
-      - run: npm run test:coverage
-      
-      - uses: codecov/codecov-action@v3
-        with:
-          files: ./coverage/lcov.info
-
-  e2e-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      
-      - run: npm ci
-      - run: npx playwright install --with-deps
-      - run: npm run test:e2e
-      
-      - uses: actions/upload-artifact@v3
-        if: failure()
-        with:
-          name: playwright-report
-          path: playwright-report/
-```
+- `create-branch-action@v6` does **not** emit `db_url_with_pooler` — read `db_url` instead
+- A FAILED migration sticks on the PR's Neon branch across pushes; closing and reopening the PR is currently the only way to reset
 
 ---
 
-## Test Coverage Goals
+## Test Coverage Targets
 
-| Category | Target | Current |
-|----------|--------|---------|
-| Unit Tests | 80% | 865+ passing (45 test files) |
-| Integration Tests | 70% | Included in Vitest suite |
-| E2E Tests | Critical paths | e2e/auth-flow.spec.ts (requires `npx playwright install chromium`) |
+| Category | Target | Status (2026-05-19) |
+|----------|--------|---------------------|
+| API route handlers | 80% | ~85% (49/59 routes covered) |
+| Lib (pure functions) | 90% | ~92% (sanitize, validations, costs, heatmap, intent, subcrew all covered) |
+| Components | 60% | Low — Crew/Meetup/Checkin components have prop-shape tests only |
+| E2E (Playwright) | Critical paths | Smoke only; authenticated flows pending Phase 8 |
 
-### Priority Test Areas
+### Priority by surface
 
-1. **Critical** (Must have 90%+ coverage)
-   - Authentication flows
-   - Trip CRUD operations
-   - Payment processing (when implemented)
-
-2. **High** (Must have 80%+ coverage)
-   - Survey submission
-   - Voting system
-   - AI itinerary generation
-
-3. **Medium** (Target 70% coverage)
-   - Social features
-   - Notifications
-   - Search functionality
-
-4. **Low** (Target 50% coverage)
-   - UI animations
-   - Admin features
-   - Analytics
+1. **P0 — Auth, Crew, Meetup, Check-in** (must have route + integration coverage; on track)
+2. **P1 — Heatmap, Intent, Subcrew** (V1 product surface; covered at lib level, route-level coverage in place)
+3. **P2 — Notifications, search, profile** (covered; refactors pending will need re-cover)
+4. **P3 — UI animations, admin-only views** (low priority; visual regression deferred)
 
 ---
 
-*Last Updated: 2026-03-24*
-
+*Last Updated: 2026-05-19*

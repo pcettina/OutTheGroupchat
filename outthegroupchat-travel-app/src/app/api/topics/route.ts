@@ -11,12 +11,21 @@ import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { apiLogger } from '@/lib/logger';
 import { captureException } from '@/lib/sentry';
+import { apiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const rl = await checkRateLimit(apiRateLimiter, `topics-list:${session.user.id}`);
+    if (!rl.success) {
+      return NextResponse.json(
+        { success: false, error: 'Rate limit exceeded' },
+        { status: 429, headers: getRateLimitHeaders(rl) },
+      );
     }
 
     const topics = await prisma.topic.findMany({

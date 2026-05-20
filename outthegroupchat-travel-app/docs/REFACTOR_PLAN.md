@@ -410,12 +410,13 @@ Each phase targets a discrete session (or a nightly build if small). Phases are 
 ### Phase 8 — Launch-readiness re-audit (1 session)
 **Objective:** Re-baseline the launch checklist against new scope.
 **Actions:**
-1. Rewrite `docs/LAUNCH_CHECKLIST.md` with meetup-centric milestones
-2. Update `docs/PRODUCTION_ROADMAP.md` (target date, priorities, new risk register)
+1. Rewrite `docs/LAUNCH_CHECKLIST.md` with meetup-centric milestones ✅ (Phase 8 initial pass, refined 2026-05-19)
+2. Update `docs/PRODUCTION_ROADMAP.md` (target date, priorities, new risk register) ✅ (refreshed v3.3, 2026-05-19)
 3. Security audit focused on new surfaces: location data handling, Crew-request abuse prevention, meetup spam, check-in stalking mitigation (Q4 `activeUntil` is first line of defense)
-4. Rate-limit audit for new routes
-5. E2E Playwright tests for new critical paths: signup → Crew request → meetup create → RSVP → check-in
-6. Sentry coverage audit: target 100% on new routes (don't repeat the 0/48-on-main debt)
+4. Rate-limit audit for new routes ✅ partial — V1 surface (intents, subcrews, topics, heatmap, recommendations) ~52/53 routes covered as of 2026-05-19; `/api/topics` patched tonight
+5. E2E Playwright tests for new critical paths: signup → Crew request → meetup create → RSVP → check-in — remaining gap
+6. Sentry coverage audit: target 100% on new routes (don't repeat the 0/48-on-main debt) ✅ ~52/53 live routes (only `/api/auth/[...nextauth]` outside scope); production DSN still missing in Vercel
+7. Refresh stale docs to current state ✅ (2026-05-19): PRODUCTION_ROADMAP, TEST_CASES, 4 agent guides (CODE_CHECKING, FRONTEND, SOCIAL_ENGAGEMENT, PLANNING), UPGRADE_PLAN, README
 
 **Exit criteria:** Updated launch checklist reflects real readiness of the new product, not the archived one.
 

@@ -1,435 +1,195 @@
 # 🌐 Social Engagement Agent Guide
 
 ## Mission Statement
-> "A social network that not just showcases experiences, but helps you build them."
+> "The social media app that wants to get you off your phone."
 
-**Your Role:** Design and implement social features that create meaningful connections, drive engagement, and make trip planning a shared experience.
+**Your Role:** Design and implement the V1 intent-to-group loop — Crew, Intent, SubCrew, Meetup — so the social graph translates into IRL meetups, not screen time.
+
+---
+
+## 🧬 V1 Domain Model (founder-locked 2026-04-24)
+
+| Entity | What it is | Where it lives |
+|--------|-----------|----------------|
+| **Crew** | Peer-tier mutual relationship (bidirectional, accepted). The persistent graph. | `prisma.crew` (model), `src/components/social/` |
+| **Topic** | Catalog of things people do together (run, climb, coffee, board games, etc.) — curated, finite. | `prisma.topic` |
+| **Intent** | A user's signal: "I want to do {Topic} in {window}". Has a lifecycle (active → expired). | `prisma.intent`, `src/components/intents/`, `src/lib/intent-lifecycle.ts` |
+| **SubCrew** | Auto-formed group when ≥2 Crew members signal Intent on the same Topic in overlapping window + city. | `prisma.subCrew`, `src/components/subcrews/`, `src/lib/subcrew-formation.ts` |
+| **Meetup** | Coordination unit: chosen Venue, time, RSVPs, check-ins. Created from a SubCrew. | `prisma.meetup`, `src/components/meetups/`, `src/components/checkins/` |
+
+**Full spec:** `docs/PRODUCT_VISION.md`. Do not introduce concepts (Trips, Activities, Surveys, Voting Sessions, AI chat) that don't map onto this model — they're archived.
 
 ---
 
 ## 🎯 Core Engagement Principles
 
-### 1. Build Experiences Together
-Not just sharing photos AFTER a trip - help groups plan, decide, and coordinate BEFORE and DURING.
+### 1. Signal → Match → Meet
+The whole loop fits in one sentence: a user signals Intent, the system matches them with their Crew, and the SubCrew converges on a Meetup.
 
-### 2. Create FOMO, Then Fulfill It
-Show amazing trips others are planning → Make it easy to start your own → Help you succeed.
+### 2. Crew Is Sacred
+Crew is mutual and accepted. No one-sided follows in the V1 loop (`Follow` is `@deprecated` in the schema). Trust gates everything downstream.
 
-### 3. Social Proof Everywhere
-Every feature should answer: "Who else is doing this? What are they saying?"
+### 3. Off-Phone Is the Win Condition
+A successful session ends with the user closing the app and walking to the venue. Engagement features that *retain* attention past that point are anti-goals.
 
-### 4. Celebrate the Group
-Individual travelers exist, but our POWER is in group dynamics.
-
----
-
-## 📊 Current Social Features Status
-
-### Implemented ✅
-| Feature | Quality | Notes |
-|---------|---------|-------|
-| Follow System | ⭐⭐⭐ | Basic but functional |
-| Activity Feed | ⭐⭐ | Needs media support |
-| Notifications | ⭐⭐⭐ | In-app only |
-| User Profiles | ⭐⭐ | Basic info only |
-| Trip Sharing | ⭐⭐ | Public/private toggle |
-
-### Missing ❌
-| Feature | Priority | Impact |
-|---------|----------|--------|
-| Reactions/Likes | P0 | Critical engagement |
-| Comments | P0 | Conversation starter |
-| Rich Media | P0 | Content quality |
-| Stories/Live Updates | P1 | Real-time engagement |
-| @Mentions | P1 | User discovery |
-| #Hashtags | P2 | Content discovery |
-| Group Chat | P1 | Trip coordination |
-| Achievements | P2 | Gamification |
+### 4. Privacy By Default
+Location visibility, Intent visibility, and SubCrew membership are all opt-in (see `src/components/privacy/PrivacyPickerModal.tsx`). Do not surface user state without consent.
 
 ---
 
-## 🔥 Engagement Loops
+## 📊 Current V1 Surface (2026-05-19)
 
-### Primary Loop: Plan → Share → Inspire
+### Shipped ✅
+| Feature | Notes |
+|---------|-------|
+| Crew (send/accept/reject, bidirectional pairing) | `src/app/api/crew/*` (6 routes), `CrewButton`, `CrewList` |
+| Intent (signal, list, expire) | `src/app/api/intents/*`, `src/components/intents/*` |
+| SubCrew auto-formation (≥2 Crew on same Topic) | `src/lib/subcrew-formation.ts`, `EmergingSubCrewCard`, `ImInButton` |
+| Meetup (create, RSVP, invite) | `src/app/api/meetups/*`, `src/components/meetups/*` |
+| Check-ins ("Who's out tonight") | `src/app/api/checkins/*`, `NearbyCrewList`, `LiveActivityCard` |
+| Crew + FoF heatmap (Phase 4) | `src/components/heatmap/HeatmapMap.tsx` (maplibre-gl, OpenFreeMap) |
+| Real-time (RSVP / formation / check-in via Pusher) | `src/lib/pusher.ts` (env vars missing in prod) |
+| Notifications (V1 types only — pruned in PR #55) | `Notification` model |
+| Public profiles | `src/app/profile/[userId]/page.tsx` |
+| Email (Crew invite, Meetup invite/RSVP, starting-soon) | `src/lib/email.ts`, `email-meetup.ts`, `email-auth.ts` |
+
+### Deferred / Out of scope
+| Item | Status |
+|------|--------|
+| Reactions beyond LIKE, threaded comments | Not in V1 scope |
+| Stories, ephemeral content | Not in V1 scope |
+| Group chat / DMs | Not in V1 (Pusher channels exist for events, not freeform chat) |
+| Gamification / achievements | Not in V1 |
+| AI suggestions / chat / icebreakers | **Removed PR #65 (2026-04-23)** — do not propose |
+| Trip planning / itineraries / surveys / voting | **Archived** to `src/_archive/trips/` |
+
+---
+
+## 🔥 The V1 Loop
+
+### Primary Loop: Signal → Match → Meet → Show Up
 ```
-┌─────────────────────────────────────────┐
-│                                         │
-│  User sees amazing trip in feed         │
-│              ↓                          │
-│  Gets inspired to plan similar trip     │
-│              ↓                          │
-│  Invites friends to join                │
-│              ↓                          │
-│  Group plans together (surveys, votes)  │
-│              ↓                          │
-│  Trip happens → Content created         │
-│              ↓                          │
-│  Shares to feed → Inspires others       │
-│              ↓                          │
-└──────────── (Loop continues) ───────────┘
+┌──────────────────────────────────────────────────┐
+│                                                  │
+│  User signals Intent on a Topic (one tap)        │
+│              ↓                                   │
+│  System checks: ≥2 Crew on same Topic +          │
+│  overlapping window + same city?                 │
+│              ↓                                   │
+│  SubCrew auto-forms → push + Pusher event        │
+│              ↓                                   │
+│  Members tap "I'm in" → coordinate venue/time    │
+│              ↓                                   │
+│  Meetup confirmed → RSVP + venue + reminder      │
+│              ↓                                   │
+│  Check-in IRL → optional public "Crew at venue"  │
+│              ↓                                   │
+│  Contribution writes back into heatmap +         │
+│  trust score → next Intent matches better        │
+│              ↓                                   │
+└──────────── (Loop continues) ────────────────────┘
 ```
 
-### Secondary Loop: Engage → Connect → Collaborate
+### Secondary Loop: Discover → Add to Crew → Co-meet
 ```
-User likes/comments on trip
+User sees a Crew member at a Venue on the heatmap (opt-in only)
         ↓
-Follows the trip creator
+Or sees a FoF (friend-of-friend) repeatedly at the same Topics
         ↓
-Sees more of their content
+Sends Crew request
         ↓
-Gets invited to future trips
+Mutual accept → bidirectional Crew pairing
         ↓
-Becomes active contributor
+Future Intents now match against the larger Crew
 ```
 
 ---
 
-## 🎮 Engagement Features to Build
+## 🎮 V1 Engagement Surfaces
 
-### 1. Reaction System
-**Priority:** P0 - CRITICAL
-**Impact:** 5x engagement increase
+The schemas below already exist in `prisma/schema.prisma`. This section describes how to think about them, not what to add.
 
-```typescript
-// Schema addition
-model Reaction {
-  id        String   @id @default(cuid())
-  userId    String
-  targetId  String   // Trip, Activity, or Comment
-  targetType ReactionTarget
-  type      ReactionType
-  createdAt DateTime @default(now())
-  
-  user User @relation(fields: [userId], references: [id])
-  
-  @@unique([userId, targetId, targetType])
-}
+### 1. Crew (the persistent graph)
+- Mutual & accepted. A single accept writes both sides.
+- Optional `crewLabel` per user (how this person knows them, e.g. "climbing partner").
+- `activeUntil` lets Crew members opt into ephemeral elevated visibility windows.
+- Notifications: `CREW_REQUEST_RECEIVED`, `CREW_REQUEST_ACCEPTED`.
 
-enum ReactionTarget {
-  TRIP
-  ACTIVITY
-  COMMENT
-  FEED_ITEM
-}
+### 2. Intent (the signal)
+- One row per (user, topic, window). `activeUntil` defaults to a short horizon (tonight, this weekend).
+- Visibility: Crew-only by default; broader tiers are opt-in.
+- Auto-expires; `src/lib/intent-lifecycle.ts` is the source of truth.
+- Writing an Intent triggers `subcrew-formation.ts` synchronously to look for matches.
 
-enum ReactionType {
-  LIKE      // ❤️ Default
-  LOVE      // 😍 Trip looks amazing
-  FIRE      // 🔥 This is hot
-  JEALOUS   // 😭 Take me with you
-  PLANNING  // 📝 Adding to my list
-}
-```
+### 3. SubCrew (the auto-formed group)
+- Created when ≥2 Crew share Intent on the same Topic in overlapping window + city.
+- Membership starts as "emerging" (system invited); becomes "joined" on "I'm in" tap.
+- Notifications: `SUBCREW_EMERGING`, `SUBCREW_FORMED`, `SUBCREW_RECOMMENDATION`.
+- Lifecycle ends when the spawned Meetup wraps or all Intents expire.
 
-**UI Considerations:**
-- Quick tap = Like
-- Long press = Reaction picker
-- Show reaction counts with breakdown
-- Animate reactions
+### 4. Meetup (the coordination unit)
+- Hosted by one SubCrew member; venue chosen via Google Places (`/api/venues/search`).
+- RSVP states: YES / NO / MAYBE / WAITLIST. Invitees can be additional Crew outside the SubCrew.
+- `MEETUP_STARTING_SOON` cron pushes reminder ~1h before.
+- Real-time: Pusher channel per Meetup for RSVP + chat-lite updates.
 
----
+### 5. Check-ins ("Who's out tonight")
+- POST `/api/checkins` clamps `activeUntilOverride` to `[now+30m, now+12h]` (default `now+6h`).
+- Visibility: `PUBLIC | CREW | PRIVATE` (no `CLOSE_CREW`).
+- Crew-only check-ins dispatch `CREW_CHECKED_IN_NEARBY` notifications.
+- Drives `NearbyCrewList` UI and contributes to the heatmap.
 
-### 2. Comments System
-**Priority:** P0 - CRITICAL
-**Impact:** 3x session duration
+### 6. Heatmap (visualized momentum)
+- `src/components/heatmap/HeatmapMap.tsx` — maplibre-gl + OpenFreeMap (no API key).
+- Crew tier (R22) and FoF tier shipped (PR #86, #87).
+- Contribution writers wired into commit + check-in flows.
+- Venue markers appear at z=15. Anchor priorities 1/3/4 wired (priority 2 deferred to post-V1).
 
-```typescript
-// Schema addition
-model Comment {
-  id        String   @id @default(cuid())
-  userId    String
-  targetId  String
-  targetType CommentTarget
-  content   String
-  parentId  String?  // For threaded replies
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  user     User      @relation(fields: [userId], references: [id])
-  parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
-  replies  Comment[] @relation("CommentReplies")
-  reactions Reaction[]
-  
-  @@index([targetId, targetType])
-}
-
-enum CommentTarget {
-  TRIP
-  ACTIVITY
-  FEED_ITEM
-}
-```
-
-**Features:**
-- Threaded replies (1 level deep)
-- @mentions with autocomplete
-- Emoji picker
-- Rich link previews
-- Edit/delete (time-limited)
-- Report inappropriate
+> **Pruned NotificationType (PR #55, 2026-04-22):** only V1-relevant types remain. Do not reintroduce trip/follow notification variants.
 
 ---
 
-### 3. Rich Media System
-**Priority:** P0 - CRITICAL
-**Impact:** 10x engagement on posts with images
-
-```typescript
-// Schema addition
-model Media {
-  id        String    @id @default(cuid())
-  userId    String
-  tripId    String?
-  activityId String?
-  type      MediaType
-  url       String    // CDN URL
-  thumbnail String?   // For videos
-  caption   String?
-  location  Json?     // {lat, lng, placeName}
-  takenAt   DateTime?
-  createdAt DateTime  @default(now())
-  
-  user     User     @relation(fields: [userId], references: [id])
-  trip     Trip?    @relation(fields: [tripId], references: [id])
-  activity Activity? @relation(fields: [activityId], references: [id])
-  tags     MediaTag[]
-}
-
-enum MediaType {
-  PHOTO
-  VIDEO
-  GALLERY
-}
-
-model MediaTag {
-  id      String @id @default(cuid())
-  mediaId String
-  userId  String // Tagged user
-  x       Float  // Position 0-1
-  y       Float
-  
-  media Media @relation(fields: [mediaId], references: [id])
-  user  User  @relation(fields: [userId], references: [id])
-}
-```
-
-**Features:**
-- Image upload with compression
-- Multi-image galleries
-- Short video clips (30s max)
-- Location tagging
-- User tagging
-- Filters (optional)
-
----
-
-### 4. Stories/Live Updates
-**Priority:** P1 - HIGH
-**Impact:** 40% DAU increase
-
-```typescript
-// Schema addition
-model Story {
-  id        String    @id @default(cuid())
-  userId    String
-  tripId    String?   // Optional trip context
-  mediaUrl  String
-  type      StoryType
-  text      String?
-  location  Json?
-  expiresAt DateTime  // 24 hours from creation
-  createdAt DateTime  @default(now())
-  
-  user  User   @relation(fields: [userId], references: [id])
-  trip  Trip?  @relation(fields: [tripId], references: [id])
-  views StoryView[]
-}
-
-enum StoryType {
-  PHOTO
-  VIDEO
-  TEXT
-  POLL
-  COUNTDOWN
-}
-
-model StoryView {
-  id        String   @id @default(cuid())
-  storyId   String
-  userId    String
-  viewedAt  DateTime @default(now())
-  
-  story Story @relation(fields: [storyId], references: [id])
-  user  User  @relation(fields: [userId], references: [id])
-  
-  @@unique([storyId, userId])
-}
-```
-
-**Features:**
-- 24-hour ephemeral content
-- Trip-linked stories
-- View tracking
-- Polls and countdowns
-- Highlight collections
-
----
-
-### 5. Group Chat
-**Priority:** P1 - HIGH
-**Impact:** Essential for coordination
-
-```typescript
-// Schema addition
-model ChatMessage {
-  id        String   @id @default(cuid())
-  tripId    String
-  userId    String
-  content   String
-  type      MessageType
-  metadata  Json?    // For special message types
-  createdAt DateTime @default(now())
-  
-  trip Trip @relation(fields: [tripId], references: [id])
-  user User @relation(fields: [userId], references: [id])
-  reactions Reaction[]
-}
-
-enum MessageType {
-  TEXT
-  IMAGE
-  ACTIVITY  // Shared activity
-  POLL      // Quick vote
-  LOCATION  // Live location share
-  SYSTEM    // Join/leave notifications
-}
-```
-
-**Features:**
-- Real-time via Pusher
-- Read receipts
-- Reply to messages
-- Share activities to chat
-- Quick polls
-- AI assistant in chat
-
----
-
-### 6. Achievements & Gamification
-**Priority:** P2 - MEDIUM
-**Impact:** 25% retention increase
-
-```typescript
-// Schema addition
-model Achievement {
-  id          String @id @default(cuid())
-  key         String @unique
-  name        String
-  description String
-  icon        String
-  category    AchievementCategory
-  tier        Int    // 1-3
-  requirement Json   // {type: 'trips_completed', count: 5}
-}
-
-model UserAchievement {
-  id            String   @id @default(cuid())
-  userId        String
-  achievementId String
-  progress      Int
-  unlockedAt    DateTime?
-  createdAt     DateTime @default(now())
-  
-  user        User        @relation(fields: [userId], references: [id])
-  achievement Achievement @relation(fields: [achievementId], references: [id])
-  
-  @@unique([userId, achievementId])
-}
-
-enum AchievementCategory {
-  PLANNING    // Trip planning milestones
-  EXPLORING   // Destinations visited
-  SOCIAL      // Followers, engagement
-  CREATOR     // Content creation
-  ORGANIZER   // Group coordination
-}
-```
-
-**Achievement Ideas:**
-```
-🌱 First Timer - Complete your first trip
-🌍 Globetrotter - Visit 10 countries
-👥 Social Butterfly - 100 followers
-🎯 Planner Pro - Perfect survey completion
-🔥 Trendsetter - Trip gets 100 saves
-🤝 Party Starter - Organize 5 group trips
-📸 Storyteller - 50 trip photos shared
-💬 Contributor - 100 helpful comments
-```
-
----
-
-## 📈 Engagement Metrics to Track
+## 📈 Engagement Metrics to Track (V1)
 
 ### Core Metrics
-| Metric | Current | Target | How to Improve |
-|--------|---------|--------|----------------|
-| DAU/MAU | TBD | 40% | Stories, notifications |
-| Trips/User | TBD | 2+ | Better onboarding |
-| Group Size Avg | TBD | 5+ | Easy invites |
-| Content/Trip | TBD | 10+ | Media features |
-| Engagement Rate | TBD | 10% | Reactions, comments |
+| Metric | Definition | Target |
+|--------|-----------|--------|
+| Intent → SubCrew rate | % of Intents that find ≥1 Crew match | >30% |
+| SubCrew → Meetup rate | % of SubCrews that produce a confirmed Meetup | >40% |
+| Meetup → Check-in rate | % of confirmed Meetups with ≥1 IRL check-in | >60% |
+| Median time-to-Meetup | Intent signal → Meetup confirm | <24h |
+| Crew size (median) | accepted mutual relationships per active user | 8+ |
+| Repeat-meetup rate | % of users with ≥2 Meetups in a month | >25% |
 
-### Social Health Metrics
+### Health metrics (anti-engagement guardrails)
 ```
-Follow Ratio = Followers / Following (ideal: 0.8-1.2)
-Reciprocity = Mutual Follows / Total Follows (ideal: >30%)
-Engagement = (Likes + Comments + Shares) / Impressions (ideal: >5%)
-Viral Coefficient = Invites Sent × Accept Rate (ideal: >1.0)
+Median session length          → SHORTER is better (target <3 min/session)
+Notifications-per-Meetup       → keep low; quality over volume
+Off-app conversion             → % of sessions that end with a check-in or
+                                 venue map open within 6h
 ```
 
 ---
 
-## 🚀 Implementation Roadmap
+## 🚀 V1 Status & Path to Launch
 
-### Phase 1: Engagement Foundation (Weeks 1-2)
+The V1 build is mostly shipped. See `docs/REFACTOR_PLAN.md` for the canonical phase tracker.
+
 ```
-Week 1:
-□ Reaction system (backend + frontend)
-□ Comment system (basic)
-□ Media upload infrastructure
-
-Week 2:
-□ Rich media in feed
-□ @mentions implementation
-□ Enhanced notifications
+✅ Phase 0–7  (Pivot, archive trips, Crew + Intent + SubCrew + Meetup +
+              Check-ins + Marketing surface) — all merged
+🟡 Phase 8    Launch readiness — IN PROGRESS
+              ✅ Actions #1–#4
+              □ #5 E2E Playwright authenticated flows
+              □ #6 Sentry full coverage audit (47/59 routes as of 2026-05-19)
 ```
 
-### Phase 2: Real-Time Social (Weeks 3-4)
-```
-Week 3:
-□ Group chat implementation
-□ Pusher full integration
-□ Typing indicators
-
-Week 4:
-□ Stories MVP
-□ Live trip updates
-□ Online presence
-```
-
-### Phase 3: Growth Mechanics (Weeks 5-6)
-```
-Week 5:
-□ Achievement system
-□ Trending algorithm
-□ Personalized feed
-
-Week 6:
-□ Share cards
-□ Viral loops
-□ Referral system
-```
+### What's left to ship for V1
+- Sentry DSN in Vercel + full route coverage
+- Pusher env vars in Vercel (real-time disabled in prod without them)
+- Resend domain verification
+- Playwright E2E for the four signed-in flows (Crew accept, Intent → SubCrew, Meetup RSVP, check-in)
+- Heatmap anchor priority 2 polish (deferred — track for post-V1)
 
 ---
 
@@ -454,12 +214,13 @@ New activity → Suggest sharing
 Milestone → Auto-celebrate
 ```
 
-### 4. FOMO Factory
+### 4. Crew Proximity, Not FOMO
 ```
-Show: "Sarah and 4 others are planning a trip to Bali"
-Show: "This trip has been saved 47 times"
-Show: "Trending in your area"
+Show: "Sarah and 3 of your Crew want coffee tomorrow morning"
+Show: "Your SubCrew has a venue picked — RSVP by 6pm"
+Show: "2 Crew are already at Roast Co. — head over?"
 ```
+The pull is *your people, near you, now* — not anonymous trending content.
 
 ---
 
@@ -512,7 +273,7 @@ Before launching any social feature:
 
 ---
 
-*Make connections that turn strangers into travel companions.*
+*Make connections that turn Crew into the people you actually saw this week.*
 
-*Last Updated: 2026-03-26*
+*Last Updated: 2026-05-19*
 

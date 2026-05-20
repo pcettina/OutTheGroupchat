@@ -14,7 +14,7 @@ A LinkedIn-style social network built for in-person meetups, not trip planning. 
 
 ## Pivot Status
 
-> **Active refactor: Phase 5 of 8.** Phase 4 (Meetups) complete — PRs #48, #49, #51. Phase 5 (Check-ins & live presence) now starting. Trip-planning code archived in `src/_archive/` (see `docs/REFACTOR_PLAN.md`). All infrastructure — auth, database, real-time, API layer — is 100% reused. No data loss; schema migrations are additive.
+> **Refactor Phases 0–7 complete; Phase 8 (launch-readiness) in progress; V1 product loop Phases 1–4 complete (heatmap shipped) — V1 Phase 5+ in planning.** Trip-planning code archived in `src/_archive/` (see `docs/REFACTOR_PLAN.md`). All infrastructure — auth, database, real-time, API layer — is 100% reused. No data loss; schema migrations are additive.
 
 ## Tech Stack
 
@@ -71,7 +71,7 @@ A LinkedIn-style social network built for in-person meetups, not trip planning. 
 ```
 src/
 ├── app/                    # Next.js App Router pages
-│   ├── api/               # API routes (51 active routes)
+│   ├── api/               # API routes (53 active routes — V1 routes: heatmap, intents, subcrews, topics, recommendations)
 │   │   ├── meetups/      # Meetup CRUD + RSVP
 │   │   ├── crew/         # Crew requests
 │   │   ├── checkins/     # Live presence
@@ -85,8 +85,11 @@ src/
 ├── components/            # React components
 │   ├── ui/               # Base UI components
 │   ├── meetups/          # Meetup components
-│   ├── crew/             # Crew components
-│   └── social/           # Feed + social components
+│   ├── social/           # Feed + social components (CrewButton, CrewList, CrewRequestCard)
+│   ├── heatmap/          # V1 heatmap (Crew + FoF tiers, maplibre-gl)
+│   ├── intents/          # V1 intent-to-group signaling
+│   ├── subcrews/         # V1 sub-crew groupings
+│   └── privacy/          # V1 opt-in location/visibility controls
 ├── hooks/                 # Custom React hooks
 ├── lib/                   # Utilities and clients
 │   ├── prisma.ts         # Database client
@@ -208,4 +211,4 @@ Built with ❤️ by the OutTheGroupchat Team
 
 ---
 
-*Last Updated: 2026-04-20 | 994+ tests passing | 51 active API routes | 0 any types | 0 console.* | Build: PASS | Pivot: Phase 5 of 8*
+*Last Updated: 2026-05-19 | ~1081 tests passing (64 test files) | 53 active API routes | 0 any types | 0 console.* | Build: PASS | Refactor Phases 0–7 ✅ · Phase 8 in progress · V1 Phases 1–4 ✅*
