@@ -1,7 +1,7 @@
 # OutTheGroupchat — Scope Pivot & Refactor Plan
 
-> **Status:** Active — Phase 5 COMPLETE (2026-04-20, PR #53); Phase 6 ✅ COMPLETE (2026-04-22, PR #55): all 4 actions done — feed rescoped, AI routes added, notification types migrated, search people-first. Phase 7 (Marketing surface) is next.
-> **Created:** 2026-04-16 | **Last updated:** 2026-04-22
+> **Status:** Active — Phases 0–7 COMPLETE. V1 Phase 4 (Heatmap) shipped on main 2026-05-20 (PR #86/#87/#91/#92). Refactor Phase 8 (launch-readiness re-audit) in progress: E2E Playwright auth flows (#5) and Sentry DSN provisioning (#6) still pending.
+> **Created:** 2026-04-16 | **Last updated:** 2026-05-20
 > **Purpose:** Canonical planning doc for the pivot from group-trip-planning app → meetup-focused social network with a persistent `Crew` graph. All future refactor sessions reference this document.
 > **Decision:** Refactor in place (not rebuild). Trip-planning infrastructure is archived but preserved for potential future reactivation.
 

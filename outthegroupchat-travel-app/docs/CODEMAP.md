@@ -1,6 +1,6 @@
 # OutTheGroupchat — Full Codemap
 
-> Auto-generated 2026-03-10. Last updated 2026-04-24 (V1 pivot begins — `docs/V1_IMPLEMENTATION_PLAN.md` landed on main; V1 Phase 0 data model in-flight on PR #76). Main stats: 58 API routes, 47 vitest-active test files, 900 tests passing, 301 TS/TSX files. Comprehensive reference for agents and developers.
+> Auto-generated 2026-03-10. Last updated 2026-05-20 (V1 Phase 4 heatmap shipped on main — Crew tier PR #86, FoF tier PR #87, seed fixtures PR #91+#92). Main stats: 72 API routes, 86 vitest-active test files, 1079 tests passing (2 pre-existing checkins-pusher parallel-load flakes), 367 TS/TSX files. Comprehensive reference for agents and developers.
 >
 > **🔀 Pivot in progress:** See `docs/REFACTOR_PLAN.md`. Trip-planning surface archived under `_archive/` directories as of Phase 1 (2026-04-16). See [Archived surface (Phase 1)](#archived-surface-phase-1) section below and `src/_archive/README.md` for the preservation scheme.
 >
@@ -897,13 +897,13 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `any` types | 0 ✅ |
 | `console.*` | 0 ✅ |
 | TSC errors (prod + test) | 0 ✅ |
-| Vitest tests | ~1050 passing, 58 test files (Phase 6 complete, 2026-04-22; +3 new: feed.test.ts, feed-extended.test.ts, notifications-rescoped.test.ts); archived tests runnable on demand via `npm run test:archive` |
-| E2E tests | 11 Playwright smoke tests (4 suites) — trip-specific specs archived |
-| Error monitoring | Sentry — 19/48 coverage on pre-archive branch; coverage recomputed on new live surface in Phase 2 |
-| Live API routes | 50 (35 base + 6 Crew + 9 Phase 4 meetup/venue/cron + 3 Phase 5 check-in + privacy + 2 Phase 6 AI: suggest-meetups, icebreakers; feed POST now 410) |
-| Files >400 lines | 0 in prod (email.ts 507 lines, email-crew.ts extracted; types/index.ts reduced to 264 lines in Phase 6) |
-| Production env gaps | Pusher vars, Sentry DSN, Resend domain, GOOGLE_PLACES_API_KEY |
-| **Phase status** | **Phase 6 COMPLETE** (2026-04-22): feed rescoped, search people-first, 9 trip notification types removed, types/index.ts cleaned. Phase 7 (Marketing surface) is next. |
+| Vitest tests | 1079 passing / 1081 total on main as of 2026-05-20 (2 pre-existing checkins-pusher parallel-load flakes — pass in isolation); 86 test files on disk; archived tests runnable on demand via `npm run test:archive` |
+| E2E tests | 11 Playwright smoke tests (4 suites) — trip-specific specs archived; authenticated flows still pending (Phase 8 action #5) |
+| Error monitoring | Sentry — instrumented on V1 surface (Crew, meetups, checkins, intents, topics, heatmap); DSN missing in Vercel prod (Phase 8 action #2) |
+| Live API routes | **72** (35 base + 6 Crew + 9 Phase 4 meetup/venue/cron + 3 Phase 5 check-in + Phase 6 + V1 routes: intents, topics, subcrews, heatmap, recommendations) |
+| Files >600 lines (prod) | 2 (`src/app/profile/page.tsx` 623, `src/components/feed/RichFeedItem.tsx` 717 — refactors in flight on PRs #56/#59) |
+| Production env gaps | Pusher vars, Sentry DSN, Resend domain (GOOGLE_PLACES_API_KEY landed) |
+| **Phase status** | **V1 Phase 4 (heatmap) COMPLETE** (2026-05-20): Crew tier (PR #86) + FoF tier (PR #87) + heatmap fixtures (PR #91/#92) shipped. Refactor Phase 8 (launch-readiness re-audit) is the active scaffolding phase. |
 
 ---
 

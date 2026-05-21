@@ -17,7 +17,7 @@
 >
 > **Target Launch:** Q2 2026 (Beta) — to be re-baselined post-pivot
 > **Current Status:** Refactoring (Phase 2 in progress — domain models added, DB migration pending)
-> **Last Updated:** 2026-04-22 (Phase 6 COMPLETE — feed rescoped, search people-first, notification types migrated, types cleanup; Phase 7 Marketing surface is next)
+> **Last Updated:** 2026-05-20 (V1 Phase 4 heatmap COMPLETE on main — PR #86/#87/#91/#92; Refactor Phase 8 launch-readiness re-audit is the active scaffolding phase)
 
 ---
 
