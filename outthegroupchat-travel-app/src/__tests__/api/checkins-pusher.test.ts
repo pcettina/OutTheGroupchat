@@ -15,6 +15,9 @@ vi.mock('@/lib/pusher', () => ({
   triggerCheckinEvent: vi.fn().mockResolvedValue(undefined),
   getCityCheckinChannel: vi.fn().mockReturnValue('city-test-checkins'),
 }));
+vi.mock('@/lib/heatmap/contribution-writer', () => ({
+  writePresenceContribution: vi.fn().mockResolvedValue(undefined),
+}));
 
 import { getServerSession } from 'next-auth';
 import { triggerCheckinEvent } from '@/lib/pusher';

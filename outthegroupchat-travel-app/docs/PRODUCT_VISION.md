@@ -278,5 +278,11 @@ These are v1 scope, not v0. Nothing in the current PR backlog ships them yet.
 
 ---
 
-**Last updated:** 2026-04-24 (round 4: R21 — SQ7 locked; R22–R25 round-3 sub-questions resolved; 2 round-4 sub-questions surfaced; Lane B complete)
+**Last updated:** 2026-05-23 (nightly/2026-05-23 progress entry added — see below).
 **Source:** Founder direction, captured across four resolution rounds on 2026-04-24.
+
+---
+
+## Implementation progress log
+
+- **2026-05-23** — R12 (Intent expiration cron) and R14 (anonymity floor N≥3) now covered by automated tests (`cron-expire-intents.test.ts`, `heatmap-anonymity-floor.test.ts`). Pusher push for heatmap (R19/R23 v1.5) still pending.

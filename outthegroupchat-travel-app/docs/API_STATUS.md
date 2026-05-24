@@ -1,6 +1,6 @@
 # 📡 API & Integration Status
 
-> **Last Updated: 2026-04-22**
+> **Last Updated: 2026-05-23** (nightly/2026-05-23 — `/api/cron/expire-intents` now has test coverage (13 tests, V1 R12); heatmap anonymity floor (V1 R14) has 10 edge-case tests)
 >
 > **Archival:** trip/activity routes moved to `src/app/api/_archive/` as of 2026-04-16 Phase 1. See REFACTOR_PLAN.md. Sections below that reference `/api/trips/*` and `/api/activities/*` reflect the pre-archive state for historical context; authoritative status for these routes is the "📦 Archived Routes" section near the bottom of this file.
 >
@@ -358,6 +358,7 @@ EMAIL_FROM=             # Email sender (onboarding@resend.dev) ✅
 | `/api/meetups/[id]/invite` | POST | ✅ | Invite Crew members; dispatches invite emails + broadcasts `meetup:updated` + per-user notification (Session 2, 2026-04-18) |
 | `/api/venues/search` | GET | ✅ | Venue search — DB-first with Google Places API fallback + auto-caching when `GOOGLE_PLACES_API_KEY` set; Session 3, 2026-04-18 |
 | `/api/cron/meetup-starting-soon` | GET | ✅ | Cron — `MEETUP_STARTING_SOON` reminder dispatch (email + notification + Pusher) for GOING attendees within T-55–65min; idempotent; Session 3, 2026-04-18 |
+| `/api/cron/expire-intents` | GET | ✅ | Cron — expires stale `INTERESTED` Intents (V1 R12); CRON_SECRET auth, `updateMany` to EXPIRED state, idempotent; **test coverage: 13 tests ✅ 2026-05-23** |
 
 ### Phase 4 — Pusher Channels & Events (Live 2026-04-18)
 

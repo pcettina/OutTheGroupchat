@@ -17,7 +17,14 @@
 >
 > **Target Launch:** Q2 2026 (Beta) — to be re-baselined post-pivot
 > **Current Status:** Refactoring (Phase 2 in progress — domain models added, DB migration pending)
-> **Last Updated:** 2026-04-22 (Phase 6 COMPLETE — feed rescoped, search people-first, notification types migrated, types cleanup; Phase 7 Marketing surface is next)
+> **Last Updated:** 2026-05-23 (Nightly build nightly/2026-05-23 — V1 R12 cron-expire-intents test coverage shipped (13 tests); V1 R14 heatmap anonymity-floor coverage shipped (10 tests); 4 dead components deleted)
+
+### V1 launch coverage (added 2026-05-23)
+- [x] V1 R12 — Intent expiration cron has automated test coverage (`cron-expire-intents.test.ts`, 13 tests)
+- [x] V1 R14 — Heatmap anonymity floor (N≥3) has edge-case test coverage (`heatmap-anonymity-floor.test.ts`, 10 tests)
+- [ ] V1 R19/R23 — Pusher push for live heatmap updates (v1.5, deferred)
+
+
 
 ---
 

@@ -1,3 +1,31 @@
+# 🟢 Completed 2026-05-23 (Nightly Build nightly/2026-05-23)
+
+> **Status:** Phase 8 (launch-readiness re-audit) ongoing. V1 R12 (Intent expiration cron) + R14 (anonymity floor N≥3) now have automated test coverage.
+> **Last Updated:** 2026-05-23
+> **Test count:** ~1102 tests passing; ~66 test files
+
+### Direct fixes
+- `prisma/scripts/seed-heatmap-only.ts`: stripped `.ts` extensions from imports (restores TSC).
+- `src/__tests__/api/checkins-pusher.test.ts`: added `vi.mock` for `@/lib/heatmap/contribution-writer` — fixes 2 flaky timeouts (1079→1081 tests passing pre-new-tests).
+
+### Wave 1 — Tests
+- [L1] 13 tests in `src/__tests__/api/cron-expire-intents.test.ts` — V1 R12 coverage: CRON_SECRET auth, expire `updateMany` on stale `INTERESTED` intents, idempotency, error paths.
+- [L2] 10 tests in `src/__tests__/lib/heatmap-anonymity-floor.test.ts` — V1 R14 coverage: cell suppression below N=3, contributor counting, edge cases.
+
+### Wave 2 — Cleanup
+- [M3] Dead components deleted: `src/components/ui/FloatingShareButton.tsx`, `src/components/profile/BadgeShowcase.tsx`, `src/components/search/FilterChip.tsx`, `src/components/search/SearchFilters.tsx`. Barrel exports updated in `src/components/ui/index.ts`, `src/components/profile/index.ts`, `src/components/search/index.ts`. ReactionPicker was a false positive — retained.
+- [M4] `any` types: 0 production-code annotations existed; the 4 grep matches were comment text. No action taken.
+- [M5] 2 TODOs in `src/app/checkins/page.tsx` resolved (implemented, not just removed).
+
+### Metrics
+- Tests: ~1079 → ~1102 (+23 new: 13 cron-expire-intents + 10 heatmap-anonymity-floor)
+- Test files: 64 → 66 (+2)
+- API routes: 59 (unchanged)
+- TS/TSX files: 367 → 363 (-4 from dead component removal)
+- TSC: clean ✅
+
+---
+
 # 🟢 Complete — Phase 6: Feed/AI/Notifications Rescope (all sessions delivered)
 
 > **Status:** Phase 6 COMPLETE as of 2026-04-22 (nightly/2026-04-22 PR #55). All 4 Phase 6 actions done: feed rescoped, AI routes added, notification types migrated, search rescoped people-first. Phase 7 (Marketing surface) is next.
