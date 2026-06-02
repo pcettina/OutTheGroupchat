@@ -35,6 +35,32 @@ export interface PickAnchorInput {
   anchorNameById: Map<string, string | null>;
 }
 
+/**
+ * Choose the single mutual-Crew "anchor" whose name labels a FoF contribution
+ * ("via Alex"), resolving R24's priority hierarchy: (1) an anchor who is also a
+ * member of the active SubCrew context, then (3) the most-recently-formed Crew
+ * edge with the viewer, then (4) alphabetical by name. Priority 2
+ * (most-recently-interacted) is deferred in v1, so the rule falls 1 -> 3 -> 4.
+ *
+ * @param input Anchor-selection inputs:
+ *   - `anchorIds` — candidate anchor user ids (the FoF user's mutual-Crew with
+ *     the viewer); iteration order is the caller's order and breaks ties within
+ *     priority 1.
+ *   - `subCrewMemberAnchorIds` — set of anchor ids that are in the active
+ *     SubCrew context (R24 priority 1); pass an empty Set when there is no event
+ *     context.
+ *   - `crewEdgeCreatedByAnchor` — map of anchorId -> Crew.createdAt with the
+ *     viewer (R24 priority 3).
+ *   - `anchorNameById` — map of anchorId -> display name (or null); used as the
+ *     priority-4 sort key and as the returned `anchorName`.
+ * @returns `{ anchorUserId, anchorName }` for the winning anchor, or `null` when
+ *   `anchorIds` is empty.
+ *
+ * Privacy note: only an id/name already known to the viewer (a mutual-Crew
+ * member, supplied by the caller) is ever returned. This function does no
+ * lookups of its own, so it cannot widen the disclosed set beyond the mutual
+ * anchors the FoF-graph layer already scoped to the viewer.
+ */
 export function pickAnchor(input: PickAnchorInput): AnchorPick | null {
   if (input.anchorIds.length === 0) return null;
 

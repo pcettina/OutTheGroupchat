@@ -9,7 +9,6 @@ A Next.js 14 web app for group travel planning with AI-powered recommendations a
 - **Database:** PostgreSQL (Supabase) via Prisma ORM
 - **Auth:** NextAuth.js
 - **Real-time:** Pusher
-- **AI:** Vercel AI SDK + OpenAI
 - **Deploy:** Vercel
 
 ## Getting Started

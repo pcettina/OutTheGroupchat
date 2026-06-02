@@ -1,3 +1,35 @@
+# 🟢 Completed 2026-06-01 (Nightly Build) — V1 Phase 5: Opt-in Notifications
+
+> **Status:** Post-pivot steady state, executing the V1 product vision (intent → group → heatmap). V1 Phase 5 (opt-in notifications) begun 2026-06-01.
+> **Last Updated:** 2026-06-01
+> **Test count:** ~1158 tests passing across 69 test files; 61 live API routes.
+
+### Wave 2 — Features / Refactors
+
+- [F1] NEW `src/app/api/users/notification-preferences/route.ts` (GET + PATCH) + `src/types/notification-preference.ts` — manages a `NotificationPreference` per trigger (`DAILY_PROMPT`, `PER_MEMBER_INTENT`, `GROUP_FORMATION`); Zod, `getServerSession`, rate-limit, Sentry.
+- [F2] NEW `src/app/api/cron/send-daily-prompts/route.ts` (GET, `CRON_SECRET` bearer) + `src/lib/notifications/daily-prompt.ts` (`sendDailyPrompts`). Added `vercel.json` DAILY cron entry `"0 13 * * *"` (Hobby-tier compliant). Sends SYSTEM notifications linking to `/intents/new` to users with `DAILY_PROMPT` enabled.
+- [F3] NEW `src/app/settings/notifications/page.tsx` + `src/components/settings/NotificationPreferencesForm.tsx` (per-trigger toggle UI). `middleware` already matched `/settings/:path*`.
+- [F4] Fixed 2 TS5097 errors in `prisma/scripts/seed-heatmap-only.ts` (removed `.ts` import extensions).
+- [F5] Resolved 2 TODOs in `src/app/checkins/page.tsx` (wired `CheckInButton`). TODO/FIXME now 0.
+- [F6] Added function JSDoc to `src/lib/subcrew/cell-anonymize.ts`, `src/lib/heatmap/aggregate.ts`, `anchor-select.ts`, `fof-graph.ts`.
+
+### Wave 1 — Tests (+77 tests, 5 new files)
+
+- `src/__tests__/api/notification-preferences.test.ts` (16)
+- `src/__tests__/api/cron-send-daily-prompts.test.ts` (7)
+- `src/__tests__/lib/daily-prompt.test.ts` (7)
+- `src/__tests__/api/heatmap-edge.test.ts` (24)
+- `src/__tests__/api/recommendations-edge.test.ts` (23)
+
+### Metrics
+
+- Tests: ~1081 → ~1158 (+77)
+- Test files: 64 → 69 (+5)
+- Live API routes: 59 → 61 (+2: `/api/users/notification-preferences`, `/api/cron/send-daily-prompts`)
+- `any`: 4 | `console.*`: 0 | TODO/FIXME: 0 (was 2) | files >600 lines: 2 (RichFeedItem 717, profile 623)
+
+---
+
 # 🟢 Complete — Phase 6: Feed/AI/Notifications Rescope (all sessions delivered)
 
 > **Status:** Phase 6 COMPLETE as of 2026-04-22 (nightly/2026-04-22 PR #55). All 4 Phase 6 actions done: feed rescoped, AI routes added, notification types migrated, search rescoped people-first. Phase 7 (Marketing surface) is next.

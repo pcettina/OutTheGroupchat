@@ -10,6 +10,7 @@
 - [x] Phase 6: Feed/AI/notifications rescope — COMPLETE 2026-04-22 (PR #55): Feed rescoped (meetup/checkin types, trip/activity queries removed, POST returns 410) ✅ | Search people-first (users→meetups→venues) ✅ | 9 trip notification types removed from schema ✅ | Follow marked @deprecated ✅ | types/index.ts cleaned (264 lines) ✅ | All AI routes later deleted 2026-04-23 (ops/kill-all-ai)
 - [ ] Phase 7: Marketing surface
 - [ ] Phase 8: Launch-readiness re-audit
+- [~] Post-pivot steady state (V1 product vision): intent → group → heatmap surface live. **V1 Phase 5 (opt-in notifications) begun 2026-06-01** — `/api/users/notification-preferences` (GET/PATCH), `/api/cron/send-daily-prompts` cron, `/settings/notifications` opt-in UI ✅
 
 ---
 
@@ -17,7 +18,7 @@
 >
 > **Target Launch:** Q2 2026 (Beta) — to be re-baselined post-pivot
 > **Current Status:** Refactoring (Phase 2 in progress — domain models added, DB migration pending)
-> **Last Updated:** 2026-04-22 (Phase 6 COMPLETE — feed rescoped, search people-first, notification types migrated, types cleanup; Phase 7 Marketing surface is next)
+> **Last Updated:** 2026-06-01 (Post-pivot steady state — V1 product vision live; V1 Phase 5 opt-in notifications begun: notification-preferences API + daily-prompt cron + /settings/notifications UI)
 
 ---
 
@@ -127,6 +128,7 @@
 - [x] /api/auth/demo has Zod input validation ✅ 2026-03-24
 - [x] XSS prevention (DOMPurify) ✅ 2026-03-25 (RichFeedItem.tsx)
 - [x] CORS configured properly ✅ 2026-03-23 — /api/:path* CORS headers added to next.config.js
+- [x] Opt-in notification controls (consent) ✅ 2026-06-01 — per-trigger `NotificationPreference` (DAILY_PROMPT, PER_MEMBER_INTENT, GROUP_FORMATION) via `GET/PATCH /api/users/notification-preferences` + `/settings/notifications` UI; daily prompts only sent to opted-in users
 
 ### Critical Fixes Required
 ```
@@ -390,4 +392,6 @@ git push origin main  # Auto-deploys to Vercel
 
 *This checklist should be reviewed daily during launch preparation.*
 
-*Last Updated: 2026-03-26 - 153 new tests (1156 total, 56 files); rate limiting added as first operation on auth/signup, auth/reset-password, auth/verify-email; newsletter/subscribe now requires auth; ai/search GET+POST fully implemented; dead components removed (NotificationCenter.tsx, SharePreview.tsx); recommendation.service.test.ts, survey.service.test.ts, geocoding-images.test.ts created. Also includes 2026-03-29 changes: JSON.parse safety on 5 AI routes + notifications/[notificationId]; Zod strengthened on ai/chat; notifications/[notificationId] bugfix (read was hardcoded true); JSDoc added to geocoding.ts; 3 new test files (ai-generate-itinerary, ai-suggest-activities, discover-import)*
+*Last Updated: 2026-06-01 — V1 Phase 5 (opt-in notifications) begun: `GET/PATCH /api/users/notification-preferences`, `GET /api/cron/send-daily-prompts` cron (DAILY `0 13 * * *`), `/settings/notifications` opt-in UI; ~1158 tests across 69 files; 61 live API routes. Post-pivot steady state executing the V1 product vision (intent → group → heatmap).*
+
+*Earlier: 2026-03-26 - 153 new tests (1156 total, 56 files); rate limiting added as first operation on auth/signup, auth/reset-password, auth/verify-email; newsletter/subscribe now requires auth; ai/search GET+POST fully implemented; dead components removed (NotificationCenter.tsx, SharePreview.tsx); recommendation.service.test.ts, survey.service.test.ts, geocoding-images.test.ts created. Also includes 2026-03-29 changes: JSON.parse safety on 5 AI routes + notifications/[notificationId]; Zod strengthened on ai/chat; notifications/[notificationId] bugfix (read was hardcoded true); JSDoc added to geocoding.ts; 3 new test files (ai-generate-itinerary, ai-suggest-activities, discover-import)*

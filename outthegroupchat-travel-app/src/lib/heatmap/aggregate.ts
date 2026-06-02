@@ -136,6 +136,36 @@ function bucketsToCells(groups: Map<string, CellBucket>): HeatmapCell[] {
   return cells;
 }
 
+/**
+ * Read-side entry point for `GET /api/heatmap`. Resolves the viewer's social
+ * graph for the requested tier, fetches the matching HeatmapContributions,
+ * applies the privacy filters, and folds everything into anonymized cells plus
+ * venue markers. Dispatches to the Crew or FoF branch based on `input.tier`.
+ *
+ * @param input Query descriptor:
+ *   - `viewerId` — the requesting user (graph is always computed relative to them).
+ *   - `type` — `'interest'` or `'presence'`, mapped to the matching
+ *     HeatmapContributionType.
+ *   - `tier` — `'crew'` (direct accepted-Crew partners) or `'fof'`
+ *     (friend-of-friend, 1-hop via Crew).
+ *   - `cityArea`, `topicId`, `windowPreset` — optional contribution filters.
+ *   - `mutualThreshold` — FoF only; minimum mutual-Crew count to include a FoF
+ *     user (R5). Defaults to 1.
+ *   - `subCrewId` — FoF only; when set, R24 priority-1 SubCrew anchoring activates.
+ *   - `prismaClient` — optional Prisma stub for tests.
+ * @returns `{ cells, venueMarkers }`. `cells` are anonymized grid cells with a
+ *   `count` and optional `anchorSummary` ("via Alex"), sorted by count desc;
+ *   `venueMarkers` are per-venue tallies sorted by count desc. Returns empty
+ *   arrays when the viewer has no relevant graph or no live contributions.
+ *
+ * Privacy invariants upheld here (via the helpers it calls): the R14 N>=3
+ * anonymous floor is applied per-cell to the ANONYMOUS bucket only; Crew-tier
+ * results drop any contributor the viewer has set to HIDDEN
+ * (CrewRelationshipSetting); FoF-tier results only ever surface FULL_CREW-scoped
+ * contributions (never a FoF user's SUBGROUP_ONLY data, which the viewer is not
+ * party to). Raw coordinates are never read — only the pre-anonymized
+ * `cellLat`/`cellLng` from the contribution rows.
+ */
 export async function aggregateContributions(
   input: AggregateInput,
 ): Promise<AggregateOutput> {

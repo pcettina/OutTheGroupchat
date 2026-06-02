@@ -1,6 +1,10 @@
 # 📡 API & Integration Status
 
-> **Last Updated: 2026-04-22**
+> **Last Updated: 2026-06-01**
+>
+> **V1 product vision live (post-pivot steady state):** The intent-to-group loop (`/api/intents/*`, `/api/subcrews/*`, `/api/topics`), the heatmap surface (`/api/heatmap`, `/api/recommendations`), and the intent-expiry cron (`/api/cron/expire-intents`) are all live. See the [🧭 V1 Product Surface](#-v1-product-surface-intent--group--heatmap) section below. **Tonight (2026-06-01, V1 Phase 5 — opt-in notifications):** added `GET/PATCH /api/users/notification-preferences` and `GET /api/cron/send-daily-prompts`.
+>
+> **Live API routes:** 61
 >
 > **Archival:** trip/activity routes moved to `src/app/api/_archive/` as of 2026-04-16 Phase 1. See REFACTOR_PLAN.md. Sections below that reference `/api/trips/*` and `/api/activities/*` reflect the pre-archive state for historical context; authoritative status for these routes is the "📦 Archived Routes" section near the bottom of this file.
 >
@@ -384,6 +388,46 @@ Phase 4 closed with Session 3. Next: Phase 5 (Check-ins & live presence).
 | `/api/checkins/[id]` | DELETE | ✅ | Cancel own check-in (soft: sets `activeUntil = now()`) |
 | `/api/users/privacy` | GET | ✅ | Get check-in privacy settings; Phase 5 Session 2, 2026-04-20 |
 | `/api/users/privacy` | PATCH | ✅ | Update check-in visibility (PUBLIC/CREW/PRIVATE); Phase 5 Session 2, 2026-04-20 |
+
+---
+
+## 🧭 V1 Product Surface (Intent → Group → Heatmap)
+
+> The V1 product vision (founder-locked 2026-04-24): signal intent → auto-group at ≥2 Crew on the same Topic → coordinate + venue recs → opt-in location visibility. These routes are **live**.
+
+### Intents
+
+| Endpoint | Method | Status | Notes |
+|----------|--------|--------|-------|
+| `/api/intents` | POST | ✅ | Signal intent on a Topic; auto-forms a SubCrew when ≥2 Crew share a Topic |
+| `/api/intents` | GET | ✅ | List caller's intents |
+| `/api/intents/mine` | GET | ✅ | Caller's active intents |
+| `/api/intents/crew` | GET | ✅ | Crew members' visible intents (for grouping) |
+| `/api/intents/[id]` | GET, PATCH, DELETE | ✅ | Intent detail / update / withdraw |
+
+### SubCrews & Topics
+
+| Endpoint | Method | Status | Notes |
+|----------|--------|--------|-------|
+| `/api/subcrews` | GET | ✅ | List caller's SubCrews (auto-formed groups) |
+| `/api/subcrews/[id]` | GET | ✅ | SubCrew detail + members (cell-anonymized where applicable) |
+| `/api/topics` | GET | ✅ | List available Topics for intent signalling |
+
+### Heatmap & Recommendations
+
+| Endpoint | Method | Status | Notes |
+|----------|--------|--------|-------|
+| `/api/heatmap` | GET | ✅ | Aggregated Crew/FoF heatmap tiles (maplibre-gl + OpenFreeMap); contribution-driven, anchor-prioritized |
+| `/api/recommendations` | GET | ✅ | Venue/meetup recommendations derived from intents + heatmap signals |
+
+### V1 Cron & Notifications
+
+| Endpoint | Method | Status | Notes |
+|----------|--------|--------|-------|
+| `/api/cron/expire-intents` | GET | ✅ | Expires stale intents past their `activeUntil` window |
+| `/api/cron/send-daily-prompts` | GET | ✅ | **NEW 2026-06-01** — CRON_SECRET bearer; sends SYSTEM notifications linking to `/intents/new` to users with `DAILY_PROMPT` enabled. Backed by `src/lib/notifications/daily-prompt.ts` (`sendDailyPrompts`). Scheduled DAILY `0 13 * * *` in `vercel.json` (Hobby-tier compliant) |
+| `/api/users/notification-preferences` | GET | ✅ | **NEW 2026-06-01** — returns per-trigger `NotificationPreference` (DAILY_PROMPT, PER_MEMBER_INTENT, GROUP_FORMATION); Zod, getServerSession, rate-limited, Sentry |
+| `/api/users/notification-preferences` | PATCH | ✅ | **NEW 2026-06-01** — opt in/out per trigger; surfaced in `/settings/notifications` via `NotificationPreferencesForm` |
 
 ---
 

@@ -1,6 +1,6 @@
 # OutTheGroupchat — Full Codemap
 
-> Auto-generated 2026-03-10. Last updated 2026-04-24 (V1 pivot begins — `docs/V1_IMPLEMENTATION_PLAN.md` landed on main; V1 Phase 0 data model in-flight on PR #76). Main stats: 58 API routes, 47 vitest-active test files, 900 tests passing, 301 TS/TSX files. Comprehensive reference for agents and developers.
+> Auto-generated 2026-03-10. Last updated 2026-06-01 (post-pivot steady state, executing V1 product vision; V1 Phase 5 opt-in notifications begun). Main stats: 61 live API routes, 69 vitest-active test files, ~1158 tests passing. Comprehensive reference for agents and developers.
 >
 > **🔀 Pivot in progress:** See `docs/REFACTOR_PLAN.md`. Trip-planning surface archived under `_archive/` directories as of Phase 1 (2026-04-16). See [Archived surface (Phase 1)](#archived-surface-phase-1) section below and `src/_archive/README.md` for the preservation scheme.
 >
@@ -34,7 +34,7 @@ Full-stack Next.js 14 collaborative travel planning app. Groups plan trips toget
 **App root:** `outthegroupchat-travel-app/`
 **Source:** `outthegroupchat-travel-app/src/`
 **Stats (post-Phase-6-complete, 2026-04-22):** 50 live API routes (35 base + 6 Crew routes + 9 Phase 4 meetup/venue/cron routes + 3 Phase 5 check-in routes + privacy route + 2 Phase 6 AI routes: suggest-meetups, icebreakers; 13 archived in Phase 1; feed POST now 410) | live component groups: auth, feed (rescoped to meetup/checkin types, tabs updated), social (incl. `CrewButton`, `CrewRequestCard`, `CrewList`), meetups (incl. `MeetupCard`, `MeetupList`, `CreateMeetupModal`, `RSVPButton`, `VenuePicker`, `AttendeeList`, `MeetupInviteModal`), checkins (incl. `CheckInButton`, `LiveActivityCard`, `NearbyCrewList`), discover, notifications, profile (incl. Recent Check-ins section), search, settings (incl. `PrivacySettingsForm`), onboarding, ai, ui, accessibility + Navigation (incl. privacy link) | live pages: /, /auth/*, /profile, `/profile/[userId]`, /feed, /discover, /inspiration, /notifications, /search, /settings, `/settings/privacy`, /onboarding, /privacy, /terms, `/crew`, `/crew/requests`, `/meetups`, `/meetups/new`, `/meetups/[id]`, `/checkins`, `/checkins/[id]` | middleware: auth-protects `/profile/:path*`, `/crew/:path*`, `/meetups/:path*`, `/checkins/:path*`, `/settings/:path*`, `/api/checkins/*`, plus select `/api/*` paths
-**Test Health (2026-04-22):** 58 live test files (+3: feed.test.ts, feed-extended.test.ts, notifications-rescoped.test.ts) | ~1050 tests passing | 0 TSC errors | Phase 6 COMPLETE: feed rescoped, search people-first, 9 trip notification types removed, types/index.ts cleaned (264 lines), suggest-meetups + icebreakers AI routes live
+**Test Health (2026-06-01):** 69 live test files | ~1158 tests passing | 0 TSC errors | V1 Phase 5 (opt-in notifications) begun: `/api/users/notification-preferences` (GET/PATCH), `/api/cron/send-daily-prompts`, `src/lib/notifications/daily-prompt.ts`, `/settings/notifications` page + `NotificationPreferencesForm`. V1 surface live: intents, subcrews, topics, heatmap, recommendations, expire-intents cron.
 
 ---
 
@@ -496,6 +496,23 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `/api/checkins/[id]` | DELETE | Yes | Yes | Cancel own check-in |
 | `/api/users/privacy` | POST, PATCH | Yes | Yes | Check-in privacy settings (PUBLIC/CREW/PRIVATE); Phase 5 Session 2, 2026-04-20 |
 
+### V1 Product Surface (Intent → Group → Heatmap)
+
+| Endpoint | Methods | Auth | Zod | Purpose |
+|----------|---------|------|-----|---------|
+| `/api/intents` | POST, GET | Yes | Yes | Signal intent on a Topic (auto-forms a SubCrew at ≥2 Crew on same Topic); list caller's intents |
+| `/api/intents/mine` | GET | Yes | No | Caller's active intents |
+| `/api/intents/crew` | GET | Yes | No | Crew members' visible intents (for grouping) |
+| `/api/intents/[id]` | GET, PATCH, DELETE | Yes | Yes | Intent detail / update / withdraw |
+| `/api/subcrews` | GET | Yes | No | Caller's auto-formed SubCrews |
+| `/api/subcrews/[id]` | GET | Yes | No | SubCrew detail + members (cell-anonymized) |
+| `/api/topics` | GET | Yes | No | Available Topics for intent signalling |
+| `/api/heatmap` | GET | Yes | Yes | Aggregated Crew/FoF heatmap tiles (maplibre-gl + OpenFreeMap), anchor-prioritized |
+| `/api/recommendations` | GET | Yes | Yes | Venue/meetup recommendations from intents + heatmap signals |
+| `/api/cron/expire-intents` | GET | Bearer | No | Cron: expire stale intents past `activeUntil` |
+| `/api/users/notification-preferences` | GET, PATCH | Yes | Yes | **NEW 2026-06-01** — per-trigger `NotificationPreference` (DAILY_PROMPT, PER_MEMBER_INTENT, GROUP_FORMATION); rate-limited, Sentry; surfaced in `/settings/notifications` |
+| `/api/cron/send-daily-prompts` | GET | Bearer | No | **NEW 2026-06-01** — CRON_SECRET; sends SYSTEM daily prompts to `DAILY_PROMPT`-enabled users via `lib/notifications/daily-prompt.ts`; scheduled DAILY `0 13 * * *` in `vercel.json` |
+
 ### Infrastructure
 
 | Endpoint | Methods | Auth | Zod | Purpose |
@@ -708,6 +725,7 @@ db:seed        → npx tsx prisma/seed/index.ts
 |------|---------|---------|
 | `lib/pusher.ts` | getPusherServer, getPusherClient, channels, events, broadcastToTrip, broadcastToUser | Pusher instances + helpers |
 | `lib/email.ts` (392L) | sendInvite, sendNotification, sendTripUpdate | Resend email templates |
+| `lib/notifications/daily-prompt.ts` | sendDailyPrompts | V1 Phase 5 — sends daily SYSTEM prompts (link to `/intents/new`) to users with `DAILY_PROMPT` preference enabled; backs `/api/cron/send-daily-prompts` ✅ 2026-06-01 |
 | `lib/rate-limit.ts` | rateLimit, getRemainingQuota | Upstash rate limiter |
 
 ### External APIs
@@ -786,10 +804,15 @@ db:seed        → npx tsx prisma/seed/index.ts
 
 ## Tests
 
-**Total: ~1050 tests across 58 Vitest unit/integration test files** (Phase 6 complete, 2026-04-22; +3 test files; 0 TSC errors)
+**Total: ~1158 tests across 69 Vitest unit/integration test files** (V1 Phase 5 opt-in notifications, 2026-06-01; +5 test files; 0 TSC errors)
 
 | File | Lines | Tests | Coverage |
 |------|-------|-------|----------|
+| `src/__tests__/api/notification-preferences.test.ts` | — | 16 | GET/PATCH /api/users/notification-preferences — auth, per-trigger Zod validation, opt in/out flow ✅ 2026-06-01 V1 Phase 5 |
+| `src/__tests__/api/cron-send-daily-prompts.test.ts` | — | 7 | GET /api/cron/send-daily-prompts — CRON_SECRET bearer, DAILY_PROMPT-enabled dispatch, graceful degradation ✅ 2026-06-01 V1 Phase 5 |
+| `src/__tests__/lib/daily-prompt.test.ts` | — | 7 | `src/lib/notifications/daily-prompt.ts` `sendDailyPrompts` — recipient filtering, SYSTEM notification creation ✅ 2026-06-01 V1 Phase 5 |
+| `src/__tests__/api/heatmap-edge.test.ts` | — | 24 | GET /api/heatmap — auth, tile aggregation, Crew/FoF tiers, anchor priority, empty-contribution edge cases ✅ 2026-06-01 V1 Phase 5 |
+| `src/__tests__/api/recommendations-edge.test.ts` | — | 23 | GET /api/recommendations — auth, intent/heatmap-derived recs, empty/error paths ✅ 2026-06-01 V1 Phase 5 |
 | `src/__tests__/api/feed.test.ts` | — | 12 | GET /api/feed — rescoped meetup/checkin item types, pagination, auth ✅ 2026-04-22 Phase 6 |
 | `src/__tests__/api/feed-extended.test.ts` | — | 25 | Feed edge cases — empty feed, multiple content types, DB errors, feedType params ✅ 2026-04-22 Phase 6 |
 | `src/__tests__/api/notifications-rescoped.test.ts` | — | 18 | Social notification types — CREW_REQUEST, CREW_ACCEPTED, MEETUP_INVITED, MEETUP_RSVP, MEETUP_STARTING_SOON, CREW_CHECKED_IN_NEARBY, SYSTEM ✅ 2026-04-22 Phase 6 |
@@ -897,13 +920,14 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `any` types | 0 ✅ |
 | `console.*` | 0 ✅ |
 | TSC errors (prod + test) | 0 ✅ |
-| Vitest tests | ~1050 passing, 58 test files (Phase 6 complete, 2026-04-22; +3 new: feed.test.ts, feed-extended.test.ts, notifications-rescoped.test.ts); archived tests runnable on demand via `npm run test:archive` |
+| Vitest tests | ~1158 passing, 69 test files (V1 Phase 5 opt-in notifications, 2026-06-01; +5 new: notification-preferences, cron-send-daily-prompts, daily-prompt, heatmap-edge, recommendations-edge); archived tests runnable on demand via `npm run test:archive` |
 | E2E tests | 11 Playwright smoke tests (4 suites) — trip-specific specs archived |
-| Error monitoring | Sentry — 19/48 coverage on pre-archive branch; coverage recomputed on new live surface in Phase 2 |
-| Live API routes | 50 (35 base + 6 Crew + 9 Phase 4 meetup/venue/cron + 3 Phase 5 check-in + privacy + 2 Phase 6 AI: suggest-meetups, icebreakers; feed POST now 410) |
-| Files >400 lines | 0 in prod (email.ts 507 lines, email-crew.ts extracted; types/index.ts reduced to 264 lines in Phase 6) |
+| Error monitoring | Sentry — instrumented across live surface (new notification-preferences route included) |
+| Live API routes | 61 (V1 surface: intents +mine/crew/[id], subcrews/*, topics, heatmap, recommendations, cron/expire-intents; + 2026-06-01: /api/users/notification-preferences, /api/cron/send-daily-prompts) |
+| `any` types | 4 |
+| Files >600 lines | 2 (RichFeedItem 717, profile 623) |
 | Production env gaps | Pusher vars, Sentry DSN, Resend domain, GOOGLE_PLACES_API_KEY |
-| **Phase status** | **Phase 6 COMPLETE** (2026-04-22): feed rescoped, search people-first, 9 trip notification types removed, types/index.ts cleaned. Phase 7 (Marketing surface) is next. |
+| **Phase status** | **Post-pivot steady state** — executing V1 product vision (intent → group → heatmap). V1 Phase 5 (opt-in notifications) begun 2026-06-01: notification-preferences API, daily-prompt cron, settings UI. |
 
 ---
 

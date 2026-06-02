@@ -68,6 +68,32 @@ export function __resetFofCacheForTests(): void {
   fofCache.clear();
 }
 
+/**
+ * Compute the viewer's friend-of-friend (FoF) set: users reachable in exactly
+ * one hop through the viewer's accepted-Crew partners, who share at least
+ * `mutualThreshold` mutual-Crew anchors with the viewer (R5). Anyone already in
+ * the viewer's direct Crew, and the viewer themselves, are excluded — they
+ * belong on the Crew-tier surface. Results are cached in-process for 60s keyed
+ * by `viewerId:mutualThreshold`.
+ *
+ * @param opts Query options:
+ *   - `viewerId` — the user whose FoF graph is computed.
+ *   - `mutualThreshold` — minimum number of mutual-Crew anchors required to
+ *     include a candidate; clamped to a floor of 1. Defaults to 1.
+ *   - `prismaClient` — optional Prisma stub (needs the `crew` delegate); defaults
+ *     to the app client.
+ *   - `bypassCache` — when true, skips the read cache (used by tests).
+ * @returns An array of `FofEntry` — `{ userId, mutualCount, anchorIds }` — sorted
+ *   by `mutualCount` desc and capped at 200 entries. `anchorIds` lists the
+ *   viewer's direct-Crew members who bridge to that FoF user.
+ *
+ * Privacy invariants: the returned set is strictly scoped to 1-hop reachability
+ * through accepted Crew edges — no 2+-hop users ever appear. Direct Crew and the
+ * viewer are filtered out, and a candidate only surfaces once its mutual-anchor
+ * count meets the threshold, enforcing the R5 minimum-overlap gate before any
+ * FoF user's location data is eligible to be aggregated. The 200-entry cap
+ * bounds fan-out for densely connected Crews.
+ */
 export async function getFofSet(opts: {
   viewerId: string;
   mutualThreshold?: number;

@@ -129,8 +129,8 @@ npm run db:seed    # Seed demo users and sample data
 3. Deploy!
 
 The project includes:
-- `vercel.json` with cron job configuration
-- Optimized function durations for AI routes
+- `vercel.json` with cron job configuration (e.g. daily prompts, meetup reminders)
+- Optimized function durations for API routes
 - Automatic builds on push
 
 ### Manual Deployment
@@ -197,6 +197,7 @@ Built with ❤️ by the OutTheGroupchat Team
 
 ## Recent Updates
 
+- **2026-06-01:** V1 Phase 5 (opt-in notifications) begun (Nightly Build). Added `GET/PATCH /api/users/notification-preferences` (per-trigger preferences: DAILY_PROMPT, PER_MEMBER_INTENT, GROUP_FORMATION), `GET /api/cron/send-daily-prompts` cron + `src/lib/notifications/daily-prompt.ts`, and a `/settings/notifications` page with `NotificationPreferencesForm`. Resolved remaining TODOs and seed-script TS5097 errors. ~1158 tests passing across 61 live API routes.
 - **2026-04-20:** Phase 5 session 2 complete (PR #53). Privacy settings (GET/PATCH /api/users/privacy), Pusher city broadcast on check-in, GET /api/checkins/[id] visibility gate, /checkins/[id] detail page, feed visibility filter. 994 tests passing across 51 active API routes.
 - **2026-04-16:** Product pivot to social meetup network initiated. Phase 1 complete: trip-planning surface archived to `src/_archive/` (routes, pages, components, services). README and docs updated to reflect new vision. 841 tests passing post-archive across 35 active API routes.
 - **2026-04-16:** Sentry error monitoring expanded to 19/48 API routes; beta/status migrated to Redis rate limiting; dead components removed (DestinationCard, CategoryFilter, TrendingSection, TravelBadges); 112 new tests added (1,346+ total pre-archive)
@@ -208,4 +209,4 @@ Built with ❤️ by the OutTheGroupchat Team
 
 ---
 
-*Last Updated: 2026-04-20 | 994+ tests passing | 51 active API routes | 0 any types | 0 console.* | Build: PASS | Pivot: Phase 5 of 8*
+*Last Updated: 2026-06-01 | ~1158 tests passing | 61 live API routes | 0 console.* | Build: PASS | Post-pivot steady state — V1 product vision (Phase 5: opt-in notifications)*
