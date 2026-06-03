@@ -1,6 +1,6 @@
 # OutTheGroupchat — Full Codemap
 
-> Auto-generated 2026-03-10. Last updated 2026-06-01 (post-pivot steady state, executing V1 product vision; V1 Phase 5 opt-in notifications begun). Main stats: 61 live API routes, 69 vitest-active test files, ~1158 tests passing. Comprehensive reference for agents and developers.
+> Auto-generated 2026-03-10. Last updated 2026-06-02 (post-pivot steady state, executing V1 product vision; V1 Phase 5 opt-in notifications COMPLETE — PER_MEMBER_INTENT trigger + GROUP_FORMATION push wired). Main stats: 61 live API routes (74 route.ts files incl. archived), 71 vitest-active test files, 1172 tests passing. Comprehensive reference for agents and developers.
 >
 > **🔀 Pivot in progress:** See `docs/REFACTOR_PLAN.md`. Trip-planning surface archived under `_archive/` directories as of Phase 1 (2026-04-16). See [Archived surface (Phase 1)](#archived-surface-phase-1) section below and `src/_archive/README.md` for the preservation scheme.
 >
@@ -34,7 +34,7 @@ Full-stack Next.js 14 collaborative travel planning app. Groups plan trips toget
 **App root:** `outthegroupchat-travel-app/`
 **Source:** `outthegroupchat-travel-app/src/`
 **Stats (post-Phase-6-complete, 2026-04-22):** 50 live API routes (35 base + 6 Crew routes + 9 Phase 4 meetup/venue/cron routes + 3 Phase 5 check-in routes + privacy route + 2 Phase 6 AI routes: suggest-meetups, icebreakers; 13 archived in Phase 1; feed POST now 410) | live component groups: auth, feed (rescoped to meetup/checkin types, tabs updated), social (incl. `CrewButton`, `CrewRequestCard`, `CrewList`), meetups (incl. `MeetupCard`, `MeetupList`, `CreateMeetupModal`, `RSVPButton`, `VenuePicker`, `AttendeeList`, `MeetupInviteModal`), checkins (incl. `CheckInButton`, `LiveActivityCard`, `NearbyCrewList`), discover, notifications, profile (incl. Recent Check-ins section), search, settings (incl. `PrivacySettingsForm`), onboarding, ai, ui, accessibility + Navigation (incl. privacy link) | live pages: /, /auth/*, /profile, `/profile/[userId]`, /feed, /discover, /inspiration, /notifications, /search, /settings, `/settings/privacy`, /onboarding, /privacy, /terms, `/crew`, `/crew/requests`, `/meetups`, `/meetups/new`, `/meetups/[id]`, `/checkins`, `/checkins/[id]` | middleware: auth-protects `/profile/:path*`, `/crew/:path*`, `/meetups/:path*`, `/checkins/:path*`, `/settings/:path*`, `/api/checkins/*`, plus select `/api/*` paths
-**Test Health (2026-06-01):** 69 live test files | ~1158 tests passing | 0 TSC errors | V1 Phase 5 (opt-in notifications) begun: `/api/users/notification-preferences` (GET/PATCH), `/api/cron/send-daily-prompts`, `src/lib/notifications/daily-prompt.ts`, `/settings/notifications` page + `NotificationPreferencesForm`. V1 surface live: intents, subcrews, topics, heatmap, recommendations, expire-intents cron.
+**Test Health (2026-06-02):** 71 live test files | 1172 tests passing | 0 TSC errors | V1 Phase 5 (opt-in notifications) COMPLETE: `/api/users/notification-preferences` (GET/PATCH), `/api/cron/send-daily-prompts`, `src/lib/notifications/daily-prompt.ts`, `/settings/notifications` page + `NotificationPreferencesForm`, plus the two opt-in triggers now wired — `src/lib/notifications/per-member-intent.ts` (PER_MEMBER_INTENT, dispatched from `POST /api/intents`) and `src/lib/subcrew/try-form.ts` GROUP_FORMATION Pusher push. `src/app/profile/page.tsx` refactored to 559 lines (extracted `ProfileCheckinsSection.tsx`). V1 surface live: intents, subcrews, topics, heatmap, recommendations, expire-intents cron.
 
 ---
 
@@ -804,10 +804,12 @@ db:seed        → npx tsx prisma/seed/index.ts
 
 ## Tests
 
-**Total: ~1158 tests across 69 Vitest unit/integration test files** (V1 Phase 5 opt-in notifications, 2026-06-01; +5 test files; 0 TSC errors)
+**Total: 1172 tests across 71 Vitest unit/integration test files** (V1 Phase 5 notification triggers wired, 2026-06-02; +2 test files; 0 TSC errors)
 
 | File | Lines | Tests | Coverage |
 |------|-------|-------|----------|
+| `src/__tests__/lib/per-member-intent.test.ts` | — | 10 | `src/lib/notifications/per-member-intent.ts` `dispatchPerMemberIntent` — PER_MEMBER_INTENT pref + ACCEPTED-Crew guard, SYSTEM notification creation, per-row failure isolation ✅ 2026-06-02 V1 Phase 5 |
+| `src/__tests__/lib/subcrew-group-formation-push.test.ts` | — | 4 | `src/lib/subcrew/try-form.ts` GROUP_FORMATION push — pref-gated `subcrew:formed` Pusher broadcast, non-fatal degradation ✅ 2026-06-02 V1 Phase 5 |
 | `src/__tests__/api/notification-preferences.test.ts` | — | 16 | GET/PATCH /api/users/notification-preferences — auth, per-trigger Zod validation, opt in/out flow ✅ 2026-06-01 V1 Phase 5 |
 | `src/__tests__/api/cron-send-daily-prompts.test.ts` | — | 7 | GET /api/cron/send-daily-prompts — CRON_SECRET bearer, DAILY_PROMPT-enabled dispatch, graceful degradation ✅ 2026-06-01 V1 Phase 5 |
 | `src/__tests__/lib/daily-prompt.test.ts` | — | 7 | `src/lib/notifications/daily-prompt.ts` `sendDailyPrompts` — recipient filtering, SYSTEM notification creation ✅ 2026-06-01 V1 Phase 5 |
@@ -920,14 +922,14 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `any` types | 0 ✅ |
 | `console.*` | 0 ✅ |
 | TSC errors (prod + test) | 0 ✅ |
-| Vitest tests | ~1158 passing, 69 test files (V1 Phase 5 opt-in notifications, 2026-06-01; +5 new: notification-preferences, cron-send-daily-prompts, daily-prompt, heatmap-edge, recommendations-edge); archived tests runnable on demand via `npm run test:archive` |
+| Vitest tests | 1172 passing, 71 test files (V1 Phase 5 notification triggers wired, 2026-06-02; +2 new: per-member-intent, subcrew-group-formation-push); archived tests runnable on demand via `npm run test:archive` |
 | E2E tests | 11 Playwright smoke tests (4 suites) — trip-specific specs archived |
 | Error monitoring | Sentry — instrumented across live surface (new notification-preferences route included) |
 | Live API routes | 61 (V1 surface: intents +mine/crew/[id], subcrews/*, topics, heatmap, recommendations, cron/expire-intents; + 2026-06-01: /api/users/notification-preferences, /api/cron/send-daily-prompts) |
 | `any` types | 4 |
-| Files >600 lines | 2 (RichFeedItem 717, profile 623) |
+| Files >600 lines | 1 (RichFeedItem 717; profile/page.tsx refactored to 559 on 2026-06-02) |
 | Production env gaps | Pusher vars, Sentry DSN, Resend domain, GOOGLE_PLACES_API_KEY |
-| **Phase status** | **Post-pivot steady state** — executing V1 product vision (intent → group → heatmap). V1 Phase 5 (opt-in notifications) begun 2026-06-01: notification-preferences API, daily-prompt cron, settings UI. |
+| **Phase status** | **Post-pivot steady state** — executing V1 product vision (intent → group → heatmap). V1 Phase 5 (opt-in notifications) COMPLETE 2026-06-02: notification-preferences API, daily-prompt cron, settings UI, PER_MEMBER_INTENT trigger + GROUP_FORMATION push wired. |
 
 ---
 
@@ -958,7 +960,7 @@ As of **2026-04-16** the trip-planning product surface has been archived to `_ar
 
 | File | Lines | Action |
 |------|-------|--------|
-| `app/profile/page.tsx` | 539 | Extract profile sections |
+| `app/profile/page.tsx` | 559 | Refactored 2026-06-02 (extracted `ProfileCheckinsSection.tsx`) |
 | `components/trips/AddActivityModal.tsx` | 485 | Extract form sections |
 | `components/surveys/SurveyBuilder.tsx` | 473 | Extract question editor |
 | `services/recommendation.service.ts` | 459 | Consider splitting by concern |

@@ -23,11 +23,14 @@
 
 import type { PrismaClient, Prisma, Intent, WindowPreset } from '@prisma/client';
 import { adjacentPresets, presetDistance } from './window-adjacency';
+import { broadcastToUser } from '@/lib/pusher';
+import { apiLogger } from '@/lib/logger';
+import { captureException } from '@/lib/sentry';
 
 /** Subset of Prisma client surface needed for formation. */
 export type FormSubCrewPrisma = Pick<
   PrismaClient,
-  'crew' | 'intent' | 'subCrew' | 'subCrewMember' | 'notification'
+  'crew' | 'intent' | 'subCrew' | 'subCrewMember' | 'notification' | 'notificationPreference'
 >;
 
 export interface FormationResult {
@@ -195,6 +198,36 @@ export async function tryFormSubCrew(
     ],
     skipDuplicates: true,
   });
+
+  // 8. Additive real-time push (V1 Phase 5). The in-app notifications above are
+  //    always written; the Pusher push is opt-in per user via their
+  //    GROUP_FORMATION NotificationPreference toggle. `broadcastToUser` already
+  //    no-ops when Pusher env is absent and swallows transport errors, but the
+  //    preference query + broadcast loop is wrapped here so any failure
+  //    (e.g. an unmocked/undefined delegate) never aborts a successful
+  //    formation — the SubCrew has already been created and persisted.
+  try {
+    const prefs = await prisma.notificationPreference.findMany({
+      where: {
+        trigger: 'GROUP_FORMATION',
+        enabled: true,
+        userId: { in: [focal.userId, bestPartner.intent.userId] },
+      },
+      select: { userId: true },
+    });
+
+    await Promise.all(
+      prefs.map((pref) =>
+        broadcastToUser(pref.userId, 'subcrew:formed', { subCrewId: subCrew.id }),
+      ),
+    );
+  } catch (error) {
+    captureException(error, { scope: 'subcrew.tryFormSubCrew.push', subCrewId: subCrew.id });
+    apiLogger.error(
+      { err: error, subCrewId: subCrew.id },
+      'SubCrew formation push notification failed (non-fatal)',
+    );
+  }
 
   return {
     subCrewId: subCrew.id,

@@ -1,3 +1,30 @@
+# 🟢 Completed 2026-06-02 (Nightly Build) — V1 Phase 5: Notification Triggers Wired
+
+> **Status:** Post-pivot steady state, executing the V1 product vision (intent → group → heatmap). V1 Phase 5 (opt-in notifications) COMPLETE — both opt-in triggers wired.
+> **Last Updated:** 2026-06-02
+> **Test count:** 1172 tests passing across 71 test files; 61 live API routes; 74 route.ts files.
+
+### Wave 2 — Features / Refactors
+
+- [F1] NEW `src/lib/notifications/per-member-intent.ts` (`dispatchPerMemberIntent`) wired into `src/app/api/intents/route.ts`. On `Intent.create`, notifies users who listed the author in their `PER_MEMBER_INTENT` `NotificationPreference.perMemberTargets` AND are ACCEPTED Crew of the author. Uses a SYSTEM Notification with `data.kind = 'PER_MEMBER_INTENT'`. Completes the V1 Phase 5 PER_MEMBER_INTENT trigger.
+- [F2] `src/lib/subcrew/try-form.ts` — additive GROUP_FORMATION push: after the `SUBCREW_FORMED` in-app notifications, queries each seed user's `GROUP_FORMATION` pref (enabled) and calls `broadcastToUser(userId, 'subcrew:formed', { subCrewId })`. Non-fatal. Completes the V1 Phase 5 GROUP_FORMATION push wiring.
+- [F3] `vitest.config.ts` — fixed cross-file mock-isolation flakiness via `clearMocks: true` + `fileParallelism: false` + `isolate: true`. Suite now deterministically green.
+- [F5] `src/app/profile/page.tsx` refactored 623 → 559 lines; extracted `src/components/profile/ProfileCheckinsSection.tsx`.
+
+### Wave 1 — Tests (+14 tests, 2 new files)
+
+- [T1] NEW `src/__tests__/lib/per-member-intent.test.ts` (+10 tests).
+- [T2] NEW `src/__tests__/lib/subcrew-group-formation-push.test.ts` (+4 tests).
+
+### Metrics
+
+- Tests: 1158 → 1172 (+14)
+- Test files (vitest, non-archive): 69 → 71 (+2)
+- Live API routes: 61 (no change — both triggers wire into existing endpoints) | route.ts files: 74
+- `any`: 4 | `console.*`: 0 | TODO/FIXME: 0 | files >600 lines: 1 (RichFeedItem 717; profile/page.tsx now 559)
+
+---
+
 # 🟢 Completed 2026-06-01 (Nightly Build) — V1 Phase 5: Opt-in Notifications
 
 > **Status:** Post-pivot steady state, executing the V1 product vision (intent → group → heatmap). V1 Phase 5 (opt-in notifications) begun 2026-06-01.
