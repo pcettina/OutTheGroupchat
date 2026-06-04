@@ -1,3 +1,29 @@
+# 🟢 Completed 2026-06-03 (Nightly Build) — Dead-code removal: last >600-line prod file eliminated
+
+> **Status:** Post-pivot steady state, executing the V1 product vision (intent → group → heatmap). Tight quality-only build per the standing #1 recommendation ("no new feature nightlies until the PR backlog drains").
+> **Last Updated:** 2026-06-03
+> **Test count:** 1172 tests passing across 71 test files; 61 live API routes; 74 route.ts files.
+
+### Wave 2 — Refactor / Dead-code cleanup
+
+- [M1] Deleted dead component `src/components/feed/RichFeedItem.tsx` (717 lines) and removed its barrel export from `src/components/feed/index.ts`. It was re-exported but never imported by any page or component — the active feed renderer is `FeedItem` (used by `src/app/feed/page.tsx`). This resolves the standing recommendation #2 (refactor the last >600-line file) by removing the file outright, the correct action for unreferenced code. **Prod files >600 lines is now 0.**
+
+### Verification
+
+- TSC: 0 errors | Lint: 0 warnings/errors | Build: PASS | Tests: 1172/1172 (no regression) | Prisma: valid
+
+### Why this build was deliberately small
+
+The dominant project risk is the unmerged nightly-PR backlog (#110–#116, with #110 itself a 17-PR consolidation). Per the 2026-06-02 report's #1 recommendation, no new feature surface was added tonight to avoid stacking further divergence on stale `main`. Quality wins only. The backlog drain is re-flagged as #1 below.
+
+### Metrics
+
+- Tests: 1172 → 1172 (→, no new tests; dead-code removal needs none)
+- Prod TS/TSX files: 382 → 381 (−1, RichFeedItem removed)
+- `any` (real): 0 | `console.*`: 0 | TODO/FIXME: 0 | **files >600 lines (prod): 1 → 0** ✅
+
+---
+
 # 🟢 Completed 2026-06-02 (Nightly Build) — V1 Phase 5: Notification Triggers Wired
 
 > **Status:** Post-pivot steady state, executing the V1 product vision (intent → group → heatmap). V1 Phase 5 (opt-in notifications) COMPLETE — both opt-in triggers wired.

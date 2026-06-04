@@ -1,6 +1,6 @@
 # OutTheGroupchat — Full Codemap
 
-> Auto-generated 2026-03-10. Last updated 2026-06-02 (post-pivot steady state, executing V1 product vision; V1 Phase 5 opt-in notifications COMPLETE — PER_MEMBER_INTENT trigger + GROUP_FORMATION push wired). Main stats: 61 live API routes (74 route.ts files incl. archived), 71 vitest-active test files, 1172 tests passing. Comprehensive reference for agents and developers.
+> Auto-generated 2026-03-10. Last updated 2026-06-03 (post-pivot steady state, executing V1 product vision; tight quality-only nightly — deleted dead `RichFeedItem.tsx`, last >600-line prod file → 0). Main stats: 61 live API routes (74 route.ts files incl. archived), 71 vitest-active test files, 1172 tests passing. Comprehensive reference for agents and developers.
 >
 > **🔀 Pivot in progress:** See `docs/REFACTOR_PLAN.md`. Trip-planning surface archived under `_archive/` directories as of Phase 1 (2026-04-16). See [Archived surface (Phase 1)](#archived-surface-phase-1) section below and `src/_archive/README.md` for the preservation scheme.
 >
@@ -89,7 +89,7 @@ outthegroupchat-travel-app/
 │   │   ├── ai/                    # TripChat (360L), ChatMessage, ChatLoadingIndicator, ChatQuickPrompts, chat-types.ts
 │   │   ├── auth/                  # SignUpForm
 │   │   ├── discover/              # CategoryFilter, DestinationCard, TrendingSection
-│   │   ├── feed/                  # FeedItem, RichFeedItem, CommentThread, ShareModal, etc.
+│   │   ├── feed/                  # FeedItem, CommentThread, ShareModal, ReactionPicker, MediaGallery, EngagementBar
 │   │   ├── notifications/         # NotificationBell, NotificationCenter, NotificationList
 │   │   ├── onboarding/            # WelcomeScreen, InterestSelector, TravelStyleQuiz
 │   │   ├── profile/               # ProfileHeader, TripHistory, BadgeShowcase, PreferencesCard
@@ -585,8 +585,7 @@ db:seed        → npx tsx prisma/seed/index.ts
 
 | Component | Lines | Props | Purpose |
 |-----------|-------|-------|---------|
-| `FeedItem` | 298 | id, type, timestamp, user, trip?, activity?, media?, onSave, onComment, onShare | Basic feed post |
-| `RichFeedItem` | 432 | id, type, timestamp, user, content?, reactions?, comments? | Enhanced post with reactions |
+| `FeedItem` | 298 | id, type, timestamp, user, trip?, activity?, media?, onSave, onComment, onShare | Basic feed post (active renderer used by `/feed`) |
 | `CommentThread` | 385 | itemId, itemType, comments, onAddComment? | Nested comments with reply |
 | `EngagementBar` | — | itemId, itemType, initialLiked?, likeCount?, commentCount? | Like/comment/share bar |
 | `MediaGallery` | — | media[], maxDisplay?, onMediaClick? | Image/video grid |
@@ -926,8 +925,8 @@ db:seed        → npx tsx prisma/seed/index.ts
 | E2E tests | 11 Playwright smoke tests (4 suites) — trip-specific specs archived |
 | Error monitoring | Sentry — instrumented across live surface (new notification-preferences route included) |
 | Live API routes | 61 (V1 surface: intents +mine/crew/[id], subcrews/*, topics, heatmap, recommendations, cron/expire-intents; + 2026-06-01: /api/users/notification-preferences, /api/cron/send-daily-prompts) |
-| `any` types | 4 |
-| Files >600 lines | 1 (RichFeedItem 717; profile/page.tsx refactored to 559 on 2026-06-02) |
+| `any` types | 0 (prior "4" were comment false-positives, not type annotations) |
+| Files >600 lines | 0 ✅ (dead `RichFeedItem.tsx` deleted 2026-06-03; profile/page.tsx 559) |
 | Production env gaps | Pusher vars, Sentry DSN, Resend domain, GOOGLE_PLACES_API_KEY |
 | **Phase status** | **Post-pivot steady state** — executing V1 product vision (intent → group → heatmap). V1 Phase 5 (opt-in notifications) COMPLETE 2026-06-02: notification-preferences API, daily-prompt cron, settings UI, PER_MEMBER_INTENT trigger + GROUP_FORMATION push wired. |
 
@@ -965,7 +964,6 @@ As of **2026-04-16** the trip-planning product surface has been archived to `_ar
 | `components/surveys/SurveyBuilder.tsx` | 473 | Extract question editor |
 | `services/recommendation.service.ts` | 459 | Consider splitting by concern |
 | `types/index.ts` | 449 | Split by domain |
-| `components/feed/RichFeedItem.tsx` | 432 | Extract reaction/comment sections |
 | `app/inspiration/page.tsx` | 401 | Extract template/trending sections |
 | `app/api/inspiration/route.ts` | 398 | Extract template data |
 

@@ -1,5 +1,4 @@
 export { FeedItem } from './FeedItem';
-export { RichFeedItem } from './RichFeedItem';
 export { EngagementBar } from './EngagementBar';
 export { ReactionPicker } from './ReactionPicker';
 export { MediaGallery } from './MediaGallery';

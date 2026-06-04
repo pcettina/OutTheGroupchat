@@ -18,7 +18,7 @@
 >
 > **Target Launch:** Q2 2026 (Beta) — to be re-baselined post-pivot
 > **Current Status:** Refactoring (Phase 2 in progress — domain models added, DB migration pending)
-> **Last Updated:** 2026-06-02 (Post-pivot steady state — V1 product vision live; V1 Phase 5 opt-in notifications COMPLETE: notification-preferences API + daily-prompt cron + /settings/notifications UI + PER_MEMBER_INTENT trigger + GROUP_FORMATION push wired)
+> **Last Updated:** 2026-06-03 (Post-pivot steady state — V1 product vision live. Tight quality-only nightly: deleted dead `RichFeedItem.tsx` → 0 prod files >600 lines. Standing #1 blocker: drain the unmerged nightly-PR backlog #110–#116.)
 
 ---
 
