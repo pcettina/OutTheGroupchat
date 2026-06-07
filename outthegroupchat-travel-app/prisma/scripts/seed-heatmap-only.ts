@@ -8,8 +8,8 @@
  *   DATABASE_URL=<...> DIRECT_URL=<...> npx tsx prisma/scripts/seed-heatmap-only.ts
  */
 import { PrismaClient } from '@prisma/client';
-import { seedHeatmapFixtures } from '../seed/generators/heatmap-fixtures.ts';
-import { seedTopics } from '../seed/generators/topics.ts';
+import { seedHeatmapFixtures } from '../seed/generators/heatmap-fixtures';
+import { seedTopics } from '../seed/generators/topics';
 
 async function main() {
   const prisma = new PrismaClient();

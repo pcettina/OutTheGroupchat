@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
+import { captureException } from '@/lib/sentry';
 
 const BetaSignupSchema = z.object({
   email: z.string().email(),
@@ -105,6 +106,7 @@ export async function POST(req: Request) {
       { status: 201 }
     );
   } catch (error) {
+    captureException(error, { route: 'api/beta/signup', method: 'POST' });
     logger.error({ err: error, context: 'BETA_SIGNUP' }, 'Error during beta signup');
     
     if (error instanceof Error) {

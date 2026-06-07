@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { authOptions } from '@/lib/auth';
 import { getPusherServer } from '@/lib/pusher';
 import { logger } from '@/lib/logger';
+import { captureException } from '@/lib/sentry';
 
 const pusherAuthSchema = z.object({
   socket_id: z.string().min(1, 'socket_id is required'),
@@ -59,6 +60,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(authResponse);
   } catch (error) {
+    captureException(error);
     logger.error({ error }, '[PUSHER_AUTH] Authentication failed');
     return NextResponse.json(
       { error: 'Authentication failed' },

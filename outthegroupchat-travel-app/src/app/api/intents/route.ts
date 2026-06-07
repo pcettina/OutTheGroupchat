@@ -13,6 +13,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { z } from 'zod';
 import { WindowPreset } from '@prisma/client';
+import * as Sentry from '@sentry/nextjs';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { apiLogger } from '@/lib/logger';
@@ -21,6 +22,7 @@ import { apiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-
 import { classifyIntentText } from '@/lib/intent/topic-classifier';
 import { resolveIntentWindow, MAX_DAY_OFFSET } from '@/lib/intent/window-preset';
 import { tryFormSubCrew } from '@/lib/subcrew/try-form';
+import { dispatchPerMemberIntent } from '@/lib/notifications/per-member-intent';
 
 const createIntentSchema = z
   .object({
@@ -137,10 +139,24 @@ export async function POST(request: NextRequest) {
     try {
       formation = await tryFormSubCrew(intent, prisma);
     } catch (err) {
-      captureException(err);
+      captureException(err, { route: '/api/intents', method: 'POST', stage: 'tryFormSubCrew', intentId: intent.id });
       apiLogger.error(
         { err, intentId: intent.id },
         '[INTENT_POST] tryFormSubCrew failed (non-fatal)',
+      );
+    }
+
+    // V1 Phase 5: notify Crew partners who opted in to be alerted about this
+    // author's Intents (PER_MEMBER_INTENT). Failures are non-fatal — the
+    // Intent create succeeds regardless.
+    let perMemberDispatch = null;
+    try {
+      perMemberDispatch = await dispatchPerMemberIntent(intent, prisma);
+    } catch (err) {
+      captureException(err);
+      apiLogger.error(
+        { err, intentId: intent.id },
+        '[INTENT_POST] dispatchPerMemberIntent failed (non-fatal)',
       );
     }
 
@@ -151,6 +167,7 @@ export async function POST(request: NextRequest) {
         topicId,
         matchedKeywords,
         subCrewFormed: formation?.subCrewId ?? null,
+        perMemberNotified: perMemberDispatch?.sent ?? 0,
       },
       '[INTENT_POST] Intent created',
     );
@@ -165,6 +182,9 @@ export async function POST(request: NextRequest) {
       { status: 201 },
     );
   } catch (error) {
+    Sentry.captureException(error, {
+      tags: { route: 'api/intents', method: 'POST' },
+    });
     captureException(error);
     apiLogger.error({ error }, '[INTENT_POST] Failed to create intent');
     return NextResponse.json(

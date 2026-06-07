@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { captureException } from '@/lib/sentry';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,8 +17,9 @@ export async function GET() {
   try {
     await prisma.$queryRaw`SELECT 1`;
     databaseStatus = 'connected';
-  } catch {
+  } catch (error) {
     databaseStatus = 'error';
+    captureException(error, { route: '/api/health', op: 'db_ping' });
   }
 
   const allOk = databaseStatus === 'connected';

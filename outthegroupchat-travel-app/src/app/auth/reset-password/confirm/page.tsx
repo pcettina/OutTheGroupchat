@@ -3,6 +3,39 @@
 import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
+import { motion } from 'framer-motion';
+import { KeyRound, AlertCircle, CheckCircle2, Loader2, X } from 'lucide-react';
+
+function AmbientHalos() {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      <div className="absolute -top-40 -right-40 w-[28rem] h-[28rem] bg-otg-sodium/15 rounded-full blur-3xl" />
+      <div className="absolute -bottom-40 -left-40 w-[24rem] h-[24rem] bg-otg-bourbon/10 rounded-full blur-3xl" />
+      <div className="absolute top-1/2 left-1/3 w-72 h-72 bg-otg-tile/10 rounded-full blur-3xl" />
+    </div>
+  );
+}
+
+function BrandLockup() {
+  return (
+    <Link href="/" className="flex items-center justify-center gap-2.5 mb-8 group">
+      <Image
+        src="/logo-mark.svg"
+        alt=""
+        aria-hidden="true"
+        width={28}
+        height={44}
+        priority
+        className="h-10 w-auto transition-transform group-hover:-translate-y-0.5"
+      />
+      <span className="font-display font-bold text-2xl tracking-tight">
+        <span className="text-otg-sodium">Out</span>
+        <span className="text-otg-text-bright">TheGroupchat</span>
+      </span>
+    </Link>
+  );
+}
 
 function ConfirmResetForm() {
   const router = useRouter();
@@ -62,145 +95,192 @@ function ConfirmResetForm() {
 
   if (!token || !email) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-emerald-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950/20 px-4">
-        <div className="w-full max-w-md">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-8 text-center">
-            <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+      <div className="relative min-h-screen flex items-center justify-center bg-otg-bg-dark px-4 py-12 sm:px-6 lg:px-8 overflow-hidden">
+        <AmbientHalos />
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
+          className="w-full max-w-md relative"
+        >
+          <BrandLockup />
+          <div className="card card-glass p-8 text-center relative overflow-hidden">
+            <div className="pointer-events-none absolute -top-24 -right-24 w-56 h-56 rounded-full bg-otg-danger/15 blur-3xl" />
+            <div className="relative">
+              <div className="w-16 h-16 rounded-full bg-otg-danger/15 ring-1 ring-otg-danger/30 flex items-center justify-center mx-auto mb-5">
+                <X className="w-8 h-8 text-otg-danger" aria-hidden="true" />
+              </div>
+              <h1 className="font-display font-bold text-2xl tracking-tight text-otg-text-bright mb-2">
+                Invalid reset link
+              </h1>
+              <p className="text-otg-text-dim mb-7">
+                This password reset link is missing required parameters or has expired.
+              </p>
+              <Link href="/auth/reset-password" className="btn btn-primary text-base px-6">
+                Request a new link
+              </Link>
             </div>
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Invalid Reset Link</h2>
-            <p className="text-slate-600 dark:text-slate-400 mb-6">
-              This password reset link is invalid or missing required parameters.
-            </p>
-            <Link
-              href="/auth/reset-password"
-              className="inline-block px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-medium hover:from-emerald-600 hover:to-teal-700 transition-all"
-            >
-              Request New Link
-            </Link>
           </div>
-        </div>
+        </motion.div>
       </div>
     );
   }
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-emerald-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950/20 px-4">
-        <div className="w-full max-w-md">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-8 text-center">
-            <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
+      <div className="relative min-h-screen flex items-center justify-center bg-otg-bg-dark px-4 py-12 sm:px-6 lg:px-8 overflow-hidden">
+        <AmbientHalos />
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
+          className="w-full max-w-md relative"
+        >
+          <BrandLockup />
+          <div className="card card-glass p-8 text-center relative overflow-hidden">
+            <div className="pointer-events-none absolute -top-24 -right-24 w-56 h-56 rounded-full bg-otg-tile/15 blur-3xl" />
+            <div className="relative">
+              <div className="w-16 h-16 rounded-full bg-otg-tile/15 ring-1 ring-otg-tile/30 flex items-center justify-center mx-auto mb-5">
+                <CheckCircle2 className="w-8 h-8 text-otg-tile" aria-hidden="true" />
+              </div>
+              <h1 className="font-display font-bold text-2xl tracking-tight text-otg-text-bright mb-2">
+                Password reset
+              </h1>
+              <p className="text-otg-text-dim mb-2">
+                Your password has been updated.
+              </p>
+              <p className="text-sm text-otg-text-dim flex items-center justify-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                Redirecting to sign in...
+              </p>
             </div>
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Password Reset!</h2>
-            <p className="text-slate-600 dark:text-slate-400 mb-2">
-              Your password has been successfully reset.
-            </p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              Redirecting to sign in...
-            </p>
           </div>
-        </div>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-emerald-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950/20 px-4">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg mb-4">
-            <span className="text-3xl">🔑</span>
-          </div>
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">New Password</h1>
-          <p className="text-slate-600 dark:text-slate-400 mt-2">
-            Choose a strong password for your account.
-          </p>
-        </div>
+    <div className="relative min-h-screen flex items-center justify-center bg-otg-bg-dark px-4 py-12 sm:px-6 lg:px-8 overflow-hidden">
+      <AmbientHalos />
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
+        className="w-full max-w-md relative"
+      >
+        <BrandLockup />
+        <div className="card card-glass p-7 sm:p-8 relative overflow-hidden">
+          <div className="pointer-events-none absolute -top-24 -right-24 w-56 h-56 rounded-full bg-otg-sodium/15 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-32 -left-20 w-56 h-56 rounded-full bg-otg-bourbon/10 blur-3xl" />
 
-        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-8">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {error && (
-              <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
-                <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
+          <div className="relative">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-11 h-11 rounded-xl bg-otg-sodium/15 ring-1 ring-otg-sodium/30 flex items-center justify-center flex-shrink-0">
+                <KeyRound className="w-5 h-5 text-otg-sodium" aria-hidden="true" />
               </div>
-            )}
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                New Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                autoFocus
-                minLength={8}
-                placeholder="At least 8 characters"
-                className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
-              />
+              <div>
+                <h1 className="font-display font-bold text-2xl tracking-tight text-otg-text-bright">
+                  Choose a new password
+                </h1>
+                <p className="text-sm text-otg-text-dim">
+                  Make it strong — at least 8 characters.
+                </p>
+              </div>
             </div>
 
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Confirm Password
-              </label>
-              <input
-                id="confirmPassword"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                placeholder="Repeat your new password"
-                className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading || !password || !confirmPassword}
-              className="w-full py-3 px-6 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 disabled:from-slate-400 disabled:to-slate-500 text-white font-semibold rounded-xl transition-all duration-200 disabled:cursor-not-allowed"
-            >
-              {isLoading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  Resetting...
-                </span>
-              ) : (
-                'Reset Password'
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {error && (
+                <div
+                  role="alert"
+                  className="bg-red-50 !bg-otg-danger/10 border border-otg-danger/30 rounded-xl p-3.5 flex items-start gap-2.5"
+                >
+                  <AlertCircle className="w-5 h-5 text-otg-danger flex-shrink-0 mt-0.5" aria-hidden="true" />
+                  <p className="text-sm text-otg-text-bright">{error}</p>
+                </div>
               )}
-            </button>
-          </form>
 
-          <p className="text-center text-sm text-slate-600 dark:text-slate-400 mt-6">
-            Link expired?{' '}
-            <Link href="/auth/reset-password" className="text-emerald-600 dark:text-emerald-400 hover:underline font-medium">
-              Request a new one
-            </Link>
-          </p>
+              <div>
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-otg-text-bright mb-1.5"
+                >
+                  New password
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  autoFocus
+                  minLength={8}
+                  placeholder="At least 8 characters"
+                  className="input"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="confirmPassword"
+                  className="block text-sm font-medium text-otg-text-bright mb-1.5"
+                >
+                  Confirm password
+                </label>
+                <input
+                  id="confirmPassword"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  placeholder="Repeat your password"
+                  className="input"
+                />
+              </div>
+
+              <motion.button
+                whileTap={{ scale: 0.98 }}
+                type="submit"
+                disabled={isLoading || !password || !confirmPassword}
+                className="btn btn-primary w-full text-base mt-1"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" aria-hidden="true" />
+                    Resetting...
+                  </>
+                ) : (
+                  'Reset password'
+                )}
+              </motion.button>
+            </form>
+
+            <p className="text-center text-sm text-otg-text-dim mt-6">
+              Link expired?{' '}
+              <Link
+                href="/auth/reset-password"
+                className="font-medium text-otg-sodium hover:text-otg-sodium-300 transition-colors"
+              >
+                Request a new one
+              </Link>
+            </p>
+          </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
 
 export default function ConfirmResetPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 rounded-full bg-emerald-500 animate-pulse" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="relative min-h-screen flex items-center justify-center bg-otg-bg-dark overflow-hidden">
+          <AmbientHalos />
+          <Loader2 className="w-8 h-8 text-otg-sodium animate-spin relative" aria-hidden="true" />
+        </div>
+      }
+    >
       <ConfirmResetForm />
     </Suspense>
   );

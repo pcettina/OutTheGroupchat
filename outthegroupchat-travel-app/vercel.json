@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/expire-intents",
       "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/send-daily-prompts",
+      "schedule": "0 13 * * *"
     }
   ],
   "headers": [
@@ -35,6 +39,9 @@
       "maxDuration": 60
     },
     "app/api/cron/expire-intents/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/cron/send-daily-prompts/route.ts": {
       "maxDuration": 60
     }
   }

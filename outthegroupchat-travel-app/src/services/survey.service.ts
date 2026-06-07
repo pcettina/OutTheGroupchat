@@ -7,6 +7,7 @@
  *
  * @module survey.service
  */
+import * as Sentry from '@sentry/nextjs';
 import { prisma } from '@/lib/prisma';
 import type { Prisma, TripSurvey } from '@prisma/client';
 import type { SurveyQuestion, SurveyAnalysis, SurveyAnswers } from '@/types';
@@ -204,51 +205,59 @@ export class SurveyService {
    * @throws {Error} If no survey is found with the given ID
    */
   static async analyzeSurveyResponses(surveyId: string): Promise<SurveyAnalysis> {
-    const survey = await prisma.tripSurvey.findUnique({
-      where: { id: surveyId },
-      include: {
-        responses: {
-          include: {
-            user: true,
+    try {
+      const survey = await prisma.tripSurvey.findUnique({
+        where: { id: surveyId },
+        include: {
+          responses: {
+            include: {
+              user: true,
+            },
           },
         },
-      },
-    });
+      });
 
-    if (!survey) {
-      throw new Error('Survey not found');
+      if (!survey) {
+        throw new Error('Survey not found');
+      }
+
+      const responses = survey.responses;
+      const totalResponses = responses.length;
+
+      // Get trip member count for response rate
+      const memberCount = await prisma.tripMember.count({
+        where: { tripId: survey.tripId },
+      });
+
+      const responseRate = memberCount > 0 ? (totalResponses / memberCount) * 100 : 0;
+
+      // Analyze budgets
+      const budgetAnalysis = this.analyzeBudgets(responses);
+
+      // Analyze date preferences
+      const dateAnalysis = this.analyzeDatePreferences(responses);
+
+      // Analyze location preferences
+      const locationPreferences = this.analyzeLocationPreferences(responses);
+
+      // Analyze activity preferences
+      const activityPreferences = this.analyzeActivityPreferences(responses);
+
+      return {
+        totalResponses,
+        responseRate,
+        budgetAnalysis,
+        dateAnalysis,
+        locationPreferences,
+        activityPreferences,
+      };
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: { route: 'service:survey', method: 'static' },
+        extra: { operation: 'analyzeSurveyResponses', surveyId },
+      });
+      throw error;
     }
-
-    const responses = survey.responses;
-    const totalResponses = responses.length;
-
-    // Get trip member count for response rate
-    const memberCount = await prisma.tripMember.count({
-      where: { tripId: survey.tripId },
-    });
-
-    const responseRate = memberCount > 0 ? (totalResponses / memberCount) * 100 : 0;
-
-    // Analyze budgets
-    const budgetAnalysis = this.analyzeBudgets(responses);
-
-    // Analyze date preferences
-    const dateAnalysis = this.analyzeDatePreferences(responses);
-
-    // Analyze location preferences
-    const locationPreferences = this.analyzeLocationPreferences(responses);
-
-    // Analyze activity preferences
-    const activityPreferences = this.analyzeActivityPreferences(responses);
-
-    return {
-      totalResponses,
-      responseRate,
-      budgetAnalysis,
-      dateAnalysis,
-      locationPreferences,
-      activityPreferences,
-    };
   }
 
   /**
@@ -404,10 +413,18 @@ export class SurveyService {
    * @returns Promise that resolves when the survey status has been updated
    */
   static async closeSurvey(surveyId: string): Promise<void> {
-    await prisma.tripSurvey.update({
-      where: { id: surveyId },
-      data: { status: 'CLOSED' },
-    });
+    try {
+      await prisma.tripSurvey.update({
+        where: { id: surveyId },
+        data: { status: 'CLOSED' },
+      });
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: { route: 'service:survey', method: 'static' },
+        extra: { operation: 'closeSurvey', surveyId },
+      });
+      throw error;
+    }
   }
 
   /**
@@ -418,17 +435,25 @@ export class SurveyService {
    * @returns The newly created TripSurvey record
    */
   static async createTripSurvey(tripId: string, expirationHours: number = 48): Promise<TripSurvey> {
-    const expiresAt = new Date(Date.now() + expirationHours * 60 * 60 * 1000);
+    try {
+      const expiresAt = new Date(Date.now() + expirationHours * 60 * 60 * 1000);
 
-    return prisma.tripSurvey.create({
-      data: {
-        tripId,
-        title: 'Trip Planning Survey',
-        questions: TRIP_PLANNING_SURVEY as unknown as Prisma.InputJsonValue,
-        status: 'ACTIVE',
-        expiresAt,
-      },
-    });
+      return await prisma.tripSurvey.create({
+        data: {
+          tripId,
+          title: 'Trip Planning Survey',
+          questions: TRIP_PLANNING_SURVEY as unknown as Prisma.InputJsonValue,
+          status: 'ACTIVE',
+          expiresAt,
+        },
+      });
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: { route: 'service:survey', method: 'static' },
+        extra: { operation: 'createTripSurvey', tripId, expirationHours },
+      });
+      throw error;
+    }
   }
 }
 

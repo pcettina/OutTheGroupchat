@@ -14,6 +14,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { z } from 'zod';
 import { IntentState, WindowPreset } from '@prisma/client';
+import * as Sentry from '@sentry/nextjs';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { apiLogger } from '@/lib/logger';
@@ -175,6 +176,9 @@ export async function PATCH(request: NextRequest, context: RouteParams) {
 
     return NextResponse.json({ success: true, data: updated });
   } catch (error) {
+    Sentry.captureException(error, {
+      tags: { route: 'api/intents/[id]', method: 'PATCH' },
+    });
     captureException(error);
     apiLogger.error({ error }, '[INTENT_PATCH] Failed to update intent');
     return NextResponse.json(
@@ -229,6 +233,9 @@ export async function DELETE(request: NextRequest, context: RouteParams) {
 
     return NextResponse.json({ success: true, data: expired });
   } catch (error) {
+    Sentry.captureException(error, {
+      tags: { route: 'api/intents/[id]', method: 'DELETE' },
+    });
     captureException(error);
     apiLogger.error({ error }, '[INTENT_DELETE] Failed to expire intent');
     return NextResponse.json(

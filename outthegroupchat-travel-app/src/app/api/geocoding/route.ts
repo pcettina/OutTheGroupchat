@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import type { Destination } from '@/types';
 import { logError } from '@/lib/logger';
+import { captureException } from '@/lib/sentry';
 import { z } from 'zod';
 import { apiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 
@@ -179,10 +180,11 @@ export async function GET(req: Request) {
     return NextResponse.json({ success: true, data: finalResults });
   } catch (error) {
     logError('GEOCODING', error);
+    captureException(error, { route: '/api/geocoding', query });
     // Return popular matches as fallback
-    return NextResponse.json({ 
-      success: true, 
-      data: popularMatches.length > 0 ? popularMatches : popularDestinations.slice(0, 8) 
+    return NextResponse.json({
+      success: true,
+      data: popularMatches.length > 0 ? popularMatches : popularDestinations.slice(0, 8)
     });
   }
 }
