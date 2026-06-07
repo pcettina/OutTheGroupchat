@@ -1,6 +1,6 @@
 # OutTheGroupchat — Full Codemap
 
-> Auto-generated 2026-03-10. Last updated 2026-05-16 (POST_PIVOT_STEADY_STATE — V1 routes live, nightly refactors + test backfill ongoing). Main stats: 59 API routes (excluding `_archive`), 67 vitest-active test files, ~1253 tests passing, 226 TS files. Comprehensive reference for agents and developers.
+> Auto-generated 2026-03-10. Last updated 2026-06-07 (**BACKLOG CONSOLIDATION** — merged #110 anchor [#93–#109] + the June nightly chain [#115–#120, canonical V1 Phase-5] + #112 topics rate-limit into one green tree, landed on main; drained the 11-PR backlog). Main stats: 61 live API routes (excluding `_archive`), 90 vitest-active test files, 1805 tests passing. Comprehensive reference for agents and developers.
 >
 > **2026-05-16 additions:** New directories `src/components/meetups/createMeetup/` (CreateMeetupModal split), `src/components/inspiration/` (inspiration page split), and `src/lib/inspiration/` (inspiration handlers extracted from the route). Files >600 lines: 2 — `RichFeedItem.tsx` and `profile/page.tsx` (refactors land in unmerged PR #108).
 >

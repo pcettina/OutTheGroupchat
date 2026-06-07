@@ -1,7 +1,7 @@
 # 🟢 Active — POST_PIVOT_STEADY_STATE (V1 pivot in flight)
 
-> **Last Updated:** 2026-05-16
-> **Status:** V1 routes live; nightly builds are now in POST_PIVOT_STEADY_STATE — tightening tests, refactoring oversized files, and consolidating docs around the V1 intent-to-group surface.
+> **Last Updated:** 2026-06-07
+> **Status:** V1 routes live; POST_PIVOT_STEADY_STATE. **2026-06-07: 11-PR backlog consolidated and landed on main** — #110 anchor (#93–#109) + June nightly chain (#115–#120, canonical V1 Phase-5 notifications) + #112 topics rate-limit, reconciled into one green tree (1805 tests / 90 files, tsc clean). The "frozen main" stall is resolved; nightly base-branch logic hardened against re-forking.
 
 ---
 

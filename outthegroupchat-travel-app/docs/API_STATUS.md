@@ -1,6 +1,6 @@
 # 📡 API & Integration Status
 
-> **Last Updated: 2026-05-16**
+> **Last Updated: 2026-06-07** (backlog consolidation landed on main: #110 + June chain #115–#120 + #112 topics rate-limit. `GET /api/topics` now rate-limited per user → 429. 61 live routes, 90 test files, 1805 tests.)
 >
 > **V1 Routes (see V1_API_ROUTES.md):** The V1 pivot added 14 new routes covering intent-to-group, sub-crew formation, topics, recommendations, heatmap, and cron-expiry. Full route reference in `docs/V1_API_ROUTES.md`. Summary:
 >
