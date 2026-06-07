@@ -22,6 +22,7 @@ import { apiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-
 import { classifyIntentText } from '@/lib/intent/topic-classifier';
 import { resolveIntentWindow, MAX_DAY_OFFSET } from '@/lib/intent/window-preset';
 import { tryFormSubCrew } from '@/lib/subcrew/try-form';
+import { dispatchPerMemberIntent } from '@/lib/notifications/per-member-intent';
 
 const createIntentSchema = z
   .object({
@@ -145,6 +146,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // V1 Phase 5: notify Crew partners who opted in to be alerted about this
+    // author's Intents (PER_MEMBER_INTENT). Failures are non-fatal — the
+    // Intent create succeeds regardless.
+    let perMemberDispatch = null;
+    try {
+      perMemberDispatch = await dispatchPerMemberIntent(intent, prisma);
+    } catch (err) {
+      captureException(err);
+      apiLogger.error(
+        { err, intentId: intent.id },
+        '[INTENT_POST] dispatchPerMemberIntent failed (non-fatal)',
+      );
+    }
+
     apiLogger.info(
       {
         intentId: intent.id,
@@ -152,6 +167,7 @@ export async function POST(request: NextRequest) {
         topicId,
         matchedKeywords,
         subCrewFormed: formation?.subCrewId ?? null,
+        perMemberNotified: perMemberDispatch?.sent ?? 0,
       },
       '[INTENT_POST] Intent created',
     );

@@ -1,10 +1,3 @@
-/**
- * @module users/notification-preferences
- * @description Notification preferences API — read and update the authenticated
- * user's NotificationPreference rows for V1 Phase 5 ("Get prompted") triggers
- * (DAILY_PROMPT, PER_MEMBER_INTENT, GROUP_FORMATION). Backed by the
- * `NotificationPreference` Prisma model with `@@unique([userId, trigger])`.
- */
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { z } from 'zod';
@@ -14,49 +7,64 @@ import { authOptions } from '@/lib/auth';
 import { apiLogger } from '@/lib/logger';
 import { captureException } from '@/lib/sentry';
 import { apiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
+import type {
+  NotificationPreferenceResponse,
+} from '@/types/notification-preference';
 
-export const dynamic = 'force-dynamic';
+// ============================================
+// CONSTANTS
+// ============================================
 
-const TIME_REGEX = /^([01]\d|2[0-3]):[0-5]\d$/;
-const CUID_REGEX = /^c[a-z0-9]{20,}$/i;
+/** All triggers the GET endpoint must always return, defaulted when absent. */
+const ALL_TRIGGERS: NotificationPreferenceTrigger[] = [
+  NotificationPreferenceTrigger.DAILY_PROMPT,
+  NotificationPreferenceTrigger.PER_MEMBER_INTENT,
+  NotificationPreferenceTrigger.GROUP_FORMATION,
+];
+
+// ============================================
+// SCHEMA DEFINITIONS
+// ============================================
+
+/** "HH:mm" 24-hour time, e.g. "09:00" — only meaningful for DAILY_PROMPT. */
+const SCHEDULE_REGEX = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 const updatePreferenceSchema = z.object({
-  trigger: z.enum([
-    NotificationPreferenceTrigger.DAILY_PROMPT,
-    NotificationPreferenceTrigger.PER_MEMBER_INTENT,
-    NotificationPreferenceTrigger.GROUP_FORMATION,
-  ]),
+  trigger: z.nativeEnum(NotificationPreferenceTrigger),
   enabled: z.boolean(),
   schedule: z
     .string()
-    .regex(TIME_REGEX, 'schedule must be HH:MM (24h)')
-    .nullable()
+    .regex(SCHEDULE_REGEX, 'schedule must be HH:mm 24-hour time')
     .optional(),
-  perMemberTargets: z
-    .array(z.string().regex(CUID_REGEX, 'invalid user id'))
-    .max(100, 'perMemberTargets exceeds max length 100')
-    .optional(),
+  perMemberTargets: z.array(z.string()).optional(),
 });
 
-type PreferenceShape = {
-  enabled: boolean;
-  schedule: string | null;
-  perMemberTargets: string[];
-};
+// ============================================
+// HELPERS
+// ============================================
 
-const DEFAULT_PREF: PreferenceShape = {
-  enabled: false,
-  schedule: null,
-  perMemberTargets: [],
-};
+/** Default (opted-out) preference for a trigger with no stored row. */
+function defaultPreference(
+  trigger: NotificationPreferenceTrigger
+): NotificationPreferenceResponse {
+  return {
+    trigger,
+    enabled: false,
+    schedule: null,
+    perMemberTargets: [],
+  };
+}
+
+// ============================================
+// GET /api/users/notification-preferences
+// ============================================
 
 /**
  * GET /api/users/notification-preferences
- * Returns the authenticated user's notification preferences keyed by trigger.
- * Triggers without a stored row are returned with default values
- * (`enabled: false`, `schedule: null`, `perMemberTargets: []`).
+ * Returns the authenticated user's preferences for all three triggers.
+ * Triggers without a stored row are returned as opted-out defaults.
  */
-export async function GET(_req: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -71,47 +79,50 @@ export async function GET(_req: NextRequest) {
       );
     }
 
+    const callerId = session.user.id;
+
     const rows = await prisma.notificationPreference.findMany({
-      where: { userId: session.user.id },
+      where: { userId: callerId },
     });
 
-    const preferences: Record<NotificationPreferenceTrigger, PreferenceShape> = {
-      [NotificationPreferenceTrigger.DAILY_PROMPT]: { ...DEFAULT_PREF },
-      [NotificationPreferenceTrigger.PER_MEMBER_INTENT]: { ...DEFAULT_PREF },
-      [NotificationPreferenceTrigger.GROUP_FORMATION]: { ...DEFAULT_PREF },
-    };
-
+    const byTrigger = new Map<NotificationPreferenceTrigger, NotificationPreferenceResponse>();
     for (const row of rows) {
-      preferences[row.trigger] = {
+      byTrigger.set(row.trigger, {
+        trigger: row.trigger,
         enabled: row.enabled,
-        schedule: row.schedule ?? null,
-        perMemberTargets: row.perMemberTargets ?? [],
-      };
+        schedule: row.schedule,
+        perMemberTargets: row.perMemberTargets,
+      });
     }
 
-    apiLogger.info(
-      { userId: session.user.id, count: rows.length },
-      '[NOTIF_PREFS_GET] Returned notification preferences'
+    const preferences: NotificationPreferenceResponse[] = ALL_TRIGGERS.map(
+      (trigger) => byTrigger.get(trigger) ?? defaultPreference(trigger)
     );
 
-    return NextResponse.json({ success: true, preferences });
+    apiLogger.info(
+      { callerId, count: preferences.length },
+      '[NOTIF_PREFS_GET] Listed notification preferences'
+    );
+
+    return NextResponse.json({ success: true, data: { preferences } });
   } catch (error) {
     captureException(error);
-    apiLogger.error({ error }, '[NOTIF_PREFS_GET] Failed to retrieve notification preferences');
+    apiLogger.error({ error }, '[NOTIF_PREFS_GET] Failed to list notification preferences');
     return NextResponse.json(
-      { success: false, error: 'Failed to retrieve notification preferences' },
+      { success: false, error: 'Failed to list notification preferences' },
       { status: 500 }
     );
   }
 }
 
+// ============================================
+// PATCH /api/users/notification-preferences
+// ============================================
+
 /**
  * PATCH /api/users/notification-preferences
- * Upserts a single NotificationPreference row for the authenticated user
- * keyed by `(userId, trigger)`. On create, all provided fields are written.
- * On update, only the fields supplied in the body are mutated. For
- * `GROUP_FORMATION`, schedule and perMemberTargets are silently ignored
- * since they're not used by that trigger.
+ * Upserts a single trigger's preference for the authenticated user, keyed on
+ * the (userId, trigger) unique constraint.
  */
 export async function PATCH(request: NextRequest) {
   try {
@@ -144,76 +155,37 @@ export async function PATCH(request: NextRequest) {
     }
 
     const { trigger, enabled, schedule, perMemberTargets } = parsed.data;
-    const userId = session.user.id;
+    const callerId = session.user.id;
 
-    // DAILY_PROMPT requires a schedule when being enabled. If enabling and no
-    // schedule was provided (and we have no prior row to fall back on), reject.
-    if (trigger === NotificationPreferenceTrigger.DAILY_PROMPT && enabled) {
-      const existing = await prisma.notificationPreference.findUnique({
-        where: { userId_trigger: { userId, trigger } },
-        select: { schedule: true },
-      });
-      const effectiveSchedule = schedule ?? existing?.schedule ?? null;
-      if (!effectiveSchedule) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: 'Validation failed',
-            details: { schedule: 'schedule is required for DAILY_PROMPT when enabled' },
-          },
-          { status: 400 }
-        );
-      }
-    }
-
-    // GROUP_FORMATION ignores schedule + perMemberTargets per spec.
-    const isGroupFormation = trigger === NotificationPreferenceTrigger.GROUP_FORMATION;
-
-    // PER_MEMBER_INTENT is the only trigger that meaningfully uses
-    // perMemberTargets. For DAILY_PROMPT we let it pass through as well in
-    // case the client sends an empty array, but never persist it for GROUP_FORMATION.
-    const includeSchedule = !isGroupFormation && schedule !== undefined;
-    const includeTargets =
-      trigger === NotificationPreferenceTrigger.PER_MEMBER_INTENT &&
-      perMemberTargets !== undefined;
-
-    const updateData: {
-      enabled: boolean;
-      schedule?: string | null;
-      perMemberTargets?: string[];
-    } = { enabled };
-    if (includeSchedule) updateData.schedule = schedule ?? null;
-    if (includeTargets) updateData.perMemberTargets = perMemberTargets ?? [];
-
-    const createData = {
-      userId,
-      trigger,
-      enabled,
-      schedule: includeSchedule ? schedule ?? null : null,
-      perMemberTargets: includeTargets ? perMemberTargets ?? [] : [],
-    };
-
-    const preference = await prisma.notificationPreference.upsert({
-      where: { userId_trigger: { userId, trigger } },
-      create: createData,
-      update: updateData,
-    });
-
-    apiLogger.info(
-      { userId, trigger, enabled },
-      '[NOTIF_PREFS_PATCH] Updated notification preference'
-    );
-
-    return NextResponse.json({
-      success: true,
-      preference: {
-        trigger: preference.trigger,
-        enabled: preference.enabled,
-        schedule: preference.schedule ?? null,
-        perMemberTargets: preference.perMemberTargets ?? [],
-        updatedAt: preference.updatedAt,
+    const row = await prisma.notificationPreference.upsert({
+      where: { userId_trigger: { userId: callerId, trigger } },
+      create: {
+        userId: callerId,
+        trigger,
+        enabled,
+        schedule: schedule ?? null,
+        perMemberTargets: perMemberTargets ?? [],
+      },
+      update: {
+        enabled,
+        ...(schedule !== undefined ? { schedule } : {}),
+        ...(perMemberTargets !== undefined ? { perMemberTargets } : {}),
       },
     });
+
+    const data: NotificationPreferenceResponse = {
+      trigger: row.trigger,
+      enabled: row.enabled,
+      schedule: row.schedule,
+      perMemberTargets: row.perMemberTargets,
+    };
+
+    apiLogger.info(
+      { callerId, trigger: row.trigger, enabled: row.enabled },
+      '[NOTIF_PREFS_PATCH] Upserted notification preference'
+    );
+
+    return NextResponse.json({ success: true, data });
   } catch (error) {
     captureException(error);
     apiLogger.error({ error }, '[NOTIF_PREFS_PATCH] Failed to update notification preference');

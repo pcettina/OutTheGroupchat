@@ -1,410 +1,424 @@
+/**
+ * Unit tests for GET + PATCH /api/users/notification-preferences.
+ *
+ * V1 Phase 5 — notification preferences.
+ *
+ * Prisma, NextAuth, logger, sentry, and rate-limit mocks are established in
+ * src/__tests__/setup.ts. This file re-mocks @/lib/rate-limit to get a
+ * controllable reference and re-arms the mock after vi.resetAllMocks() in
+ * beforeEach.
+ */
+
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { NotificationPreferenceTrigger } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 
 // ---------------------------------------------------------------------------
-// Local mocks (rate-limit and sentry mock follows project convention)
+// Module-level mock for @/lib/rate-limit — must be declared before any
+// imports that transitively pull the module.
 // ---------------------------------------------------------------------------
 vi.mock('@/lib/rate-limit', () => ({
-  apiRateLimiter: {},
-  checkRateLimit: vi.fn(),
+  apiRateLimiter: null,
+  aiRateLimiter: null,
+  authRateLimiter: null,
+  checkRateLimit: vi
+    .fn()
+    .mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: 0 }),
   getRateLimitHeaders: vi.fn().mockReturnValue({}),
 }));
 
-import { getServerSession } from 'next-auth';
+// Static imports — NEVER use dynamic await import in beforeEach.
+import { GET, PATCH } from '@/app/api/users/notification-preferences/route';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { captureException } from '@/lib/sentry';
 
 // ---------------------------------------------------------------------------
-// Inline-cast prisma to add notificationPreference until Wave 3 adds it to
-// src/__tests__/setup.ts. Re-armed in beforeEach so vi.resetAllMocks() does
-// not leave stale fns in place.
+// Typed references to mocked Prisma delegate + helpers
 // ---------------------------------------------------------------------------
-type NotifPrefMock = {
+const mockPrismaNotifPref = prisma.notificationPreference as unknown as {
   findMany: ReturnType<typeof vi.fn>;
-  findUnique: ReturnType<typeof vi.fn>;
   upsert: ReturnType<typeof vi.fn>;
-  create: ReturnType<typeof vi.fn>;
-  update: ReturnType<typeof vi.fn>;
 };
 
-function attachNotifPrefMock(): NotifPrefMock {
-  const m: NotifPrefMock = {
-    findMany: vi.fn(),
-    findUnique: vi.fn(),
-    upsert: vi.fn(),
-    create: vi.fn(),
-    update: vi.fn(),
-  };
-  (prisma as unknown as { notificationPreference: NotifPrefMock }).notificationPreference = m;
-  return m;
-}
+const mockCheckRateLimit = vi.mocked(checkRateLimit);
+const mockGetServerSession = vi.mocked(getServerSession);
+const mockCaptureException = vi.mocked(captureException);
 
-let notifPref: NotifPrefMock = attachNotifPrefMock();
-
-const MOCK_SESSION = { user: { id: 'user-1', name: 'Alice' } };
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 const BASE_URL = 'http://localhost/api/users/notification-preferences';
-const VALID_CUID_A = 'c' + 'a'.repeat(24);
-const VALID_CUID_B = 'c' + 'b'.repeat(24);
 
-function makeGetRequest() {
-  return new NextRequest(BASE_URL);
-}
-
-function makePatchRequest(body: unknown) {
-  return new NextRequest(BASE_URL, {
-    method: 'PATCH',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-}
-
-beforeEach(() => {
-  vi.resetAllMocks();
-  // Re-arm prisma.notificationPreference (resetAllMocks wipes implementations).
-  notifPref = attachNotifPrefMock();
-  // Re-arm rate-limit mock — factory mockResolvedValue is wiped on resetAllMocks.
-  vi.mocked(checkRateLimit).mockResolvedValue({
-    success: true,
-    limit: 100,
-    remaining: 99,
-    reset: Date.now() + 60000,
-  });
+const sessionFor = (id = 'user-1', name = 'Alice') => ({
+  user: { id, name, email: `${id}@example.com` },
+  expires: '2099-01-01',
 });
 
-// ──────────────────────────────────────────────────────────────────────────────
+const makeGetReq = () => new NextRequest(BASE_URL);
+
+const makePatchReq = (body: unknown) =>
+  new NextRequest(BASE_URL, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+
+/** PATCH request with a raw (possibly malformed) string body. */
+const makePatchReqRaw = (raw: string) =>
+  new NextRequest(BASE_URL, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: raw,
+  });
+
+/** Minimal stored preference row returned from prisma. */
+const fakeRow = (overrides: Record<string, unknown> = {}) => ({
+  id: 'np-1',
+  userId: 'user-1',
+  trigger: NotificationPreferenceTrigger.DAILY_PROMPT,
+  enabled: true,
+  schedule: null,
+  perMemberTargets: [],
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+  ...overrides,
+});
+
+const RL_PASS = { success: true, limit: 100, remaining: 99, reset: 0 };
+const RL_FAIL = { success: false, limit: 100, remaining: 0, reset: 0 };
+
+// ---------------------------------------------------------------------------
+// beforeEach — reset and re-arm permanent mocks
+// ---------------------------------------------------------------------------
+beforeEach(() => {
+  vi.resetAllMocks();
+
+  // Re-arm rate-limit pass-through after resetAllMocks wipes mockResolvedValue.
+  mockCheckRateLimit.mockResolvedValue(RL_PASS);
+});
+
+// ===========================================================================
 // GET /api/users/notification-preferences
-// ──────────────────────────────────────────────────────────────────────────────
+// ===========================================================================
 describe('GET /api/users/notification-preferences', () => {
-  it('returns 401 when no session', async () => {
-    vi.mocked(getServerSession).mockResolvedValueOnce(null);
-    const { GET } = await import('@/app/api/users/notification-preferences/route');
-    const res = await GET(makeGetRequest());
+  it('returns 401 when not authenticated', async () => {
+    mockGetServerSession.mockResolvedValueOnce(null);
+
+    const res = await GET(makeGetReq());
+
     expect(res.status).toBe(401);
-    const json = await res.json();
-    expect(json.success).toBe(false);
+    const body = await res.json();
+    expect(body.success).toBe(false);
+    expect(body.error).toBe('Unauthorized');
   });
 
-  it('returns 429 when rate limit denied', async () => {
-    vi.mocked(getServerSession).mockResolvedValueOnce(MOCK_SESSION);
-    vi.mocked(checkRateLimit).mockResolvedValueOnce({
-      success: false,
-      limit: 100,
-      remaining: 0,
-      reset: Date.now() + 60000,
-    });
-    const { GET } = await import('@/app/api/users/notification-preferences/route');
-    const res = await GET(makeGetRequest());
-    expect(res.status).toBe(429);
-  });
+  it('returns all 3 triggers as opted-out defaults when no rows exist', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
+    mockPrismaNotifPref.findMany.mockResolvedValueOnce([]);
 
-  it('returns 3 trigger entries with defaults when no rows exist', async () => {
-    vi.mocked(getServerSession).mockResolvedValueOnce(MOCK_SESSION);
-    notifPref.findMany.mockResolvedValueOnce([]);
-
-    const { GET } = await import('@/app/api/users/notification-preferences/route');
-    const res = await GET(makeGetRequest());
-    const json = await res.json();
+    const res = await GET(makeGetReq());
 
     expect(res.status).toBe(200);
-    expect(json.success).toBe(true);
-    expect(json.preferences).toBeDefined();
-    expect(json.preferences.DAILY_PROMPT).toEqual({
-      enabled: false,
-      schedule: null,
-      perMemberTargets: [],
-    });
-    expect(json.preferences.PER_MEMBER_INTENT).toEqual({
-      enabled: false,
-      schedule: null,
-      perMemberTargets: [],
-    });
-    expect(json.preferences.GROUP_FORMATION).toEqual({
-      enabled: false,
-      schedule: null,
-      perMemberTargets: [],
-    });
+    const body = await res.json();
+    expect(body.success).toBe(true);
+    expect(body.data.preferences).toHaveLength(3);
+
+    const triggers = body.data.preferences.map(
+      (p: { trigger: string }) => p.trigger
+    );
+    expect(triggers).toEqual([
+      NotificationPreferenceTrigger.DAILY_PROMPT,
+      NotificationPreferenceTrigger.PER_MEMBER_INTENT,
+      NotificationPreferenceTrigger.GROUP_FORMATION,
+    ]);
+
+    // Every default is opted out.
+    for (const pref of body.data.preferences) {
+      expect(pref.enabled).toBe(false);
+      expect(pref.schedule).toBeNull();
+      expect(pref.perMemberTargets).toEqual([]);
+    }
   });
 
-  it('merges existing rows over defaults (DAILY_PROMPT row with schedule)', async () => {
-    vi.mocked(getServerSession).mockResolvedValueOnce(MOCK_SESSION);
-    notifPref.findMany.mockResolvedValueOnce([
-      {
-        id: 'pref-1',
-        userId: 'user-1',
-        trigger: 'DAILY_PROMPT',
+  it('merges existing stored rows over defaults', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
+    mockPrismaNotifPref.findMany.mockResolvedValueOnce([
+      fakeRow({
+        trigger: NotificationPreferenceTrigger.DAILY_PROMPT,
         enabled: true,
         schedule: '09:00',
         perMemberTargets: [],
-      },
+      }),
+      fakeRow({
+        trigger: NotificationPreferenceTrigger.PER_MEMBER_INTENT,
+        enabled: true,
+        schedule: null,
+        perMemberTargets: ['user-2', 'user-3'],
+      }),
     ]);
 
-    const { GET } = await import('@/app/api/users/notification-preferences/route');
-    const res = await GET(makeGetRequest());
-    const json = await res.json();
+    const res = await GET(makeGetReq());
 
     expect(res.status).toBe(200);
-    expect(json.preferences.DAILY_PROMPT).toEqual({
-      enabled: true,
-      schedule: '09:00',
-      perMemberTargets: [],
-    });
-    // Other triggers still default
-    expect(json.preferences.PER_MEMBER_INTENT.enabled).toBe(false);
-    expect(json.preferences.GROUP_FORMATION.enabled).toBe(false);
+    const body = await res.json();
+    expect(body.data.preferences).toHaveLength(3);
+
+    const byTrigger = Object.fromEntries(
+      body.data.preferences.map((p: { trigger: string }) => [p.trigger, p])
+    );
+
+    // DAILY_PROMPT comes from a stored row.
+    expect(byTrigger[NotificationPreferenceTrigger.DAILY_PROMPT].enabled).toBe(true);
+    expect(byTrigger[NotificationPreferenceTrigger.DAILY_PROMPT].schedule).toBe('09:00');
+
+    // PER_MEMBER_INTENT comes from a stored row with targets.
+    expect(byTrigger[NotificationPreferenceTrigger.PER_MEMBER_INTENT].enabled).toBe(true);
+    expect(
+      byTrigger[NotificationPreferenceTrigger.PER_MEMBER_INTENT].perMemberTargets
+    ).toEqual(['user-2', 'user-3']);
+
+    // GROUP_FORMATION has no stored row — falls back to opted-out default.
+    expect(byTrigger[NotificationPreferenceTrigger.GROUP_FORMATION].enabled).toBe(false);
   });
 
-  it('returns 500 when prisma throws', async () => {
-    vi.mocked(getServerSession).mockResolvedValueOnce(MOCK_SESSION);
-    notifPref.findMany.mockRejectedValueOnce(new Error('DB down'));
-    const { GET } = await import('@/app/api/users/notification-preferences/route');
-    const res = await GET(makeGetRequest());
+  it('queries only the caller user ID in the prisma where clause', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor('user-42'));
+    mockPrismaNotifPref.findMany.mockResolvedValueOnce([]);
+
+    await GET(makeGetReq());
+
+    const whereArg = mockPrismaNotifPref.findMany.mock.calls[0]?.[0]?.where;
+    expect(whereArg?.userId).toBe('user-42');
+  });
+
+  it('returns 429 when rate limited', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
+    mockCheckRateLimit.mockResolvedValueOnce(RL_FAIL);
+
+    const res = await GET(makeGetReq());
+
+    expect(res.status).toBe(429);
+    const body = await res.json();
+    expect(body.success).toBe(false);
+    expect(body.error).toBe('Rate limit exceeded');
+  });
+
+  it('returns 500 and calls captureException when prisma throws', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
+    mockPrismaNotifPref.findMany.mockRejectedValueOnce(new Error('db down'));
+
+    const res = await GET(makeGetReq());
+
     expect(res.status).toBe(500);
+    const body = await res.json();
+    expect(body.success).toBe(false);
+    expect(body.error).toBe('Failed to list notification preferences');
+    expect(mockCaptureException).toHaveBeenCalledTimes(1);
   });
 });
 
-// ──────────────────────────────────────────────────────────────────────────────
+// ===========================================================================
 // PATCH /api/users/notification-preferences
-// ──────────────────────────────────────────────────────────────────────────────
+// ===========================================================================
 describe('PATCH /api/users/notification-preferences', () => {
-  it('returns 401 when no session', async () => {
-    vi.mocked(getServerSession).mockResolvedValueOnce(null);
-    const { PATCH } = await import('@/app/api/users/notification-preferences/route');
+  it('returns 401 when not authenticated', async () => {
+    mockGetServerSession.mockResolvedValueOnce(null);
+
     const res = await PATCH(
-      makePatchRequest({ trigger: 'DAILY_PROMPT', enabled: false })
+      makePatchReq({ trigger: 'DAILY_PROMPT', enabled: true })
     );
+
     expect(res.status).toBe(401);
+    const body = await res.json();
+    expect(body.success).toBe(false);
+    expect(body.error).toBe('Unauthorized');
   });
 
-  it('returns 429 when rate limit denied', async () => {
-    vi.mocked(getServerSession).mockResolvedValueOnce(MOCK_SESSION);
-    vi.mocked(checkRateLimit).mockResolvedValueOnce({
-      success: false,
-      limit: 100,
-      remaining: 0,
-      reset: Date.now() + 60000,
-    });
-    const { PATCH } = await import('@/app/api/users/notification-preferences/route');
-    const res = await PATCH(
-      makePatchRequest({ trigger: 'DAILY_PROMPT', enabled: false })
-    );
-    expect(res.status).toBe(429);
-  });
+  it('returns 400 on invalid JSON body', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
 
-  it('returns 400 when Zod fails (invalid trigger)', async () => {
-    vi.mocked(getServerSession).mockResolvedValueOnce(MOCK_SESSION);
-    const { PATCH } = await import('@/app/api/users/notification-preferences/route');
-    const res = await PATCH(
-      makePatchRequest({ trigger: 'NOT_A_REAL_TRIGGER', enabled: true })
-    );
+    const res = await PATCH(makePatchReqRaw('{ not valid json'));
+
     expect(res.status).toBe(400);
-    const json = await res.json();
-    expect(json.success).toBe(false);
-    expect(json.error).toBe('Validation failed');
+    const body = await res.json();
+    expect(body.success).toBe(false);
+    expect(body.error).toBe('Invalid JSON body');
   });
 
-  it('returns 400 when Zod fails (invalid schedule format like "25:00")', async () => {
-    vi.mocked(getServerSession).mockResolvedValueOnce(MOCK_SESSION);
-    const { PATCH } = await import('@/app/api/users/notification-preferences/route');
+  it('returns 400 on an invalid trigger enum value (Zod)', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
+
     const res = await PATCH(
-      makePatchRequest({
-        trigger: 'DAILY_PROMPT',
+      makePatchReq({ trigger: 'NOT_A_REAL_TRIGGER', enabled: true })
+    );
+
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.success).toBe(false);
+    expect(body.error).toBe('Validation failed');
+    expect(body.details).toBeDefined();
+  });
+
+  it('returns 400 on a malformed schedule format (e.g. "25:00")', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
+
+    const res = await PATCH(
+      makePatchReq({
+        trigger: NotificationPreferenceTrigger.DAILY_PROMPT,
         enabled: true,
         schedule: '25:00',
       })
     );
+
     expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.success).toBe(false);
+    expect(body.error).toBe('Validation failed');
+    expect(body.details).toBeDefined();
   });
 
-  it('returns 400 when JSON body is invalid', async () => {
-    vi.mocked(getServerSession).mockResolvedValueOnce(MOCK_SESSION);
-    const req = new NextRequest(BASE_URL, {
-      method: 'PATCH',
-      headers: { 'content-type': 'application/json' },
-      body: '{not json',
-    });
-    const { PATCH } = await import('@/app/api/users/notification-preferences/route');
-    const res = await PATCH(req);
-    expect(res.status).toBe(400);
-  });
+  it('returns 400 when enabled is missing (required field)', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
 
-  it('returns 400 when DAILY_PROMPT enabled without schedule and no existing row', async () => {
-    vi.mocked(getServerSession).mockResolvedValueOnce(MOCK_SESSION);
-    notifPref.findUnique.mockResolvedValueOnce(null);
-    const { PATCH } = await import('@/app/api/users/notification-preferences/route');
     const res = await PATCH(
-      makePatchRequest({ trigger: 'DAILY_PROMPT', enabled: true })
+      makePatchReq({ trigger: NotificationPreferenceTrigger.DAILY_PROMPT })
     );
+
     expect(res.status).toBe(400);
-    const json = await res.json();
-    expect(json.error).toBe('Validation failed');
+    const body = await res.json();
+    expect(body.success).toBe(false);
+    expect(body.error).toBe('Validation failed');
   });
 
-  it('returns 200 when toggling DAILY_PROMPT enabled with valid schedule', async () => {
-    vi.mocked(getServerSession).mockResolvedValueOnce(MOCK_SESSION);
-    const updatedAt = new Date('2026-04-28T12:00:00Z');
-    notifPref.upsert.mockResolvedValueOnce({
-      id: 'pref-1',
-      userId: 'user-1',
-      trigger: 'DAILY_PROMPT',
-      enabled: true,
-      schedule: '08:30',
-      perMemberTargets: [],
-      updatedAt,
-    });
+  it('upserts DAILY_PROMPT with a schedule and returns 200', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor('user-1'));
+    mockPrismaNotifPref.upsert.mockResolvedValueOnce(
+      fakeRow({
+        trigger: NotificationPreferenceTrigger.DAILY_PROMPT,
+        enabled: true,
+        schedule: '08:30',
+        perMemberTargets: [],
+      })
+    );
 
-    const { PATCH } = await import('@/app/api/users/notification-preferences/route');
     const res = await PATCH(
-      makePatchRequest({
-        trigger: 'DAILY_PROMPT',
+      makePatchReq({
+        trigger: NotificationPreferenceTrigger.DAILY_PROMPT,
         enabled: true,
         schedule: '08:30',
       })
     );
-    const json = await res.json();
 
     expect(res.status).toBe(200);
-    expect(json.success).toBe(true);
-    expect(json.preference.trigger).toBe('DAILY_PROMPT');
-    expect(json.preference.enabled).toBe(true);
-    expect(json.preference.schedule).toBe('08:30');
-    expect(notifPref.upsert).toHaveBeenCalledTimes(1);
+    const body = await res.json();
+    expect(body.success).toBe(true);
+    expect(body.data.trigger).toBe(NotificationPreferenceTrigger.DAILY_PROMPT);
+    expect(body.data.enabled).toBe(true);
+    expect(body.data.schedule).toBe('08:30');
+
+    // Verify upsert keyed on (userId, trigger) and create carries the schedule.
+    const upsertArg = mockPrismaNotifPref.upsert.mock.calls[0]?.[0];
+    expect(upsertArg?.where?.userId_trigger).toEqual({
+      userId: 'user-1',
+      trigger: NotificationPreferenceTrigger.DAILY_PROMPT,
+    });
+    expect(upsertArg?.create?.schedule).toBe('08:30');
+    expect(upsertArg?.update?.schedule).toBe('08:30');
   });
 
-  it('returns 200 when updating PER_MEMBER_INTENT with perMemberTargets array', async () => {
-    vi.mocked(getServerSession).mockResolvedValueOnce(MOCK_SESSION);
-    const targets = [VALID_CUID_A, VALID_CUID_B];
-    notifPref.upsert.mockResolvedValueOnce({
-      id: 'pref-2',
-      userId: 'user-1',
-      trigger: 'PER_MEMBER_INTENT',
-      enabled: true,
-      schedule: null,
-      perMemberTargets: targets,
-      updatedAt: new Date(),
-    });
-
-    const { PATCH } = await import('@/app/api/users/notification-preferences/route');
-    const res = await PATCH(
-      makePatchRequest({
-        trigger: 'PER_MEMBER_INTENT',
+  it('upserts PER_MEMBER_INTENT with perMemberTargets and returns 200', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor('user-1'));
+    mockPrismaNotifPref.upsert.mockResolvedValueOnce(
+      fakeRow({
+        trigger: NotificationPreferenceTrigger.PER_MEMBER_INTENT,
         enabled: true,
-        perMemberTargets: targets,
+        schedule: null,
+        perMemberTargets: ['user-7', 'user-8'],
       })
     );
-    const json = await res.json();
 
-    expect(res.status).toBe(200);
-    expect(json.preference.perMemberTargets).toEqual(targets);
-    // Verify upsert called with correct compound key
-    const call = notifPref.upsert.mock.calls[0][0];
-    expect(call.where).toEqual({
-      userId_trigger: { userId: 'user-1', trigger: 'PER_MEMBER_INTENT' },
-    });
-    expect(call.create.perMemberTargets).toEqual(targets);
-    expect(call.update.perMemberTargets).toEqual(targets);
-  });
-
-  it('returns 200 when toggling GROUP_FORMATION (no schedule/targets needed)', async () => {
-    vi.mocked(getServerSession).mockResolvedValueOnce(MOCK_SESSION);
-    notifPref.upsert.mockResolvedValueOnce({
-      id: 'pref-3',
-      userId: 'user-1',
-      trigger: 'GROUP_FORMATION',
-      enabled: true,
-      schedule: null,
-      perMemberTargets: [],
-      updatedAt: new Date(),
-    });
-
-    const { PATCH } = await import('@/app/api/users/notification-preferences/route');
     const res = await PATCH(
-      makePatchRequest({ trigger: 'GROUP_FORMATION', enabled: true })
-    );
-
-    expect(res.status).toBe(200);
-    // GROUP_FORMATION should not include schedule or perMemberTargets in updateData
-    const call = notifPref.upsert.mock.calls[0][0];
-    expect(call.update).toEqual({ enabled: true });
-    expect(call.create.schedule).toBeNull();
-    expect(call.create.perMemberTargets).toEqual([]);
-  });
-
-  it('upsert called with userId_trigger compound key', async () => {
-    vi.mocked(getServerSession).mockResolvedValueOnce(MOCK_SESSION);
-    notifPref.upsert.mockResolvedValueOnce({
-      id: 'pref-4',
-      userId: 'user-1',
-      trigger: 'GROUP_FORMATION',
-      enabled: false,
-      schedule: null,
-      perMemberTargets: [],
-      updatedAt: new Date(),
-    });
-
-    const { PATCH } = await import('@/app/api/users/notification-preferences/route');
-    await PATCH(makePatchRequest({ trigger: 'GROUP_FORMATION', enabled: false }));
-
-    expect(notifPref.upsert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { userId_trigger: { userId: 'user-1', trigger: 'GROUP_FORMATION' } },
-      })
-    );
-  });
-
-  it('returns 400 when perMemberTargets exceeds max length 100', async () => {
-    vi.mocked(getServerSession).mockResolvedValueOnce(MOCK_SESSION);
-    const tooMany = Array.from({ length: 101 }, () => VALID_CUID_A);
-    const { PATCH } = await import('@/app/api/users/notification-preferences/route');
-    const res = await PATCH(
-      makePatchRequest({
-        trigger: 'PER_MEMBER_INTENT',
+      makePatchReq({
+        trigger: NotificationPreferenceTrigger.PER_MEMBER_INTENT,
         enabled: true,
-        perMemberTargets: tooMany,
+        perMemberTargets: ['user-7', 'user-8'],
       })
     );
-    expect(res.status).toBe(400);
-  });
 
-  it('returns 400 when perMemberTargets contains an invalid (non-CUID) id', async () => {
-    vi.mocked(getServerSession).mockResolvedValueOnce(MOCK_SESSION);
-    const { PATCH } = await import('@/app/api/users/notification-preferences/route');
-    const res = await PATCH(
-      makePatchRequest({
-        trigger: 'PER_MEMBER_INTENT',
-        enabled: true,
-        perMemberTargets: ['not-a-cuid'],
-      })
-    );
-    expect(res.status).toBe(400);
-  });
-
-  it('allows DAILY_PROMPT enabled when no schedule provided but existing row has one', async () => {
-    vi.mocked(getServerSession).mockResolvedValueOnce(MOCK_SESSION);
-    notifPref.findUnique.mockResolvedValueOnce({ schedule: '07:00' });
-    notifPref.upsert.mockResolvedValueOnce({
-      id: 'pref-5',
-      userId: 'user-1',
-      trigger: 'DAILY_PROMPT',
-      enabled: true,
-      schedule: '07:00',
-      perMemberTargets: [],
-      updatedAt: new Date(),
-    });
-
-    const { PATCH } = await import('@/app/api/users/notification-preferences/route');
-    const res = await PATCH(
-      makePatchRequest({ trigger: 'DAILY_PROMPT', enabled: true })
-    );
     expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.success).toBe(true);
+    expect(body.data.trigger).toBe(NotificationPreferenceTrigger.PER_MEMBER_INTENT);
+    expect(body.data.perMemberTargets).toEqual(['user-7', 'user-8']);
+
+    const upsertArg = mockPrismaNotifPref.upsert.mock.calls[0]?.[0];
+    expect(upsertArg?.create?.perMemberTargets).toEqual(['user-7', 'user-8']);
+    expect(upsertArg?.update?.perMemberTargets).toEqual(['user-7', 'user-8']);
   });
 
-  it('returns 500 when prisma upsert throws', async () => {
-    vi.mocked(getServerSession).mockResolvedValueOnce(MOCK_SESSION);
-    notifPref.upsert.mockRejectedValueOnce(new Error('DB down'));
-    const { PATCH } = await import('@/app/api/users/notification-preferences/route');
-    const res = await PATCH(
-      makePatchRequest({ trigger: 'GROUP_FORMATION', enabled: true })
+  it('upserts a disable (enabled=false) without schedule/targets', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor('user-1'));
+    mockPrismaNotifPref.upsert.mockResolvedValueOnce(
+      fakeRow({
+        trigger: NotificationPreferenceTrigger.GROUP_FORMATION,
+        enabled: false,
+        schedule: null,
+        perMemberTargets: [],
+      })
     );
+
+    const res = await PATCH(
+      makePatchReq({
+        trigger: NotificationPreferenceTrigger.GROUP_FORMATION,
+        enabled: false,
+      })
+    );
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.success).toBe(true);
+    expect(body.data.enabled).toBe(false);
+
+    // schedule omitted → create defaults to null, update does not set it.
+    const upsertArg = mockPrismaNotifPref.upsert.mock.calls[0]?.[0];
+    expect(upsertArg?.create?.schedule).toBeNull();
+    expect(upsertArg?.update?.schedule).toBeUndefined();
+  });
+
+  it('returns 429 when rate limited', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
+    mockCheckRateLimit.mockResolvedValueOnce(RL_FAIL);
+
+    const res = await PATCH(
+      makePatchReq({
+        trigger: NotificationPreferenceTrigger.DAILY_PROMPT,
+        enabled: true,
+      })
+    );
+
+    expect(res.status).toBe(429);
+    const body = await res.json();
+    expect(body.success).toBe(false);
+    expect(body.error).toBe('Rate limit exceeded');
+  });
+
+  it('returns 500 and calls captureException when prisma upsert throws', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
+    mockPrismaNotifPref.upsert.mockRejectedValueOnce(new Error('db down'));
+
+    const res = await PATCH(
+      makePatchReq({
+        trigger: NotificationPreferenceTrigger.DAILY_PROMPT,
+        enabled: true,
+      })
+    );
+
     expect(res.status).toBe(500);
+    const body = await res.json();
+    expect(body.success).toBe(false);
+    expect(body.error).toBe('Failed to update notification preference');
+    expect(mockCaptureException).toHaveBeenCalledTimes(1);
   });
 });

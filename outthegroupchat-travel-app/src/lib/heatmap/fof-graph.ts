@@ -22,15 +22,8 @@ import { prisma as defaultPrisma } from '@/lib/prisma';
 
 type PrismaLike = Pick<typeof defaultPrisma, 'crew'>;
 
-/**
- * One row in the FoF set returned by {@link getFofSet} — a candidate
- * friend-of-friend, the count of mutual Crew shared with the viewer, and
- * the ids of those mutual-Crew anchors (consumed by anchor selection).
- */
 export interface FofEntry {
-  /** The FoF user id (a non-Crew user 1-hop from the viewer). */
   userId: string;
-  /** Number of mutual Crew shared with the viewer (R5 threshold). */
   mutualCount: number;
   /** Mutual-Crew anchor user ids (i.e. members of the viewer's direct Crew
    *  who are *also* Crew with this FoF user). */
@@ -70,28 +63,36 @@ function writeCache(key: string, value: FofEntry[]): void {
   }
 }
 
-/**
- * Test-only — clear the in-memory FoF cache between runs so cached entries
- * from a prior test don't leak into the next assertion.
- */
+/** Test-only — clear the FoF cache between runs. */
 export function __resetFofCacheForTests(): void {
   fofCache.clear();
 }
 
 /**
- * Compute the FoF set for a viewer — users who share at least
- * `mutualThreshold` accepted-Crew edges with the viewer, excluding the
- * viewer and anyone already in their direct Crew. Result is capped at 200
- * entries (sorted by mutualCount desc) and cached for 60s per
- * `viewerId:mutualThreshold` key.
+ * Compute the viewer's friend-of-friend (FoF) set: users reachable in exactly
+ * one hop through the viewer's accepted-Crew partners, who share at least
+ * `mutualThreshold` mutual-Crew anchors with the viewer (R5). Anyone already in
+ * the viewer's direct Crew, and the viewer themselves, are excluded — they
+ * belong on the Crew-tier surface. Results are cached in-process for 60s keyed
+ * by `viewerId:mutualThreshold`.
  *
- * @param opts.viewerId The viewing user's id.
- * @param opts.mutualThreshold Minimum mutual-Crew count to qualify (>=1).
- *   Defaults to 1.
- * @param opts.prismaClient Optional Prisma client override (test/seam).
- * @param opts.bypassCache When true, skip cache reads — used by tests.
- * @returns The (possibly empty) FoF entries; cache is updated as a
- *   side-effect so subsequent calls within the TTL hit memory.
+ * @param opts Query options:
+ *   - `viewerId` — the user whose FoF graph is computed.
+ *   - `mutualThreshold` — minimum number of mutual-Crew anchors required to
+ *     include a candidate; clamped to a floor of 1. Defaults to 1.
+ *   - `prismaClient` — optional Prisma stub (needs the `crew` delegate); defaults
+ *     to the app client.
+ *   - `bypassCache` — when true, skips the read cache (used by tests).
+ * @returns An array of `FofEntry` — `{ userId, mutualCount, anchorIds }` — sorted
+ *   by `mutualCount` desc and capped at 200 entries. `anchorIds` lists the
+ *   viewer's direct-Crew members who bridge to that FoF user.
+ *
+ * Privacy invariants: the returned set is strictly scoped to 1-hop reachability
+ * through accepted Crew edges — no 2+-hop users ever appear. Direct Crew and the
+ * viewer are filtered out, and a candidate only surfaces once its mutual-anchor
+ * count meets the threshold, enforcing the R5 minimum-overlap gate before any
+ * FoF user's location data is eligible to be aggregated. The 200-entry cap
+ * bounds fan-out for densely connected Crews.
  */
 export async function getFofSet(opts: {
   viewerId: string;

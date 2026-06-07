@@ -236,6 +236,10 @@ Before reactivating trip planning, a future session must confirm:
 
 ## 5. Phased Execution Plan
 
+> ✅ **The 8-phase refactor is COMPLETE.** The project is in **POST_PIVOT_STEADY_STATE**, executing the V1 product vision (signal intent → auto-group at ≥2 Crew on the same Topic → coordinate + venue recs → opt-in location visibility). The intent-to-group loop, SubCrews, Topics, heatmap, and recommendations surfaces are all live. **V1 Phase 5 (opt-in notifications) began 2026-06-01** with the `/api/users/notification-preferences` API (per-trigger preferences), the `/api/cron/send-daily-prompts` daily-prompt cron, and the `/settings/notifications` UI. The phase definitions and objectives below are retained unchanged as the historical refactor record.
+>
+> V1 Phase 5 (opt-in notifications) COMPLETE as of 2026-06-02 — PER_MEMBER_INTENT trigger + GROUP_FORMATION push wired (PR pending).
+
 Each phase targets a discrete session (or a nightly build if small). Phases are **roughly sequential** but 3+4 and 5+6 can overlap if splitting work.
 
 ### Phase 0 — Merge backlog & baseline (1 session)

@@ -31,42 +31,22 @@ type PrismaLike = Pick<
   'crew' | 'heatmapContribution' | 'crewRelationshipSetting' | 'intent' | 'checkIn' | 'venue' | 'user' | 'subCrewMember'
 >;
 
-/**
- * Inputs to {@link aggregateContributions}. Carries the viewer identity,
- * tier selector (`crew` vs `fof`), and optional filter axes (city area,
- * topic, window preset). FoF-only fields (`mutualThreshold`, `subCrewId`)
- * are ignored on the Crew tier.
- */
 export interface AggregateInput {
-  /** The viewer whose heatmap is being computed. */
   viewerId: string;
-  /** Which contribution surface to read — INTEREST or PRESENCE. */
   type: HeatmapType;
-  /** `'crew'` = direct accepted Crew. `'fof'` = friends-of-friends (R5). */
   tier: 'crew' | 'fof';
-  /** Optional neighborhood narrowing for venue markers. */
   cityArea?: string;
-  /** Optional topic filter applied to INTEREST contributions. */
   topicId?: string;
-  /** Optional `WindowPreset` filter (e.g. TONIGHT, THIS_WEEK). */
   windowPreset?: WindowPreset;
   /** FoF only — minimum mutual-Crew count to include a FoF user (R5). */
   mutualThreshold?: number;
   /** FoF only — when set, R24 priority 1 (SubCrew-anchor) activates. */
   subCrewId?: string;
-  /** Test-injectable Prisma client. Defaults to the app-wide singleton. */
   prismaClient?: PrismaLike;
 }
 
-/**
- * Output of {@link aggregateContributions} — heatmap cells (sorted by count
- * desc) and venue markers (sorted by count desc, only emitted when the
- * underlying contribution sources resolve to a Venue with lat/lng).
- */
 export interface AggregateOutput {
-  /** Per-cell rollups, sorted by count desc. */
   cells: HeatmapCell[];
-  /** Venue-resolved markers for the R22 zoom-in surface. */
   venueMarkers: HeatmapVenueMarker[];
 }
 
@@ -157,15 +137,34 @@ function bucketsToCells(groups: Map<string, CellBucket>): HeatmapCell[] {
 }
 
 /**
- * Top-level read entry point for `GET /api/heatmap`. Branches on
- * `input.tier` to either {@link aggregateCrew} (viewer's accepted Crew) or
- * {@link aggregateFoF} (mutual-Crew friends-of-friends). Both branches
- * apply the R14 N>=3 anonymous floor inside {@link bucketsToCells} and
- * derive venue markers from contribution source rows.
+ * Read-side entry point for `GET /api/heatmap`. Resolves the viewer's social
+ * graph for the requested tier, fetches the matching HeatmapContributions,
+ * applies the privacy filters, and folds everything into anonymized cells plus
+ * venue markers. Dispatches to the Crew or FoF branch based on `input.tier`.
  *
- * @param input Aggregation parameters — viewer, tier, optional filters.
- * @returns Cells (sorted desc by count) and venue markers; both empty when
- *   the viewer has no Crew (Crew tier) or no qualifying FoF (FoF tier).
+ * @param input Query descriptor:
+ *   - `viewerId` — the requesting user (graph is always computed relative to them).
+ *   - `type` — `'interest'` or `'presence'`, mapped to the matching
+ *     HeatmapContributionType.
+ *   - `tier` — `'crew'` (direct accepted-Crew partners) or `'fof'`
+ *     (friend-of-friend, 1-hop via Crew).
+ *   - `cityArea`, `topicId`, `windowPreset` — optional contribution filters.
+ *   - `mutualThreshold` — FoF only; minimum mutual-Crew count to include a FoF
+ *     user (R5). Defaults to 1.
+ *   - `subCrewId` — FoF only; when set, R24 priority-1 SubCrew anchoring activates.
+ *   - `prismaClient` — optional Prisma stub for tests.
+ * @returns `{ cells, venueMarkers }`. `cells` are anonymized grid cells with a
+ *   `count` and optional `anchorSummary` ("via Alex"), sorted by count desc;
+ *   `venueMarkers` are per-venue tallies sorted by count desc. Returns empty
+ *   arrays when the viewer has no relevant graph or no live contributions.
+ *
+ * Privacy invariants upheld here (via the helpers it calls): the R14 N>=3
+ * anonymous floor is applied per-cell to the ANONYMOUS bucket only; Crew-tier
+ * results drop any contributor the viewer has set to HIDDEN
+ * (CrewRelationshipSetting); FoF-tier results only ever surface FULL_CREW-scoped
+ * contributions (never a FoF user's SUBGROUP_ONLY data, which the viewer is not
+ * party to). Raw coordinates are never read — only the pre-anonymized
+ * `cellLat`/`cellLng` from the contribution rows.
  */
 export async function aggregateContributions(
   input: AggregateInput,
