@@ -2,6 +2,39 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
+import { motion } from 'framer-motion';
+import { Mail, AlertCircle, Loader2, CheckCircle2 } from 'lucide-react';
+
+function AmbientHalos() {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      <div className="absolute -top-40 -right-40 w-[28rem] h-[28rem] bg-otg-sodium/15 rounded-full blur-3xl" />
+      <div className="absolute -bottom-40 -left-40 w-[24rem] h-[24rem] bg-otg-bourbon/10 rounded-full blur-3xl" />
+      <div className="absolute top-1/2 left-1/3 w-72 h-72 bg-otg-tile/10 rounded-full blur-3xl" />
+    </div>
+  );
+}
+
+function BrandLockup() {
+  return (
+    <Link href="/" className="flex items-center justify-center gap-2.5 mb-8 group">
+      <Image
+        src="/logo-mark.svg"
+        alt=""
+        aria-hidden="true"
+        width={28}
+        height={44}
+        priority
+        className="h-10 w-auto transition-transform group-hover:-translate-y-0.5"
+      />
+      <span className="font-display font-bold text-2xl tracking-tight">
+        <span className="text-otg-sodium">Out</span>
+        <span className="text-otg-text-bright">TheGroupchat</span>
+      </span>
+    </Link>
+  );
+}
 
 export default function ResetPasswordPage() {
   const [email, setEmail] = useState('');
@@ -37,98 +70,130 @@ export default function ResetPasswordPage() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-emerald-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950/20 px-4">
-        <div className="w-full max-w-md">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-8 text-center">
-            <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
+      <div className="relative min-h-screen flex items-center justify-center bg-otg-bg-dark px-4 py-12 sm:px-6 lg:px-8 overflow-hidden">
+        <AmbientHalos />
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
+          className="w-full max-w-md relative"
+        >
+          <BrandLockup />
+          <div className="card card-glass p-8 text-center relative overflow-hidden">
+            <div className="pointer-events-none absolute -top-24 -right-24 w-56 h-56 rounded-full bg-otg-tile/15 blur-3xl" />
+            <div className="relative">
+              <div className="w-16 h-16 rounded-full bg-otg-tile/15 ring-1 ring-otg-tile/30 flex items-center justify-center mx-auto mb-5">
+                <CheckCircle2 className="w-8 h-8 text-otg-tile" aria-hidden="true" />
+              </div>
+              <h1 className="font-display font-bold text-2xl tracking-tight text-otg-text-bright mb-2">
+                Check your email
+              </h1>
+              <p className="text-otg-text-dim mb-2">
+                If an account with{' '}
+                <strong className="text-otg-text-bright font-semibold">{email}</strong>{' '}
+                exists, we sent a reset link.
+              </p>
+              <p className="text-sm text-otg-text-dim mb-7">
+                Check your inbox and spam folder. The link expires in 1 hour.
+              </p>
+              <Link href="/auth/signin" className="btn btn-primary text-base px-6">
+                Back to sign in
+              </Link>
             </div>
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Check your email</h2>
-            <p className="text-slate-600 dark:text-slate-400 mb-6">
-              If an account with <strong>{email}</strong> exists, we sent a password reset link. Check your inbox and spam folder.
-            </p>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-              The link expires in 1 hour.
-            </p>
-            <Link
-              href="/auth/signin"
-              className="inline-block px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-medium hover:from-emerald-600 hover:to-teal-700 transition-all"
-            >
-              Back to Sign In
-            </Link>
           </div>
-        </div>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-emerald-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950/20 px-4">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg mb-4">
-            <span className="text-3xl">✈️</span>
-          </div>
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Reset Password</h1>
-          <p className="text-slate-600 dark:text-slate-400 mt-2">
-            Enter your email and we will send you a reset link.
-          </p>
-        </div>
+    <div className="relative min-h-screen flex items-center justify-center bg-otg-bg-dark px-4 py-12 sm:px-6 lg:px-8 overflow-hidden">
+      <AmbientHalos />
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
+        className="w-full max-w-md relative"
+      >
+        <BrandLockup />
+        <div className="card card-glass p-7 sm:p-8 relative overflow-hidden">
+          <div className="pointer-events-none absolute -top-24 -right-24 w-56 h-56 rounded-full bg-otg-sodium/15 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-32 -left-20 w-56 h-56 rounded-full bg-otg-bourbon/10 blur-3xl" />
 
-        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-8">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {error && (
-              <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
-                <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
+          <div className="relative">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-11 h-11 rounded-xl bg-otg-sodium/15 ring-1 ring-otg-sodium/30 flex items-center justify-center flex-shrink-0">
+                <Mail className="w-5 h-5 text-otg-sodium" aria-hidden="true" />
               </div>
-            )}
-
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Email address
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoFocus
-                placeholder="you@example.com"
-                className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
-              />
+              <div>
+                <h1 className="font-display font-bold text-2xl tracking-tight text-otg-text-bright">
+                  Reset your password
+                </h1>
+                <p className="text-sm text-otg-text-dim">
+                  We&apos;ll send a reset link to your inbox.
+                </p>
+              </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={isLoading || !email}
-              className="w-full py-3 px-6 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 disabled:from-slate-400 disabled:to-slate-500 text-white font-semibold rounded-xl transition-all duration-200 disabled:cursor-not-allowed"
-            >
-              {isLoading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  Sending...
-                </span>
-              ) : (
-                'Send Reset Link'
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {error && (
+                <div
+                  role="alert"
+                  className="bg-red-50 !bg-otg-danger/10 border border-otg-danger/30 rounded-xl p-3.5 flex items-start gap-2.5"
+                >
+                  <AlertCircle className="w-5 h-5 text-otg-danger flex-shrink-0 mt-0.5" aria-hidden="true" />
+                  <p className="text-sm text-otg-text-bright">{error}</p>
+                </div>
               )}
-            </button>
-          </form>
 
-          <p className="text-center text-sm text-slate-600 dark:text-slate-400 mt-6">
-            Remember your password?{' '}
-            <Link href="/auth/signin" className="text-emerald-600 dark:text-emerald-400 hover:underline font-medium">
-              Sign in
-            </Link>
-          </p>
+              <div>
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-otg-text-bright mb-1.5"
+                >
+                  Email address
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  autoFocus
+                  placeholder="you@example.com"
+                  className="input"
+                />
+              </div>
+
+              <motion.button
+                whileTap={{ scale: 0.98 }}
+                type="submit"
+                disabled={isLoading || !email}
+                className="btn btn-primary w-full text-base mt-1"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" aria-hidden="true" />
+                    Sending...
+                  </>
+                ) : (
+                  'Send reset link'
+                )}
+              </motion.button>
+            </form>
+
+            <p className="text-center text-sm text-otg-text-dim mt-6">
+              Remember your password?{' '}
+              <Link
+                href="/auth/signin"
+                className="font-medium text-otg-sodium hover:text-otg-sodium-300 transition-colors"
+              >
+                Sign in
+              </Link>
+            </p>
+          </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

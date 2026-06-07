@@ -4,15 +4,11 @@ import { useState, useCallback, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
-import { VenuePicker } from './VenuePicker';
 import type { MeetupVisibility } from '@/types/meetup';
-
-interface SelectedVenue {
-  id: string;
-  name: string;
-  address?: string;
-  city: string;
-}
+import { MeetupBasicFields } from './createMeetup/MeetupBasicFields';
+import { MeetupVenueSection } from './createMeetup/MeetupVenueSection';
+import { MeetupScheduleFields } from './createMeetup/MeetupScheduleFields';
+import type { SelectedVenue } from './createMeetup/types';
 
 interface CreateMeetupModalProps {
   isOpen: boolean;
@@ -25,13 +21,6 @@ interface CreateMeetupModalProps {
   /** The check-in id this meetup originated from (stored, not shown). */
   initialCheckInId?: string;
 }
-
-const VISIBILITY_OPTIONS: { value: MeetupVisibility; label: string }[] = [
-  { value: 'CREW', label: 'Crew only' },
-  { value: 'PUBLIC', label: 'Public' },
-  { value: 'INVITE_ONLY', label: 'Invite only' },
-  { value: 'PRIVATE', label: 'Private' },
-];
 
 export function CreateMeetupModal({
   isOpen,
@@ -158,23 +147,17 @@ export function CreateMeetupModal({
       const data = (await res.json()) as { success: boolean; data?: { id: string }; error?: string };
 
       if (!res.ok || !data.success) {
-        throw new Error(data.error ?? 'That didn\u2019t go through. Try again.');
+        throw new Error(data.error ?? 'That didn’t go through. Try again.');
       }
 
       onSuccess?.(data.data!.id);
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'That didn\u2019t go through. Try again.');
+      setError(err instanceof Error ? err.message : 'That didn’t go through. Try again.');
     } finally {
       setSubmitting(false);
     }
   };
-
-  // Last Call palette — brief §3. Inputs live on the dark app background, not a white card
-  // surface: `bg-otg-bg-dark` keeps them readable inside the `bg-otg-maraschino` modal
-  // without competing with the form labels. Focus rings use sodium.
-  const inputClass =
-    'w-full rounded-lg border border-otg-border bg-otg-bg-dark px-3 py-2 text-sm text-otg-text-bright placeholder:text-otg-text-dim/70 focus:border-otg-sodium focus:outline-none focus:ring-1 focus:ring-otg-sodium disabled:opacity-60';
 
   return (
     <AnimatePresence>
@@ -226,156 +209,34 @@ export function CreateMeetupModal({
 
               {/* Form */}
               <form onSubmit={(e) => { void handleSubmit(e); }} className="space-y-5 px-6 py-5">
-                {/* Title */}
-                <div>
-                  <label
-                    htmlFor="meetup-title"
-                    className="mb-1.5 block text-sm font-medium text-otg-text-bright"
-                  >
-                    Title <span className="text-otg-sodium" aria-hidden="true">*</span>
-                  </label>
-                  <input
-                    id="meetup-title"
-                    type="text"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="Rooftop hangout"
-                    disabled={submitting}
-                    required
-                    className={inputClass}
-                  />
-                </div>
+                <MeetupBasicFields
+                  title={title}
+                  description={description}
+                  submitting={submitting}
+                  onTitleChange={setTitle}
+                  onDescriptionChange={setDescription}
+                />
 
-                {/* Description */}
-                <div>
-                  <label
-                    htmlFor="meetup-description"
-                    className="mb-1.5 block text-sm font-medium text-otg-text-bright"
-                  >
-                    Description
-                  </label>
-                  <textarea
-                    id="meetup-description"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="What’s the vibe?"
-                    rows={3}
-                    disabled={submitting}
-                    className={`${inputClass} resize-none`}
-                  />
-                </div>
+                <MeetupVenueSection
+                  selectedVenue={selectedVenue}
+                  freeTextVenue={freeTextVenue}
+                  paramVenueId={paramVenueId}
+                  submitting={submitting}
+                  onSelectedVenueChange={setSelectedVenue}
+                  onFreeTextVenueChange={setFreeTextVenue}
+                />
 
-                {/* Venue */}
-                <div>
-                  <span className="mb-1.5 block text-sm font-medium text-otg-text-bright">
-                    Venue
-                  </span>
-                  <VenuePicker
-                    value={selectedVenue}
-                    onChange={setSelectedVenue}
-                    className="mb-2"
-                  />
-                  {!selectedVenue && (
-                    <>
-                      {paramVenueId && !freeTextVenue && (
-                        <p className="mb-1.5 text-xs text-otg-text-dim">
-                          Venue from your check-in will be used. Type below to override.
-                        </p>
-                      )}
-                      <input
-                        type="text"
-                        value={freeTextVenue}
-                        onChange={(e) => setFreeTextVenue(e.target.value)}
-                        placeholder={
-                          paramVenueId ? 'Override venue name (optional)' : 'Or type a venue name'
-                        }
-                        disabled={submitting}
-                        className={inputClass}
-                      />
-                    </>
-                  )}
-                </div>
-
-                {/* Date & Time */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label
-                      htmlFor="meetup-scheduled-at"
-                      className="mb-1.5 block text-sm font-medium text-otg-text-bright"
-                    >
-                      Date &amp; time <span className="text-otg-sodium" aria-hidden="true">*</span>
-                    </label>
-                    <input
-                      id="meetup-scheduled-at"
-                      type="datetime-local"
-                      value={scheduledAt}
-                      onChange={(e) => setScheduledAt(e.target.value)}
-                      disabled={submitting}
-                      required
-                      className={`${inputClass} [color-scheme:dark]`}
-                    />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="meetup-ends-at"
-                      className="mb-1.5 block text-sm font-medium text-otg-text-bright"
-                    >
-                      End time
-                    </label>
-                    <input
-                      id="meetup-ends-at"
-                      type="datetime-local"
-                      value={endsAt}
-                      onChange={(e) => setEndsAt(e.target.value)}
-                      disabled={submitting}
-                      className={`${inputClass} [color-scheme:dark]`}
-                    />
-                  </div>
-                </div>
-
-                {/* Visibility */}
-                <div>
-                  <label
-                    htmlFor="meetup-visibility"
-                    className="mb-1.5 block text-sm font-medium text-otg-text-bright"
-                  >
-                    Visibility
-                  </label>
-                  <select
-                    id="meetup-visibility"
-                    value={visibility}
-                    onChange={(e) => setVisibility(e.target.value as MeetupVisibility)}
-                    disabled={submitting}
-                    className={inputClass}
-                  >
-                    {VISIBILITY_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Capacity */}
-                <div>
-                  <label
-                    htmlFor="meetup-capacity"
-                    className="mb-1.5 block text-sm font-medium text-otg-text-bright"
-                  >
-                    Capacity <span className="text-otg-text-dim font-normal">(2–500)</span>
-                  </label>
-                  <input
-                    id="meetup-capacity"
-                    type="number"
-                    value={capacity}
-                    onChange={(e) => setCapacity(e.target.value)}
-                    min={2}
-                    max={500}
-                    placeholder="No limit"
-                    disabled={submitting}
-                    className={inputClass}
-                  />
-                </div>
+                <MeetupScheduleFields
+                  scheduledAt={scheduledAt}
+                  endsAt={endsAt}
+                  visibility={visibility}
+                  capacity={capacity}
+                  submitting={submitting}
+                  onScheduledAtChange={setScheduledAt}
+                  onEndsAtChange={setEndsAt}
+                  onVisibilityChange={setVisibility}
+                  onCapacityChange={setCapacity}
+                />
 
                 {/* Error */}
                 {error && (
@@ -402,7 +263,7 @@ export function CreateMeetupModal({
                     disabled={submitting}
                     className="rounded-full bg-otg-sodium px-5 py-2 text-sm font-medium text-otg-bg-dark hover:bg-otg-sodium-400 active:bg-otg-brick disabled:opacity-60 transition-colors"
                   >
-                    {submitting ? 'Creating\u2026' : 'Create meetup'}
+                    {submitting ? 'Creating…' : 'Create meetup'}
                   </button>
                 </div>
               </form>

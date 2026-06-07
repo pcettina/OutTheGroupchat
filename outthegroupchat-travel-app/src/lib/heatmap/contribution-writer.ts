@@ -31,21 +31,43 @@ import { getNeighborhoodCentroid } from '@/lib/intent/neighborhoods';
 
 type PrismaLike = Pick<typeof defaultPrisma, 'heatmapContribution' | 'venue'>;
 
+/**
+ * The slice of an `Intent` row needed to build an INTEREST contribution.
+ * The caller (SubCrew commit route) selects exactly these fields so the
+ * writer doesn't pull the full Intent record.
+ */
 export interface IntentForContribution {
+  /** Source Intent id — copied into `HeatmapContribution.sourceId`. */
   id: string;
+  /** Optional venue join — used to resolve cell lat/lng when present. */
   venueId: string | null;
+  /** Optional neighborhood; falls back to its centroid when no venue. */
   cityArea: string | null;
+  /** Topic carried into the contribution for read-side filtering. */
   topicId: string;
+  /** Window preset carried into the contribution. */
   windowPreset: WindowPreset;
+  /** Contribution `expiresAt` — typically Intent.expiresAt (R10 decay). */
   expiresAt: Date;
 }
 
+/**
+ * The slice of a `CheckIn` row needed to build a PRESENCE contribution.
+ * `latitude`/`longitude` may be inline on the CheckIn or `null` (in which
+ * case the writer falls back to the joined Venue's lat/lng).
+ */
 export interface CheckInForContribution {
+  /** Source CheckIn id — copied into `HeatmapContribution.sourceId`. */
   id: string;
+  /** Optional venue join — preferred lat/lng source when set. */
   venueId: string | null;
+  /** Inline latitude when no venue. */
   latitude: number | null;
+  /** Inline longitude when no venue. */
   longitude: number | null;
+  /** Drives the SocialScope mapping (R20 v1 defaults). */
   visibility: CheckInVisibility;
+  /** Contribution `expiresAt` — typically CheckIn.activeUntil. */
   activeUntil: Date;
 }
 
@@ -95,10 +117,13 @@ function resolveCell(
 }
 
 /**
- * Map a CheckIn.visibility to the HeatmapSocialScope used at the
+ * Map a `CheckIn.visibility` to the `HeatmapSocialScope` used at the
  * aggregation layer. PUBLIC and CREW both read as FULL_CREW because the
  * v1 heatmap has no public-stranger tier; PRIVATE blocks any contribution
  * from surfacing.
+ *
+ * @param visibility The CheckIn visibility chosen by the user.
+ * @returns The matching `HeatmapSocialScope`. NOBODY suppresses the write.
  */
 export function checkInVisibilityToSocialScope(
   visibility: CheckInVisibility,
@@ -121,6 +146,15 @@ export function checkInVisibilityToSocialScope(
  *
  * Synchronous so it can be appended to an existing `prisma.$transaction`
  * array by the caller (see the SubCrew commit route).
+ *
+ * @param opts.userId Contributor user id.
+ * @param opts.intent The source Intent row (already loaded by the caller).
+ * @param opts.venueLatLng Venue lat/lng when Intent has a venueId, else null.
+ * @param opts.socialScope SocialScope picked at commit (R6).
+ * @param opts.granularity Cell precision picked at commit (3-axis picker).
+ * @param opts.identityMode Identity mode picked at commit (KNOWN/ANONYMOUS).
+ * @returns `Prisma.HeatmapContributionUncheckedCreateInput` ready to insert,
+ *   or `null` to skip the write.
  */
 export function buildInterestContributionData(opts: {
   userId: string;
@@ -156,6 +190,15 @@ export function buildInterestContributionData(opts: {
  * Build the row payload for a PRESENCE contribution. Returns `null` when no
  * cell can be resolved or when visibility maps to NOBODY (the contribution
  * still surfaces to nobody — skipping the write keeps the table tidy).
+ *
+ * Always uses `HeatmapGranularityMode.BLOCK` since v1 CheckIns have no
+ * granularity picker (R20).
+ *
+ * @param opts.userId Contributor user id.
+ * @param opts.checkIn The source CheckIn row (already created).
+ * @param opts.venueLatLng Venue lat/lng when CheckIn has a venueId, else null.
+ * @returns `Prisma.HeatmapContributionUncheckedCreateInput` ready to insert,
+ *   or `null` to skip the write.
  */
 export function buildPresenceContributionData(opts: {
   userId: string;
@@ -196,6 +239,12 @@ export function buildPresenceContributionData(opts: {
  * wrapper used by `POST /api/checkins` — does the Venue lat/lng lookup if the
  * CheckIn carries a `venueId` and no inline coords. Returns `null` when no
  * contribution is written; never throws.
+ *
+ * @param opts.userId Contributor user id.
+ * @param opts.checkIn The freshly-created CheckIn row.
+ * @param opts.prismaClient Test-injectable Prisma client.
+ * @returns `{ id }` of the created HeatmapContribution row, or `null` when
+ *   the contribution was skipped (no resolvable cell or NOBODY scope).
  */
 export async function writePresenceContribution(opts: {
   userId: string;

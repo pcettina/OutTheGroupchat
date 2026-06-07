@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    captureException(error);
+    captureException(error, { route: '/api/heatmap', method: 'GET' });
     apiLogger.error({ error }, '[HEATMAP_GET] Failed to aggregate');
     return NextResponse.json(
       { success: false, error: 'Failed to load heatmap' },

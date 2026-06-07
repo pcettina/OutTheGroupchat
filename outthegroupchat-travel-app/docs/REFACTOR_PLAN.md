@@ -1,7 +1,7 @@
 # OutTheGroupchat — Scope Pivot & Refactor Plan
 
 > **Status:** Active — Phase 5 COMPLETE (2026-04-20, PR #53); Phase 6 ✅ COMPLETE (2026-04-22, PR #55): all 4 actions done — feed rescoped, AI routes added, notification types migrated, search people-first. Phase 7 (Marketing surface) is next.
-> **Created:** 2026-04-16 | **Last updated:** 2026-04-22
+> **Created:** 2026-04-16 | **Last updated:** 2026-05-16 (POST_PIVOT_STEADY_STATE — no phase exit changes; date bump only)
 > **Purpose:** Canonical planning doc for the pivot from group-trip-planning app → meetup-focused social network with a persistent `Crew` graph. All future refactor sessions reference this document.
 > **Decision:** Refactor in place (not rebuild). Trip-planning infrastructure is archived but preserved for potential future reactivation.
 
@@ -414,10 +414,12 @@ Each phase targets a discrete session (or a nightly build if small). Phases are 
 2. Update `docs/PRODUCTION_ROADMAP.md` (target date, priorities, new risk register)
 3. Security audit focused on new surfaces: location data handling, Crew-request abuse prevention, meetup spam, check-in stalking mitigation (Q4 `activeUntil` is first line of defense)
 4. Rate-limit audit for new routes
-5. E2E Playwright tests for new critical paths: signup → Crew request → meetup create → RSVP → check-in
-6. Sentry coverage audit: target 100% on new routes (don't repeat the 0/48-on-main debt)
+5. E2E Playwright tests for new critical paths: signup → Crew request → meetup create → RSVP → check-in — **PENDING**
+6. Sentry coverage audit: target 100% on new routes (don't repeat the 0/48-on-main debt) — **Sentry coverage expanded to V1 surface (intents + subcrews + V1 misc) — completed 2026-05-12 (PR for nightly/2026-05-13). Sentry full audit (#6) substantially advanced; ~10 V1 routes newly instrumented.**
 
 **Exit criteria:** Updated launch checklist reflects real readiness of the new product, not the archived one.
+
+> *Last refactor-plan update: 2026-05-10 (nightly build) — Phase 8 actions #5/#6 marked partial/ongoing per tonight's progress; phase definitions unchanged.*
 
 ---
 

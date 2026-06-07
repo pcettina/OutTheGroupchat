@@ -2,6 +2,12 @@
  * @module intent/window-preset
  * @description WindowPreset → wall-clock range mapping (R3) and expiresAt helper (R12).
  *
+ * Related V1 spec requirements (see `docs/PRODUCT_VISION.md`):
+ *   - **R11** (adjacent-window matching) is implemented in `window-adjacency.ts`;
+ *     this module owns the concrete time-range resolution that R11 then compares.
+ *   - **R12** (Intent expiry = window end + 2h buffer).
+ *   - **R3** (dayOffset 0..7 day range).
+ *
  * The classifier and Intent capture form work in two layers:
  *   1. The user picks a `WindowPreset` (EVENING, NIGHT, …) plus a `dayOffset` (0..7).
  *   2. The server computes a concrete `[startAt, endAt]` window in the server's
@@ -18,6 +24,10 @@
 
 import { WindowPreset } from '@prisma/client';
 
+/**
+ * Per-preset clock-hour bounds used to construct the concrete window range.
+ * `endHour` may exceed 24 to encode a window that crosses midnight (e.g. NIGHT).
+ */
 interface WindowRangeHours {
   /** Inclusive start hour, 0..23. */
   startHour: number;
@@ -40,8 +50,15 @@ export const EXPIRY_BUFFER_HOURS = 2;
 /** Maximum allowed `dayOffset` (R3). */
 export const MAX_DAY_OFFSET = 7;
 
+/**
+ * Concrete resolved time window for an Intent. Returned by
+ * {@link computeWindowRange} and (extended with `expiresAt`) by
+ * {@link resolveIntentWindow}.
+ */
 export interface WindowRange {
+  /** Inclusive start instant of the Intent's availability window. */
   startAt: Date;
+  /** Exclusive end instant of the Intent's availability window. */
   endAt: Date;
 }
 
@@ -50,10 +67,15 @@ export interface WindowRange {
  * `now`'s date as day-zero. Works in the server's local timezone — clients that
  * need user-local correctness should pass explicit overrides on the Intent.
  *
+ * Per R3 the dayOffset is bounded to `[0, MAX_DAY_OFFSET]` by the route layer
+ * (see {@link MAX_DAY_OFFSET}); values outside that range are passed through
+ * here unchanged and will simply produce a far-future window.
+ *
  * @param preset One of the curated WindowPreset values.
  * @param dayOffset Number of days from `now` (0 = today, 7 = a week out). Clamped
  *                  by the route layer; passed through here unchanged.
  * @param now Reference instant; defaults to current time. Tests pass a fixed Date.
+ * @returns A WindowRange with concrete `startAt` and `endAt` Date instances.
  */
 export function computeWindowRange(
   preset: WindowPreset,
@@ -75,8 +97,13 @@ export function computeWindowRange(
 /**
  * Compute `expiresAt` per R12: window end + EXPIRY_BUFFER_HOURS.
  *
+ * The buffer gives Crew partners a grace period to respond after the nominal
+ * window closes, so a late "I'm in" doesn't immediately invalidate a still-
+ * relevant Intent.
+ *
  * @param endAt The window's end instant (either computed from a preset or supplied
  *              by the client as an explicit override).
+ * @returns A new Date offset by `EXPIRY_BUFFER_HOURS` past `endAt`.
  */
 export function computeExpiresAt(endAt: Date): Date {
   const expires = new Date(endAt);
@@ -88,6 +115,11 @@ export function computeExpiresAt(endAt: Date): Date {
  * Resolve the final (startAt, endAt, expiresAt) for an Intent, preferring
  * client-supplied overrides when present and falling back to the preset
  * default otherwise. Throws if `endAt` precedes `startAt` after resolution.
+ *
+ * @param args Object with `preset`, `dayOffset`, optional `startAtOverride` /
+ *             `endAtOverride`, and optional `now` reference instant.
+ * @returns The resolved `{ startAt, endAt, expiresAt }` triple.
+ * @throws {Error} When the resolved `endAt` is not strictly after `startAt`.
  */
 export function resolveIntentWindow(args: {
   preset: WindowPreset;

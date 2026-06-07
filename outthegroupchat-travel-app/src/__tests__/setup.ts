@@ -13,6 +13,7 @@ vi.mock('@/lib/prisma', () => ({
       findFirst: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
       delete: vi.fn(),
     },
     tripMember: {
@@ -97,6 +98,18 @@ vi.mock('@/lib/prisma', () => ({
       updateMany: vi.fn(),
       createMany: vi.fn(),
       delete: vi.fn(),
+      count: vi.fn(),
+    },
+    notificationPreference: {
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      findFirst: vi.fn(),
+      upsert: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      updateMany: vi.fn(),
+      delete: vi.fn(),
+      deleteMany: vi.fn(),
       count: vi.fn(),
     },
     itineraryDay: {

@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { z } from 'zod';
 import { IntentState } from '@prisma/client';
+import * as Sentry from '@sentry/nextjs';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { apiLogger } from '@/lib/logger';
@@ -82,6 +83,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: { intents } });
   } catch (error) {
+    Sentry.captureException(error, {
+      tags: { route: 'api/intents/mine', method: 'GET' },
+    });
     captureException(error);
     apiLogger.error({ error }, '[INTENT_GET_MINE] Failed to list intents');
     return NextResponse.json(

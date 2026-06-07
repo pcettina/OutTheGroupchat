@@ -1,0 +1,21 @@
+# Normalize line endings across the repo.
+# Without this, Windows checkouts auto-convert LF→CRLF and trigger
+# "warning: in the working copy of '<file>', LF will be replaced by CRLF"
+# every time a doc/source file is committed.
+* text=auto eol=lf
+
+# Binary assets — never normalize.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.otf binary
+*.mp4 binary
+*.webm binary
+*.zip binary

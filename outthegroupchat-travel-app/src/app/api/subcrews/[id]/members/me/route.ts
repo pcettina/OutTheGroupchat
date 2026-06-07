@@ -12,8 +12,8 @@ import { getServerSession } from 'next-auth';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
+import * as Sentry from '@sentry/nextjs';
 import { apiLogger } from '@/lib/logger';
-import { captureException } from '@/lib/sentry';
 import { apiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 
 type RouteParams = { params: { id: string } };
@@ -79,7 +79,7 @@ export async function PATCH(request: NextRequest, context: RouteParams) {
 
     return NextResponse.json({ success: true, data: updated });
   } catch (error) {
-    captureException(error);
+    Sentry.captureException(error, { tags: { route: 'api/subcrews/[id]/members/me', method: 'PATCH' } });
     apiLogger.error({ error }, '[SUBCREW_MEMBER_ME_PATCH] Failed to update member');
     return NextResponse.json(
       { success: false, error: 'Failed to update member' },

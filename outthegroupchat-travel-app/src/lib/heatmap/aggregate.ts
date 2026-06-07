@@ -31,22 +31,42 @@ type PrismaLike = Pick<
   'crew' | 'heatmapContribution' | 'crewRelationshipSetting' | 'intent' | 'checkIn' | 'venue' | 'user' | 'subCrewMember'
 >;
 
+/**
+ * Inputs to {@link aggregateContributions}. Carries the viewer identity,
+ * tier selector (`crew` vs `fof`), and optional filter axes (city area,
+ * topic, window preset). FoF-only fields (`mutualThreshold`, `subCrewId`)
+ * are ignored on the Crew tier.
+ */
 export interface AggregateInput {
+  /** The viewer whose heatmap is being computed. */
   viewerId: string;
+  /** Which contribution surface to read — INTEREST or PRESENCE. */
   type: HeatmapType;
+  /** `'crew'` = direct accepted Crew. `'fof'` = friends-of-friends (R5). */
   tier: 'crew' | 'fof';
+  /** Optional neighborhood narrowing for venue markers. */
   cityArea?: string;
+  /** Optional topic filter applied to INTEREST contributions. */
   topicId?: string;
+  /** Optional `WindowPreset` filter (e.g. TONIGHT, THIS_WEEK). */
   windowPreset?: WindowPreset;
   /** FoF only — minimum mutual-Crew count to include a FoF user (R5). */
   mutualThreshold?: number;
   /** FoF only — when set, R24 priority 1 (SubCrew-anchor) activates. */
   subCrewId?: string;
+  /** Test-injectable Prisma client. Defaults to the app-wide singleton. */
   prismaClient?: PrismaLike;
 }
 
+/**
+ * Output of {@link aggregateContributions} — heatmap cells (sorted by count
+ * desc) and venue markers (sorted by count desc, only emitted when the
+ * underlying contribution sources resolve to a Venue with lat/lng).
+ */
 export interface AggregateOutput {
+  /** Per-cell rollups, sorted by count desc. */
   cells: HeatmapCell[];
+  /** Venue-resolved markers for the R22 zoom-in surface. */
   venueMarkers: HeatmapVenueMarker[];
 }
 
@@ -136,6 +156,17 @@ function bucketsToCells(groups: Map<string, CellBucket>): HeatmapCell[] {
   return cells;
 }
 
+/**
+ * Top-level read entry point for `GET /api/heatmap`. Branches on
+ * `input.tier` to either {@link aggregateCrew} (viewer's accepted Crew) or
+ * {@link aggregateFoF} (mutual-Crew friends-of-friends). Both branches
+ * apply the R14 N>=3 anonymous floor inside {@link bucketsToCells} and
+ * derive venue markers from contribution source rows.
+ *
+ * @param input Aggregation parameters — viewer, tier, optional filters.
+ * @returns Cells (sorted desc by count) and venue markers; both empty when
+ *   the viewer has no Crew (Crew tier) or no qualifying FoF (FoF tier).
+ */
 export async function aggregateContributions(
   input: AggregateInput,
 ): Promise<AggregateOutput> {

@@ -1,6 +1,8 @@
 # OutTheGroupchat — Full Codemap
 
-> Auto-generated 2026-03-10. Last updated 2026-04-24 (V1 pivot begins — `docs/V1_IMPLEMENTATION_PLAN.md` landed on main; V1 Phase 0 data model in-flight on PR #76). Main stats: 58 API routes, 47 vitest-active test files, 900 tests passing, 301 TS/TSX files. Comprehensive reference for agents and developers.
+> Auto-generated 2026-03-10. Last updated 2026-05-16 (POST_PIVOT_STEADY_STATE — V1 routes live, nightly refactors + test backfill ongoing). Main stats: 59 API routes (excluding `_archive`), 67 vitest-active test files, ~1253 tests passing, 226 TS files. Comprehensive reference for agents and developers.
+>
+> **2026-05-16 additions:** New directories `src/components/meetups/createMeetup/` (CreateMeetupModal split), `src/components/inspiration/` (inspiration page split), and `src/lib/inspiration/` (inspiration handlers extracted from the route). Files >600 lines: 2 — `RichFeedItem.tsx` and `profile/page.tsx` (refactors land in unmerged PR #108).
 >
 > **🔀 Pivot in progress:** See `docs/REFACTOR_PLAN.md`. Trip-planning surface archived under `_archive/` directories as of Phase 1 (2026-04-16). See [Archived surface (Phase 1)](#archived-surface-phase-1) section below and `src/_archive/README.md` for the preservation scheme.
 >
@@ -34,7 +36,20 @@ Full-stack Next.js 14 collaborative travel planning app. Groups plan trips toget
 **App root:** `outthegroupchat-travel-app/`
 **Source:** `outthegroupchat-travel-app/src/`
 **Stats (post-Phase-6-complete, 2026-04-22):** 50 live API routes (35 base + 6 Crew routes + 9 Phase 4 meetup/venue/cron routes + 3 Phase 5 check-in routes + privacy route + 2 Phase 6 AI routes: suggest-meetups, icebreakers; 13 archived in Phase 1; feed POST now 410) | live component groups: auth, feed (rescoped to meetup/checkin types, tabs updated), social (incl. `CrewButton`, `CrewRequestCard`, `CrewList`), meetups (incl. `MeetupCard`, `MeetupList`, `CreateMeetupModal`, `RSVPButton`, `VenuePicker`, `AttendeeList`, `MeetupInviteModal`), checkins (incl. `CheckInButton`, `LiveActivityCard`, `NearbyCrewList`), discover, notifications, profile (incl. Recent Check-ins section), search, settings (incl. `PrivacySettingsForm`), onboarding, ai, ui, accessibility + Navigation (incl. privacy link) | live pages: /, /auth/*, /profile, `/profile/[userId]`, /feed, /discover, /inspiration, /notifications, /search, /settings, `/settings/privacy`, /onboarding, /privacy, /terms, `/crew`, `/crew/requests`, `/meetups`, `/meetups/new`, `/meetups/[id]`, `/checkins`, `/checkins/[id]` | middleware: auth-protects `/profile/:path*`, `/crew/:path*`, `/meetups/:path*`, `/checkins/:path*`, `/settings/:path*`, `/api/checkins/*`, plus select `/api/*` paths
-**Test Health (2026-04-22):** 58 live test files (+3: feed.test.ts, feed-extended.test.ts, notifications-rescoped.test.ts) | ~1050 tests passing | 0 TSC errors | Phase 6 COMPLETE: feed rescoped, search people-first, 9 trip notification types removed, types/index.ts cleaned (264 lines), suggest-meetups + icebreakers AI routes live
+**Test Health (2026-05-10):** 90 live test files (+4 tonight: intents-id.test.ts, subcrews-coverage.test.ts, checkins-feed.test.ts, intents-mine-crew.test.ts) | ~991 tests passing | 0 TSC errors | Phase 8 IN PROGRESS: nightly/2026-05-11 advanced action #5 (E2E + integration coverage) and #6 (Sentry coverage — `/api/topics`, `/api/recommendations` instrumented). V1 Phase 4 heatmap shipped 2026-05-09 (PR #86/#87)
+
+**Codebase Health metrics (2026-05-10):** `any` types: 4 | `console.*`: 0 | TODO/FIXME: 2 | files >600 lines: 2 (RichFeedItem.tsx 717, profile/page.tsx 623) | API routes: 58 | test files: 90 | TS files: 290
+
+**New test files (2026-05-10):**
+
+| File | Tests | Covers |
+|------|-------|--------|
+| `src/__tests__/intents-id.test.ts` | 19 | `PATCH` + `DELETE /api/intents/[id]` |
+| `src/__tests__/subcrews-coverage.test.ts` | 23 | `/api/subcrews/{mine,emerging,[id],[id]/join,[id]/commit,[id]/members/me}` |
+| `src/__tests__/checkins-feed.test.ts` | 14 | `GET /api/checkins/feed` (auth, rate-limit, where-clause, Sentry) |
+| `src/__tests__/intents-mine-crew.test.ts` | 18 | `GET /api/intents/mine` + `GET /api/intents/crew` |
+
+**Test Health (2026-05-11, nightly/2026-05-12):** 90 live test files (+4 new V1 lib test files: `heatmap-aggregate.test.ts` (28), `topic-classifier.test.ts` (34), `hotness-score.test.ts` (21), `fof-graph.test.ts` (18)) | ~1018 tests passing | 0 TSC errors | Aux-route Sentry instrumentation added (cron + beta/signup + beta/initialize-password + beta/status); search Zod enum re-tightened; 4 dead components removed (profile/TripHistory, profile/PreferencesCard, profile/BadgeShowcase, ui/FloatingShareButton); JSDoc on 35 V1 lib exports across `src/lib/heatmap/*`, `src/lib/hotness/score.ts`, `src/lib/validations/social.ts`, `src/lib/intent/*`, `src/lib/subcrew/try-form.ts`; 59 live API routes; 291 TS files.
 
 ---
 
@@ -569,7 +584,7 @@ db:seed        → npx tsx prisma/seed/index.ts
 | Component | Lines | Props | Purpose |
 |-----------|-------|-------|---------|
 | `FeedItem` | 298 | id, type, timestamp, user, trip?, activity?, media?, onSave, onComment, onShare | Basic feed post |
-| `RichFeedItem` | 432 | id, type, timestamp, user, content?, reactions?, comments? | Enhanced post with reactions |
+| `RichFeedItem` | 222 | id, type, timestamp, user, content?, reactions?, comments? | Enhanced post with reactions; refactored 2026-05-04 from 717→222 lines, 11 subcomponents extracted under `src/components/feed/rich-item/` |
 | `CommentThread` | 385 | itemId, itemType, comments, onAddComment? | Nested comments with reply |
 | `EngagementBar` | — | itemId, itemType, initialLiked?, likeCount?, commentCount? | Like/comment/share bar |
 | `MediaGallery` | — | media[], maxDisplay?, onMediaClick? | Image/video grid |
@@ -786,7 +801,7 @@ db:seed        → npx tsx prisma/seed/index.ts
 
 ## Tests
 
-**Total: ~1050 tests across 58 Vitest unit/integration test files** (Phase 6 complete, 2026-04-22; +3 test files; 0 TSC errors)
+**Total: ~1045 tests across 91 Vitest unit/integration test files** (nightly/2026-05-05; +5 test files: subcrews-actions, subcrews-listing, intents-detail, recommendations-edge, heatmap-edge; +128 new tests this build; 0 TSC errors)
 
 | File | Lines | Tests | Coverage |
 |------|-------|-------|----------|
@@ -897,10 +912,10 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `any` types | 0 ✅ |
 | `console.*` | 0 ✅ |
 | TSC errors (prod + test) | 0 ✅ |
-| Vitest tests | ~1050 passing, 58 test files (Phase 6 complete, 2026-04-22; +3 new: feed.test.ts, feed-extended.test.ts, notifications-rescoped.test.ts); archived tests runnable on demand via `npm run test:archive` |
+| Vitest tests | ~1045 passing, 91 test files (nightly/2026-05-05, 2026-05-04; +5 new: subcrews-actions, subcrews-listing, intents-detail, recommendations-edge, heatmap-edge; +128 tests this build); archived tests runnable on demand via `npm run test:archive` |
 | E2E tests | 11 Playwright smoke tests (4 suites) — trip-specific specs archived |
 | Error monitoring | Sentry — 19/48 coverage on pre-archive branch; coverage recomputed on new live surface in Phase 2 |
-| Live API routes | 50 (35 base + 6 Crew + 9 Phase 4 meetup/venue/cron + 3 Phase 5 check-in + privacy + 2 Phase 6 AI: suggest-meetups, icebreakers; feed POST now 410) |
+| Live API routes | 72 (35 base + 6 Crew + 9 Phase 4 meetup/venue/cron + 3 Phase 5 check-in + privacy + 14 V1 routes: intents 4 + subcrews 6 + topics + heatmap + recommendations + cron/expire-intents; feed POST now 410; AI routes deleted 2026-04-23) |
 | Files >400 lines | 0 in prod (email.ts 507 lines, email-crew.ts extracted; types/index.ts reduced to 264 lines in Phase 6) |
 | Production env gaps | Pusher vars, Sentry DSN, Resend domain, GOOGLE_PLACES_API_KEY |
 | **Phase status** | **Phase 6 COMPLETE** (2026-04-22): feed rescoped, search people-first, 9 trip notification types removed, types/index.ts cleaned. Phase 7 (Marketing surface) is next. |
@@ -939,7 +954,7 @@ As of **2026-04-16** the trip-planning product surface has been archived to `_ar
 | `components/surveys/SurveyBuilder.tsx` | 473 | Extract question editor |
 | `services/recommendation.service.ts` | 459 | Consider splitting by concern |
 | `types/index.ts` | 449 | Split by domain |
-| `components/feed/RichFeedItem.tsx` | 432 | Extract reaction/comment sections |
+| `components/feed/RichFeedItem.tsx` | 222 | ✅ Refactored 2026-05-04 (was 717→222, 11 subcomponents extracted) |
 | `app/inspiration/page.tsx` | 401 | Extract template/trending sections |
 | `app/api/inspiration/route.ts` | 398 | Extract template data |
 

@@ -356,6 +356,8 @@ function classifyIntentText(text) {
 
 ## Phase 5 — Journey E: Get prompted
 
+> **Status (2026-04-29):** ✅ Partial — daily prompt cron + settings page shipped on `nightly/2026-04-29`. Partial — per-member-intent dispatch deferred to next session.
+
 **Ship when:** A user can opt into the daily morning prompt and per-member triggers; both deliver reliably.
 
 ### Daily prompt

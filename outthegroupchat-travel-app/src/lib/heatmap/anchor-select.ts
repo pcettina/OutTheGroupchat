@@ -17,11 +17,22 @@
  * absent that, the rule falls back through 3 → 4.
  */
 
+/**
+ * Result of {@link pickAnchor} — the chosen anchor user id and its display
+ * name (null when the user record has no name set).
+ */
 export interface AnchorPick {
+  /** User id of the selected anchor (always a member of the viewer's Crew). */
   anchorUserId: string;
+  /** Display name for the anchor, or null when unset on the User row. */
   anchorName: string | null;
 }
 
+/**
+ * Inputs to {@link pickAnchor}. Caller is responsible for pre-fetching the
+ * mutual-Crew anchor candidates and the lookup maps used by priorities 1, 3,
+ * and 4 of R24's hierarchy.
+ */
 export interface PickAnchorInput {
   /** Anchor candidate ids — the FoF user's mutual-Crew with the viewer. */
   anchorIds: string[];
@@ -35,6 +46,15 @@ export interface PickAnchorInput {
   anchorNameById: Map<string, string | null>;
 }
 
+/**
+ * Pick the single mutual-Crew anchor whose name attaches to a FoF cell.
+ * Walks R24's priority hierarchy: SubCrew member (priority 1) → most-recent
+ * Crew edge (priority 3) → alphabetical fallback (priority 4). Priority 2
+ * (recent interaction) is deferred for v1.
+ *
+ * @param input Anchor candidates plus the lookup maps used by each priority.
+ * @returns The chosen anchor, or `null` when `anchorIds` is empty.
+ */
 export function pickAnchor(input: PickAnchorInput): AnchorPick | null {
   if (input.anchorIds.length === 0) return null;
 
@@ -78,8 +98,16 @@ export function pickAnchor(input: PickAnchorInput): AnchorPick | null {
   };
 }
 
-/** Build a "via Alex, Jamie + 2 more" summary string from an ordered list of
- *  anchor names. Empty input returns null so the UI can branch. */
+/**
+ * Build a "via Alex, Jamie + 2 more" summary string from an ordered list of
+ * anchor names. Null entries are dropped before slicing.
+ *
+ * @param names Anchor display names (nulls allowed and filtered).
+ * @param max Maximum names to inline before collapsing the remainder into
+ *   a "+ N more" suffix. Defaults to 2.
+ * @returns The formatted summary, or `null` when no usable names remain so
+ *   the UI can branch on absence.
+ */
 export function buildAnchorSummary(names: ReadonlyArray<string | null>, max = 2): string | null {
   const cleaned = names.filter((n): n is string => Boolean(n));
   if (cleaned.length === 0) return null;

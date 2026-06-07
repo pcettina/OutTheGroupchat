@@ -1,7 +1,9 @@
 // Protected by CRON_SECRET bearer token — set CRON_SECRET env var before deploying
 import { NextResponse } from 'next/server';
+import * as Sentry from '@sentry/nextjs';
 import { prisma } from '@/lib/prisma';
 import { logError, apiLogger } from '@/lib/logger';
+import { captureException } from '@/lib/sentry';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -201,6 +203,10 @@ export async function GET(req: Request) {
       results,
     });
   } catch (error) {
+    Sentry.captureException(error, {
+      tags: { route: 'cron', method: 'GET' },
+      extra: { context: 'CRON', endpoint: '/api/cron' },
+    });
     logError('CRON', error);
     return NextResponse.json(
       { success: false, error: 'Cron job failed' },
