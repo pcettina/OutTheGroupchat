@@ -6,11 +6,23 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
+
+// Rate-limit pass-through mock (the route rate-limits the topics list per user).
+vi.mock('@/lib/rate-limit', () => ({
+  apiRateLimiter: null,
+  checkRateLimit: vi
+    .fn()
+    .mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: 0 }),
+  getRateLimitHeaders: vi.fn().mockReturnValue({}),
+}));
+
 import { GET } from '@/app/api/topics/route';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 type MockFn = ReturnType<typeof vi.fn>;
 const mockPrismaTopic = prisma.topic as unknown as { findMany: MockFn };
 const mockGetServerSession = vi.mocked(getServerSession);
+const mockCheckRateLimit = vi.mocked(checkRateLimit);
 
 const sessionFor = (id = 'user-1') => ({
   user: { id, name: 'Alice', email: 'alice@example.com' },
@@ -19,6 +31,14 @@ const sessionFor = (id = 'user-1') => ({
 
 beforeEach(() => {
   vi.resetAllMocks();
+  // Re-establish the permanent rate-limit pass-through after reset (resetAllMocks
+  // clears the factory-level mockResolvedValue).
+  mockCheckRateLimit.mockResolvedValue({
+    success: true,
+    limit: 100,
+    remaining: 99,
+    reset: 0,
+  });
 });
 
 describe('GET /api/topics', () => {
@@ -53,5 +73,20 @@ describe('GET /api/topics', () => {
 
     const res = await GET();
     expect(res.status).toBe(500);
+  });
+
+  it('429 when the per-user rate limit is exceeded', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
+    mockCheckRateLimit.mockResolvedValueOnce({
+      success: false,
+      limit: 100,
+      remaining: 0,
+      reset: 0,
+    });
+
+    const res = await GET();
+    expect(res.status).toBe(429);
+    // Topic query must not run once rate-limited.
+    expect(mockPrismaTopic.findMany).not.toHaveBeenCalled();
   });
 });
