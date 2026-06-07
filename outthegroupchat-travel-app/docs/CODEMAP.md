@@ -1,6 +1,6 @@
 # OutTheGroupchat — Full Codemap
 
-> Auto-generated 2026-03-10. Last updated 2026-06-03 (post-pivot steady state, executing V1 product vision; tight quality-only nightly — deleted dead `RichFeedItem.tsx`, last >600-line prod file → 0). Main stats: 61 live API routes (74 route.ts files incl. archived), 71 vitest-active test files, 1172 tests passing. Comprehensive reference for agents and developers.
+> Auto-generated 2026-03-10. Last updated 2026-06-06 (verification-only nightly — all metrics re-verified & unchanged; no code changes. Blocked on human merge of the 8-commit linear nightly chain onto stale `main` #92). Main stats: 61 live API routes (74 route.ts files incl. archived), 71 vitest-active test files, 1172 tests passing. Comprehensive reference for agents and developers.
 >
 > **🔀 Pivot in progress:** See `docs/REFACTOR_PLAN.md`. Trip-planning surface archived under `_archive/` directories as of Phase 1 (2026-04-16). See [Archived surface (Phase 1)](#archived-surface-phase-1) section below and `src/_archive/README.md` for the preservation scheme.
 >

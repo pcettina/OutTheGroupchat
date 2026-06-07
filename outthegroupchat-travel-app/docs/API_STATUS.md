@@ -1,6 +1,6 @@
 # 📡 API & Integration Status
 
-> **Last Updated: 2026-06-03** (no route changes; tight quality-only nightly — deleted dead `RichFeedItem.tsx`. 61 live API routes unchanged.)
+> **Last Updated: 2026-06-06** (no route changes; verification-only nightly — re-verified 61 live API routes, all tests green. Blocked on human merge to stale `main` #92.)
 >
 > **V1 product vision live (post-pivot steady state):** The intent-to-group loop (`/api/intents/*`, `/api/subcrews/*`, `/api/topics`), the heatmap surface (`/api/heatmap`, `/api/recommendations`), and the intent-expiry cron (`/api/cron/expire-intents`) are all live. See the [🧭 V1 Product Surface](#-v1-product-surface-intent--group--heatmap) section below. **2026-06-01 (V1 Phase 5 — opt-in notifications):** added `GET/PATCH /api/users/notification-preferences` and `GET /api/cron/send-daily-prompts`. **2026-06-02 (V1 Phase 5 notification triggers fully wired):** the PER_MEMBER_INTENT trigger (`src/lib/notifications/per-member-intent.ts`, dispatched from `POST /api/intents`) and the GROUP_FORMATION push (`src/lib/subcrew/try-form.ts`, Pusher `subcrew:formed`) are now complete. No new routes were added — both dispatchers wire into existing endpoints.
 >
