@@ -1,6 +1,6 @@
 # OutTheGroupchat — Full Codemap
 
-> Auto-generated 2026-03-10. Last updated 2026-06-07 (**BACKLOG CONSOLIDATION** — merged #110 anchor [#93–#109] + the June nightly chain [#115–#120, canonical V1 Phase-5] + #112 topics rate-limit into one green tree, landed on main; drained the 11-PR backlog). Main stats: 61 live API routes (excluding `_archive`), 90 vitest-active test files, 1805 tests passing. Comprehensive reference for agents and developers.
+> Auto-generated 2026-03-10. Last updated 2026-06-07 (**NIGHTLY nightly/2026-06-08** — E2E authenticated-flow spec authored, topics rate-limit unit tests added, 5 dead feed/settings components deleted, docs/README rewritten; built on the 2026-06-07 backlog consolidation that merged #110 anchor [#93–#109] + the June nightly chain [#115–#120, canonical V1 Phase-5] + #112 topics rate-limit into one green tree). Main stats: 61 live API routes (excluding `_archive`), 91 vitest-active test files, 1814 tests passing, +16 Playwright E2E tests in `e2e/` (run separately, not counted in the 1814). Comprehensive reference for agents and developers.
 >
 > **2026-05-16 additions:** New directories `src/components/meetups/createMeetup/` (CreateMeetupModal split), `src/components/inspiration/` (inspiration page split), and `src/lib/inspiration/` (inspiration handlers extracted from the route). Files >600 lines: 2 — `RichFeedItem.tsx` and `profile/page.tsx` (refactors land in unmerged PR #108).
 >
@@ -98,7 +98,7 @@ outthegroupchat-travel-app/
 │   │   ├── inspiration/page.tsx
 │   │   ├── notifications/page.tsx
 │   │   ├── profile/page.tsx
-│   │   └── api/                   # 57 API route files (see API Routes section)
+│   │   └── api/                   # 61 live API route files (see API Routes section)
 │   ├── components/                # 92 files across 16 feature directories
 │   │   ├── accessibility/         # FocusTrap, SkipLinks, VisuallyHidden, LiveRegion
 │   │   ├── ai/                    # TripChat (360L), ChatMessage, ChatLoadingIndicator, ChatQuickPrompts, chat-types.ts
@@ -801,10 +801,11 @@ db:seed        → npx tsx prisma/seed/index.ts
 
 ## Tests
 
-**Total: ~1045 tests across 91 Vitest unit/integration test files** (nightly/2026-05-05; +5 test files: subcrews-actions, subcrews-listing, intents-detail, recommendations-edge, heatmap-edge; +128 new tests this build; 0 TSC errors)
+**Total: 1814 tests across 91 Vitest unit/integration test files** (nightly/2026-06-08; +9 tests from `topics-ratelimit.test.ts`; 0 TSC errors). Separately, `e2e/` adds 16 Playwright authenticated-flow tests (run via `npm run test:e2e`, not counted in the 1814).
 
 | File | Lines | Tests | Coverage |
 |------|-------|-------|----------|
+| `src/__tests__/api/topics-ratelimit.test.ts` | — | 9 | GET /api/topics — per-user rate-limit (429 on quota exceed), header propagation, auth ✅ 2026-06-08 nightly/2026-06-08 |
 | `src/__tests__/api/feed.test.ts` | — | 12 | GET /api/feed — rescoped meetup/checkin item types, pagination, auth ✅ 2026-04-22 Phase 6 |
 | `src/__tests__/api/feed-extended.test.ts` | — | 25 | Feed edge cases — empty feed, multiple content types, DB errors, feedType params ✅ 2026-04-22 Phase 6 |
 | `src/__tests__/api/notifications-rescoped.test.ts` | — | 18 | Social notification types — CREW_REQUEST, CREW_ACCEPTED, MEETUP_INVITED, MEETUP_RSVP, MEETUP_STARTING_SOON, CREW_CHECKED_IN_NEARBY, SYSTEM ✅ 2026-04-22 Phase 6 |
@@ -892,6 +893,7 @@ db:seed        → npx tsx prisma/seed/index.ts
 | File | Lines | Suites | Tests | Coverage |
 |------|-------|--------|-------|----------|
 | `e2e/smoke.spec.ts` | 156 | 4 | 11 | Landing page CTA, auth flow (signup/signin/validation), protected route redirects, API health checks |
+| `e2e/authenticated-flow.spec.ts` | — | — | 16 | Authenticated Crew→Meetup loop (Phase 8 action #5). Spec authored 2026-06-08 nightly/2026-06-08; compiles via `--list`. **Browsers not yet installed/run** — pending CI browser execution to verify passing. |
 
 ### E2E Suite Summary
 
@@ -912,10 +914,11 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `any` types | 0 ✅ |
 | `console.*` | 0 ✅ |
 | TSC errors (prod + test) | 0 ✅ |
-| Vitest tests | ~1045 passing, 91 test files (nightly/2026-05-05, 2026-05-04; +5 new: subcrews-actions, subcrews-listing, intents-detail, recommendations-edge, heatmap-edge; +128 tests this build); archived tests runnable on demand via `npm run test:archive` |
-| E2E tests | 11 Playwright smoke tests (4 suites) — trip-specific specs archived |
-| Error monitoring | Sentry — 19/48 coverage on pre-archive branch; coverage recomputed on new live surface in Phase 2 |
-| Live API routes | 72 (35 base + 6 Crew + 9 Phase 4 meetup/venue/cron + 3 Phase 5 check-in + privacy + 14 V1 routes: intents 4 + subcrews 6 + topics + heatmap + recommendations + cron/expire-intents; feed POST now 410; AI routes deleted 2026-04-23) |
+| Vitest tests | 1814 passing, 91 test files (nightly/2026-06-08; +9 from topics-ratelimit.test.ts); archived tests runnable on demand via `npm run test:archive` |
+| E2E tests | 11 Playwright smoke tests + 16 authenticated-flow tests (`e2e/authenticated-flow.spec.ts`, authored 2026-06-08 — browsers not yet run); trip-specific specs archived |
+| Error monitoring | Sentry — V1 surface instrumented (2026-05-12); 19/48 coverage figure is pre-archive trip-era historical |
+| Live API routes | 61 (excluding `_archive`): 35 base + 6 Crew + 9 Phase 4 meetup/venue/cron + 3 Phase 5 check-in + privacy + 14 V1 routes (intents 4 + subcrews 6 + topics + heatmap + recommendations + cron/expire-intents); feed POST now 410; AI routes deleted 2026-04-23 |
+| TS/TSX files | 423 (−5 from deleted dead components 2026-06-08) |
 | Files >400 lines | 0 in prod (email.ts 507 lines, email-crew.ts extracted; types/index.ts reduced to 264 lines in Phase 6) |
 | Production env gaps | Pusher vars, Sentry DSN, Resend domain, GOOGLE_PLACES_API_KEY |
 | **Phase status** | **Phase 6 COMPLETE** (2026-04-22): feed rescoped, search people-first, 9 trip notification types removed, types/index.ts cleaned. Phase 7 (Marketing surface) is next. |
@@ -939,7 +942,7 @@ As of **2026-04-16** the trip-planning product surface has been archived to `_ar
 | Git tag | `v1.0-trip-planning` anchors the pre-pivot commit |
 
 ### What remains live
-- **API (~45 routes):** auth/*, beta/*, crew/*, checkins/*, feed/*, meetups/*, venues/*, users/*, profile, search, notifications/*, invitations/*, discover/*, inspiration, pusher/auth, geocoding, images/search, newsletter, cron, health
+- **API (61 live routes):** auth/*, beta/*, crew/*, checkins/*, feed/*, meetups/*, venues/*, users/*, profile, search, notifications/*, invitations/*, discover/*, inspiration, pusher/auth, geocoding, images/search, newsletter, cron, health, plus 14 V1 routes (intents/*, subcrews/*, topics, heatmap, recommendations, cron/expire-intents)
 - **Pages:** /, /auth/*, /profile, /feed, /discover, /inspiration, /notifications, /search, /settings, /onboarding, /privacy, /terms, /crew, /meetups, /checkins
 - **Components:** accessibility, auth, checkins, crew, discover, feed, meetups, notifications, onboarding, profile, search, settings, social, ui + Navigation.tsx (trip links removed, AI removed 2026-04-23)
 - **Services:** survey.service.ts (repurpose-pending)

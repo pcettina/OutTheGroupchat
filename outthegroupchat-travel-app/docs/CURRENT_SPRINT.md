@@ -1,7 +1,23 @@
 # 🟢 Active — POST_PIVOT_STEADY_STATE (V1 pivot in flight)
 
 > **Last Updated:** 2026-06-07
-> **Status:** V1 routes live; POST_PIVOT_STEADY_STATE. **2026-06-07: 11-PR backlog consolidated and landed on main** — #110 anchor (#93–#109) + June nightly chain (#115–#120, canonical V1 Phase-5 notifications) + #112 topics rate-limit, reconciled into one green tree (1805 tests / 90 files, tsc clean). The "frozen main" stall is resolved; nightly base-branch logic hardened against re-forking.
+> **Status:** V1 routes live; POST_PIVOT_STEADY_STATE. **2026-06-07: 11-PR backlog consolidated and landed on main** — #110 anchor (#93–#109) + June nightly chain (#115–#120, canonical V1 Phase-5 notifications) + #112 topics rate-limit, reconciled into one green tree (1805 tests / 90 files, tsc clean). The "frozen main" stall is resolved; nightly base-branch logic hardened against re-forking. **2026-06-08 nightly:** +9 tests (1814 / 91 files), 16 E2E authenticated-flow tests authored, 5 dead components removed.
+
+---
+
+## 🟢 Completed 2026-06-08 (Nightly Build nightly/2026-06-08)
+
+- [T1] `e2e/authenticated-flow.spec.ts` NEW — 16 Playwright E2E tests for the authenticated Crew→Meetup loop (Phase 8 action #5). Spec compiles via `--list`; browsers not yet installed/run, so it is authored but not yet verified passing in a browser.
+- [T2] `src/__tests__/api/topics-ratelimit.test.ts` NEW — 9 tests covering the per-user rate-limit on `GET /api/topics` (429 on quota exceed).
+- [R1] Deleted 5 dead zero-importer components: `src/components/feed/FeedItemEngagement.tsx`, `FeedItemHeader.tsx`, `FeedItemLegacyCards.tsx`, `FeedItemNewCards.tsx`, and `src/components/settings/NotificationSettingsForm.tsx`.
+- [R2] Removed unused imports: `useState` in `src/components/ui/Toast.tsx`; `Switch` in `src/components/settings/ProfileSettings.tsx`.
+- [D1] Rewrote `docs/README.md` (was "December 2024" → current state).
+
+### Metrics
+- Tests: 1805 → 1814 (+9 from topics-ratelimit.test.ts) | Test files: 90 → 91
+- E2E: +16 Playwright authenticated-flow tests in `e2e/` (not counted in the vitest 1814)
+- Live API routes: 61 (unchanged) | TS/TSX files: 428 → 423 (−5 deleted components)
+- `any`: 0 | `console.*`: 0 | TODO/FIXME: 0 | files >600 lines: 0 | tsc: 0 errors | lint: 0/0 | prisma: valid
 
 ---
 

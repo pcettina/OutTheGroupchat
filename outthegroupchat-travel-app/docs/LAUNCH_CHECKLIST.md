@@ -9,7 +9,7 @@
 - [x] Phase 5: Check-ins + presence — COMPLETE 2026-04-20 (PR #53): POST /api/checkins ✅ | GET /api/checkins/feed ✅ | DELETE /api/checkins/[id] ✅ | GET /api/checkins/[id] ✅ | CheckInButton (duration picker) ✅ | LiveActivityCard ("Join me" wired) ✅ | NearbyCrewList ✅ | /checkins page ✅ | /checkins/[id] page ✅ | Privacy settings page (/settings/privacy) ✅ | /api/users/privacy ✅ | Pusher city-channel broadcast ✅ | All Phase 5 exit criteria met ✅
 - [x] Phase 6: Feed/AI/notifications rescope — COMPLETE 2026-04-22 (PR #55): Feed rescoped (meetup/checkin types, trip/activity queries removed, POST returns 410) ✅ | Search people-first (users→meetups→venues) ✅ | 9 trip notification types removed from schema ✅ | Follow marked @deprecated ✅ | types/index.ts cleaned (264 lines) ✅ | All AI routes later deleted 2026-04-23 (ops/kill-all-ai)
 - [x] Phase 7: Marketing surface (PR #56, 2026-04-22)
-- [~] Phase 8: Launch-readiness re-audit (IN PROGRESS — nightly/2026-05-11 advanced action #5 (E2E + integration coverage, +74 integration tests on V1 intent/subcrew/checkin surface) and action #6 (Sentry coverage — `/api/topics` + `/api/recommendations` instrumented 2026-05-10))
+- [~] Phase 8: Launch-readiness re-audit (IN PROGRESS — nightly/2026-05-11 advanced action #5 (E2E + integration coverage, +74 integration tests on V1 intent/subcrew/checkin surface) and action #6 (Sentry coverage — `/api/topics` + `/api/recommendations` instrumented 2026-05-10); nightly/2026-06-08 authored `e2e/authenticated-flow.spec.ts` (16 tests, Crew→Meetup loop) — spec compiles, browsers still pending CI run to fully close action #5)
 
 ---
 
@@ -17,7 +17,7 @@
 >
 > **Target Launch:** Q2 2026 (Beta) — to be re-baselined post-pivot
 > **Current Status:** Refactoring (Phase 2 in progress — domain models added, DB migration pending)
-> **Last Updated:** 2026-05-16 (POST_PIVOT_STEADY_STATE — V1 routes live; nightly/2026-05-16 added 172 tests, 3 file refactors, V1_API_ROUTES.md, JSDoc on src/lib/intent/*, README rewrites)
+> **Last Updated:** 2026-06-07 (nightly/2026-06-08 — Phase 8 action #5: `e2e/authenticated-flow.spec.ts` authored (16 tests, Crew→Meetup loop; spec compiles, browsers not yet run); +9 topics rate-limit unit tests (1814 / 91 files), 5 dead components removed, docs/README rewrite)
 
 ---
 
@@ -103,7 +103,7 @@ These are the gates that must close before V1 beta launch.
 - [x] Library tests (sanitize, pusher, email)
 - [x] CI: GitHub Actions runs Node 20 + TSC + lint + Vitest + Playwright
 - [x] E2E smoke spec (Playwright, public flows only)
-- [ ] **E2E Playwright authenticated flows** — Crew → Meetup loop (Phase 8 outstanding)
+- [~] **E2E Playwright authenticated flows** — Crew → Meetup loop. Spec authored 2026-06-08 (`e2e/authenticated-flow.spec.ts`, 16 tests, compiles via `--list`). **NOT yet verified passing** — browsers must be installed + run in CI to close this item.
 - [ ] Auth flow E2E (signup → verify → signin)
 
 ### 8.6 UI/UX
@@ -243,7 +243,7 @@ The following are **blocking** for opening V1 beta to external users:
 1. Sentry DSN live in Vercel production
 2. Pusher env vars live in Vercel production (real-time meetup + check-in updates)
 3. Resend domain verified (production emails currently bounce on unverified sandbox domain)
-4. E2E Playwright authenticated flow covering the canonical V1 loop: signup → set Intent → match into Subcrew → create Meetup → check in
+4. E2E Playwright authenticated flow covering the canonical V1 loop: signup → set Intent → match into Subcrew → create Meetup → check in. **Spec authored 2026-06-08 (`e2e/authenticated-flow.spec.ts`, 16 tests, compiles); still requires browser install + CI run to verify passing.**
 5. Uptime monitor connected
 6. NEXTAUTH_SECRET audit confirmed in prod
 

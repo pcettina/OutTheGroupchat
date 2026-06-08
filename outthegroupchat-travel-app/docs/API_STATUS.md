@@ -1,6 +1,6 @@
 # 📡 API & Integration Status
 
-> **Last Updated: 2026-06-07** (backlog consolidation landed on main: #110 + June chain #115–#120 + #112 topics rate-limit. `GET /api/topics` now rate-limited per user → 429. 61 live routes, 90 test files, 1805 tests.)
+> **Last Updated: 2026-06-07** (nightly/2026-06-08: no route status changes. Added `src/__tests__/api/topics-ratelimit.test.ts` — 9 tests covering the per-user rate-limit on `GET /api/topics` (429 on quota exceed). 61 live routes unchanged, 91 test files, 1814 tests, +16 Playwright E2E. Built on the 2026-06-07 backlog consolidation: #110 + June chain #115–#120 + #112 topics rate-limit landed on main; `GET /api/topics` is rate-limited per user → 429.)
 >
 > **V1 Routes (see V1_API_ROUTES.md):** The V1 pivot added 14 new routes covering intent-to-group, sub-crew formation, topics, recommendations, heatmap, and cron-expiry. Full route reference in `docs/V1_API_ROUTES.md`. Summary:
 >

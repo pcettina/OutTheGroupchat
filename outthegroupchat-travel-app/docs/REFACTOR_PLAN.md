@@ -418,12 +418,12 @@ Each phase targets a discrete session (or a nightly build if small). Phases are 
 2. Update `docs/PRODUCTION_ROADMAP.md` (target date, priorities, new risk register)
 3. Security audit focused on new surfaces: location data handling, Crew-request abuse prevention, meetup spam, check-in stalking mitigation (Q4 `activeUntil` is first line of defense)
 4. Rate-limit audit for new routes
-5. E2E Playwright tests for new critical paths: signup → Crew request → meetup create → RSVP → check-in — **PENDING**
+5. E2E Playwright tests for new critical paths: signup → Crew request → meetup create → RSVP → check-in — **🔶 spec authored 2026-06-08 (nightly/2026-06-08): `e2e/authenticated-flow.spec.ts` (16 tests, Crew→Meetup loop) compiles via `--list`; PR pending CI browser run to verify passing. Not yet executed in a browser.**
 6. Sentry coverage audit: target 100% on new routes (don't repeat the 0/48-on-main debt) — **Sentry coverage expanded to V1 surface (intents + subcrews + V1 misc) — completed 2026-05-12 (PR for nightly/2026-05-13). Sentry full audit (#6) substantially advanced; ~10 V1 routes newly instrumented.**
 
 **Exit criteria:** Updated launch checklist reflects real readiness of the new product, not the archived one.
 
-> *Last refactor-plan update: 2026-05-10 (nightly build) — Phase 8 actions #5/#6 marked partial/ongoing per tonight's progress; phase definitions unchanged.*
+> *Last refactor-plan update: 2026-06-07 (nightly/2026-06-08) — Phase 8 action #5 advanced: authenticated-flow E2E spec authored (browsers pending CI run). Action #6 (Sentry coverage) still outstanding; Phase 8 NOT complete. Phase definitions/objectives unchanged.*
 
 ---
 

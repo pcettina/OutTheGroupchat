@@ -1,249 +1,124 @@
-# 📚 OutTheGroupchat Documentation
+# OutTheGroupchat Documentation
 
-> **"A social network that not just showcases experiences, but helps you build them."**
+> **"The social media app that wants to get you off your phone."**
 
-Welcome to the OutTheGroupchat documentation hub. This directory contains all technical documentation, guides, and operational procedures for the platform.
+OutTheGroupchat is a full-stack Next.js meetup-centric social network. The product
+loop: a user signals intent (a topic + time window), and when two or more Crew
+members land on the same topic in an overlapping window, a sub-crew auto-forms,
+coordinates a time, and gets venue recommendations — turning a group chat into a
+real-world meetup. (The app began as a group trip-planning tool; that surface has
+been archived — see `archive/trip-planning/`.)
 
----
-
-## 🗂️ Documentation Structure
-
-```
-docs/
-├── README.md               # ← You are here
-├── 📋 Operations
-│   ├── LAUNCH_CHECKLIST.md    # Pre-launch requirements
-│   ├── CURRENT_SPRINT.md      # Active sprint priorities
-│   └── API_STATUS.md          # Endpoint status tracker
-│
-├── 🔧 Technical
-│   ├── IMPLEMENTATION_STACK.md  # Full tech stack reference
-│   ├── SECURITY_AUDIT.md        # Security review & fixes
-│   ├── TEST_CASES.md            # Testing documentation
-│   └── VERCEL_ENV_SETUP.md      # Deployment configuration
-│
-├── 🗺️ Roadmap
-│   ├── PRODUCTION_ROADMAP.md    # 4-week deployment plan
-│   └── FUTURE_IMPLEMENTATION.md # Long-term feature roadmap
-│
-├── 🤖 Agent Guides
-│   └── agents/
-│       ├── PLANNING_AGENT_GUIDE.md
-│       ├── CODE_CHECKING_AGENT_GUIDE.md
-│       ├── FRONTEND_AGENT_GUIDE.md
-│       └── SOCIAL_ENGAGEMENT_AGENT_GUIDE.md
-│
-└── 📦 Archive
-    └── archive/                  # Historical versions
-        ├── LAUNCH_ROADMAP_v1_2024-12.md
-        ├── IMPLEMENTATION_CLOSURE_v1_2024-12.md
-        ├── IMPROVEMENT_RANKINGS_v1_2024-12.md
-        ├── IMPROVEMENT_RANKINGS_v2_2024-12.md
-        └── FUTURE_IMPLEMENTATION_v1_2024-12.md
-```
+This directory is the documentation hub for the platform: product vision,
+operational status, technical references, launch/infra planning, and agent guides.
 
 ---
 
-## 🚀 Quick Start
+## Tech Stack (at a glance)
 
-### For New Developers
-1. Read [IMPLEMENTATION_STACK.md](./IMPLEMENTATION_STACK.md) - Understand the tech stack
-2. Check [CURRENT_SPRINT.md](./CURRENT_SPRINT.md) - See current priorities
-3. Review [API_STATUS.md](./API_STATUS.md) - Know what's working
+- **Frontend:** Next.js 14, React 18, TypeScript, Tailwind CSS, Framer Motion
+- **Backend:** Next.js API Routes, Prisma ORM, PostgreSQL (Neon)
+- **Auth:** NextAuth.js with Prisma adapter · **Real-time:** Pusher · **Deploy:** Vercel
+- **Mobile:** Expo / React Native iOS app (`outthegroupchat-mobile/`)
 
-### For Deployment
-1. Follow [VERCEL_ENV_SETUP.md](./VERCEL_ENV_SETUP.md) - Configure environment
-2. Complete [LAUNCH_CHECKLIST.md](./LAUNCH_CHECKLIST.md) - Verify all requirements
-3. Reference [PRODUCTION_ROADMAP.md](./PRODUCTION_ROADMAP.md) - Deployment plan
-
-### For Planning
-1. Read [PRODUCTION_ROADMAP.md](./PRODUCTION_ROADMAP.md) - Near-term goals
-2. Check [FUTURE_IMPLEMENTATION.md](./FUTURE_IMPLEMENTATION.md) - Long-term vision
-3. Review agent guides for specific areas
+Current metrics: 1805 tests across 90 test files · 61 live API routes · 428 TS/TSX files.
 
 ---
 
-## 📋 Key Documents
+## Product & Planning
 
-### [🚀 Launch Checklist](./LAUNCH_CHECKLIST.md)
-**Use when:** Preparing for deployment or checking launch readiness
+| Document | Description |
+|----------|-------------|
+| [PRODUCT_VISION.md](./PRODUCT_VISION.md) | North-star v1 spec — the intent → sub-crew → coordinate → venue loop, privacy model, and locked founder resolutions. |
+| [V1_IMPLEMENTATION_PLAN.md](./V1_IMPLEMENTATION_PLAN.md) | Phased shippable work translating the product vision into engineering tasks. |
+| [V1_API_ROUTES.md](./V1_API_ROUTES.md) | Reference for the v1 API route surface. |
+| [REFACTOR_PLAN.md](./REFACTOR_PLAN.md) | Trip-planning → social pivot refactor plan and phase tracking. |
+| [FUTURE_IMPLEMENTATION.md](./FUTURE_IMPLEMENTATION.md) | Longer-term feature roadmap. |
+| [PRODUCTION_ROADMAP.md](./PRODUCTION_ROADMAP.md) | Deployment timeline and production milestones. |
 
-Contains:
-- Infrastructure checklist
-- Security requirements
-- Testing checklist
-- Launch day procedures
+## Operations & Status
 
-**Current Status:** 56% Complete → Target 85% for Beta
+| Document | Description |
+|----------|-------------|
+| [CURRENT_SPRINT.md](./CURRENT_SPRINT.md) | Active sprint priorities and task breakdown. |
+| [API_STATUS.md](./API_STATUS.md) | Per-endpoint status tracker (frontend wiring, known issues). |
+| [LAUNCH_CHECKLIST.md](./LAUNCH_CHECKLIST.md) | Pre-launch readiness checklist. |
+| [OPS_LAUNCH_CHECKLIST.md](./OPS_LAUNCH_CHECKLIST.md) | Remaining ops/dashboard launch blockers (keys in Vercel, no code changes). |
+| [CODEMAP.md](./CODEMAP.md) | Full codebase reference map for agents and onboarding. |
 
----
+## Technical Reference
 
-### [🎯 Current Sprint](./CURRENT_SPRINT.md)
-**Use when:** Starting daily work or checking immediate priorities
+| Document | Description |
+|----------|-------------|
+| [IMPLEMENTATION_STACK.md](./IMPLEMENTATION_STACK.md) | Full tech stack reference and architecture overview. |
+| [SECURITY_AUDIT.md](./SECURITY_AUDIT.md) | Security review, findings, and remediation tracking. |
+| [SENTRY_COVERAGE_AUDIT.md](./SENTRY_COVERAGE_AUDIT.md) | Per-route Sentry error-monitoring coverage audit. |
+| [TEST_CASES.md](./TEST_CASES.md) | Testing patterns, templates, and stack setup. |
+| [UPGRADE_PLAN.md](./UPGRADE_PLAN.md) | Major package version upgrade plan (Next/React/Prisma) with breaking changes. |
 
-Contains:
-- Critical bug fixes (P0)
-- Security fixes (P0)
-- Feature work (P1-P2)
-- Daily task breakdown
+## Infrastructure & Deployment
 
-**Sprint Goal:** Fix critical bugs, complete core functionality
+| Document | Description |
+|----------|-------------|
+| [PRODUCTION_INFRASTRUCTURE_PLAN.md](./PRODUCTION_INFRASTRUCTURE_PLAN.md) | End-to-end plan for a real, observable, recoverable production environment. |
+| [VERCEL_ENV_SETUP.md](./VERCEL_ENV_SETUP.md) | Vercel environment variable configuration guide. |
+| [N8N_SETUP_SUMMARY.md](./N8N_SETUP_SUMMARY.md) | n8n integration quick-reference summary. |
+| [N8N_DEPLOYMENT_CHECKLIST.md](./N8N_DEPLOYMENT_CHECKLIST.md) | n8n integration deployment checklist. |
+| [N8N_BETA_NEWSLETTER_INTEGRATION.md](./N8N_BETA_NEWSLETTER_INTEGRATION.md) | n8n beta-signup and newsletter integration guide. |
 
----
+## Mobile (iOS)
 
-### [📡 API Status](./API_STATUS.md)
-**Use when:** Working on frontend integration or debugging API issues
+| Document | Description |
+|----------|-------------|
+| [iOS_IMPLEMENTATION_PLAN.md](./iOS_IMPLEMENTATION_PLAN.md) | Plan for getting OutTheGroupchat into the Apple App Store. |
+| [MOBILE_BUILD_ONESHOT.md](./MOBILE_BUILD_ONESHOT.md) | Self-contained Expo (SDK 54) iOS build guide. |
+| [LAUNCH_RESEARCH_PORTFOLIO.md](./LAUNCH_RESEARCH_PORTFOLIO.md) | Phased launch portfolio synthesized from a multi-stream research swarm. |
 
-Contains:
-- All endpoint status
-- Frontend connection state
-- Known issues per endpoint
-- Required migrations
+## Design
 
-**API Completion:** 55% fully working
+| Document | Description |
+|----------|-------------|
+| [design/README.md](./design/README.md) | Design workflows index. |
+| [design/DESIGN_BRIEF.md](./design/DESIGN_BRIEF.md) | Product design brief. |
+| [design/DESIGN_LOG.md](./design/DESIGN_LOG.md) | Running design-decision log. |
+| [STYLE_IMPLEMENTATION_PLAN.md](./STYLE_IMPLEMENTATION_PLAN.md) | Project-wide "Last Call" palette/typography/interaction sweep. |
 
----
+## Agent Guides (`agents/`)
 
-### [🔧 Implementation Stack](./IMPLEMENTATION_STACK.md)
-**Use when:** Onboarding or making architecture decisions
-
-Contains:
-- Complete tech stack reference
-- Architecture diagrams
-- Database schema overview
-- File structure guide
-
----
-
-### [🔒 Security Audit](./SECURITY_AUDIT.md)
-**Use when:** Reviewing security or fixing vulnerabilities
-
-Contains:
-- Critical security issues (4)
-- Medium priority issues (4)
-- Security checklist
-- Recommended fixes
-
-**Security Score:** 6/10 → Target 9/10
-
----
-
-### [🧪 Test Cases](./TEST_CASES.md)
-**Use when:** Writing or running tests
-
-Contains:
-- Unit test templates
-- Integration test patterns
-- E2E test scenarios
-- Testing stack setup
-
----
-
-### [📅 Production Roadmap](./PRODUCTION_ROADMAP.md)
-**Use when:** Planning sprints or understanding deployment timeline
-
-Contains:
-- Week-by-week plan
-- Feature requirements
-- Infrastructure setup
-- Cost estimates
-
----
-
-### [🔮 Future Implementation](./FUTURE_IMPLEMENTATION.md)
-**Use when:** Planning future features or understanding product vision
-
-Contains:
-- 6-phase roadmap
-- Feature prioritization
-- Technical debt tracking
-- AI system improvements
-
----
-
-## 🤖 Agent Guides
-
-Specialized guides for AI development agents:
+Specialized guides for AI development agents working in this repo:
 
 | Guide | Purpose |
 |-------|---------|
-| [Planning Agent](./agents/PLANNING_AGENT_GUIDE.md) | Architecture & feature planning |
-| [Code Checking Agent](./agents/CODE_CHECKING_AGENT_GUIDE.md) | Code review & security patterns |
-| [Frontend Agent](./agents/FRONTEND_AGENT_GUIDE.md) | UI/UX & component patterns |
-| [Social Engagement Agent](./agents/SOCIAL_ENGAGEMENT_AGENT_GUIDE.md) | Social features & engagement |
+| [Planning Agent](./agents/PLANNING_AGENT_GUIDE.md) | Architecture and feature planning. |
+| [Code Checking Agent](./agents/CODE_CHECKING_AGENT_GUIDE.md) | Code review and security patterns. |
+| [Frontend Agent](./agents/FRONTEND_AGENT_GUIDE.md) | UI/UX and component patterns. |
+| [Social Engagement Agent](./agents/SOCIAL_ENGAGEMENT_AGENT_GUIDE.md) | Social features and engagement. |
+
+## Nightly Build Reports (`nightly-reports/`)
+
+Dated reports from the nightly automated build pipeline (task completion, test
+results, build/lint status, PR links). See [`nightly-reports/`](./nightly-reports/)
+for the full set; the most recent is
+[`nightly-reports/2026-06-07.md`](./nightly-reports/2026-06-07.md).
+
+## Archive (`archive/`)
+
+Historical and superseded documentation:
+
+- [`archive/trip-planning/`](./archive/trip-planning/) — frozen snapshots of the
+  trip-planning docs taken at the moment of the social pivot (API status, launch
+  checklist, roadmap, sprint, future implementation, upgrade plan).
+- `archive/*_v1_2024-12.md` — original 2024 launch roadmap, implementation closure,
+  improvement rankings, and future-implementation drafts.
 
 ---
 
-## 📊 Current Status Overview
+## Conventions
 
-| Area | Status | Document |
-|------|--------|----------|
-| Infrastructure | ✅ Ready | [Launch Checklist](./LAUNCH_CHECKLIST.md) |
-| Authentication | ✅ Working | [API Status](./API_STATUS.md) |
-| Core APIs | 🟡 Partial | [API Status](./API_STATUS.md) |
-| Security | 🔴 Needs Work | [Security Audit](./SECURITY_AUDIT.md) |
-| Testing | 🔴 Minimal | [Test Cases](./TEST_CASES.md) |
-| Documentation | ✅ Updated | This file |
+When adding or updating a doc: use a descriptive filename, include a status/last-updated
+line at the top, add it to the relevant section of this index, and link related documents.
+For a major rewrite, archive the prior version under `archive/`.
 
 ---
 
-## 🔗 External Links
-
-| Resource | URL |
-|----------|-----|
-| Production App | https://outthegroupchat-travel-app.vercel.app |
-| Vercel Dashboard | https://vercel.com/patrick-cettinas-projects/outthegroupchat-travel-app |
-| Supabase | *(from env vars)* |
-| Upstash Console | https://console.upstash.com |
-
----
-
-## 📝 Document Maintenance
-
-| Document | Update Frequency | Owner |
-|----------|-----------------|-------|
-| CURRENT_SPRINT.md | Daily | Dev Team |
-| API_STATUS.md | Per API change | Dev Team |
-| LAUNCH_CHECKLIST.md | Weekly | Lead Dev |
-| SECURITY_AUDIT.md | Monthly | Security |
-| PRODUCTION_ROADMAP.md | Bi-weekly | Product |
-| FUTURE_IMPLEMENTATION.md | Quarterly | Product |
-
----
-
-## 📦 Archive
-
-The `archive/` folder contains previous versions of documents for historical reference:
-
-- `LAUNCH_ROADMAP_v1_2024-12.md` - Original launch roadmap (superseded by PRODUCTION_ROADMAP)
-- `IMPLEMENTATION_CLOSURE_v1_2024-12.md` - Bug tracking snapshot (superseded by CURRENT_SPRINT)
-- `IMPROVEMENT_RANKINGS_v1_2024-12.md` - Original priority rankings
-- `IMPROVEMENT_RANKINGS_v2_2024-12.md` - Updated priority rankings (consolidated into CURRENT_SPRINT)
-- `FUTURE_IMPLEMENTATION_v1_2024-12.md` - Original future roadmap
-
----
-
-## 💡 Best Practices
-
-### When Adding Documentation
-1. Use clear, descriptive filenames
-2. Include last updated date
-3. Add to this README index
-4. Link related documents
-
-### When Updating Documentation
-1. Update the "Last Updated" date
-2. Note significant changes
-3. Archive old versions if major rewrite
-
-### Document Format
-- Use Markdown
-- Include status indicators (✅ 🟡 🔴 ⏳)
-- Add code examples where helpful
-- Keep tables for quick reference
-
----
-
-*Built with ❤️ for travelers who believe the journey is better together.*
-
-*Last Updated: December 2024*
+*Last Updated: 2026-06-07*
