@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { logger } from '@/lib/logger';
+import { captureException } from '@/lib/sentry';
 import {
   searchSchema,
   inspirationPostSchema,
@@ -174,6 +175,7 @@ export async function handleInspirationGet(req: Request) {
       },
     });
   } catch (error) {
+    captureException(error, { route: '/api/inspiration', method: 'GET' });
     logger.error({ error }, '[INSPIRATION_GET] Failed to fetch inspiration');
     return NextResponse.json(
       { error: 'Failed to fetch inspiration' },
@@ -217,6 +219,7 @@ export async function handleInspirationPost(req: Request) {
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error) {
+    captureException(error, { route: '/api/inspiration', method: 'POST' });
     logger.error({ error }, '[INSPIRATION_POST] Failed to process request');
     return NextResponse.json(
       { error: 'Failed to process request' },

@@ -17,7 +17,7 @@
 >
 > **Target Launch:** Q2 2026 (Beta) — to be re-baselined post-pivot
 > **Current Status:** Refactoring (Phase 2 in progress — domain models added, DB migration pending)
-> **Last Updated:** 2026-06-07 (nightly/2026-06-08 — Phase 8 action #5: `e2e/authenticated-flow.spec.ts` authored (16 tests, Crew→Meetup loop; spec compiles, browsers not yet run); +9 topics rate-limit unit tests (1814 / 91 files), 5 dead components removed, docs/README rewrite)
+> **Last Updated:** 2026-06-08 (nightly/2026-06-09 — Phase 8 action #6: Sentry `captureException` extended to discover/*, images/search, invitations (+[invitationId]), newsletter/subscribe, and the inspiration handler → ~63/64 non-archive routes instrumented (code-side instrumentation essentially complete; DSN-in-Vercel operational gap still blocks ingestion). Dead `feed/rich-item/` directory + `ui/ImagePicker.tsx` removed (13 component files). 1814 tests / 91 files.)
 
 ---
 
@@ -86,7 +86,7 @@ These are the gates that must close before V1 beta launch.
 ### 8.4 Monitoring & observability
 
 - [x] Sentry installed and configured (`instrumentation-client.ts`, `src/lib/sentry.ts`)
-- [x] Sentry coverage on V1 hot paths — **44 / 59 live routes (74.6%)** — see `docs/SENTRY_COVERAGE_AUDIT.md`
+- [x] Sentry `captureException` coverage — **~63 / 64 non-archive routes (2026-06-08)** — only the NextAuth catch-all re-export uncovered (not meaningful); code-side instrumentation essentially complete. See `docs/SENTRY_COVERAGE_AUDIT.md`
 - [x] Structured logging (pino via `@/lib/logger`)
 - [x] Vercel Analytics enabled
 - [ ] Sentry DSN set in production (blocks event ingestion)
@@ -176,6 +176,7 @@ These are the gates that must close before V1 beta launch.
 - [x] Sentry installed and configured ✅ 2026-03-10 (instrumentation-client.ts onRouterTransitionStart fixed 2026-03-20; src/lib/sentry.ts helper created 2026-03-25; needs real DSN in Vercel)
 - [x] Sentry captureException added to 19/48 routes ✅ 2026-04-16 (feed x4, notifications x2, trips/route x1, trips/[tripId] x8, auth x4)
 - [x] Sentry instrumented on V1 routes (intents/*, subcrews/*, heatmap, recommendations, topics, venues/search) ✅ 2026-05-12 (nightly/2026-05-13 — 10 V1 routes newly instrumented, 12 catch blocks tagged; V1 surface Sentry coverage complete)
+- [x] Sentry `captureException` extended to discover/*, images/search, invitations (+[invitationId]), newsletter/subscribe, inspiration handler ✅ 2026-06-08 (nightly/2026-06-09) — code-side coverage now ~63/64 non-archive routes (only NextAuth catch-all re-export uncovered)
 - [ ] Error alerts configured (pending Sentry DSN)
 - [ ] Source maps uploaded (pending Sentry DSN)
 

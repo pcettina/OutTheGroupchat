@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
+import { captureException } from '@/lib/sentry';
 import { apiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 
 const NewsletterSubscribeSchema = z.object({
@@ -106,8 +107,9 @@ export async function POST(req: Request) {
       },
     });
   } catch (error) {
+    captureException(error, { route: '/api/newsletter/subscribe', method: 'POST' });
     logger.error({ err: error, context: 'NEWSLETTER_SUBSCRIBE' }, 'Error during newsletter subscription');
-    
+
     return NextResponse.json(
       { error: 'Unable to process subscription. Please try again.' },
       { status: 500 }

@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
 import type { Prisma } from '@prisma/client';
 import { logger } from '@/lib/logger';
+import { captureException } from '@/lib/sentry';
 
 const respondSchema = z.object({
   action: z.enum(['accept', 'decline']),
@@ -125,6 +126,7 @@ export async function POST(
       });
     }
   } catch (error) {
+    captureException(error, { route: '/api/invitations/[invitationId]', method: 'POST' });
     logger.error({ error }, '[INVITATION_RESPOND] Failed to respond to invitation');
     return NextResponse.json(
       { success: false, error: 'Failed to respond to invitation' },
@@ -196,6 +198,7 @@ export async function GET(
 
     return NextResponse.json({ success: true, data: invitation });
   } catch (error) {
+    captureException(error, { route: '/api/invitations/[invitationId]', method: 'GET' });
     logger.error({ error }, '[INVITATION_GET] Failed to fetch invitation');
     return NextResponse.json(
       { success: false, error: 'Failed to fetch invitation' },

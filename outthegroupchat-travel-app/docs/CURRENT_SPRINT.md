@@ -1,7 +1,23 @@
 # 🟢 Active — POST_PIVOT_STEADY_STATE (V1 pivot in flight)
 
-> **Last Updated:** 2026-06-07
-> **Status:** V1 routes live; POST_PIVOT_STEADY_STATE. **2026-06-07: 11-PR backlog consolidated and landed on main** — #110 anchor (#93–#109) + June nightly chain (#115–#120, canonical V1 Phase-5 notifications) + #112 topics rate-limit, reconciled into one green tree (1805 tests / 90 files, tsc clean). The "frozen main" stall is resolved; nightly base-branch logic hardened against re-forking. **2026-06-08 nightly:** +9 tests (1814 / 91 files), 16 E2E authenticated-flow tests authored, 5 dead components removed.
+> **Last Updated:** 2026-06-08
+> **Status:** V1 routes live; POST_PIVOT_STEADY_STATE. **2026-06-08 nightly (nightly/2026-06-09):** Sentry `captureException` extended to 8 more routes/handlers → coverage now **~63/64 non-archive routes** (only the NextAuth catch-all re-export uncovered); **Phase 8 action #6 substantially complete**. Dead code removed: `src/components/feed/rich-item/` directory + `src/components/ui/ImagePicker.tsx` (13 component files). No new tests added this build (1814 tests / 91 files). **2026-06-07:** 11-PR backlog consolidated and landed on main — #110 anchor (#93–#109) + June nightly chain (#115–#120, canonical V1 Phase-5 notifications) + #112 topics rate-limit, reconciled into one green tree (tsc clean). The "frozen main" stall is resolved; nightly base-branch logic hardened against re-forking.
+
+---
+
+## 🟢 Completed 2026-06-08 (Nightly Build nightly/2026-06-09)
+
+- [L1] Sentry `captureException` added to 4 routes: `discover/search`, `discover/recommendations`, `discover/import`, `images/search`.
+- [L2] Sentry `captureException` added to `invitations` (route + `[invitationId]`), `newsletter/subscribe`, and `src/lib/inspiration/handlers.ts` (the `/api/inspiration` handler). **Sentry coverage now ~63/64 non-archive routes** (only the NextAuth catch-all re-export lacks it — not meaningful). **Phase 8 action #6 (Sentry coverage audit) is now substantially complete on the code side.**
+- [M1] Deleted entire dead `src/components/feed/rich-item/` directory (12 files) + `src/components/ui/ImagePicker.tsx` — 13 zero-importer component files removed; `tsc` clean.
+- [M2] Added `playwright-report/`, `test-results/`, `/blob-report/`, `/playwright/.cache/` to `.gitignore`.
+- [M3] Refreshed `docs/SECURITY_AUDIT.md` with a genuine 2026-06-08 re-audit (score 7 → 8/10).
+
+### Metrics
+- Tests: 1814 (no new tests added this build) | Test files: 91
+- Live API routes: 61 (unchanged) | Sentry coverage: ~63/64 non-archive routes
+- `any`: 4 | `console.*`: 0 | TODO/FIXME: 0 | files >600 lines (active): 0 | tsc: 0 errors
+- Component files removed: 13 (`feed/rich-item/` directory + `ui/ImagePicker.tsx`)
 
 ---
 

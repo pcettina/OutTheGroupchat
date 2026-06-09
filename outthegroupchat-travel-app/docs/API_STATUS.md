@@ -1,6 +1,8 @@
 # 📡 API & Integration Status
 
-> **Last Updated: 2026-06-07** (nightly/2026-06-08: no route status changes. Added `src/__tests__/api/topics-ratelimit.test.ts` — 9 tests covering the per-user rate-limit on `GET /api/topics` (429 on quota exceed). 61 live routes unchanged, 91 test files, 1814 tests, +16 Playwright E2E. Built on the 2026-06-07 backlog consolidation: #110 + June chain #115–#120 + #112 topics rate-limit landed on main; `GET /api/topics` is rate-limited per user → 429.)
+> **Last Updated: 2026-06-08** (nightly/2026-06-09: Sentry `captureException` added to 8 more routes/handlers — `discover/search`, `discover/recommendations`, `discover/import`, `images/search`, `invitations`, `invitations/[invitationId]`, `newsletter/subscribe`, and `lib/inspiration/handlers.ts` (the `/api/inspiration` handler). Sentry coverage now ~63/64 non-archive routes (only the NextAuth catch-all re-export lacks it — not meaningful). No route status changes; 61 live routes unchanged, 91 test files, 1814 tests. Dead code removed this build: `src/components/feed/rich-item/` directory + `src/components/ui/ImagePicker.tsx`.)
+>
+> **Previous (2026-06-07, nightly/2026-06-08):** no route status changes. Added `src/__tests__/api/topics-ratelimit.test.ts` — 9 tests covering the per-user rate-limit on `GET /api/topics` (429 on quota exceed). Built on the 2026-06-07 backlog consolidation: #110 + June chain #115–#120 + #112 topics rate-limit landed on main; `GET /api/topics` is rate-limited per user → 429.
 >
 > **V1 Routes (see V1_API_ROUTES.md):** The V1 pivot added 14 new routes covering intent-to-group, sub-crew formation, topics, recommendations, heatmap, and cron-expiry. Full route reference in `docs/V1_API_ROUTES.md`. Summary:
 >
@@ -33,7 +35,7 @@
 > **Live API routes (post-archive):** 72 total (59 active + 13 archived). Active surface includes 35 base routes + 6 Crew + 9 Phase 4 meetup/venue/cron + 3 Phase 5 check-in + privacy + 14 V1 routes (intents/subcrews/topics/heatmap/recommendations/cron-expire-intents). Feed POST now returns 410.
 > **Archived API routes (Phase 1):** 13
 > **Target:** 100% for Beta Launch (re-baselined in Phase 8)
-> **Sentry Coverage:** V1 surface fully instrumented as of 2026-05-12. Pre-archive trip-era coverage: 19/48 routes (historical, on pre-archive branch).
+> **Sentry Coverage:** ~63/64 non-archive routes instrumented with `captureException` as of 2026-06-08 (only the NextAuth catch-all re-export uncovered — not meaningful). V1 surface fully instrumented 2026-05-12; discover/*, images/search, invitations, newsletter/subscribe, and the inspiration handler added 2026-06-08. Pre-archive trip-era coverage: 19/48 routes (historical, on pre-archive branch).
 
 ---
 
@@ -76,9 +78,9 @@
 
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
-| `/api/invitations` | GET | ✅ | ⏳ | List all invitations for current user; auto-marks expired PENDING invitations (will be retargeted to Crew invites in Phase 3) |
-| `/api/invitations/[invitationId]` | GET | ✅ | ⏳ | Get invitation details; retained — Phase 3 will rescope for Crew requests |
-| `/api/invitations/[invitationId]` | POST | ✅ | ⏳ | Accept/decline invitation; retained — Phase 3 will rescope |
+| `/api/invitations` | GET | ✅ | ⏳ | List all invitations for current user; auto-marks expired PENDING invitations (will be retargeted to Crew invites in Phase 3); **Sentry captureException added 2026-06-08** |
+| `/api/invitations/[invitationId]` | GET | ✅ | ⏳ | Get invitation details; retained — Phase 3 will rescope for Crew requests; **Sentry captureException added 2026-06-08** |
+| `/api/invitations/[invitationId]` | POST | ✅ | ⏳ | Accept/decline invitation; retained — Phase 3 will rescope; **Sentry captureException added 2026-06-08** |
 
 ---
 
@@ -138,13 +140,13 @@ Follow model marked @deprecated (retirement deferred to Phase 7)
 |----------|--------|--------|-------------------|-------|
 | `/api/discover` | GET | ✅ | ⏳ | Search events/places/restaurants/attractions/nightlife by city + date range; type param filters results |
 | `/api/discover` | POST | ✅ | ⏳ | Search flights via EventsService (origin, destination, departureDate, returnDate, adults); Zod validation added 2026-03-21 |
-| `/api/discover/search` | GET | ✅ | 🔶 | Auth guard added 2026-03-24 (was unauthenticated — security improvement); rate limiting, Zod validation ✅ |
-| `/api/discover/recommendations` | GET | ✅ | 🔶 | Auth guard added 2026-03-24; category filter, rate limiting, pino logging ✅ |
-| `/api/discover/import` | POST | ✅ | ⏳ | Rate limiting + auth guard ✅ 2026-03-24; pino logging, typed helpers, fixed empty catch blocks |
+| `/api/discover/search` | GET | ✅ | 🔶 | Auth guard added 2026-03-24 (was unauthenticated — security improvement); rate limiting, Zod validation ✅; **Sentry captureException added 2026-06-08** |
+| `/api/discover/recommendations` | GET | ✅ | 🔶 | Auth guard added 2026-03-24; category filter, rate limiting, pino logging ✅; **Sentry captureException added 2026-06-08** |
+| `/api/discover/import` | POST | ✅ | ⏳ | Rate limiting + auth guard ✅ 2026-03-24; pino logging, typed helpers, fixed empty catch blocks; **Sentry captureException added 2026-06-08** |
 | `/api/search` | GET | ✅ | 🔶 | Email removed from select projection (privacy fix) ✅ 2026-03-20; **rescoped 2026-04-22 (Phase 6)** — people-first ordering (users→meetups→venues), Zod enum updated to `['all','people','meetups','venues']`, trip/activity search paths removed; **Zod enum re-tightened 2026-05-11** (M3 nightly/2026-05-12) — confirmed only the 4 canonical values, no legacy fallbacks |
 | `/api/geocoding` | GET | ✅ | 🔶 | Geocoding for destination search via Nominatim; Zod validation added 2026-03-21 |
-| `/api/inspiration` | GET | ✅ | 🔶 | Auth guard added 2026-03-08; Zod coerce.number on query params + POST body schema added 2026-03-22 |
-| `/api/images/search` | GET | ✅ | 🔶 | Image search via Unsplash API; requires UNSPLASH_ACCESS_KEY |
+| `/api/inspiration` | GET | ✅ | 🔶 | Auth guard added 2026-03-08; Zod coerce.number on query params + POST body schema added 2026-03-22; handler extracted to `src/lib/inspiration/handlers.ts` (2026-05-16); **Sentry captureException added to handler 2026-06-08** |
+| `/api/images/search` | GET | ✅ | 🔶 | Image search via Unsplash API; requires UNSPLASH_ACCESS_KEY; **Sentry captureException added 2026-06-08** |
 
 ### Search Issues to Fix
 ```
@@ -250,9 +252,9 @@ BLOCKED - Need Environment Variables:
 
 | Endpoint | Method | Status | Frontend Connected | Notes |
 |----------|--------|--------|-------------------|-------|
-| `/api/invitations` | GET | ✅ | 🔶 | List user's pending invitations; Phase 3 will retarget for Crew requests |
-| `/api/invitations/[invitationId]` | GET | ✅ | 🔶 | Get invitation detail |
-| `/api/invitations/[invitationId]` | POST | ✅ | 🔶 | Respond to invitation (accept/decline) |
+| `/api/invitations` | GET | ✅ | 🔶 | List user's pending invitations; Phase 3 will retarget for Crew requests; **Sentry captureException added 2026-06-08** |
+| `/api/invitations/[invitationId]` | GET | ✅ | 🔶 | Get invitation detail; **Sentry captureException added 2026-06-08** |
+| `/api/invitations/[invitationId]` | POST | ✅ | 🔶 | Respond to invitation (accept/decline); **Sentry captureException added 2026-06-08** |
 
 ---
 
@@ -263,7 +265,7 @@ BLOCKED - Need Environment Variables:
 | `/api/beta/signup` | POST | ✅ | ✅ | Beta waitlist signup; **Sentry captureException added 2026-05-11** |
 | `/api/beta/status` | GET | ✅ | ✅ | Check beta access status; IP rate limiting added 2026-03-21; response narrowed to {exists, passwordInitialized} only (data minimization) ✅ 2026-03-22; **Sentry captureException added 2026-05-11** |
 | `/api/beta/initialize-password` | POST | ✅ | ✅ | Beta user password init — now protected with N8N_API_KEY auth ✅ 2026-03-19 (was unauthenticated — account takeover vulnerability fixed); **Sentry captureException added 2026-05-11** |
-| `/api/newsletter/subscribe` | POST | ✅ | ✅ | Newsletter subscription; auth now required 2026-03-26 |
+| `/api/newsletter/subscribe` | POST | ✅ | ✅ | Newsletter subscription; auth now required 2026-03-26; **Sentry captureException added 2026-06-08** |
 
 ---
 
@@ -513,6 +515,8 @@ All routes below were moved to `src/app/api/_archive/` on **2026-04-16** as part
 
 *Review and update after each API change.*
 
-*Last Updated: 2026-05-10 (nightly/2026-05-11) — Sentry instrumentation added to `/api/topics` and `/api/recommendations`; +74 integration tests covering `/api/intents/[id]` (PATCH/DELETE — 19), `/api/intents/mine` + `/api/intents/crew` (9 each), six `/api/subcrews/*` sub-routes (23), and `/api/checkins/feed` (14). Tested-route count moves to ~52/58. No new routes; README + PRODUCTION_ROADMAP refreshed.*
+*Last Updated: 2026-06-08 (nightly/2026-06-09) — Sentry `captureException` added to discover/search, discover/recommendations, discover/import, images/search, invitations (route + [invitationId]), newsletter/subscribe, and the inspiration handler (`lib/inspiration/handlers.ts`); coverage now ~63/64 non-archive routes. No route status changes. Dead code removed: `src/components/feed/rich-item/` + `src/components/ui/ImagePicker.tsx`.*
+
+*Previous: 2026-05-10 (nightly/2026-05-11) — Sentry instrumentation added to `/api/topics` and `/api/recommendations`; +74 integration tests covering `/api/intents/[id]` (PATCH/DELETE — 19), `/api/intents/mine` + `/api/intents/crew` (9 each), six `/api/subcrews/*` sub-routes (23), and `/api/checkins/feed` (14). Tested-route count moves to ~52/58. No new routes; README + PRODUCTION_ROADMAP refreshed.*
 
 *Previous: 2026-03-26 - /api/ai/search GET+POST fully implemented (semantic search, destinations branch); /api/newsletter/subscribe now requires auth; /api/auth/signup, /api/auth/reset-password, /api/auth/verify-email: rate limiting now first operation; 153 new tests tonight (1156 total, 56 test files); dead components (NotificationCenter.tsx, SharePreview.tsx) removed; JSDoc added to costs.ts; README updated. Also includes 2026-03-29 changes: /api/ai/chat Zod strengthened + JSON.parse safety; /api/ai/recommend Zod GET params + JSON.parse safety; /api/ai/suggest-activities + generate-itinerary JSON.parse safety; /api/notifications/[notificationId] Zod params (cuid) + bugfix (read was hardcoded true); JSDoc added to src/lib/geocoding.ts; N8N docs deprecated*

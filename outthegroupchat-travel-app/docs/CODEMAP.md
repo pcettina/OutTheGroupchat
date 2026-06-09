@@ -1,6 +1,6 @@
 # OutTheGroupchat — Full Codemap
 
-> Auto-generated 2026-03-10. Last updated 2026-06-07 (**NIGHTLY nightly/2026-06-08** — E2E authenticated-flow spec authored, topics rate-limit unit tests added, 5 dead feed/settings components deleted, docs/README rewritten; built on the 2026-06-07 backlog consolidation that merged #110 anchor [#93–#109] + the June nightly chain [#115–#120, canonical V1 Phase-5] + #112 topics rate-limit into one green tree). Main stats: 61 live API routes (excluding `_archive`), 91 vitest-active test files, 1814 tests passing, +16 Playwright E2E tests in `e2e/` (run separately, not counted in the 1814). Comprehensive reference for agents and developers.
+> Auto-generated 2026-03-10. Last updated 2026-06-08 (**NIGHTLY nightly/2026-06-09** — Sentry `captureException` extended to 8 more routes/handlers (discover/*, images/search, invitations + [invitationId], newsletter/subscribe, inspiration handler) → ~63/64 non-archive routes instrumented; dead `src/components/feed/rich-item/` directory + `src/components/ui/ImagePicker.tsx` removed (13 component files); `.gitignore` hardened for Playwright artifacts; SECURITY_AUDIT re-audited). Main stats: 61 live API routes (excluding `_archive`), 91 vitest-active test files, 1814 tests passing, +16 Playwright E2E tests in `e2e/` (run separately, not counted in the 1814). Comprehensive reference for agents and developers.
 >
 > **2026-05-16 additions:** New directories `src/components/meetups/createMeetup/` (CreateMeetupModal split), `src/components/inspiration/` (inspiration page split), and `src/lib/inspiration/` (inspiration handlers extracted from the route). Files >600 lines: 2 — `RichFeedItem.tsx` and `profile/page.tsx` (refactors land in unmerged PR #108).
 >
@@ -584,7 +584,7 @@ db:seed        → npx tsx prisma/seed/index.ts
 | Component | Lines | Props | Purpose |
 |-----------|-------|-------|---------|
 | `FeedItem` | 298 | id, type, timestamp, user, trip?, activity?, media?, onSave, onComment, onShare | Basic feed post |
-| `RichFeedItem` | 222 | id, type, timestamp, user, content?, reactions?, comments? | Enhanced post with reactions; refactored 2026-05-04 from 717→222 lines, 11 subcomponents extracted under `src/components/feed/rich-item/` |
+| `RichFeedItem` | 193 | id, type, timestamp, user, content?, reactions?, comments? | Enhanced post with reactions; refactored to ~193 lines with inline sub-renderers. The earlier `src/components/feed/rich-item/` subcomponent directory was deleted as dead code 2026-06-08 (zero importers). |
 | `CommentThread` | 385 | itemId, itemType, comments, onAddComment? | Nested comments with reply |
 | `EngagementBar` | — | itemId, itemType, initialLiked?, likeCount?, commentCount? | Like/comment/share bar |
 | `MediaGallery` | — | media[], maxDisplay?, onMediaClick? | Image/video grid |
@@ -691,7 +691,7 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `Tabs` | tabs[], defaultValue?, onValueChange? | Radix tab navigation |
 | `Switch` | checked, onCheckedChange, disabled?, label? | Toggle switch |
 | `Select` | options, value, onChange, placeholder? | Dropdown select |
-| `ImagePicker` | onSelect, aspect?, maxSize? | Image upload & crop |
+| ~~`ImagePicker`~~ | — | Removed 2026-06-08 (`src/components/ui/ImagePicker.tsx` — confirmed unused dead code) |
 | `FloatingShareButton` | itemId, itemType, onShare? | Floating share FAB |
 | `Toast` | message, type (success\|error\|info), duration?, onClose | Toast notification |
 
@@ -914,11 +914,11 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `any` types | 0 ✅ |
 | `console.*` | 0 ✅ |
 | TSC errors (prod + test) | 0 ✅ |
-| Vitest tests | 1814 passing, 91 test files (nightly/2026-06-08; +9 from topics-ratelimit.test.ts); archived tests runnable on demand via `npm run test:archive` |
+| Vitest tests | 1814 passing, 91 test files (nightly/2026-06-09; no new tests this build); archived tests runnable on demand via `npm run test:archive` |
 | E2E tests | 11 Playwright smoke tests + 16 authenticated-flow tests (`e2e/authenticated-flow.spec.ts`, authored 2026-06-08 — browsers not yet run); trip-specific specs archived |
-| Error monitoring | Sentry — V1 surface instrumented (2026-05-12); 19/48 coverage figure is pre-archive trip-era historical |
+| Error monitoring | Sentry — ~63/64 non-archive routes instrumented with `captureException` as of 2026-06-08 (only NextAuth catch-all re-export uncovered); 19/48 coverage figure is pre-archive trip-era historical |
 | Live API routes | 61 (excluding `_archive`): 35 base + 6 Crew + 9 Phase 4 meetup/venue/cron + 3 Phase 5 check-in + privacy + 14 V1 routes (intents 4 + subcrews 6 + topics + heatmap + recommendations + cron/expire-intents); feed POST now 410; AI routes deleted 2026-04-23 |
-| TS/TSX files | 423 (−5 from deleted dead components 2026-06-08) |
+| TS/TSX files | 410 (−13 from deleted dead components 2026-06-08: `feed/rich-item/` directory + `ui/ImagePicker.tsx`) |
 | Files >400 lines | 0 in prod (email.ts 507 lines, email-crew.ts extracted; types/index.ts reduced to 264 lines in Phase 6) |
 | Production env gaps | Pusher vars, Sentry DSN, Resend domain, GOOGLE_PLACES_API_KEY |
 | **Phase status** | **Phase 6 COMPLETE** (2026-04-22): feed rescoped, search people-first, 9 trip notification types removed, types/index.ts cleaned. Phase 7 (Marketing surface) is next. |

@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { searchImages, isUnsplashConfigured } from '@/lib/api/unsplash';
 import { z } from 'zod';
 import { logError } from '@/lib/logger';
+import { captureException } from '@/lib/sentry';
 import { apiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 
 const ImageSearchQuerySchema = z.object({
@@ -73,6 +74,7 @@ export async function GET(req: NextRequest) {
       totalPages: result.total_pages,
     });
   } catch (error) {
+    captureException(error, { route: '/api/images/search', method: 'GET' });
     logError('IMAGES_SEARCH', error);
     return NextResponse.json(
       { success: false, error: 'Failed to search images' },

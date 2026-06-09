@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { logger } from '@/lib/logger';
+import { captureException } from '@/lib/sentry';
 import { z } from 'zod';
 
 const createInvitationSchema = z.object({
@@ -67,6 +68,7 @@ export async function GET() {
 
     return NextResponse.json({ success: true, data: updatedInvitations });
   } catch (error) {
+    captureException(error, { route: '/api/invitations', method: 'GET' });
     logger.error({ error }, '[INVITATIONS_GET] Failed to fetch invitations');
     return NextResponse.json(
       { success: false, error: 'Failed to fetch invitations' },
@@ -126,6 +128,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, data: result });
   } catch (error) {
+    captureException(error, { route: '/api/invitations', method: 'POST' });
     logger.error({ error }, '[INVITATIONS_POST] Failed to create invitations');
     return NextResponse.json(
       { success: false, error: 'Failed to create invitations' },
