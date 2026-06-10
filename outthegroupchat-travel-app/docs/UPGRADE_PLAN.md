@@ -1,9 +1,13 @@
 # Package Upgrade Plan
 
-**Last Updated:** 2026-04-09
-**Status:** Planning
+**Last Updated:** 2026-06-10
+**Status:** Planning — none of the documented major upgrades have been performed yet
 
 This document tracks major version upgrades identified for the OutTheGroupchat stack. Upgrades are ordered by priority and dependency chain.
+
+> **Reconciliation note (2026-06-10):** Current versions below were re-verified against `package.json`. As of this date, every package is still on the version the plan targets upgrading *from* — no major upgrade in this plan has been executed. The Vercel AI SDK and provider packages were fully removed (see AI removal note), so any previously-listed AI upgrade is now N/A.
+>
+> The "Latest" target versions in each entry were captured 2026-04-09. This environment cannot fetch live npm registry data, so those targets are retained as-is — **re-verify the latest published version before starting any upgrade.**
 
 ---
 
@@ -26,9 +30,10 @@ This document tracks major version upgrades identified for the OutTheGroupchat s
 
 | Field | Value |
 |-------|-------|
-| **Current** | react/react-dom 18.3.1, next 14.2.35 |
-| **Latest** | react/react-dom 19.2.5, next 16.2.3 |
+| **Current (package.json)** | react/react-dom `^18.2.0`, next `^14.1.3` (still on React 18 / Next 14 — not upgraded) |
+| **Latest (as of 2026-04-09, re-verify)** | react/react-dom 19.2.5, next 16.2.3 |
 | **Priority** | High |
+| **Status** | Not started |
 
 **Key breaking changes to watch for:**
 - React 19: `forwardRef` is deprecated — refs are now passed as props. Remove all `forwardRef` wrappers and accept `ref` in props directly.
@@ -52,9 +57,10 @@ This document tracks major version upgrades identified for the OutTheGroupchat s
 
 | Field | Value |
 |-------|-------|
-| **Current** | 3.25.76 |
-| **Latest** | 4.3.6 |
+| **Current (package.json)** | `^3.25.0` (still on Zod 3 — not upgraded) |
+| **Latest (as of 2026-04-09, re-verify)** | 4.3.6 |
 | **Priority** | High |
+| **Status** | Not started |
 
 **Key breaking changes to watch for:**
 - Zod v4 has a rewritten core with different internal types — some advanced type utilities (`z.infer`, `z.input`, `z.output`) may have subtle changes.
@@ -65,7 +71,7 @@ This document tracks major version upgrades identified for the OutTheGroupchat s
 
 **Recommended approach:**
 1. Upgrade in a single PR. Run `tsc --noEmit` immediately after.
-2. Audit all 48 API routes that use Zod schemas for parse/safeParse error handling.
+2. Audit every API route that uses Zod schemas for parse/safeParse error handling (live route count is ~46 after the AI-route removal — confirm against `src/app/api/` before starting).
 3. Test edge cases: optional transforms, enum validation, coerce patterns (known Zod v3 quirks that v4 may handle differently).
 
 ---
@@ -74,13 +80,14 @@ This document tracks major version upgrades identified for the OutTheGroupchat s
 
 | Field | Value |
 |-------|-------|
-| **Current** | 5.22.0 |
-| **Latest** | 7.7.0 |
+| **Current (package.json)** | `prisma` + `@prisma/client` `^5.22.0` (still on Prisma 5 — not upgraded) |
+| **Latest (as of 2026-04-09, re-verify)** | 7.7.0 |
 | **Priority** | Medium |
+| **Status** | Not started |
 
 **Key breaking changes to watch for:**
 - Prisma 6+: `PrismaClient` instantiation options and log levels may differ.
-- Driver adapters and edge runtime support changes — if using Prisma with Supabase edge, verify adapter compatibility.
+- Driver adapters and edge runtime support changes — the database is now PostgreSQL on Neon (migrated from Supabase 2026-04-17); verify Neon connection-string/pooler and any adapter compatibility against the target Prisma version.
 - `prisma.$queryRaw` template literal API: verify tag function behavior is unchanged.
 - Generated client types may change — particularly around relation includes and select return types.
 - `prisma generate` output format changes may require test mock updates (setup.ts mock object structure).
@@ -97,9 +104,10 @@ This document tracks major version upgrades identified for the OutTheGroupchat s
 
 | Field | Value |
 |-------|-------|
-| **Current** | 5.9.3 |
-| **Latest** | 6.0.2 |
+| **Current (package.json)** | `^5.4.2` (still on TypeScript 5 — not upgraded) |
+| **Latest (as of 2026-04-09, re-verify)** | 6.0.2 |
 | **Priority** | Medium |
+| **Status** | Not started |
 
 **Key breaking changes to watch for:**
 - TypeScript 6 strictness improvements — some previously-passing code may produce new errors.
@@ -118,9 +126,10 @@ This document tracks major version upgrades identified for the OutTheGroupchat s
 
 | Field | Value |
 |-------|-------|
-| **Current** | 3.4.19 |
-| **Latest** | 4.2.2 |
+| **Current (package.json)** | `^3.4.1` (still on Tailwind 3 — not upgraded) |
+| **Latest (as of 2026-04-09, re-verify)** | 4.2.2 |
 | **Priority** | Medium |
+| **Status** | Not started |
 
 **Key breaking changes to watch for:**
 - Tailwind v4 has a completely new configuration system — `tailwind.config.js` is replaced by CSS-native `@import "tailwindcss"` + `@theme` blocks.
@@ -141,9 +150,10 @@ This document tracks major version upgrades identified for the OutTheGroupchat s
 
 | Field | Value |
 |-------|-------|
-| **Current** | 8.57.1 |
-| **Latest** | 10.2.0 |
+| **Current (package.json)** | `^8.57.1` (still on ESLint 8 — not upgraded) |
+| **Latest (as of 2026-04-09, re-verify)** | 10.2.0 |
 | **Priority** | Low |
+| **Status** | Not started |
 
 **Key breaking changes to watch for:**
 - ESLint 9+ uses flat config (`eslint.config.js`) by default — `eslintrc` format is deprecated.
@@ -161,9 +171,10 @@ This document tracks major version upgrades identified for the OutTheGroupchat s
 
 | Field | Value |
 |-------|-------|
-| **Current** | 3.10.0 |
-| **Latest** | 5.2.2 |
+| **Current (package.json)** | `^3.10.0` (paired with `react-hook-form` `^7.54.2` — not upgraded) |
+| **Latest (as of 2026-04-09, re-verify)** | 5.2.2 |
 | **Priority** | Low |
+| **Status** | Not started |
 
 **Key breaking changes to watch for:**
 - Major version bump likely follows `react-hook-form` major version compatibility.
@@ -179,15 +190,16 @@ This document tracks major version upgrades identified for the OutTheGroupchat s
 ## Upgrade Sequencing
 
 ```
-Week 1: Next.js 14 → 15 (async params/headers fixes)
-Week 2: Next.js 15 → 16 + React 18 → 19
-Week 3: AI SDK 3 → 6 + provider packages
-Week 4: Zod 3 → 4
-Week 5: Prisma 5 → 7
-Week 6: TypeScript 5 → 6
-Week 7: Tailwind 3 → 4 (visual audit required)
-Week 8: ESLint 8 → 10 + hookform/resolvers
+Step 1: Next.js 14 → 15 (async params/headers fixes)
+Step 2: Next.js 15 → 16 + React 18 → 19
+Step 3: Zod 3 → 4
+Step 4: Prisma 5 → 7
+Step 5: TypeScript 5 → 6
+Step 6: Tailwind 3 → 4 (visual audit required)
+Step 7: ESLint 8 → 10 + hookform/resolvers
 ```
+
+The former "AI SDK 3 → 6 + provider packages" step has been dropped — all AI functionality was removed (PR #65, `ops/kill-all-ai-2026-04-23`); there is no `ai`, `@ai-sdk/*`, `openai`, or `anthropic` dependency to upgrade.
 
 Each upgrade should be a separate PR with passing CI before merging.
 
@@ -197,5 +209,5 @@ Each upgrade should be a separate PR with passing CI before merging.
 
 - Never upgrade multiple major versions in a single PR — isolate to diagnose issues.
 - Always run `rm -rf .next && npm run build` after framework upgrades (stale cache causes false failures).
-- Update test mocks (setup.ts) after any Prisma or AI SDK upgrade that changes generated types.
-- The `ai` package docs are bundled at `node_modules/ai/docs/` — always read these after upgrading before writing AI route code.
+- Update test mocks (`src/__tests__/setup.ts`) after any Prisma upgrade that changes generated client types.
+- AI was fully removed (PR #65, 2026-04-23) — there are no `ai`, `@ai-sdk/*`, `openai`, or `anthropic` packages, no `/api/ai/*` routes, and no `src/lib/ai` / `src/components/ai`. Do not reintroduce AI dependencies as part of any upgrade.

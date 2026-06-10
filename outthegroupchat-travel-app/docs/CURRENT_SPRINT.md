@@ -1,7 +1,23 @@
 # 🟢 Active — POST_PIVOT_STEADY_STATE (V1 pivot in flight)
 
-> **Last Updated:** 2026-06-08
-> **Status:** V1 routes live; POST_PIVOT_STEADY_STATE. **2026-06-08 nightly (nightly/2026-06-09):** Sentry `captureException` extended to 8 more routes/handlers → coverage now **~63/64 non-archive routes** (only the NextAuth catch-all re-export uncovered); **Phase 8 action #6 substantially complete**. Dead code removed: `src/components/feed/rich-item/` directory + `src/components/ui/ImagePicker.tsx` (13 component files). No new tests added this build (1814 tests / 91 files). **2026-06-07:** 11-PR backlog consolidated and landed on main — #110 anchor (#93–#109) + June nightly chain (#115–#120, canonical V1 Phase-5 notifications) + #112 topics rate-limit, reconciled into one green tree (tsc clean). The "frozen main" stall is resolved; nightly base-branch logic hardened against re-forking.
+> **Last Updated:** 2026-06-10
+> **Status:** V1 routes live; POST_PIVOT_STEADY_STATE. **2026-06-10 nightly (nightly/2026-06-10):** housekeeping build — dead-code cleanup + stale-doc content refresh + brand-metadata fix. No route or test count change (61 routes / 1814 tests / 91 files). 2 dead files removed (`src/lib/email-crew.ts`, `src/components/feed/ReactionPicker.tsx`) → 332 active TS/TSX files. **Previous, 2026-06-08 nightly (nightly/2026-06-09):** Sentry `captureException` extended to 8 more routes/handlers → coverage now **~63/64 non-archive routes** (only the NextAuth catch-all re-export uncovered); **Phase 8 action #6 substantially complete**. Dead code removed: `src/components/feed/rich-item/` directory + `src/components/ui/ImagePicker.tsx` (13 component files). No new tests added this build (1814 tests / 91 files). **2026-06-07:** 11-PR backlog consolidated and landed on main — #110 anchor (#93–#109) + June nightly chain (#115–#120, canonical V1 Phase-5 notifications) + #112 topics rate-limit, reconciled into one green tree (tsc clean). The "frozen main" stall is resolved; nightly base-branch logic hardened against re-forking.
+
+---
+
+## 🟢 Completed 2026-06-10 (Nightly Build nightly/2026-06-10)
+
+- [1] Deleted dead `src/lib/email-crew.ts` — 0 importers; crew emails are served by `src/lib/email.ts`.
+- [2] Deleted dead `src/components/feed/ReactionPicker.tsx` — exported but never imported anywhere.
+- [3] Content-refreshed `docs/UPGRADE_PLAN.md`, `docs/FUTURE_IMPLEMENTATION.md`, `docs/IMPLEMENTATION_STACK.md`, `docs/TEST_CASES.md` — reconciled to the post-pivot meetup-centric reality; removed stale AI + trip-planning references; corrected Supabase → Neon. (Genuine content refresh, not date bumps.)
+- [4] Fixed `package.json` brand metadata (description + keywords) from trip-planning copy to meetup-centric.
+- [5] Wave 3 shared-doc consolidation (this entry): CODEMAP, API_STATUS, CURRENT_SPRINT, LAUNCH_CHECKLIST, REFACTOR_PLAN updated to 2026-06-10.
+
+### Metrics
+- Tests: 1814 (no change) | Test files: 91
+- Live API routes: 61 (unchanged) | Active (non-archive) TS/TSX files: 332 (was 334; −2 from deletions)
+- `any`: 0 | `console.*`: 0 | TODO/FIXME: 0 | files >600 lines (active): 0 | tsc: 0 errors | lint: 0/0 | prisma: valid
+- Sentry coverage: ~63/64 non-archive routes (unchanged)
 
 ---
 

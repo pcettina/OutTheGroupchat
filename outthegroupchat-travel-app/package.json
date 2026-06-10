@@ -2,7 +2,7 @@
   "name": "outthegroupchat",
   "version": "0.2.0",
   "private": true,
-  "description": "A collaborative travel planning app that helps groups plan trips together",
+  "description": "A meetup-centric social network that turns shared intent into in-person plans — the social app that wants to get you off your phone",
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
@@ -25,9 +25,10 @@
     "seed": "npx tsx prisma/seed/index.ts"
   },
   "keywords": [
-    "travel",
-    "group-planning",
-    "trips",
+    "meetups",
+    "social-network",
+    "in-person",
+    "crew",
     "social"
   ],
   "author": "OutTheGroupchat Team",

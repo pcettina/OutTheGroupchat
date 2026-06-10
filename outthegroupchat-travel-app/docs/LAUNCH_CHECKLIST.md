@@ -17,7 +17,8 @@
 >
 > **Target Launch:** Q2 2026 (Beta) — to be re-baselined post-pivot
 > **Current Status:** Refactoring (Phase 2 in progress — domain models added, DB migration pending)
-> **Last Updated:** 2026-06-08 (nightly/2026-06-09 — Phase 8 action #6: Sentry `captureException` extended to discover/*, images/search, invitations (+[invitationId]), newsletter/subscribe, and the inspiration handler → ~63/64 non-archive routes instrumented (code-side instrumentation essentially complete; DSN-in-Vercel operational gap still blocks ingestion). Dead `feed/rich-item/` directory + `ui/ImagePicker.tsx` removed (13 component files). 1814 tests / 91 files.)
+> **Last Updated:** 2026-06-10 (nightly/2026-06-10 — housekeeping pass: dead `src/lib/email-crew.ts` + `src/components/feed/ReactionPicker.tsx` removed (0 importers); stale docs content-refreshed to meetup-centric reality; `package.json` brand metadata fixed. No launch gates closed in code — remaining gates are operational/infra (Sentry DSN, Pusher vars, Resend domain, E2E browser run, uptime monitor). 1814 tests / 91 files / 61 routes.)
+> **Previous:** 2026-06-08 (nightly/2026-06-09 — Phase 8 action #6: Sentry `captureException` extended to discover/*, images/search, invitations (+[invitationId]), newsletter/subscribe, and the inspiration handler → ~63/64 non-archive routes instrumented (code-side instrumentation essentially complete; DSN-in-Vercel operational gap still blocks ingestion). Dead `feed/rich-item/` directory + `ui/ImagePicker.tsx` removed (13 component files). 1814 tests / 91 files.)
 
 ---
 

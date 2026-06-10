@@ -2,9 +2,11 @@
 
 ## Overview
 
-OutTheGroupchat is a full-stack group travel planning application built with modern web technologies, AI integration, and real-time collaboration features.
+OutTheGroupchat is a full-stack, meetup-centric social network — "the social media app that wants to get you off your phone." Members build a **Crew** (mutual connections), signal **Intent** on shared **Topics**, get **auto-grouped** when 2+ Crew land on the same Topic, coordinate **Meetups**, broadcast live **Check-ins**, and see Crew presence on a **heatmap**.
 
-*Last Updated: 2026-03-25*
+The product pivoted from a collaborative group-trip-planning app to this in-person meetup network. All legacy trip-planning code is archived under `src/_archive/` and is no longer part of the live product. The **AI surface was fully removed** (PR #65, 2026-04-23): there are no OpenAI/Anthropic dependencies, no `/api/ai/*` routes, and no `src/lib/ai`.
+
+*Last Updated: 2026-06-10*
 
 ---
 
@@ -19,8 +21,8 @@ OutTheGroupchat is a full-stack group travel planning application built with mod
 |  +-------------+  +-------------+  +-------------+  +-------------+         |
 |                                                                              |
 |  +-------------+  +-------------+  +-------------+  +-------------+         |
-|  |  TanStack   |  |   Pusher    |  |  React Hook |  |   Lucide    |         |
-|  |   Query 5   |  |     JS      |  |    Form     |  |   React     |         |
+|  |  TanStack   |  |   Pusher    |  |  React Hook |  |  MapLibre   |         |
+|  |   Query 5   |  |     JS      |  |    Form     |  |  GL (heatmap)        |
 |  +-------------+  +-------------+  +-------------+  +-------------+         |
 +-----------------------------------------------------------------------------+
                                     |
@@ -29,9 +31,9 @@ OutTheGroupchat is a full-stack group travel planning application built with mod
 |                              API LAYER                                       |
 |  +-----------------------------------------------------------------------+  |
 |  |                  Next.js API Routes (App Router)                       |  |
-|  |  /api/trips    /api/ai    /api/notifications    /api/discover          |  |
-|  |  /api/feed     /api/users /api/search           /api/geocoding         |  |
-|  |  /api/auth     /api/beta  /api/inspiration      /api/images            |  |
+|  |  /api/crew     /api/meetups   /api/checkins      /api/notifications    |  |
+|  |  /api/feed     /api/users     /api/search        /api/venues           |  |
+|  |  /api/auth     /api/beta      /api/heatmap       /api/discover         |  |
 |  |  /api/cron     /api/pusher/auth                                        |  |
 |  +-----------------------------------------------------------------------+  |
 |                                                                              |
@@ -53,35 +55,36 @@ OutTheGroupchat is a full-stack group travel planning application built with mod
 |  |    Survey     |  | Recommendation|  |    Events     |                    |
 |  |   Service     |  |    Service    |  |   Service     |                    |
 |  +---------------+  +---------------+  +---------------+                    |
-|                                                                              |
+|  (legacy services retained where still referenced; trip-only logic archived)|
 +-----------------------------------------------------------------------------+
                                     |
                                     v
 +-----------------------------------------------------------------------------+
 |                            DATA LAYER                                        |
 |  +-----------------------------------------------------------------------+  |
-|  |                   Supabase PostgreSQL Database                         |  |
-|  |  Users | Trips | Activities | Surveys | Votes | Notifications          |  |
-|  |  TripComments | TripLikes | ItineraryDay | ItineraryItem               |  |
-|  |  VerificationToken | PendingInvitation                                 |  |
+|  |               Neon PostgreSQL Database (via Vercel Marketplace)        |  |
+|  |  User | Crew | Topic | Intent | MeetupGroup | Meetup | CheckIn         |  |
+|  |  Notification | HeatmapContribution | VerificationToken                |  |
 |  +-----------------------------------------------------------------------+  |
 |                                                                              |
 |  +-----------------------------------------------------------------------+  |
 |  |                         Prisma ORM 5.22.0                              |  |
-|  |  Schema | Migrations | Client | Studio                                 |  |
+|  |  Schema | Migrations (per-PR Neon branch) | Client | Studio            |  |
 |  +-----------------------------------------------------------------------+  |
 +-----------------------------------------------------------------------------+
                                     |
                                     v
 +-----------------------------------------------------------------------------+
 |                         EXTERNAL SERVICES                                    |
-|  +-------------+  +-------------+  +-------------+  +-------------+         |
-|  |   Amadeus   |  |Ticketmaster |  |   Google    |  |  Eventbrite |         |
-|  |   Flights   |  |   Events    |  |   Places    |  |   Events    |         |
-|  | [key needed]|  | [key needed]|  | [key needed]|  |             |         |
-|  +-------------+  +-------------+  +-------------+  +-------------+         |
+|  +-------------+  +-------------+  +-------------+                          |
+|  |   Google    |  | OpenFreeMap |  |   Resend    |                          |
+|  |   Places    |  | (map tiles) |  |   Email     |                          |
+|  | (venue recs)|  |             |  |             |                          |
+|  +-------------+  +-------------+  +-------------+                          |
 +-----------------------------------------------------------------------------+
 ```
+
+> Note: The AI/LLM stack that previously sat in this diagram (OpenAI, embeddings, Vercel AI SDK) was removed in PR #65 and is intentionally absent. Travel-booking external services (Amadeus, Ticketmaster, Eventbrite) belonged to the archived trip-planning product and are no longer wired into the live app.
 
 ---
 
@@ -91,328 +94,155 @@ OutTheGroupchat is a full-stack group travel planning application built with mod
 
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| **Next.js** | 14.1.3 | React framework with App Router |
-| **React** | 18.2.0 | UI component library |
-| **TypeScript** | 5.4.2 | Type safety (strict mode, 0 `any` types) |
-| **Tailwind CSS** | 3.4.1 | Utility-first CSS framework |
-| **Framer Motion** | 11.0.0 | Animation library |
-| **TanStack Query** | 5.59.0 | Server state management |
-| **React Hook Form** | 7.54.2 | Form handling |
-| **Zod** | 3.25.0 | Schema validation (all API inputs) |
-| **Lucide React** | 0.576.0 | Icon library |
-| **date-fns** | 3.6.0 | Date manipulation |
+| **Next.js** | ^14.1.3 | React framework with App Router |
+| **React** | ^18.2.0 | UI component library |
+| **TypeScript** | ^5.4.2 | Type safety (strict mode) |
+| **Tailwind CSS** | ^3.4.1 | Utility-first CSS framework |
+| **Framer Motion** | ^11.0.0 | Animation library |
+| **TanStack Query** | ^5.59.0 | Server state management |
+| **React Hook Form** | ^7.54.2 | Form handling |
+| **Zod** | ^3.25.0 | Schema validation (all API inputs) |
+| **Lucide React** | ^0.576.0 | Icon library |
+| **MapLibre GL** | ^4.7.1 | Interactive heatmap rendering (OpenFreeMap tiles) |
+| **date-fns** | ^3.6.0 | Date manipulation |
+| **axios** | ^1.8.4 | HTTP client |
 
 ### Backend
 
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| **Next.js API Routes** | 14.1.3 | REST API (48 endpoints as of 2026-03-24) |
-| **Prisma** | 5.22.0 | Database ORM |
-| **PostgreSQL** | 15+ | Relational database via Supabase |
-| **NextAuth.js** | 4.24.7 | Authentication (credentials provider) |
-| **bcryptjs** | 3.0.2 | Password hashing |
-| **pino** | 10.1.0 | Structured logging (replaces console.*) |
-| **Resend** | 6.6.0 | Transactional email (verification, invitations) |
-| **isomorphic-dompurify** | 2.34.0 | XSS sanitization |
+| **Next.js API Routes** | ^14.1.3 | REST API (61 routes as of 2026-06-09) |
+| **Prisma** | ^5.22.0 | Database ORM |
+| **PostgreSQL** | 15+ | Relational database via **Neon** (Vercel Marketplace) |
+| **NextAuth.js** | ^4.24.7 | Authentication (credentials provider, Prisma adapter) |
+| **bcryptjs** | ^3.0.2 | Password hashing |
+| **pino** | ^10.1.0 | Structured logging (replaces console.*) |
+| **Resend** | ^6.6.0 | Transactional email (verification, Crew, meetup, check-in) |
+| **isomorphic-dompurify** | ^2.34.0 | XSS sanitization |
 
 ### Rate Limiting & Caching
 
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| **@upstash/ratelimit** | 2.0.7 | Redis-based rate limiting |
-| **@upstash/redis** | 1.35.8 | Redis client |
+| **@upstash/ratelimit** | ^2.0.7 | Redis-based rate limiting |
+| **@upstash/redis** | ^1.35.8 | Redis client |
 
 ### Real-time
 
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| **Pusher** | 5.2.0 | Server-side WebSocket |
-| **Pusher-js** | 8.4.0 | Client-side WebSocket |
+| **Pusher** | ^5.2.0 | Server-side WebSocket (check-ins, meetup updates) |
+| **Pusher-js** | ^8.4.0 | Client-side WebSocket |
 
-> Note: Pusher is configured but environment variables are missing in Vercel production as of 2026-03-25.
+> Note: Pusher is configured in code but environment variables are missing in Vercel production as of 2026-06-09 — real-time features are disabled in prod until set.
 
 ### Monitoring & Observability
 
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| **@sentry/nextjs** | 10.43.0 | Error tracking (needs real DSN in Vercel) |
-| **@vercel/analytics** | 2.0.1 | Web analytics (active in production) |
+| **@sentry/nextjs** | ^10.43.0 | Error tracking (needs real DSN in Vercel) |
+| **@vercel/analytics** | ^2.0.1 | Web analytics (active in production) |
 
 ### Testing
 
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| **Vitest** | 4.0.18 | Unit/integration test runner |
-| **@playwright/test** | 1.48.0 | E2E testing (browsers need install) |
+| **Vitest** | ^4.0.18 | Unit/integration test runner |
+| **@playwright/test** | ^1.48.0 | E2E testing |
 
-> As of 2026-03-25: 925+ Vitest tests across 49 test files, 0 failures. Playwright spec exists; browsers need `npx playwright install chromium`.
+> As of 2026-06-09: ~1814 Vitest tests across 91 test files. Playwright smoke spec exists; authenticated E2E flows are still in progress (Phase 8 #5).
 
 ### External APIs
 
 | Service | Purpose | Status |
 |---------|---------|--------|
-| **Amadeus** | Flight search | API key not set |
-| **Ticketmaster** | Event discovery | API key not set |
-| **Eventbrite** | Event discovery | Not yet integrated |
-| **Google Places** | Location and venue data | API key not set |
+| **Google Places** | Venue search / meetup venue recommendations | API key not set in prod |
+| **OpenFreeMap** | Map tiles for the heatmap | No key required |
+
+> **Removed / archived:** AI providers (OpenAI/Anthropic) removed entirely (PR #65). Amadeus (flights), Ticketmaster, and Eventbrite belonged to the archived trip-planning product and are no longer integrated.
 
 ---
 
 ## Database Schema
 
-### Core Models (Actual, as of 2026-03-25)
+The schema is centered on the meetup loop: people, their Crew, the Topics they signal Intent on, the groups that auto-form, the Meetups they coordinate, live Check-ins, and notifications. The full authoritative schema lives in `prisma/schema.prisma`; the models below are the load-bearing entities.
+
+### Core Models (meetup domain)
+
+- **User** — identity, profile (`name`, `city`, `bio`, `image`), `lastActive` presence, notification preferences.
+- **Crew** — mutual connection between two users (request → accept), the basis for grouping and presence visibility.
+- **Topic** — a meetup interest/activity (carries a `displayName` label).
+- **Intent** — a user signalling they want to do a Topic within a time window.
+- **MeetupGroup** — auto-formed when **2+ Crew** signal Intent on the same Topic.
+- **Meetup** — a coordinated in-person gathering with attendees/RSVPs and an optional venue.
+- **CheckIn** — live presence broadcast with `CheckInVisibility` (PUBLIC | CREW | PRIVATE) and a clamped `activeUntil` window.
+- **HeatmapContribution** — anonymized location signals written on commit and check-in, surfaced on the MapLibre heatmap.
+- **Notification** — typed notifications (daily prompt, per-member intent, group formation, crew-checked-in-nearby, meetup events).
+- **VerificationToken** — email verification on signup.
+
+> Legacy trip-planning models (Trip, Activity, TripSurvey, VotingSession, ItineraryDay/Item, etc.) exist only in archived code paths and are not part of the live meetup product.
+
+### Representative Enums
 
 ```prisma
-model User {
-  id              String    @id @default(cuid())
-  email           String    @unique
-  name            String
-  password        String?
-  emailVerified   DateTime?
-  image           String?
-  city            String?
-  bio             String?
-  phone           String?
-  preferences     Json?
-  lastActive      DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-
-  ownedTrips      Trip[]    @relation("owner")
-  tripMemberships TripMember[]
-  followers       Follow[]  @relation("followers")
-  following       Follow[]  @relation("following")
-  notifications   Notification[]
-  surveyResponses SurveyResponse[]
-  votes           Vote[]
-  savedActivities SavedActivity[]
-  activityComments ActivityComment[]
-  activityRatings  ActivityRating[]
-  tripComments    TripComment[]
-  tripLikes       TripLike[]
-}
-
-model Trip {
-  id          String     @id @default(cuid())
-  title       String
-  description String?
-  destination Json       // { city, country, coordinates }
-  startDate   DateTime
-  endDate     DateTime
-  status      TripStatus @default(PLANNING)
-  budget      Json?      // { total, currency, breakdown }
-  isPublic    Boolean    @default(false)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-
-  ownerId     String
-  owner       User       @relation("owner", fields: [ownerId], references: [id])
-
-  members     TripMember[]
-  invitations TripInvitation[]
-  survey      TripSurvey?
-  activities  Activity[]
-  itinerary   ItineraryDay[]
-  votingSessions VotingSession[]
-  comments    TripComment[]
-  likes       TripLike[]
+enum CheckInVisibility {
+  PUBLIC | CREW | PRIVATE
 }
 ```
 
-### Additional Models Added Since Initial Setup
-
-- `TripComment` — trip-level comments
-- `TripLike` — trip-level likes/reactions
-- `ItineraryDay` / `ItineraryItem` — structured itinerary (GET/PUT with $transaction atomicity)
-- `VerificationToken` — email verification on signup
-- `PendingInvitation` — prevents placeholder user creation abuse
-
-### Enums
-
-```prisma
-enum TripStatus {
-  PLANNING | SURVEYING | VOTING | BOOKED | IN_PROGRESS | COMPLETED | CANCELLED
-}
-
-enum MemberRole {
-  OWNER | ADMIN | MEMBER
-}
-
-enum ActivityStatus {
-  SUGGESTED | APPROVED | REJECTED | COMPLETED
-}
-
-enum PriceRange {
-  BUDGET | MODERATE | EXPENSIVE | LUXURY
-}
-```
+> `NotificationType` was pruned to the meetup domain during the pivot; see `prisma/schema.prisma` for the current member list.
 
 ---
 
-## API Endpoints (48 total as of 2026-03-24)
+## API Endpoints (61 routes as of 2026-06-09)
 
-### Trips
+The live API is organized around the meetup loop. The canonical, always-current route inventory is maintained in `docs/API_STATUS.md` and `docs/CODEMAP.md` — the groupings below summarize the surface.
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/trips` | List user's trips |
-| POST | `/api/trips` | Create new trip |
-| GET | `/api/trips/[tripId]` | Get trip details |
-| PATCH | `/api/trips/[tripId]` | Update trip |
-| DELETE | `/api/trips/[tripId]` | Delete trip |
-| GET/PUT | `/api/trips/[tripId]/itinerary` | Itinerary management (atomic PUT) |
-| POST | `/api/trips/[tripId]/itinerary` | Add itinerary day |
-| GET/POST | `/api/trips/[tripId]/survey` | Survey management |
-| GET/POST/PUT | `/api/trips/[tripId]/voting` | Voting sessions |
-| GET/POST | `/api/trips/[tripId]/activities` | Activities |
-| GET/POST/PATCH/DELETE | `/api/trips/[tripId]/members` | Members |
-| GET/POST | `/api/trips/[tripId]/invitations` | Invitations |
-| GET/POST | `/api/trips/[tripId]/recommendations` | AI recommendations |
-| GET | `/api/trips/[tripId]/suggestions` | Activity suggestions (external APIs) |
-| GET | `/api/trips/[tripId]/flights` | Flight data (Amadeus) |
+### Crew & Social
+
+| Area | Description |
+|------|-------------|
+| `/api/crew/*` | Crew requests, accept/decline, list, removal |
+| `/api/users/me`, `/api/users/[userId]` | Profiles (public profile at `/profile/[userId]`) |
+| `/api/feed/*` | People-first activity feed (comments, engagement, share) |
+| `/api/search` | People-first global search (types: all / people / meetups / venues) |
+| `/api/notifications/*` | Typed notifications + preferences |
+
+### Meetups, Intents & Check-ins
+
+| Area | Description |
+|------|-------------|
+| `/api/meetups/*` | Create/list/detail, RSVP, invite |
+| `/api/checkins/*` | Create check-in, active Crew feed, delete |
+| `/api/venues/search` | Google Places venue search for meetups |
+| `/api/heatmap/*` | Crew/FoF presence heatmap data |
 
 ### Auth
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/auth/signup` | User registration + email verification send |
+| POST | `/api/auth/signup` | Registration + verification email |
 | GET | `/api/auth/verify-email` | Email token verification |
-| POST | `/api/auth/reset-password` | Initiate password reset |
-| PATCH | `/api/auth/reset-password` | Confirm password reset |
-| POST | `/api/auth/demo` | Demo auth (requires DEMO_MODE=true) |
-
-### Users & Social
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET/PATCH | `/api/users/me` | Current user profile |
-| GET/PATCH | `/api/users/[userId]` | User profile |
-| GET | `/api/notifications` | User notifications (paginated) |
-| PATCH | `/api/notifications/[id]` | Mark as read |
-| GET | `/api/feed` | Activity feed |
-| GET/POST | `/api/feed/comments` | Feed comments |
-| POST | `/api/feed/engagement` | Likes/reactions |
-| POST | `/api/feed/share` | Share a trip to feed |
-| GET | `/api/search` | Global search (email excluded for privacy) |
-
-### Discovery
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET/POST | `/api/discover` | Discovery browsing (auth required) |
-| GET | `/api/discover/search` | Destination search (auth required, 2026-03-24) |
-| GET | `/api/discover/recommendations` | AI recommendations (auth required, 2026-03-24) |
-| POST | `/api/discover/import` | Import trip template (rate limited + auth) |
+| POST / PATCH | `/api/auth/reset-password` | Initiate / confirm password reset |
+| POST | `/api/auth/demo` | Demo auth (requires `DEMO_MODE=true`) |
 
 ### System
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/cron` | Background jobs (CRON_SECRET protected) |
+| GET | `/api/cron/*` | Background jobs (CRON_SECRET protected; e.g. MEETUP_STARTING_SOON) |
 | POST | `/api/pusher/auth` | Pusher channel authentication |
-| GET | `/api/geocoding` | Nominatim geocoding |
-| GET | `/api/images/search` | Unsplash image search |
-| GET/POST | `/api/inspiration` | Trip inspiration content |
-| GET/POST | `/api/beta/signup` | Beta program signup |
-| GET | `/api/beta/status` | Beta status check (narrowed response) |
-| POST | `/api/beta/initialize-password` | Beta password init (N8N_API_KEY protected) |
+| GET | `/api/health` | Health check |
+| GET/POST | `/api/beta/*` | Beta signup + status (status route uses `NextRequest` for rate-limit header access) |
 
----
-
-## File Structure (Actual, 2026-03-25)
-
-```
-src/
-+-- app/                          # Next.js App Router
-|   +-- api/                      # API Routes (48 endpoints)
-|   |   +-- ai/                   # AI endpoints
-|   |   +-- auth/                 # Auth endpoints (signup, verify-email, reset-password, demo)
-|   |   +-- beta/                 # Beta program endpoints
-|   |   +-- cron/route.ts         # Background jobs
-|   |   +-- discover/             # Discovery (all routes auth-guarded)
-|   |   +-- feed/                 # Feed, comments, engagement, share
-|   |   +-- geocoding/route.ts    # Nominatim geocoding
-|   |   +-- images/               # Unsplash image search
-|   |   +-- inspiration/          # Inspiration content
-|   |   +-- invitations/          # Invitation management
-|   |   +-- notifications/        # Notifications
-|   |   +-- pusher/auth/route.ts  # Pusher auth
-|   |   +-- search/route.ts       # Global search
-|   |   +-- trips/                # Trip management (all sub-routes)
-|   |   +-- users/                # User profiles
-|   +-- auth/                     # Auth UI pages
-|   |   +-- reset-password/       # Password reset pages
-|   +-- discover/page.tsx
-|   +-- feed/page.tsx
-|   +-- trips/
-|   |   +-- page.tsx
-|   |   +-- new/page.tsx
-|   |   +-- [tripId]/
-|   |       +-- page.tsx
-|   |       +-- survey/page.tsx
-|   |       +-- vote/page.tsx
-|   +-- layout.tsx
-|   +-- page.tsx
-|   +-- not-found.tsx             # Custom 404 page
-|   +-- error.tsx                 # Custom error page
-|   +-- global-error.tsx          # Global error boundary
-|
-+-- components/
-|   +-- ui/                       # Base components (Button, Card, Input)
-|   +-- trips/                    # TripCard, TripList, InviteMemberModal
-|   +-- surveys/                  # QuestionRenderer
-|   +-- voting/                   # VotingCard, ResultsChart
-|   +-- social/                   # ActivityCard
-|   +-- profile/                  # ProfileStatsTab
-|   +-- Navigation.tsx
-|
-+-- hooks/
-|   +-- useTrips.ts
-|   +-- usePusher.ts
-|
-+-- lib/
-|   +-- ai/                       # AI client, embeddings, prompts
-|   +-- api/                      # External API integrations (flights, places, ticketmaster, unsplash)
-|   +-- utils/                    # costs.ts, other utilities
-|   +-- prisma.ts
-|   +-- pusher.ts
-|   +-- auth.ts
-|   +-- email.ts                  # Resend email service
-|   +-- geocoding.ts              # Nominatim geocoding
-|   +-- logger.ts                 # pino structured logging
-|   +-- rate-limit.ts             # Upstash Redis rate limiting
-|   +-- sanitize.ts               # DOMPurify wrapper
-|   +-- api-config.ts
-|   +-- api-middleware.ts
-|   +-- providers.tsx
-|
-+-- services/
-|   +-- survey.service.ts
-|   +-- recommendation.service.ts (407 lines, split from 568)
-|   +-- recommendation-data.ts
-|   +-- events.service.ts
-|
-+-- styles/
-|   +-- globals.css
-|
-+-- types/
-|   +-- index.ts
-|
-+-- __tests__/
-|   +-- setup.ts                  # Prisma mocks for all models
-    (49 test files, 925+ tests as of 2026-03-24)
-
-e2e/
-+-- auth-flow.spec.ts             # Playwright E2E (browsers need install)
-+-- smoke.spec.ts
-```
+> **Removed:** `/api/ai/*` routes (suggest-meetups, icebreakers, chat, recommend, etc.) were deleted in PR #65 and must not be reintroduced without explicit direction. Trip-only routes (`/api/trips/*` survey/voting/itinerary/flights) belong to the archived product.
 
 ---
 
 ## Environment Variables
 
 ```bash
-# Database
+# Database (Neon via Vercel Marketplace)
 DATABASE_URL="postgresql://..."
 
 # Auth
@@ -437,14 +267,9 @@ UPSTASH_REDIS_REST_TOKEN=""       # Set
 # Monitoring
 SENTRY_DSN=""                     # Installed; MISSING real DSN in Vercel
 
-# External APIs (all missing in production)
-AMADEUS_API_KEY=""
-AMADEUS_API_SECRET=""
-TICKETMASTER_API_KEY=""
-EVENTBRITE_API_KEY=""
-GOOGLE_PLACES_API_KEY=""
-GOOGLE_CLIENT_ID=""
-GOOGLE_CLIENT_SECRET=""
+# Venues / Maps
+GOOGLE_PLACES_API_KEY=""          # Venue search; not set in prod
+# Heatmap tiles use OpenFreeMap (no key required)
 
 # Cron
 CRON_SECRET=""
@@ -456,6 +281,8 @@ DEMO_MODE=""                      # Set to "true" to enable /api/auth/demo
 # Logging
 LOG_LEVEL=""                      # pino log level (info, debug, warn, error)
 ```
+
+> Removed from the live env surface: AI provider keys (OpenAI/Anthropic) and the archived trip-planning booking keys (AMADEUS_*, TICKETMASTER_API_KEY, EVENTBRITE_API_KEY).
 
 ---
 
@@ -475,6 +302,8 @@ LOG_LEVEL=""                      # pino log level (info, debug, warn, error)
 }
 ```
 
+> Database is Neon (Vercel Marketplace). Every PR gets a Neon branch with `prisma migrate deploy` applied for isolated testing.
+
 ### Build Commands
 
 ```bash
@@ -482,52 +311,54 @@ npm run build        # prisma generate + next build
 npm run db:push      # Push schema to database
 npm run db:migrate   # Create migrations
 npm run db:generate  # Regenerate Prisma client
-npm run test         # Run Vitest test suite (925+ tests)
-npm run test:e2e     # Run Playwright E2E (requires browser install)
+npm run test         # Run Vitest test suite (~1814 tests)
+npm run test:e2e     # Run Playwright E2E
 ```
 
 ---
 
 ## Security Measures (Current)
 
-1. **Authentication**: NextAuth.js with session-based auth, bcrypt password hashing
-2. **Authorization**: Role-based access control (OWNER, ADMIN, MEMBER) + auth guards on all protected routes
-3. **Input Validation**: Zod schemas on all major API endpoints
-4. **Rate Limiting**: Upstash Redis-based rate limiting on all high-risk routes
-5. **CORS**: Configured in vercel.json and next.config.js (2026-03-23)
-6. **Security Headers**: HSTS, X-Frame-Options, Content-Security-Policy (2026-03-10)
-7. **Logging**: pino structured logging (0 `console.*` in production code)
-8. **Type Safety**: TypeScript strict mode, 0 `any` types
+1. **Authentication**: NextAuth.js with session-based auth, bcrypt password hashing, Prisma adapter
+2. **Authorization**: `getServerSession()` auth guards on all protected routes; Crew/visibility checks on presence data
+3. **Input Validation**: Zod schemas on all API endpoints
+4. **Rate Limiting**: Upstash Redis-based rate limiting on high-risk routes
+5. **CORS**: Configured in next.config.js
+6. **Security Headers**: HSTS, X-Frame-Options, Content-Security-Policy
+7. **Logging**: pino structured logging
+8. **Type Safety**: TypeScript strict mode
 9. **XSS**: React + isomorphic-dompurify
 10. **SQL Injection**: Prisma ORM parameterized queries
+11. **Presence privacy**: Check-in visibility (PUBLIC/CREW/PRIVATE) and opt-in heatmap contribution
 
 ---
 
-## Code Quality Metrics (2026-03-25)
+## Code Quality Metrics (2026-06-09)
 
 | Metric | Target | Current |
 |--------|--------|---------|
-| `any` types | 0 | 0 |
-| `console.*` in prod | 0 | 0 |
-| Files > 600 lines (prod) | 0 | 0 |
+| `console.*` in prod | 0 | tracked (see CLAUDE.md) |
+| `any` types | 0 | tracked (see CLAUDE.md) |
+| Files > 600 lines (prod) | 0 | tracked (see CODEMAP.md) |
 | TSC errors | 0 | 0 |
-| Test count | 500+ | 925+ |
-| Test files | - | 49 |
-| API routes | - | 48 |
-| TypeScript files | - | 253 |
+| Test count | 500+ | ~1814 |
+| Test files | - | 91 |
+| API routes | - | 61 |
 | Lint warnings/errors | 0 | 0 |
+
+> Live counts (routes, test files, file-length offenders) are maintained authoritatively in `docs/API_STATUS.md` and `docs/CODEMAP.md`.
 
 ---
 
 ## Performance Optimizations
 
-1. **React Query Caching**: 60-second stale time, optimistic updates
-2. **Database Indexing**: Prisma auto-indexes on relations
-4. **Image Optimization**: Next.js `<Image>` component (0 raw `<img>` tags)
-5. **Code Splitting**: App Router automatic per-route splitting
-6. **Edge Caching**: Vercel edge network
-7. **Structured Logging**: pino for low-overhead production logging
+1. **React Query Caching**: stale-time caching, optimistic updates
+2. **Database Indexing**: Prisma indexes on relations and presence queries
+3. **Image Optimization**: Next.js `<Image>` component
+4. **Code Splitting**: App Router automatic per-route splitting
+5. **Edge Caching**: Vercel edge network
+6. **Structured Logging**: pino for low-overhead production logging
 
 ---
 
-*Last Updated: 2026-03-25*
+*Last Updated: 2026-06-10*

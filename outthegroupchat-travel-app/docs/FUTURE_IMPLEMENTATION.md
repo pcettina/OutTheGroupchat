@@ -2,361 +2,248 @@
 
 ## Overview
 
-This document outlines future features, improvements, and technical debt to address for the OutTheGroupchat platform. Items already completed as of 2026-03-25 are marked accordingly.
+This document outlines future features, improvements, and technical debt for OutTheGroupchat — a meetup-centric social network ("the social media app that wants to get you off your phone"). The product centers on the **intent-to-group loop**: members build a **Crew**, signal **Intent** on shared **Topics**, **auto-group** when 2+ Crew land on the same Topic, coordinate **Meetups**, broadcast live **Check-ins**, and see Crew presence on a **heatmap**.
 
-*Last Updated: 2026-03-25*
+This roadmap was reconciled against the post-pivot reality on 2026-06-10. The app pivoted away from collaborative group-trip-planning; that code is archived under `src/_archive/` and its future features are **out of scope** (see "Archived / Out of Scope"). The **AI surface was fully removed** (PR #65, 2026-04-23) — any AI roadmap items below are marked removed and are not planned.
 
----
-
-## Current State Summary (2026-03-25)
-
-The following items from earlier versions of this roadmap have been **completed**:
-
-### Completed from Former "Phase 1: MVP Enhancements"
-- [x] **Email Verification** — VerificationToken + email on signup (2026-03-21)
-- [x] **Password Reset** — POST/PATCH API + frontend UI (2026-03-14)
-- [x] **Activity Management** — Full CRUD via /api/trips/[tripId]/activities
-- [x] **Account Settings (partial)** — Profile PATCH with preferences
-- [x] **Shared Expenses (partial)** — Budget field on Trip model
-
-### Completed from Former "Technical Debt"
-- [x] **TypeScript strict mode** — Enabled, 0 `any` types
-- [x] **Error Handling** — Global error boundary, standardized API error responses, pino logging
-- [x] **Testing** — 925+ unit/integration tests across 49 Vitest test files; Playwright E2E framework configured
-- [x] **Rate Limiting** — Upstash Redis on all high-risk routes
-- [x] **Input Sanitization** — Zod on all major API endpoints
-- [x] **Security Headers** — HSTS, X-Frame-Options, CSP (2026-03-10)
-- [x] **CORS** — Configured in next.config.js (2026-03-23)
-- [x] **Itinerary API** — GET/POST/PUT with $transaction atomicity (2026-03-23)
-
-### Completed from Former "Phase 3: Monitoring"
-- [x] **Sentry installed and configured** — Needs real DSN in Vercel production
-- [x] **Vercel Analytics** — Active in production (2026-03-16)
-- [x] **Structured logging** — pino via @/lib/logger (2026-03-09)
+*Last Updated: 2026-06-10*
 
 ---
 
-## Phase 1: Immediate Pre-Beta (Weeks 1-4)
+## Shipped Since This Roadmap Was Written
 
-These items are blockers or near-blockers for the Q2 2026 beta launch. See LAUNCH_CHECKLIST.md for the full authoritative list.
+The core meetup loop that earlier versions of this document listed as "future" is now **built and merged**:
+
+- [x] **Crew system** — requests/accept, Crew list, profile pages (`/profile/[userId]`) — Phase 3
+- [x] **Meetups** — create/list/detail, RSVP, invite, MeetupDetail page, Google Places venue search — Phase 4
+- [x] **Real-time** — Pusher events for meetups and check-ins; MEETUP_STARTING_SOON cron — Phase 4
+- [x] **Check-ins / live presence** — "Who's Out Tonight?", join-me flow, visibility (PUBLIC/CREW/PRIVATE), NearbyCrewList — Phase 5
+- [x] **Heatmap** — MapLibre GL + OpenFreeMap, Crew tier + Friends-of-Friends tier, contribution writers on commit and check-in — Phase 4 (heatmap)
+- [x] **Notifications** — typed notifications + preference triggers (DAILY_PROMPT, PER_MEMBER_INTENT, GROUP_FORMATION, CREW_CHECKED_IN_NEARBY) — Phase 5
+- [x] **People-first feed & search** — feed rescoped to people/meetups; search types narrowed to all/people/meetups/venues — Phase 6
+- [x] **Email** — Crew, meetup invite/RSVP/starting-soon, and auth emails via Resend (`email-auth.ts`, `email-meetup.ts`)
+- [x] **About page** — "off your phone" ethos, OG/Twitter tags updated from trip copy — Phase 7
+
+### Platform / quality items already done
+
+- [x] **TypeScript strict mode** enabled
+- [x] **Error handling** — global error boundary, standardized API errors, pino logging
+- [x] **Rate limiting** — Upstash Redis on high-risk routes
+- [x] **Input validation** — Zod on API endpoints
+- [x] **Security headers** — HSTS, X-Frame-Options, CSP
+- [x] **Sentry installed** (still needs a real DSN in Vercel production)
+- [x] **Vercel Analytics** active in production
+- [x] **Structured logging** — pino via `@/lib/logger`
+- [x] **Neon migration** — Postgres on Neon (Vercel Marketplace), per-PR Neon branch workflow
+
+---
+
+## Phase 1: Immediate Pre-Launch (Launch-Readiness, Phase 8 active)
+
+Blockers / near-blockers for launch. See `docs/LAUNCH_CHECKLIST.md` for the authoritative list.
 
 ### 1.1 Environment & Infrastructure
 
 | Item | Priority | Status |
 |------|----------|--------|
-| Set Pusher env vars in Vercel | Critical | Missing |
+| Set Pusher env vars in Vercel (real-time disabled without them) | Critical | Missing |
 | Obtain Sentry DSN + set in Vercel | High | Missing |
-| Verify Resend domain | High | Pending |
-| Install Playwright browsers in CI | High | `npx playwright install chromium` needed |
-| NEXTAUTH_SECRET rotation (32+ chars) | High | Unverified |
+| Verify Resend domain (prod sends bounce until verified) | High | Pending |
+| Set GOOGLE_PLACES_API_KEY in prod (venue search) | High | Missing |
+| NEXTAUTH_SECRET rotation (32+ chars) in prod | High | Unverified |
+| `DEMO_MODE=true` only where demo auth is intended | Medium | Off by default |
 
-### 1.2 Core Feature Completion
+### 1.2 Launch-Readiness Work (Phase 8 remaining)
 
-| Feature | Priority | Complexity | Description |
-|---------|----------|------------|-------------|
-| Trip wizard (multi-step) | High | Medium | Replace single-page form with step-by-step wizard |
-| Trip editing flow | High | Low | PATCH /api/trips/[tripId] UI |
-| Trip deletion/archiving | High | Low | DELETE + soft-delete UI |
-| Survey frontend integration | High | Medium | Connect survey API to frontend |
-| Voting frontend integration | High | Medium | Connect voting API to frontend |
-| Real-time vote updates | High | Medium | Pusher event on vote cast |
-| Survey results display | Medium | Medium | Results visualization |
-| Follow system integration | Medium | Medium | Follow API exists; frontend wiring needed |
-
-### 1.3 Security Completions
-
-| Item | Priority | Description |
-|------|----------|-------------|
-| Rate limiting on remaining endpoints | High | Ensure 100% coverage |
-| Session timeout configuration | High | NextAuth session maxAge |
-| Failed login attempt limiting | High | Track failures per IP/email |
-| Form validation errors inline | Medium | Client-side Zod feedback |
+| Item | Priority | Complexity | Description |
+|------|----------|------------|-------------|
+| Authenticated E2E flows (Playwright) | High | Medium | Crew → Intent → group-formation → meetup → check-in happy paths (Phase 8 #5) |
+| Sentry full coverage audit | High | Low | Confirm captureException on all live meetup-domain routes (Phase 8 #6) |
+| Failed-login attempt limiting | High | Medium | Track failures per IP/email |
+| Session timeout configuration | Medium | Low | NextAuth session maxAge |
+| Inline client-side validation feedback | Medium | Low | Surface Zod errors on Crew/meetup/check-in forms |
 
 ---
 
-## Phase 2: Beta Hardening (Month 1-2 Post-Beta)
+## Phase 2: Meetup-Loop Depth (Post-Launch)
 
-### 2.1 Authentication Expansion
+Deepen the core intent-to-group experience.
+
+### 2.1 Intents & Grouping
 
 | Feature | Priority | Complexity | Description |
 |---------|----------|------------|-------------|
-| OAuth Providers | High | Low | Google, Apple login via NextAuth |
-| Profile Photos | Medium | Low | Avatar upload with S3/Cloudinary |
-| Account Deletion | Medium | Medium | GDPR-compliant removal |
+| Intent expiry & re-prompt | High | Medium | Auto-expire stale intents; nudge to re-signal |
+| Group chat on formation | High | High | Lightweight thread when a MeetupGroup auto-forms |
+| Topic discovery / browse | Medium | Medium | Browse popular Topics, see how many Crew are in |
+| Recurring intents | Medium | Medium | "Every Friday I'm down for X" |
+| Group size / quorum controls | Medium | Medium | Let users tune the 2+ Crew threshold per Topic |
+
+### 2.2 Meetups
+
+| Feature | Priority | Complexity | Description |
+|---------|----------|------------|-------------|
+| Meetup edit / cancel flows | High | Low | PATCH/DELETE UI with attendee notification |
+| Venue recommendations ranking | Medium | Medium | Rank Google Places results by Crew fit / distance |
+| Calendar export (.ics) | Medium | Low | Add meetup to Google/Apple/Outlook calendar |
+| Recurring meetups | Low | Medium | Standing weekly/monthly meetups |
+| Meetup recap / photos | Low | Medium | Post-meetup recap to feed |
+
+### 2.3 Check-ins & Presence
+
+| Feature | Priority | Complexity | Description |
+|---------|----------|------------|-------------|
+| Presence privacy granularity | High | Medium | Per-Crew visibility overrides beyond PUBLIC/CREW/PRIVATE |
+| Heatmap anchor priority 2 | Medium | Medium | Deferred tier from the Phase 4 heatmap work |
+| "Ping nearby Crew" | Medium | Medium | One-tap nudge to active Crew nearby |
+| Check-in reactions | Low | Low | Lightweight reactions on live check-ins |
+
+---
+
+## Phase 3: Authentication & Account
+
+| Feature | Priority | Complexity | Description |
+|---------|----------|------------|-------------|
+| OAuth Providers (Google, Apple) | High | Low | Via NextAuth |
+| Profile Photos | High | Low | Avatar upload (S3/Cloudinary) |
+| Account Deletion (GDPR) | Medium | Medium | Permanent data + presence removal |
 | Two-Factor Authentication | Low | Medium | TOTP-based 2FA |
 
-### 2.2 Trip Features
+---
 
-| Feature | Priority | Complexity | Description |
-|---------|----------|------------|-------------|
-| Trip Templates | High | Medium | Bachelor party, family reunion, weekend getaway |
-| Trip Duplication | Medium | Low | Clone existing trip |
-| Trip Archiving | Medium | Low | Hide without deleting |
-| Shared Expenses | High | High | Split costs, track who owes what |
-| Trip Documents | Medium | Medium | Upload confirmations, tickets |
-| Departure Cities | High | Medium | Track where each member flies from |
-
-### 2.3 Itinerary Improvements
-
-| Feature | Priority | Complexity | Description |
-|---------|----------|------------|-------------|
-| Drag-and-Drop Editor | High | High | Reorder activities visually |
-| Map Integration | High | High | View itinerary on interactive map |
-| Time Conflict Detection | Medium | Medium | Detect overlapping activities |
-| Weather Integration | Medium | Medium | Show forecast for each day |
-| PDF Export | Low | Low | Print-friendly itinerary export |
-
-### 2.4 Monitoring Completions
+## Phase 4: Monitoring & Reliability
 
 | Item | Priority | Complexity | Description |
 |------|----------|------------|-------------|
 | Uptime monitoring | High | Low | BetterStack or Checkly |
-| Status page | High | Low | Public status.outthegroupchat.com |
+| Status page | Medium | Low | Public status page |
 | Alert channels | High | Low | Slack/email for errors and downtime |
-| Log aggregation | Medium | Medium | Centralized log storage |
+| Database backup schedule | High | Low | Neon automated backups |
 | Core Web Vitals monitoring | Medium | Low | Vercel Analytics integration |
-| Database backup schedule | High | Low | Supabase automated backups |
+| Background jobs queue | Medium | Medium | Migrate cron to a proper queue (e.g. BullMQ) if cron volume grows |
 
 ---
 
-## Phase 3: Booking & Commerce (Month 2-4)
-
-### 3.1 Booking Integrations
-
-| Integration | Priority | Complexity | Description |
-|-------------|----------|------------|-------------|
-| **Flights** | High | High | Amadeus deep integration (key needed) |
-| **Hotels** | High | High | Booking.com affiliate API |
-| **Airbnb** | Medium | High | Vacation rentals |
-| **Activities** | Medium | Medium | Viator/GetYourGuide |
-| **Restaurants** | Low | Medium | OpenTable/Resy |
-
-### 3.2 Payment Features
+## Phase 5: Social & Community Growth
 
 | Feature | Priority | Complexity | Description |
 |---------|----------|------------|-------------|
-| Stripe Integration | High | Medium | Payment processing |
-| Group Payment Collection | High | High | Collect deposits from members |
-| Split Payments | High | High | Pay together or separately |
-| Payment Reminders | Medium | Low | Automated nudges |
-| Refund Management | Medium | Medium | Handle cancellations |
-
-### 3.3 Price Tracking
-
-| Feature | Priority | Complexity | Description |
-|---------|----------|------------|-------------|
-| Flight Price Alerts | High | Medium | Notify when prices drop |
-| Budget Tracking | High | Medium | Real-time budget vs. actual spend |
-| Currency Conversion | Medium | Low | Multi-currency support |
-| Price Prediction | Low | High | AI-powered best time to book |
+| @Mentions in comments | Medium | Low | Tag Crew in feed/meetup comments |
+| Web Push Notifications | High | Medium | Push for group formation & nearby check-ins |
+| Friend-of-Friend Crew suggestions | High | Medium | Suggest new Crew from FoF graph (already powering heatmap FoF tier) |
+| Referral program | Medium | Medium | Invite friends to grow Crew |
+| Reputation / reliability signal | Low | Medium | Show-up reliability for meetups |
 
 ---
 
-## Phase 4: AI & Intelligence (Month 2-4)
+## Phase 6: Mobile & Platform
 
-### 4.1 Advanced AI Features
-
-| Feature | Priority | Complexity | Description |
-|---------|----------|------------|-------------|
-| **Vector Database** | High | High | Migrate from in-memory to pgvector or Pinecone |
-| **RAG Pipeline** | High | High | Activity/destination knowledge base |
-| **Personalization** | High | High | Learn user preferences over time |
-| **Smart Scheduling** | Medium | High | AI optimizes daily schedule |
-| **Photo Generation** | Low | Medium | Generate trip preview images |
-
-### 4.2 Natural Language Features
+A dedicated mobile app effort exists (`outthegroupchat-mobile/`). Web-side platform work:
 
 | Feature | Priority | Complexity | Description |
 |---------|----------|------------|-------------|
-| Trip Search | High | Medium | Natural language: "beach trips under $1000" |
-| Voice Input | Medium | Medium | Spoken queries for mobile |
-| Multilingual | Low | High | i18n support |
+| PWA optimization | High | Medium | Install prompt, better offline shell |
+| Native location features | Medium | Medium | Background presence for check-ins (mobile) |
+| SMS notifications | Medium | Medium | Twilio for meetup reminders |
+| Calendar sync | Medium | Medium | Two-way Google/Apple/Outlook |
 
-### 4.3 Predictive Features
+### Legal & Compliance
 
-| Feature | Priority | Complexity | Description |
-|---------|----------|------------|-------------|
-| Destination Matching | High | Medium | AI suggests perfect destinations |
-| Group Compatibility | Medium | High | Predict trip success based on preferences |
-| Weather Impact | Medium | Medium | Suggest backup plans automatically |
-
-### 4.4 AI Observability
-
-| Feature | Priority | Complexity | Description |
-|---------|----------|------------|-------------|
-| Langfuse Tracing | High | Medium | LLM call tracing and cost monitoring |
-| Prompt A/B Testing | Medium | Medium | Evaluate prompt variants |
-| AI Latency Tracking | High | Low | Track p50/p95/p99 for AI endpoints |
-
-### Target AI Architecture (Future State)
-
-```
-+-------------------------------------------------------------------+
-|                   Enhanced AI Stack                                |
-+-------------------------------------------------------------------+
-|                                                                    |
-|  +-----------+    +-----------+    +-----------+                  |
-|  | Vercel AI |    |  Agents   |    |   Tools   |                  |
-|  |    SDK    | -> | (ReAct)   | -> | (Booking) |                  |
-|  +-----------+    +-----------+    +-----------+                  |
-|        |                                                           |
-|        v                                                           |
-|  +-----------+    +-----------+    +-----------+                  |
-|  |  pgvector |    | Knowledge |    |  Web      |                  |
-|  | or Pinecone    |   Base    | <- | Scraping  |                  |
-|  +-----------+    +-----------+    +-----------+                  |
-|        |                                                           |
-|        v                                                           |
-|  +-----------+    +-----------+                                    |
-|  |  Langfuse |    |   Eval    |                                    |
-|  |  Tracing  |    | Pipeline  |                                    |
-|  +-----------+    +-----------+                                    |
-|                                                                    |
-+-------------------------------------------------------------------+
-```
-
----
-
-## Phase 5: Social & Community (Month 3-5)
-
-### 5.1 Social Features
-
-| Feature | Priority | Complexity | Status |
-|---------|----------|------------|--------|
-| **User Profiles** | High | Medium | Basic profile exists; public trip history pending |
-| **Follow System** | High | Medium | API exists; frontend wiring pending |
-| **Trip Reviews** | High | Medium | Rate and review completed trips |
-| **Activity Sharing** | Medium | Low | Share activities to feed |
-| **Group Matching** | Low | High | Find travel buddies |
-
-### 5.2 Communication
-
-| Feature | Priority | Complexity | Status |
-|---------|----------|------------|--------|
-| **In-App Chat** | High | High | Not yet built |
-| **@Mentions** | Medium | Low | Tag members in comments |
-| **Push Notifications** | High | Medium | Web push API |
-| **Reactions** | Low | Low | Emoji reactions on activities |
-
-### 5.3 Gamification
-
-| Feature | Priority | Complexity | Description |
-|---------|----------|------------|-------------|
-| Travel Badges | Low | Low | Achievements for trips taken |
-| Referral Program | Medium | Medium | Invite friends, earn rewards |
-
----
-
-## Phase 6: Mobile & Platform (Month 4-6)
-
-### 6.1 Mobile Experience
-
-| Feature | Priority | Complexity | Description |
-|---------|----------|------------|-------------|
-| **PWA Optimization** | High | Medium | Better offline, install prompt |
-| **Location Features** | Medium | Medium | Nearby activities, check-ins |
-| **Offline Mode** | Medium | High | View trips offline via service worker |
-| **React Native App** | Low | Very High | Native iOS/Android (post-launch) |
-
-### 6.2 Integrations
-
-| Feature | Priority | Complexity | Description |
-|---------|----------|------------|-------------|
-| **Calendar Sync** | High | Medium | Google/Apple/Outlook calendar export |
-| **SMS Notifications** | Medium | Medium | Twilio for reminders |
-| **WhatsApp** | Medium | High | Share trips via WhatsApp |
-| **Slack Bot** | Low | Medium | Trip updates in Slack |
-
-### 6.3 Legal & Compliance
-
-| Item | Priority | Complexity | Description |
-|------|----------|------------|-------------|
-| Privacy Policy page | High | Low | Required before public launch |
-| Terms of Service page | High | Low | Required before public launch |
-| SEO meta tags | Medium | Low | All pages need titles, descriptions, OG tags |
+| Item | Priority | Complexity | Status |
+|------|----------|------------|--------|
+| Privacy Policy page | High | Low | Exists (`/privacy`) — keep current with presence/location data |
+| Terms of Service page | High | Low | Exists (`/terms`) |
+| Location-data disclosure | High | Low | Clear copy on heatmap/check-in location use |
 | GDPR account deletion | Medium | Medium | Permanent data removal flow |
 
 ---
 
-## Phase 7: Enterprise & Scale (Post-Beta, 6+ Months)
-
-### 7.1 Infrastructure
+## Phase 7: Scale & Business
 
 | Feature | Priority | Complexity | Description |
 |---------|----------|------------|-------------|
-| **CDN for Assets** | High | Low | Already via Vercel Edge |
-| **Background Jobs** | High | Medium | Migrate cron to proper queue (BullMQ) |
-| **Caching Layer** | Medium | Medium | Redis for hot query results |
-| **Horizontal Scaling** | Medium | High | Multi-region deployment |
-| **Database Sharding** | Low | Very High | Scale beyond single Supabase DB |
+| Caching layer (Redis hot queries) | Medium | Medium | Cache heatmap/presence aggregates |
+| Horizontal / multi-region | Low | High | Multi-region deployment |
+| Analytics dashboard | Medium | Medium | Crew/meetup engagement insights |
+| Public API for partners | Low | High | Third-party integrations |
 
-### 7.2 Business Features
+---
 
-| Feature | Priority | Complexity | Description |
-|---------|----------|------------|-------------|
-| Analytics Dashboard | Medium | Medium | Trip insights and engagement stats |
-| Team Plans | Low | Medium | Organization accounts |
-| API for Partners | Low | High | Public API for third-party integrations |
-| White Label | Low | Very High | B2B solution for travel agencies |
+## Removed — Not Planned
+
+The **AI surface was fully removed** in PR #65 (2026-04-23): no OpenAI/Anthropic dependencies, no `/api/ai/*` routes, no `src/lib/ai`. The following items from earlier roadmaps are **removed and not on the plan**. Do not reintroduce AI without explicit founder direction.
+
+- Vector database (pgvector / Pinecone) — N/A (AI removed)
+- RAG pipeline / knowledge base — N/A (AI removed)
+- AI personalization / smart scheduling — N/A (AI removed)
+- AI trip search / destination matching / group-compatibility prediction — N/A (AI removed)
+- Langfuse tracing, prompt A/B testing, AI latency tracking — N/A (AI removed)
+- Vercel AI SDK / agent (ReAct) / tool-calling stack — N/A (AI removed)
+- Photo / image generation — N/A (AI removed)
+
+---
+
+## Archived / Out of Scope (Trip-Planning Era)
+
+The following belonged to the collaborative trip-planning product that OutTheGroupchat pivoted away from. The code is archived under `src/_archive/`; these are **not planned** for the meetup-centric product and are recorded here only to explain their absence from the roadmap:
+
+- Trip wizard, trip editing/duplication/templates/archiving
+- Survey + voting flows, itinerary drag-and-drop editor, PDF itinerary export
+- Shared expenses / split payments / departure-city tracking
+- Booking integrations (Amadeus flights, Booking.com/Airbnb hotels, Viator/GetYourGuide activities, OpenTable/Resy)
+- Flight price alerts / price prediction / budget vs. actual tracking
+- Trip reviews, travel badges tied to trips, travel-buddy matching
+
+If any of these concepts return, they would be re-scoped to the meetup domain (e.g. "shared expenses" → splitting a meetup tab) rather than restored as trip-planning features.
 
 ---
 
 ## Recommended Implementation Order
 
 ```
-Q2 2026 — Beta Launch Prep (Current)
-+-- Set production env vars (Pusher, Sentry)
-+-- Trip wizard + trip editing UI
-+-- Survey/voting frontend integration
-+-- Uptime monitoring
-+-- Privacy Policy + Terms of Service
-+-- Beta launch
+Now — Launch-Readiness (Phase 8 active)
++-- Set production env vars (Pusher, Sentry, Google Places)
++-- Verify Resend domain
++-- Authenticated E2E flows (Crew → group → meetup → check-in)
++-- Sentry coverage audit
++-- Launch
 
-Q3 2026 — Post-Beta Hardening
-+-- OAuth providers (Google)
-+-- Stripe + group payments
-+-- Shared expenses
-+-- Drag-and-drop itinerary editor
-+-- PWA optimization + offline mode
+Post-Launch — Meetup-Loop Depth
++-- Intent expiry + re-prompt
++-- Group chat on formation
++-- Meetup edit/cancel + calendar export
++-- Presence privacy granularity
++-- OAuth (Google/Apple) + profile photos
 
-Q4 2026 — AI & Booking
-+-- Vector DB migration (pgvector)
-+-- Flight search (Amadeus)
-+-- Price alerts
-+-- Personalization engine
-+-- Langfuse tracing
-
-Q1 2027 — Social & Mobile
-+-- In-app chat
-+-- Travel badges + referral program
-+-- Calendar sync
-+-- Native app exploration
+Growth
++-- Web push (group formation, nearby check-ins)
++-- FoF Crew suggestions + referral program
++-- PWA optimization + mobile presence
++-- Uptime monitoring + status page
 ```
 
 ---
 
 ## Success Metrics
 
-### User Engagement
+### User Engagement (meetup loop)
 - Daily Active Users (DAU)
-- Trips created per user per month
-- Survey completion rate
-- Voting participation rate
-- AI chat sessions per trip
+- Intents signalled per user per week
+- Group-formation rate (intents → auto-formed MeetupGroups)
+- Meetup creation & RSVP rate
+- Check-in rate; show-up rate for formed meetups
 
 ### Business Metrics
 - User acquisition cost (CAC)
-- Booking conversion rate (once bookings are live)
-- Revenue per trip
+- Crew growth per user (network density)
 - Customer lifetime value (CLV)
 
 ### Technical Metrics
 - API response time (p50, p95, p99)
-- Error rate < 1% (Sentry)
-- AI latency (per provider)
+- Error rate < 1% (Sentry, once DSN is set)
 - Uptime > 99.9%
-- Test coverage (currently 925+ tests, targeting > 80% line coverage)
+- Test coverage (currently ~1814 tests across 91 files)
 
 ---
 
-*Last Updated: 2026-03-25*
+*Last Updated: 2026-06-10*

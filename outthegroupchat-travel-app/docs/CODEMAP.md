@@ -1,6 +1,6 @@
 # OutTheGroupchat — Full Codemap
 
-> Auto-generated 2026-03-10. Last updated 2026-06-08 (**NIGHTLY nightly/2026-06-09** — Sentry `captureException` extended to 8 more routes/handlers (discover/*, images/search, invitations + [invitationId], newsletter/subscribe, inspiration handler) → ~63/64 non-archive routes instrumented; dead `src/components/feed/rich-item/` directory + `src/components/ui/ImagePicker.tsx` removed (13 component files); `.gitignore` hardened for Playwright artifacts; SECURITY_AUDIT re-audited). Main stats: 61 live API routes (excluding `_archive`), 91 vitest-active test files, 1814 tests passing, +16 Playwright E2E tests in `e2e/` (run separately, not counted in the 1814). Comprehensive reference for agents and developers.
+> Auto-generated 2026-03-10. Last updated 2026-06-10 (**NIGHTLY nightly/2026-06-10** — housekeeping build: dead `src/lib/email-crew.ts` (0 importers; crew emails served by `src/lib/email.ts`) + `src/components/feed/ReactionPicker.tsx` (exported, never imported) removed; stale docs content-refreshed to the meetup-centric reality (UPGRADE_PLAN, FUTURE_IMPLEMENTATION, IMPLEMENTATION_STACK, TEST_CASES); `package.json` brand metadata corrected. No route or test count change.). Main stats: 61 live API routes (excluding `_archive`), 91 vitest-active test files, 1814 tests passing, 332 active (non-archive) TS/TSX files, +16 Playwright E2E tests in `e2e/` (run separately, not counted in the 1814). Comprehensive reference for agents and developers.
 >
 > **2026-05-16 additions:** New directories `src/components/meetups/createMeetup/` (CreateMeetupModal split), `src/components/inspiration/` (inspiration page split), and `src/lib/inspiration/` (inspiration handlers extracted from the route). Files >600 lines: 2 — `RichFeedItem.tsx` and `profile/page.tsx` (refactors land in unmerged PR #108).
 >
@@ -31,14 +31,18 @@
 
 ## Project Overview
 
-Full-stack Next.js 14 collaborative travel planning app. Groups plan trips together with AI recommendations, real-time collaboration, surveys, voting, and a social feed.
+Full-stack Next.js 14 meetup-centric social network — **"the social media app that wants to get you off your phone."** The core loop: a user builds a persistent, mutual **Crew** graph, signals an **Intent** on a **Topic** ("who wants to grab dinner this week?"), and when ≥2 Crew share the same Topic the app **auto-forms a sub-crew** and helps them coordinate a real-world **Meetup** at a venue (Google Places search, RSVP, invite, Pusher real-time, starting-soon cron). **Check-ins** broadcast live presence ("who's out tonight?") to Crew with privacy controls, and a **heatmap** (MapLibre + OpenFreeMap) visualizes Crew/friend-of-friend activity. The social **feed** is rescoped to meetup/check-in activity. Trip-planning, the app's prior identity, is archived under `_archive/` (see REFACTOR_PLAN.md) and is not part of the live surface.
 
 **App root:** `outthegroupchat-travel-app/`
 **Source:** `outthegroupchat-travel-app/src/`
-**Stats (post-Phase-6-complete, 2026-04-22):** 50 live API routes (35 base + 6 Crew routes + 9 Phase 4 meetup/venue/cron routes + 3 Phase 5 check-in routes + privacy route + 2 Phase 6 AI routes: suggest-meetups, icebreakers; 13 archived in Phase 1; feed POST now 410) | live component groups: auth, feed (rescoped to meetup/checkin types, tabs updated), social (incl. `CrewButton`, `CrewRequestCard`, `CrewList`), meetups (incl. `MeetupCard`, `MeetupList`, `CreateMeetupModal`, `RSVPButton`, `VenuePicker`, `AttendeeList`, `MeetupInviteModal`), checkins (incl. `CheckInButton`, `LiveActivityCard`, `NearbyCrewList`), discover, notifications, profile (incl. Recent Check-ins section), search, settings (incl. `PrivacySettingsForm`), onboarding, ai, ui, accessibility + Navigation (incl. privacy link) | live pages: /, /auth/*, /profile, `/profile/[userId]`, /feed, /discover, /inspiration, /notifications, /search, /settings, `/settings/privacy`, /onboarding, /privacy, /terms, `/crew`, `/crew/requests`, `/meetups`, `/meetups/new`, `/meetups/[id]`, `/checkins`, `/checkins/[id]` | middleware: auth-protects `/profile/:path*`, `/crew/:path*`, `/meetups/:path*`, `/checkins/:path*`, `/settings/:path*`, `/api/checkins/*`, plus select `/api/*` paths
+**Current stats (2026-06-10):** 61 live API routes (excluding `_archive`) | 91 vitest-active test files | 1814 tests passing | 332 active (non-archive) TS/TSX files | `any`: 0 | `console.*`: 0 | TODO/FIXME: 0 | files >600 lines (active): 0 | tsc: 0 errors | lint: 0/0 | prisma: valid | Sentry coverage ~63/64 non-archive routes.
+
+**Stats (historical, post-Phase-6-complete, 2026-04-22):** 50 live API routes (35 base + 6 Crew routes + 9 Phase 4 meetup/venue/cron routes + 3 Phase 5 check-in routes + privacy route + 2 Phase 6 AI routes: suggest-meetups, icebreakers; 13 archived in Phase 1; feed POST now 410) | live component groups: auth, feed (rescoped to meetup/checkin types, tabs updated), social (incl. `CrewButton`, `CrewRequestCard`, `CrewList`), meetups (incl. `MeetupCard`, `MeetupList`, `CreateMeetupModal`, `RSVPButton`, `VenuePicker`, `AttendeeList`, `MeetupInviteModal`), checkins (incl. `CheckInButton`, `LiveActivityCard`, `NearbyCrewList`), discover, notifications, profile (incl. Recent Check-ins section), search, settings (incl. `PrivacySettingsForm`), onboarding, ai, ui, accessibility + Navigation (incl. privacy link) | live pages: /, /auth/*, /profile, `/profile/[userId]`, /feed, /discover, /inspiration, /notifications, /search, /settings, `/settings/privacy`, /onboarding, /privacy, /terms, `/crew`, `/crew/requests`, `/meetups`, `/meetups/new`, `/meetups/[id]`, `/checkins`, `/checkins/[id]` | middleware: auth-protects `/profile/:path*`, `/crew/:path*`, `/meetups/:path*`, `/checkins/:path*`, `/settings/:path*`, `/api/checkins/*`, plus select `/api/*` paths
 **Test Health (2026-05-10):** 90 live test files (+4 tonight: intents-id.test.ts, subcrews-coverage.test.ts, checkins-feed.test.ts, intents-mine-crew.test.ts) | ~991 tests passing | 0 TSC errors | Phase 8 IN PROGRESS: nightly/2026-05-11 advanced action #5 (E2E + integration coverage) and #6 (Sentry coverage — `/api/topics`, `/api/recommendations` instrumented). V1 Phase 4 heatmap shipped 2026-05-09 (PR #86/#87)
 
-**Codebase Health metrics (2026-05-10):** `any` types: 4 | `console.*`: 0 | TODO/FIXME: 2 | files >600 lines: 2 (RichFeedItem.tsx 717, profile/page.tsx 623) | API routes: 58 | test files: 90 | TS files: 290
+**Codebase Health metrics (2026-06-10):** `any` types: 0 | `console.*`: 0 | TODO/FIXME: 0 | files >600 lines (active): 0 | API routes: 61 | test files: 91 | tests: 1814 | active (non-archive) TS/TSX files: 332
+
+**Codebase Health metrics (historical, 2026-05-10):** `any` types: 4 | `console.*`: 0 | TODO/FIXME: 2 | files >600 lines: 2 (RichFeedItem.tsx 717, profile/page.tsx 623) | API routes: 58 | test files: 90 | TS files: 290
 
 **New test files (2026-05-10):**
 
@@ -588,7 +592,6 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `CommentThread` | 385 | itemId, itemType, comments, onAddComment? | Nested comments with reply |
 | `EngagementBar` | — | itemId, itemType, initialLiked?, likeCount?, commentCount? | Like/comment/share bar |
 | `MediaGallery` | — | media[], maxDisplay?, onMediaClick? | Image/video grid |
-| `ReactionPicker` | — | onSelect, reactions? | Emoji reaction popover |
 | `ShareModal` | 295 | open, onOpenChange, itemId, itemType, itemTitle? | Share to socials / copy link |
 | ~~`SharePreview`~~ | — | — | Removed 2026-03-26 (confirmed unused dead code) |
 
@@ -918,8 +921,8 @@ db:seed        → npx tsx prisma/seed/index.ts
 | E2E tests | 11 Playwright smoke tests + 16 authenticated-flow tests (`e2e/authenticated-flow.spec.ts`, authored 2026-06-08 — browsers not yet run); trip-specific specs archived |
 | Error monitoring | Sentry — ~63/64 non-archive routes instrumented with `captureException` as of 2026-06-08 (only NextAuth catch-all re-export uncovered); 19/48 coverage figure is pre-archive trip-era historical |
 | Live API routes | 61 (excluding `_archive`): 35 base + 6 Crew + 9 Phase 4 meetup/venue/cron + 3 Phase 5 check-in + privacy + 14 V1 routes (intents 4 + subcrews 6 + topics + heatmap + recommendations + cron/expire-intents); feed POST now 410; AI routes deleted 2026-04-23 |
-| TS/TSX files | 410 (−13 from deleted dead components 2026-06-08: `feed/rich-item/` directory + `ui/ImagePicker.tsx`) |
-| Files >400 lines | 0 in prod (email.ts 507 lines, email-crew.ts extracted; types/index.ts reduced to 264 lines in Phase 6) |
+| TS/TSX files | 332 active (non-archive) as of 2026-06-10 (−2: dead `src/lib/email-crew.ts` + `src/components/feed/ReactionPicker.tsx` removed; prior −13 on 2026-06-08: `feed/rich-item/` directory + `ui/ImagePicker.tsx`) |
+| Files >400 lines | 0 in prod (email.ts ~507 lines holds all crew/meetup email functions; the dead `email-crew.ts` duplicate was deleted 2026-06-10; types/index.ts reduced to 264 lines in Phase 6) |
 | Production env gaps | Pusher vars, Sentry DSN, Resend domain, GOOGLE_PLACES_API_KEY |
 | **Phase status** | **Phase 6 COMPLETE** (2026-04-22): feed rescoped, search people-first, 9 trip notification types removed, types/index.ts cleaned. Phase 7 (Marketing surface) is next. |
 

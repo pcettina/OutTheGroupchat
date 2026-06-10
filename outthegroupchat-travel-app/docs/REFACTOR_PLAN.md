@@ -419,11 +419,12 @@ Each phase targets a discrete session (or a nightly build if small). Phases are 
 3. Security audit focused on new surfaces: location data handling, Crew-request abuse prevention, meetup spam, check-in stalking mitigation (Q4 `activeUntil` is first line of defense)
 4. Rate-limit audit for new routes
 5. E2E Playwright tests for new critical paths: signup → Crew request → meetup create → RSVP → check-in — **🔶 spec authored 2026-06-08 (nightly/2026-06-08): `e2e/authenticated-flow.spec.ts` (16 tests, Crew→Meetup loop) compiles via `--list`; PR pending CI browser run to verify passing. Not yet executed in a browser.**
+   - *Progress (PR (nightly/2026-06-10)):* housekeeping pass only — dead-code cleanup (`src/lib/email-crew.ts`, `src/components/feed/ReactionPicker.tsx` removed), stale-doc content refresh (UPGRADE_PLAN, FUTURE_IMPLEMENTATION, IMPLEMENTATION_STACK, TEST_CASES reconciled to meetup-centric post-pivot reality), and `package.json` brand-metadata fix. No change to E2E verification status; action #5 remains open (browsers still pending a CI run).
 6. Sentry coverage audit: target 100% on new routes (don't repeat the 0/48-on-main debt) — **🟢 SUBSTANTIALLY COMPLETE: Sentry `captureException` now on ~63/64 non-archive routes as of 2026-06-08 (PR for nightly/2026-06-09); only NextAuth catch-all re-export uncovered (not meaningful). Operational gap remains: DSN not set in Vercel prod.** (Prior: V1 surface — intents + subcrews + V1 misc — instrumented 2026-05-12, PR for nightly/2026-05-13.)
 
 **Exit criteria:** Updated launch checklist reflects real readiness of the new product, not the archived one.
 
-> *Last refactor-plan update: 2026-06-08 (nightly/2026-06-09) — Phase 8 action #6 (Sentry coverage) substantially complete: `captureException` now on ~63/64 non-archive routes; only NextAuth catch-all re-export uncovered. Operational gap remains (DSN not set in Vercel prod). Action #5 (authenticated-flow E2E) still unverified — spec authored 2026-06-08, browsers pending CI run. Phase 8 NOT complete. Phase definitions/objectives unchanged.*
+> *Last refactor-plan update: 2026-06-10 (nightly/2026-06-10) — housekeeping pass: dead-code cleanup (`src/lib/email-crew.ts`, `src/components/feed/ReactionPicker.tsx`), stale-doc content refresh (UPGRADE_PLAN, FUTURE_IMPLEMENTATION, IMPLEMENTATION_STACK, TEST_CASES), and `package.json` brand metadata. No phase-exit change. Action #6 (Sentry coverage) remains substantially complete (~63/64 non-archive routes; DSN-in-Vercel operational gap stands). Action #5 (authenticated-flow E2E) still unverified — browsers pending CI run. Phase 8 NOT complete. Phase definitions/objectives unchanged. (Prior: 2026-06-08, nightly/2026-06-09.)*
 
 ---
 
