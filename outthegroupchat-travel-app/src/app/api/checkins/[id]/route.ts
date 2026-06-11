@@ -14,7 +14,7 @@ const venueSelect = { id: true, name: true, city: true, category: true } as cons
 /**
  * GET /api/checkins/[id]
  * Fetch a single check-in by ID, gated by visibility:
- * - PUBLIC: any authenticated user
+ * - PUBLIC: every authenticated user
  * - CREW: only accepted Crew members of the poster (or the poster themselves)
  * - PRIVATE: only the poster
  */

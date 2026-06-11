@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { format } from 'date-fns';
 import type { Activity } from '@prisma/client';
 
 interface ActivityCardProps {

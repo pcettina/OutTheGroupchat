@@ -1,9 +1,11 @@
 # 🔍 Code Checking Agent Guide
 
 ## Mission Statement
-> "A social network that not just showcases experiences, but helps you build them."
+> "The social media app that wants to get you off your phone."
 
-**Your Role:** Ensure code quality, security, and maintainability as the platform scales.
+**Your Role:** Ensure code quality, security, and maintainability as the meetup-centric platform scales toward launch (Phase 8 launch-readiness).
+
+> **Domain context:** OutTheGroupchat is a meetup-centric social network. The core models are **Crew, Meetup, Venue, CheckIn, Intent, SubCrew, Topic**, and the Heatmap (`HeatmapContribution`). The legacy trip-planning code is archived under `src/_archive/` and the AI surface was fully removed (PR #65) — there are no `/api/ai/*` routes, no OpenAI/Anthropic deps, no `src/lib/ai`. Trip/Activity/Survey/Voting models still exist in the schema as legacy and back the feed, but new feature review should center the meetup domain. The IDOR/ownership examples below use `trip` only as a generic illustration of the pattern; apply the same checks to `meetup`, `crew`, `checkIn`, etc.
 
 ---
 
@@ -219,10 +221,10 @@ src/
 ## 🧪 Testing Requirements
 
 ### Unit Tests Required For:
-- [ ] Business logic in `lib/` services
-- [ ] Utility functions
+- [ ] Business logic in `lib/` and `services/`
+- [ ] Utility functions (`lib/sanitize`, rate limiting, pusher helpers)
 - [ ] Zod schemas (edge cases)
-- [ ] AI prompt builders
+- [ ] Heatmap contribution / intent-grouping logic
 
 ### Integration Tests Required For:
 - [ ] API routes (happy path + error cases)
@@ -231,9 +233,11 @@ src/
 
 ### E2E Tests Required For:
 - [ ] User signup/signin
-- [ ] Trip creation flow
-- [ ] Invitation acceptance
-- [ ] Voting flow
+- [ ] Crew request / accept flow
+- [ ] Meetup creation + RSVP
+- [ ] Check-in ("Who's Out Tonight?") flow
+
+> The authenticated E2E spec for the meetup loop is authored but not yet browser-verified — see `docs/OPS_LAUNCH_CHECKLIST.md` §6.
 
 ---
 
@@ -309,8 +313,9 @@ return NextResponse.json({
 | TypeScript Coverage | 100% | ~98% |
 | Any Types | 0 | 0 ✅ |
 | Console Statements | 0 (prod) | 0 ✅ |
-| Test Coverage | >80% | 865+ tests passing (45 files) ✅ |
-| API Routes | 48 | 48 ✅ |
+| Test Coverage | >80% | 1863+ tests passing (93 live test files) ✅ |
+| API Routes | — | 61 live `route.ts` files (74 incl. archived) ✅ |
+| Sentry instrumentation | all routes | ~63/64 routes wired ✅ |
 | Cyclomatic Complexity | <10 | Varies |
 | Bundle Size | <500KB | TBD |
 
@@ -365,14 +370,14 @@ These patterns should automatically fail code review:
    - [ ] Proper error handling
    - [ ] Good naming
 
-4. **Social Feature Alignment**
-   - [ ] Generates shareable content?
-   - [ ] Supports collaboration?
-   - [ ] Integrates with feed?
+4. **Meetup Product Alignment**
+   - [ ] Moves users toward an in-person meetup (Crew / Meetup / CheckIn)?
+   - [ ] Respects location-visibility privacy (opt-in only)?
+   - [ ] Wires real-time updates via Pusher where coordination matters?
 
 ---
 
-*Quality is not negotiable. Every line of code should serve the mission.*
+*Quality is not negotiable. Every line of code should serve the mission — get people off their phones and into the room.*
 
-*Last Updated: 2026-03-24*
+*Last Updated: 2026-06-11*
 

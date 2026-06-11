@@ -3,7 +3,6 @@ import { NextResponse } from 'next/server';
 import * as Sentry from '@sentry/nextjs';
 import { prisma } from '@/lib/prisma';
 import { logError, apiLogger } from '@/lib/logger';
-import { captureException } from '@/lib/sentry';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';

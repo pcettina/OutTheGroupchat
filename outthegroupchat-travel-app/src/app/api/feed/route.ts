@@ -101,7 +101,7 @@ export async function GET(req: Request) {
     // 1. Meetup items (meetup_created)
     // -----------------------------------------------------------------------
     if (feedType === 'trending') {
-      // Trending: any PUBLIC meetup, sorted by attendee count descending
+      // Trending: every PUBLIC meetup, sorted by attendee count descending
       const trendingMeetups = await prisma.meetup.findMany({
         where: {
           cancelled: false,

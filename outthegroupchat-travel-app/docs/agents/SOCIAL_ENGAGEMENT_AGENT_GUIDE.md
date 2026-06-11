@@ -1,25 +1,27 @@
 # 🌐 Social Engagement Agent Guide
 
 ## Mission Statement
-> "A social network that not just showcases experiences, but helps you build them."
+> "The social media app that wants to get you off your phone."
 
-**Your Role:** Design and implement social features that create meaningful connections, drive engagement, and make trip planning a shared experience.
+**Your Role:** Design social features that drive *real-world* connection — getting Crews to actually meet up, not racking up screen time.
+
+> **Domain context & reality check:** OutTheGroupchat is a meetup-centric social network. The product pivoted away from trip-planning (archived to `src/_archive/`) and the AI surface was fully removed (PR #65) — ignore any "AI in chat / AI moderation" suggestions below. The schema snippets in this guide are **historical design proposals**, not the shipped schema. What actually exists today: a meetup-centric feed with comments/likes, in-app **notifications** with three triggers (DAILY_PROMPT, PER_MEMBER_INTENT, GROUP_FORMATION), **Crew** relationships, **Check-ins** ("Who's Out Tonight?") as the live-update surface, **Meetups** + RSVP as the coordination surface, and the opt-in location **Heatmap**. Treat the engagement principles below as durable, but map any "to build" feature onto the current meetup domain (Crew / Meetup / CheckIn / Topic / Intent), and skip anything that contradicts the pivot.
 
 ---
 
 ## 🎯 Core Engagement Principles
 
-### 1. Build Experiences Together
-Not just sharing photos AFTER a trip - help groups plan, decide, and coordinate BEFORE and DURING.
+### 1. Get People in the Room
+The win condition is an in-person meetup, not a like. Every feature should shorten intent → meet.
 
 ### 2. Create FOMO, Then Fulfill It
-Show amazing trips others are planning → Make it easy to start your own → Help you succeed.
+Show "your Crew is out tonight" / "3 people want the same thing" → make it one tap to join → help the meetup actually happen.
 
 ### 3. Social Proof Everywhere
-Every feature should answer: "Who else is doing this? What are they saying?"
+Every feature should answer: "Who in my Crew is doing this right now?"
 
 ### 4. Celebrate the Group
-Individual travelers exist, but our POWER is in group dynamics.
+Solo check-ins exist, but our POWER is when a SubCrew forms and a Meetup lands.
 
 ---
 
@@ -28,58 +30,58 @@ Individual travelers exist, but our POWER is in group dynamics.
 ### Implemented ✅
 | Feature | Quality | Notes |
 |---------|---------|-------|
-| Follow System | ⭐⭐⭐ | Basic but functional |
-| Activity Feed | ⭐⭐ | Needs media support |
-| Notifications | ⭐⭐⭐ | In-app only |
-| User Profiles | ⭐⭐ | Basic info only |
-| Trip Sharing | ⭐⭐ | Public/private toggle |
+| Crew system | ⭐⭐⭐ | Request/accept, crewLabel, relationship settings |
+| Meetups + RSVP | ⭐⭐⭐ | Create/detail/invite, AttendeeStatus, Pusher real-time |
+| Check-ins | ⭐⭐⭐ | "Who's Out Tonight?", visibility PUBLIC/CREW/PRIVATE |
+| Location Heatmap | ⭐⭐⭐ | Crew + FoF tiers (maplibre + OpenFreeMap) |
+| Notifications | ⭐⭐⭐ | In-app; DAILY_PROMPT / PER_MEMBER_INTENT / GROUP_FORMATION triggers |
+| Feed (likes/comments) | ⭐⭐ | Meetup-centric; rich-item layer removed |
+| Follow (legacy) | ⭐ | `@deprecated` — Crew is the canonical relationship |
 
-### Missing ❌
+### Missing / Next ❌
 | Feature | Priority | Impact |
 |---------|----------|--------|
-| Reactions/Likes | P0 | Critical engagement |
-| Comments | P0 | Conversation starter |
-| Rich Media | P0 | Content quality |
-| Stories/Live Updates | P1 | Real-time engagement |
-| @Mentions | P1 | User discovery |
-| #Hashtags | P2 | Content discovery |
-| Group Chat | P1 | Trip coordination |
-| Achievements | P2 | Gamification |
+| Rich media in feed/check-ins | P1 | Content quality |
+| @Mentions | P2 | Crew discovery |
+| Recurring meetups | P2 | Retention via standing plans |
+| Achievements | P3 | Gamification (post-launch) |
+
+> Reactions, comments, notifications, and group coordination already ship via the feed + Meetup + Crew surfaces — they are no longer "missing." Do not re-propose them as net-new.
 
 ---
 
 ## 🔥 Engagement Loops
 
-### Primary Loop: Plan → Share → Inspire
+### Primary Loop: Intent → Group → Meet → Repeat
 ```
 ┌─────────────────────────────────────────┐
 │                                         │
-│  User sees amazing trip in feed         │
+│  User signals Intent on a Topic         │
 │              ↓                          │
-│  Gets inspired to plan similar trip     │
+│  ≥2 Crew share it → SubCrew forms        │
 │              ↓                          │
-│  Invites friends to join                │
+│  Group picks venue + time (Meetup)      │
 │              ↓                          │
-│  Group plans together (surveys, votes)  │
+│  Crew RSVP + check in IRL                │
 │              ↓                          │
-│  Trip happens → Content created         │
+│  Meetup happens → trust + habit grow     │
 │              ↓                          │
-│  Shares to feed → Inspires others       │
+│  More likely to signal next time        │
 │              ↓                          │
 └──────────── (Loop continues) ───────────┘
 ```
 
-### Secondary Loop: Engage → Connect → Collaborate
+### Secondary Loop: Check in → Notice → Join
 ```
-User likes/comments on trip
+User posts a check-in ("Who's Out Tonight?")
         ↓
-Follows the trip creator
+Crew sees it (CREW_CHECKED_IN_NEARBY notification)
         ↓
-Sees more of their content
+Someone taps "Join me"
         ↓
-Gets invited to future trips
+An impromptu meetup forms
         ↓
-Becomes active contributor
+Both more likely to check in again
 ```
 
 ---
@@ -309,9 +311,9 @@ enum MessageType {
 - Real-time via Pusher
 - Read receipts
 - Reply to messages
-- Share activities to chat
-- Quick polls
-- AI assistant in chat
+- Share a meetup / venue to chat
+- Quick polls (Poll / PollResponse models exist)
+- Live location share (opt-in)
 
 ---
 
@@ -374,11 +376,11 @@ enum AchievementCategory {
 ### Core Metrics
 | Metric | Current | Target | How to Improve |
 |--------|---------|--------|----------------|
-| DAU/MAU | TBD | 40% | Stories, notifications |
-| Trips/User | TBD | 2+ | Better onboarding |
-| Group Size Avg | TBD | 5+ | Easy invites |
-| Content/Trip | TBD | 10+ | Media features |
-| Engagement Rate | TBD | 10% | Reactions, comments |
+| DAU/MAU | TBD | 40% | Daily prompt, check-in notifications |
+| Meetups/User/month | TBD | 2+ | Faster intent→group→meet loop |
+| Crew size avg | TBD | 5+ | Easy Crew requests, FoF discovery |
+| Intent→Meetup conversion | TBD | 25%+ | Surface formation moments, venue recs |
+| Check-in → "Join me" rate | TBD | 10%+ | Timely Crew notifications |
 
 ### Social Health Metrics
 ```
@@ -479,7 +481,7 @@ Show: "Trending in your area"
 □ Mute notifications from user
 □ Hide content from feed
 □ Admin dashboard for review
-□ AI content moderation (future)
+□ Keyword/heuristic content filtering (no AI moderation — AI removed PR #65)
 ```
 
 ### Trust & Safety Features
@@ -512,7 +514,7 @@ Before launching any social feature:
 
 ---
 
-*Make connections that turn strangers into travel companions.*
+*Make connections that turn group chats into people actually showing up.*
 
-*Last Updated: 2026-03-26*
+*Last Updated: 2026-06-11*
 

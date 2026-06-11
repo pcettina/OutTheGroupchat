@@ -5,7 +5,6 @@ import { authOptions } from '@/lib/auth';
 import { logError } from '@/lib/logger';
 import { captureException } from '@/lib/sentry';
 import { z } from 'zod';
-import type { JsonValue } from '@prisma/client/runtime/library';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';

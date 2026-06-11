@@ -1,35 +1,37 @@
 # 🗺️ Planning Agent Guide
 
 ## Mission Statement
-> "A social network that not just showcases experiences, but helps you build them."
+> "The social media app that wants to get you off your phone."
 
-**Your Role:** Architect features that balance social engagement with practical trip planning utility.
+**Your Role:** Architect features that turn online signals into real-world meetups — the intent → group → coordinate → meet loop.
+
+> **Domain context:** OutTheGroupchat is a meetup-centric social network. The v1 product loop (founder-locked 2026-04-24) is: **signal Intent → auto-group when ≥2 Crew share a Topic → coordinate + get venue recs → opt-in location visibility (Heatmap)**. Core models: **Crew, Topic, Intent, SubCrew, Meetup, Venue, CheckIn, HeatmapContribution**. The trip-planning product was archived (`src/_archive/`) and the AI surface was fully removed (PR #65) — do not plan AI features or new trip-planning features without explicit founder direction. Trip/Survey/Voting models remain only as legacy backing the feed.
 
 ---
 
 ## 🎯 Core Planning Principles
 
-### 1. Social-First Architecture
-Every feature should answer: **"How does this help users share or collaborate?"**
+### 1. Meetup-First Architecture
+Every feature should answer: **"How does this get people to actually meet up?"**
 
 ```
-✅ GOOD: "Users can share their itinerary with friends for feedback"
-❌ BAD: "Users can create an itinerary" (no social element)
+✅ GOOD: "When 2+ Crew signal the same Topic, auto-form a SubCrew and prompt a meetup"
+❌ BAD: "Users can browse Topics" (no path to the room)
 ```
 
-### 2. Experience Building Focus
-Prioritize features that CREATE experiences, not just document them.
+### 2. Reduce Coordination Friction
+Prioritize features that collapse the gap between intent and meeting.
 
 ```
-✅ GOOD: "AI suggests activities based on group preferences"
-❌ BAD: "Users can manually add activities" (passive)
+✅ GOOD: "Surface venue recs + a time picker the moment a group forms"
+❌ BAD: "Users can manually thread a long chat to pick a place" (high friction)
 ```
 
 ### 3. Group Dynamics
 Always consider multi-user scenarios:
-- How do decisions get made?
-- What happens with disagreements?
-- How is consensus built?
+- How does a SubCrew form from individual Intents?
+- What happens when interest fizzles (Intent expiry / `activeUntil`)?
+- How is a meetup confirmed and who can see it?
 
 ---
 
@@ -40,24 +42,24 @@ Use this for every new feature:
 ```markdown
 ## Feature: [Name]
 
-### Social Value
-- How does this enable sharing?
-- How does this foster connection?
-- What content does this generate for the feed?
+### Meetup Value
+- How does this move users toward an in-person meetup?
+- Does it strengthen Crew / SubCrew formation?
+- What real-world coordination does it unblock?
 
-### Experience Building Value
-- Does this help plan better trips?
-- Does AI enhance this feature?
-- What decisions does this help make?
+### Friction / Loop Value
+- Does it shorten intent → group → meet?
+- Does it respect opt-in location visibility?
+- What decision does it help a group make (where / when / who)?
 
 ### User Stories
 1. As a [role], I want to [action] so that [outcome]
 
 ### Technical Requirements
-- Database changes needed
+- Database changes needed (schema)
 - API endpoints required
-- Real-time requirements
-- AI integration points
+- Real-time requirements (Pusher)
+- Notification triggers (DAILY_PROMPT / PER_MEMBER_INTENT / GROUP_FORMATION)
 
 ### Success Metrics
 - Engagement: [metric]
@@ -83,14 +85,15 @@ Use this for every new feature:
 - **Auth:** NextAuth.js
 - **Real-time:** Pusher (configured, env vars missing in production)
 - **Styling:** TailwindCSS + Framer Motion
-- **Monitoring:** Sentry (infrastructure in `src/lib/sentry.ts` — awaiting DSN env var in Vercel)
+- **Maps/Heatmap:** maplibre-gl + OpenFreeMap (location Heatmap, Crew & FoF tiers)
+- **Monitoring:** Sentry (~63/64 routes instrumented in code; awaiting `SENTRY_DSN` env var in Vercel)
 
 ### Recommended Additions for Social Scale
 1. **Redis** - Caching, rate limiting, sessions (Upstash already wired for rate limiting)
 2. **CDN** - Cloudinary/Uploadcare for media
-3. **Search** - Algolia or Elasticsearch
+3. **Search** - Algolia or Elasticsearch (current search is Prisma-backed, people-first)
 4. **Analytics** - Mixpanel or Amplitude
-5. **Monitoring** - Sentry (code in place via `src/lib/sentry.ts`; needs `SENTRY_DSN` in Vercel) + Vercel Analytics
+5. **Monitoring** - Sentry (code in place via `src/lib/sentry.ts`; needs `SENTRY_DSN` in Vercel) + Vercel Analytics + an external uptime monitor on `/api/health`
 
 ---
 
@@ -98,64 +101,57 @@ Use this for every new feature:
 
 ### Core Social Graph
 ```
-User ─┬─ follows ──→ User
-      ├─ owns ──→ Trip ─┬─ has ──→ Activity
-      ├─ memberOf ──→ Trip    ├─ has ──→ Survey
-      └─ saves ──→ Activity   └─ has ──→ Vote
+User ─┬─ requests/accepts ──→ Crew (CrewStatus)
+      ├─ signals ──→ Intent ──→ Topic
+      ├─ memberOf ──→ SubCrew (auto-formed from shared Intent)
+      ├─ hosts/RSVPs ──→ Meetup ──→ Venue
+      ├─ posts ──→ CheckIn (visibility: PUBLIC/CREW/PRIVATE)
+      └─ writes ──→ HeatmapContribution (opt-in location)
 ```
 
-### Content Creation Flow
+### Core Meetup Flow (v1 loop)
 ```
-User creates Trip
+User signals Intent on a Topic
   ↓
-Invites Friends (TripMember)
+≥2 Crew share that Topic → SubCrew auto-forms (GROUP_FORMATION notification)
   ↓
-AI generates Survey
+Group gets venue recs (Venue) + picks a time
   ↓
-Members respond (SurveyResponse)
+Meetup created → Crew RSVP (AttendeeStatus)
   ↓
-AI analyzes → Suggests Activities
+Members check in (CheckIn) → opt-in location feeds Heatmap
   ↓
-Group votes (VotingSession)
-  ↓
-AI generates Itinerary
-  ↓
-Trip happens → Content shared (Feed)
+Meetup happens IRL → activity surfaces in feed
 ```
 
 ---
 
-## 🎯 Planning Priorities (Next 90 Days)
+## 🎯 Planning Priorities (Phase 8: launch-readiness)
 
-### Phase 1: Social Foundation (Weeks 1-4)
-**Goal:** Make sharing feel natural and rewarding
+The v1 meetup loop is built (Phases 1–5 complete: Crew API/UI, Meetup + RSVP + Pusher, Check-ins, Heatmap Crew+FoF tiers, all 3 notification triggers). Remaining planning is launch hardening, not new product surfaces.
 
-| Feature | Purpose | Estimate |
-|---------|---------|----------|
-| Media Uploads | Rich content for feed | 5 days |
-| Reactions System | Engagement mechanics | 3 days |
-| Share Cards | Beautiful link previews | 3 days |
-| User Mentions | @user tagging | 4 days |
+### Now: Launch hardening
+| Item | Purpose | Status |
+|------|---------|--------|
+| Sentry DSN in Vercel | Production error visibility | Open (code done) |
+| Pusher prod env vars | Live check-in / RSVP updates | Open |
+| Resend domain verify | Deliverable transactional email | Open |
+| Authenticated E2E green run | Prove the meetup loop end-to-end | Spec authored, not verified |
+| Uptime monitor on `/api/health` | Paging when prod is down | Open |
 
-### Phase 2: Experience Building (Weeks 5-8)
-**Goal:** AI-powered collaborative planning
+### Next: Launch-city seeding & polish
+| Item | Purpose |
+|------|---------|
+| Seed Topics + Venues for launch city | Cold-start the intent→group loop |
+| Heatmap legend / tier toggle UX | Make Crew vs FoF visibility legible |
+| Onboarding into first Crew / check-in | Activate new users fast |
 
-| Feature | Purpose | Estimate |
-|---------|---------|----------|
-| Group AI Chat | Multi-user + AI sessions | 8 days |
-| Smart Suggestions | Context-aware AI | 5 days |
-| Conflict Resolution | Handle disagreements | 4 days |
-| Budget Optimizer | AI cost analysis | 5 days |
-
-### Phase 3: Growth Mechanics (Weeks 9-12)
-**Goal:** Viral loops and retention
-
-| Feature | Purpose | Estimate |
-|---------|---------|----------|
-| Trip Templates | Shareable trip blueprints | 5 days |
-| Achievements | Gamification layer | 4 days |
-| Recommendations | Friend suggestions | 4 days |
-| Trending | Discovery algorithm | 5 days |
+### Later: Growth (post-launch, founder-gated)
+| Item | Purpose |
+|------|---------|
+| SubCrew priority-2 anchor | Deferred heatmap anchor tier |
+| Recurring meetups | Retention via standing plans |
+| Friend-of-friend discovery | Expand the graph safely |
 
 ---
 
@@ -171,7 +167,7 @@ Every feature should work BETTER with groups, not just work alone.
 Avoid "read-only" features. Everything should invite action.
 
 ### 4. Complex Onboarding
-New users should create or join a trip within 2 minutes.
+New users should join a Crew or post a check-in within 2 minutes.
 
 ### 5. Hidden Social Actions
 Make sharing, inviting, and connecting obvious and easy.
@@ -182,35 +178,35 @@ Make sharing, inviting, and connecting obvious and easy.
 
 Before any feature is approved:
 
-- [ ] Connects to social graph (follows, shares, comments)
-- [ ] Generates feed-worthy content
-- [ ] Works better with AI assistance
-- [ ] Has clear group dynamics
-- [ ] Includes real-time elements
+- [ ] Moves users toward an in-person meetup
+- [ ] Connects to the Crew / SubCrew graph
+- [ ] Has clear group dynamics (formation, expiry, confirmation)
+- [ ] Includes real-time elements where coordination matters (Pusher)
+- [ ] Respects opt-in location visibility
 - [ ] Mobile-friendly by design
 - [ ] Has measurable success metrics
 - [ ] Doesn't duplicate existing functionality
 - [ ] Scales to 100K+ users
-- [ ] Respects privacy/security principles
+- [ ] Does NOT reintroduce AI or trip-planning without founder sign-off
 
 ---
 
 ## 🔮 Long-Term Vision
 
-### Year 1: Community
-- 10K active users
-- 50K trips created
-- Strong social engagement
+### Year 1: Density in launch cities
+- Strong per-city Crew density (the loop only works with critical mass)
+- Meetups happening weekly per active Crew
+- High intent → meetup conversion
 
-### Year 2: Platform
-- Creator tools
-- API for partners
-- Booking integrations
+### Year 2: Multi-city + venue partners
+- Expand city by city (density-gated, not blanket)
+- Venue partnerships (recs, deals for groups)
+- Friend-of-friend graph expansion
 
-### Year 3: Ecosystem
-- Travel brand partnerships
-- User-generated content marketplace
-- International expansion
+### Year 3: Platform
+- Organizer / community tools
+- Local events ingestion
+- Selective API for partners
 
 ---
 
@@ -234,7 +230,7 @@ Before any feature is approved:
 
 ---
 
-*Remember: We're not building a trip planner. We're building a social network for experiences.*
+*Remember: we're not building a feed to scroll. We're building the shortest path from "I'm bored" to "we're out together."*
 
-*Last Updated: 2026-03-26*
+*Last Updated: 2026-06-11*
 

@@ -1,6 +1,6 @@
 # OutTheGroupchat — Full Codemap
 
-> Auto-generated 2026-03-10. Last updated 2026-06-10 (**NIGHTLY nightly/2026-06-10** — housekeeping build: dead `src/lib/email-crew.ts` (0 importers; crew emails served by `src/lib/email.ts`) + `src/components/feed/ReactionPicker.tsx` (exported, never imported) removed; stale docs content-refreshed to the meetup-centric reality (UPGRADE_PLAN, FUTURE_IMPLEMENTATION, IMPLEMENTATION_STACK, TEST_CASES); `package.json` brand metadata corrected. No route or test count change.). Main stats: 61 live API routes (excluding `_archive`), 91 vitest-active test files, 1814 tests passing, 332 active (non-archive) TS/TSX files, +16 Playwright E2E tests in `e2e/` (run separately, not counted in the 1814). Comprehensive reference for agents and developers.
+> Auto-generated 2026-03-10. Last updated 2026-06-11 (**NIGHTLY nightly/2026-06-11** — edge/security test-depth build: +49 tests (check-in privacy/stalking-mitigation 22, meetup authz 27); 7 unused imports removed; `any`-types confirmed 0 in live code; **Phase 8 action #5 (E2E authenticated flows) now PASSES 16/16 in a real Chromium browser** — production behavior was already correct, spec assertions corrected to match intentional middleware redirects; 5 stale docs refreshed.). Main stats: 61 live API routes (excluding `_archive`), 93 vitest-active test files, 1863 tests passing, 333 active (non-archive) TS/TSX files, +16 Playwright E2E tests in `e2e/` (now passing 16/16 in a real browser, run separately, not counted in the 1863). Comprehensive reference for agents and developers.
 >
 > **2026-05-16 additions:** New directories `src/components/meetups/createMeetup/` (CreateMeetupModal split), `src/components/inspiration/` (inspiration page split), and `src/lib/inspiration/` (inspiration handlers extracted from the route). Files >600 lines: 2 — `RichFeedItem.tsx` and `profile/page.tsx` (refactors land in unmerged PR #108).
 >
@@ -35,12 +35,12 @@ Full-stack Next.js 14 meetup-centric social network — **"the social media app 
 
 **App root:** `outthegroupchat-travel-app/`
 **Source:** `outthegroupchat-travel-app/src/`
-**Current stats (2026-06-10):** 61 live API routes (excluding `_archive`) | 91 vitest-active test files | 1814 tests passing | 332 active (non-archive) TS/TSX files | `any`: 0 | `console.*`: 0 | TODO/FIXME: 0 | files >600 lines (active): 0 | tsc: 0 errors | lint: 0/0 | prisma: valid | Sentry coverage ~63/64 non-archive routes.
+**Current stats (2026-06-11):** 61 live API routes (excluding `_archive`) | 93 vitest-active test files | 1863 tests passing | 333 active (non-archive) TS/TSX files | `any`: 0 | `console.*`: 0 | TODO/FIXME: 0 | files >600 lines (active): 0 | tsc: 0 errors | lint: 0/0 | prisma: valid | Sentry coverage ~63/64 non-archive routes | E2E `authenticated-flow.spec.ts` passing 16/16 in real Chromium (Phase 8 action #5 complete).
 
 **Stats (historical, post-Phase-6-complete, 2026-04-22):** 50 live API routes (35 base + 6 Crew routes + 9 Phase 4 meetup/venue/cron routes + 3 Phase 5 check-in routes + privacy route + 2 Phase 6 AI routes: suggest-meetups, icebreakers; 13 archived in Phase 1; feed POST now 410) | live component groups: auth, feed (rescoped to meetup/checkin types, tabs updated), social (incl. `CrewButton`, `CrewRequestCard`, `CrewList`), meetups (incl. `MeetupCard`, `MeetupList`, `CreateMeetupModal`, `RSVPButton`, `VenuePicker`, `AttendeeList`, `MeetupInviteModal`), checkins (incl. `CheckInButton`, `LiveActivityCard`, `NearbyCrewList`), discover, notifications, profile (incl. Recent Check-ins section), search, settings (incl. `PrivacySettingsForm`), onboarding, ai, ui, accessibility + Navigation (incl. privacy link) | live pages: /, /auth/*, /profile, `/profile/[userId]`, /feed, /discover, /inspiration, /notifications, /search, /settings, `/settings/privacy`, /onboarding, /privacy, /terms, `/crew`, `/crew/requests`, `/meetups`, `/meetups/new`, `/meetups/[id]`, `/checkins`, `/checkins/[id]` | middleware: auth-protects `/profile/:path*`, `/crew/:path*`, `/meetups/:path*`, `/checkins/:path*`, `/settings/:path*`, `/api/checkins/*`, plus select `/api/*` paths
 **Test Health (2026-05-10):** 90 live test files (+4 tonight: intents-id.test.ts, subcrews-coverage.test.ts, checkins-feed.test.ts, intents-mine-crew.test.ts) | ~991 tests passing | 0 TSC errors | Phase 8 IN PROGRESS: nightly/2026-05-11 advanced action #5 (E2E + integration coverage) and #6 (Sentry coverage — `/api/topics`, `/api/recommendations` instrumented). V1 Phase 4 heatmap shipped 2026-05-09 (PR #86/#87)
 
-**Codebase Health metrics (2026-06-10):** `any` types: 0 | `console.*`: 0 | TODO/FIXME: 0 | files >600 lines (active): 0 | API routes: 61 | test files: 91 | tests: 1814 | active (non-archive) TS/TSX files: 332
+**Codebase Health metrics (2026-06-11):** `any` types: 0 | `console.*`: 0 | TODO/FIXME: 0 | files >600 lines (active): 0 | API routes: 61 | test files: 93 | tests: 1863 | active (non-archive) TS/TSX files: 333 (prior docs showed 332 — 1-file count drift corrected)
 
 **Codebase Health metrics (historical, 2026-05-10):** `any` types: 4 | `console.*`: 0 | TODO/FIXME: 2 | files >600 lines: 2 (RichFeedItem.tsx 717, profile/page.tsx 623) | API routes: 58 | test files: 90 | TS files: 290
 
@@ -804,10 +804,12 @@ db:seed        → npx tsx prisma/seed/index.ts
 
 ## Tests
 
-**Total: 1814 tests across 91 Vitest unit/integration test files** (nightly/2026-06-08; +9 tests from `topics-ratelimit.test.ts`; 0 TSC errors). Separately, `e2e/` adds 16 Playwright authenticated-flow tests (run via `npm run test:e2e`, not counted in the 1814).
+**Total: 1863 tests across 93 Vitest unit/integration test files** (nightly/2026-06-11; +49 tests from `checkins-privacy-edge.test.ts` (22) + `api/meetups-authz-edge.test.ts` (27); 0 TSC errors). Separately, `e2e/` adds 16 Playwright authenticated-flow tests (run via `npm run test:e2e`) — now **passing 16/16 in a real Chromium browser**, not counted in the 1863.
 
 | File | Lines | Tests | Coverage |
 |------|-------|-------|----------|
+| `src/__tests__/checkins-privacy-edge.test.ts` | — | 22 | Check-in privacy / stalking-mitigation — `activeUntil` clamping (now+30m..now+12h, default 6h), feed expiry gate, PUBLIC/CREW/PRIVATE visibility scoping, owner-only DELETE, 401s ✅ 2026-06-11 nightly/2026-06-11 |
+| `src/__tests__/api/meetups-authz-edge.test.ts` | — | 27 | Meetup authorization — host-only PATCH/DELETE, RSVP capacity/duplicate, invite authz + fan-out cap, 401/400/403/404/409 ✅ 2026-06-11 nightly/2026-06-11 |
 | `src/__tests__/api/topics-ratelimit.test.ts` | — | 9 | GET /api/topics — per-user rate-limit (429 on quota exceed), header propagation, auth ✅ 2026-06-08 nightly/2026-06-08 |
 | `src/__tests__/api/feed.test.ts` | — | 12 | GET /api/feed — rescoped meetup/checkin item types, pagination, auth ✅ 2026-04-22 Phase 6 |
 | `src/__tests__/api/feed-extended.test.ts` | — | 25 | Feed edge cases — empty feed, multiple content types, DB errors, feedType params ✅ 2026-04-22 Phase 6 |
@@ -917,11 +919,11 @@ db:seed        → npx tsx prisma/seed/index.ts
 | `any` types | 0 ✅ |
 | `console.*` | 0 ✅ |
 | TSC errors (prod + test) | 0 ✅ |
-| Vitest tests | 1814 passing, 91 test files (nightly/2026-06-09; no new tests this build); archived tests runnable on demand via `npm run test:archive` |
-| E2E tests | 11 Playwright smoke tests + 16 authenticated-flow tests (`e2e/authenticated-flow.spec.ts`, authored 2026-06-08 — browsers not yet run); trip-specific specs archived |
+| Vitest tests | 1863 passing, 93 test files (nightly/2026-06-11; +49 edge/security tests: checkins-privacy-edge 22, meetups-authz-edge 27); archived tests runnable on demand via `npm run test:archive` |
+| E2E tests | 11 Playwright smoke tests + 16 authenticated-flow tests (`e2e/authenticated-flow.spec.ts`) — **passing 16/16 in a real Chromium browser as of 2026-06-11** (Phase 8 action #5 complete; signed-JWT cookie helper `e2e/auth-helper.ts`); trip-specific specs archived |
 | Error monitoring | Sentry — ~63/64 non-archive routes instrumented with `captureException` as of 2026-06-08 (only NextAuth catch-all re-export uncovered); 19/48 coverage figure is pre-archive trip-era historical |
 | Live API routes | 61 (excluding `_archive`): 35 base + 6 Crew + 9 Phase 4 meetup/venue/cron + 3 Phase 5 check-in + privacy + 14 V1 routes (intents 4 + subcrews 6 + topics + heatmap + recommendations + cron/expire-intents); feed POST now 410; AI routes deleted 2026-04-23 |
-| TS/TSX files | 332 active (non-archive) as of 2026-06-10 (−2: dead `src/lib/email-crew.ts` + `src/components/feed/ReactionPicker.tsx` removed; prior −13 on 2026-06-08: `feed/rich-item/` directory + `ui/ImagePicker.tsx`) |
+| TS/TSX files | 333 active (non-archive) as of 2026-06-11 (prior docs showed 332 — 1-file count drift corrected against the live tree; +2 new test files this build are TS, partly offset by unused-import cleanup) |
 | Files >400 lines | 0 in prod (email.ts ~507 lines holds all crew/meetup email functions; the dead `email-crew.ts` duplicate was deleted 2026-06-10; types/index.ts reduced to 264 lines in Phase 6) |
 | Production env gaps | Pusher vars, Sentry DSN, Resend domain, GOOGLE_PLACES_API_KEY |
 | **Phase status** | **Phase 6 COMPLETE** (2026-04-22): feed rescoped, search people-first, 9 trip notification types removed, types/index.ts cleaned. Phase 7 (Marketing surface) is next. |

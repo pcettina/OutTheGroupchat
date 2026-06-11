@@ -1,7 +1,31 @@
 # 🟢 Active — POST_PIVOT_STEADY_STATE (V1 pivot in flight)
 
-> **Last Updated:** 2026-06-10
-> **Status:** V1 routes live; POST_PIVOT_STEADY_STATE. **2026-06-10 nightly (nightly/2026-06-10):** housekeeping build — dead-code cleanup + stale-doc content refresh + brand-metadata fix. No route or test count change (61 routes / 1814 tests / 91 files). 2 dead files removed (`src/lib/email-crew.ts`, `src/components/feed/ReactionPicker.tsx`) → 332 active TS/TSX files. **Previous, 2026-06-08 nightly (nightly/2026-06-09):** Sentry `captureException` extended to 8 more routes/handlers → coverage now **~63/64 non-archive routes** (only the NextAuth catch-all re-export uncovered); **Phase 8 action #6 substantially complete**. Dead code removed: `src/components/feed/rich-item/` directory + `src/components/ui/ImagePicker.tsx` (13 component files). No new tests added this build (1814 tests / 91 files). **2026-06-07:** 11-PR backlog consolidated and landed on main — #110 anchor (#93–#109) + June nightly chain (#115–#120, canonical V1 Phase-5 notifications) + #112 topics rate-limit, reconciled into one green tree (tsc clean). The "frozen main" stall is resolved; nightly base-branch logic hardened against re-forking.
+> **Last Updated:** 2026-06-11
+> **Status:** V1 routes live; POST_PIVOT_STEADY_STATE. **2026-06-11 nightly (nightly/2026-06-11):** edge/security test-depth build — +49 tests (check-in privacy/stalking-mitigation 22, meetup authz 27) → 93 files / 1863 tests; 7 unused imports removed; `any`-types confirmed 0 in live code; **Phase 8 action #5 (E2E authenticated flows) now PASSES 16/16 in a real Chromium browser** (production behavior was already correct — spec assertions corrected to match intentional middleware redirects); 5 stale docs refreshed; `/api/discover` base route corrected to ARCHIVED in API_STATUS. No route count change (61 routes). **Previous, 2026-06-10 nightly (nightly/2026-06-10):** housekeeping build — dead-code cleanup + stale-doc content refresh + brand-metadata fix. No route or test count change (61 routes / 1814 tests / 91 files). 2 dead files removed (`src/lib/email-crew.ts`, `src/components/feed/ReactionPicker.tsx`) → 332 active TS/TSX files. **Previous, 2026-06-08 nightly (nightly/2026-06-09):** Sentry `captureException` extended to 8 more routes/handlers → coverage now **~63/64 non-archive routes** (only the NextAuth catch-all re-export uncovered); **Phase 8 action #6 substantially complete**. Dead code removed: `src/components/feed/rich-item/` directory + `src/components/ui/ImagePicker.tsx` (13 component files). No new tests added this build (1814 tests / 91 files). **2026-06-07:** 11-PR backlog consolidated and landed on main — #110 anchor (#93–#109) + June nightly chain (#115–#120, canonical V1 Phase-5 notifications) + #112 topics rate-limit, reconciled into one green tree (tsc clean). The "frozen main" stall is resolved; nightly base-branch logic hardened against re-forking.
+
+---
+
+## 🟢 Completed 2026-06-11 (Nightly Build nightly/2026-06-11)
+
+### Wave 1 — Tests (+49 edge/security)
+
+- [T1] NEW `src/__tests__/checkins-privacy-edge.test.ts` — 22 tests on check-in privacy / stalking-mitigation: `activeUntil` clamping (min now+30m, max now+12h, default now+6h), feed expiry gate (`WHERE activeUntil > now()`), PUBLIC/CREW/PRIVATE visibility scoping, owner-only DELETE, 401 paths.
+- [T2] NEW `src/__tests__/api/meetups-authz-edge.test.ts` — 27 tests on meetup authorization: host-only PATCH/DELETE, RSVP capacity + duplicate handling, invite authz + fan-out cap, full 401/400/403/404/409 matrix. No new `setup.ts` mocks were required.
+
+### Wave 2 — Cleanup + E2E
+
+- [R1] Removed 7 unused imports: `captureException` (`cron/route.ts`), `JsonValue` (`search/route.ts`), `useEffect` (`LiveRegion.tsx`), `SkeletonCard` (`SearchResults.tsx`), `Switch` (`SecuritySettings.tsx`), `format` (`ActivityCard.tsx`), `WindowPreset` (`subcrew/try-form.ts`). `any`-types confirmed 0 in live code (the previously-reported 4 were comment false-positives, now reworded). `tsc --noEmit` clean.
+- [E1] **Phase 8 action #5 — E2E authenticated flows now PASS 16/16** in a real Chromium browser. `e2e/authenticated-flow.spec.ts` executes against a live build; new helper `e2e/auth-helper.ts` mints a signed NextAuth JWT cookie for authed-UI tests; gated API routes assert intentional middleware 307-redirects (`/api/meetups`, `/api/checkins/*`, `/api/notifications/*`). **Production code unchanged** — app behavior was already correct, spec assertions were corrected to match.
+- [D1] Refreshed `docs/OPS_LAUNCH_CHECKLIST.md` + 4 agent guides (`CODE_CHECKING`, `FRONTEND`, `PLANNING`, `SOCIAL_ENGAGEMENT`).
+
+### Metrics
+
+- Tests: 1814 → 1863 (+49: 22 checkins-privacy-edge + 27 meetups-authz-edge) | Test files: 91 → 93 (+2)
+- E2E: `e2e/authenticated-flow.spec.ts` now **16/16 passing in real Chromium** (Phase 8 action #5 complete)
+- Live API routes: 61 (unchanged) | Active (non-archive) TS/TSX files: 333
+- `any`: 0 | `console.*`: 0 | TODO/FIXME: 0 | files >600 lines (active): 0 | tsc: 0 errors | lint: 0/0 | prisma: valid
+- Sentry coverage: ~63/64 non-archive routes (unchanged)
+- Doc fix: `/api/discover` base route (GET + POST) marked ARCHIVED in `API_STATUS.md` (only file is `src/app/api/_archive/discover/route.ts`)
 
 ---
 

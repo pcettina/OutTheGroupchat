@@ -1,9 +1,11 @@
 # 🎨 Frontend Development Agent Guide
 
 ## Mission Statement
-> "A social network that not just showcases experiences, but helps you build them."
+> "The social media app that wants to get you off your phone."
 
-**Your Role:** Create beautiful, engaging interfaces that make sharing experiences and planning trips feel magical.
+**Your Role:** Create beautiful, low-friction interfaces that move people from signalling intent to actually meeting up in person — Crews, Meetups, check-ins, and venue picks.
+
+> **Domain context:** This is a meetup-centric social network. Primary surfaces are **Crew lists / profiles, Meetup create & detail, Venue picker, Check-ins ("Who's Out Tonight?"), and the location Heatmap**. The trip-planning UI was archived (`src/_archive/`) and the AI assistant surface was fully removed (PR #65) — there is no AI chat panel, no `src/components/ai`. The `TripCard` / `FeedItem` / AI-chat snippets below are retained as generic React + Framer Motion + Tailwind *patterns* (motion, engagement bars, skeletons), not as a description of current screens. When building, target the meetup components in `src/components/meetups`, `src/components/crew`, `src/components/checkins`, and the heatmap.
 
 ---
 
@@ -16,12 +18,12 @@ Every screen should encourage connection:
 - Celebrate group achievements
 - Show activity and engagement
 
-### 2. Experience-Building Focus
-Make planning feel like an experience itself:
-- Progressive disclosure (not overwhelming)
-- AI assistance should feel conversational
-- Gamify the planning process
-- Celebrate milestones
+### 2. Bias Toward Meeting Up
+Every screen should shorten the path to an in-person meetup:
+- Surface "≥2 Crew want the same thing" moments prominently
+- One-tap to signal intent, RSVP, or check in
+- Make venue picks and timing obvious, not buried
+- Celebrate when a group actually forms / meets
 
 ### 3. Mobile-First, Always
 60%+ of social usage is mobile:
@@ -61,7 +63,7 @@ Radix UI (accessible primitives)
 ### Color Palette
 ```css
 :root {
-  /* Primary - Emerald/Teal (Travel, Growth) */
+  /* Primary - Emerald/Teal (Energy, Go) */
   --primary-50: #ecfdf5;
   --primary-500: #10b981;
   --primary-600: #059669;
@@ -247,10 +249,12 @@ export function FeedItem({ item }: { item: FeedItemType }) {
 }
 ```
 
-### AI Chat Component Pattern
+### Floating Panel Pattern
+> Generic pattern only — the AI assistant was removed (PR #65). Reuse this for any floating panel (e.g. a quick check-in composer or a "who's nearby" peek).
+
 ```tsx
-// Floating AI assistant with context awareness
-export function AIAssistant({ context }: { context?: TripContext }) {
+// Floating action button that opens a contextual panel
+export function FloatingPanel({ context }: { context?: unknown }) {
   const [isOpen, setIsOpen] = useState(false);
   
   return (
@@ -274,7 +278,7 @@ export function AIAssistant({ context }: { context?: TripContext }) {
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             className="fixed bottom-24 right-6 z-50 w-96 h-[32rem] bg-white rounded-2xl shadow-2xl flex flex-col"
           >
-            {/* Chat implementation */}
+            {/* Panel implementation */}
           </motion.div>
         )}
       </AnimatePresence>
@@ -491,29 +495,25 @@ Before submitting any component:
 
 ---
 
-## 🎯 Priority UI Features
+## 🎯 Priority UI Features (Phase 8 launch polish)
 
-### Sprint 1
-- [ ] Rich feed with media
-- [ ] Reaction/like system
-- [ ] Share cards with previews
-- [ ] Improved AI chat UI
+Most core meetup surfaces already ship (Crew, Meetup, Venue picker, Check-ins, Heatmap, notifications). Remaining frontend work is launch polish on authenticated pages.
 
-### Sprint 2
-- [ ] Profile redesign
-- [ ] Trip detail page overhaul
-- [ ] Voting UI improvements
-- [ ] Notification center
+### Launch sweep
+- [ ] Design pass on all authenticated pages (Crew, Meetup detail, Check-ins, Profile, Heatmap)
+- [ ] Signature micro-interactions (RSVP, "Join me", group-forms celebration)
+- [ ] Empty / loading / error states audited on every meetup surface
+- [ ] Hero + onboarding that gets a new user into a Crew or check-in fast
 
-### Sprint 3
-- [ ] Discovery/explore page
-- [ ] Search with filters
-- [ ] Settings pages
-- [ ] Onboarding flow
+### Polish
+- [ ] Notification center refinements (DAILY_PROMPT, PER_MEMBER_INTENT, GROUP_FORMATION triggers)
+- [ ] Heatmap legend / tier-toggle UX (Crew vs FoF visibility)
+- [ ] Search (people-first) filter UI
+- [ ] Settings / privacy (location visibility opt-in) clarity
 
 ---
 
-*Make every interaction feel like the start of an adventure.*
+*Make every interaction shorten the distance to the room.*
 
-*Last Updated: 2026-03-26*
+*Last Updated: 2026-06-11*
 

@@ -17,7 +17,7 @@
  *   - share the focal Intent's `topicId`
  *   - have a matching `windowPreset` (exact or adjacent — R11/R17)
  *   - are not yet expired (R12)
- *   - share the focal `cityArea` if both supply one (else: any)
+ *   - share the focal `cityArea` if both supply one (else unconstrained)
  *   - belong to a Crew partner who isn't already in an active SubCrew with
  *     the focal user for the same (topic, window) — prevents duplicates
  *
@@ -30,7 +30,7 @@
  * sent to both. Returns the created SubCrew or `null` if no match.
  */
 
-import type { PrismaClient, Prisma, Intent, WindowPreset } from '@prisma/client';
+import type { PrismaClient, Prisma, Intent } from '@prisma/client';
 import { adjacentPresets, presetDistance } from './window-adjacency';
 import { broadcastToUser } from '@/lib/pusher';
 import { apiLogger } from '@/lib/logger';

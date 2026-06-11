@@ -26,7 +26,7 @@ type RouteParams = { params: { id: string } };
  * Fetch full meetup detail including host, venue, attendees, and invite count.
  * Visibility rules:
  *   - Host always sees their own meetup (including cancelled).
- *   - PUBLIC: any authenticated user.
+ *   - PUBLIC: every authenticated user.
  *   - CREW: caller must have an ACCEPTED Crew record with the host.
  *   - INVITE_ONLY: caller must have a MeetupInvite row for this meetup.
  *   - PRIVATE: host only.

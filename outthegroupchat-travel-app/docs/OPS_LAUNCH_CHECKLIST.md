@@ -1,16 +1,26 @@
 # Ops Launch Checklist
 
-**Scope:** the three remaining Lane A launch blockers as of 2026-04-23. All three are dashboard/ops work — no code changes needed. Code is already wired; these steps just put the keys in Vercel so production can read them.
+**Scope:** the launch blockers that live in the Vercel/Resend/Pusher dashboards (and one strength audit) for the meetup-centric OutTheGroupchat app. Most are pure ops work — the application code is already wired (Crew, Meetup, Venue, CheckIn, Intent/SubCrew, and Heatmap domains all live; ~63/64 routes have Sentry instrumentation). These steps put the keys in Vercel so production can read them, plus a couple of items that still need a human eye.
 
-1. [Sentry DSN](#1-sentry-dsn) — error monitoring
-2. [Pusher env vars](#2-pusher-env-vars) — real-time features
-3. [Resend domain verification](#3-resend-domain-verification) — production email deliverability
+**Open ops blockers (as of 2026-06-11):**
+
+1. [Sentry DSN](#1-sentry-dsn) — error monitoring (code instrumented, DSN not set in Vercel prod)
+2. [Pusher env vars](#2-pusher-env-vars) — real-time check-in / meetup features (env vars missing in prod)
+3. [Resend domain verification](#3-resend-domain-verification) — production email deliverability (domain unverified)
+4. [NEXTAUTH_SECRET strength audit](#4-nextauth_secret-strength-audit) — confirm the prod secret is a strong, rotated value
+5. [Uptime / health monitor](#5-uptime--health-monitor) — external ping on `/api/health`
+6. [E2E authenticated flow verification](#6-e2e-authenticated-flow-verification) — spec authored, not yet browser-verified
+7. [DEMO_MODE flag](#7-demo_mode-flag) — `DEMO_MODE=false` in prod; flip only intentionally for demos
 
 See [`LAUNCH_CHECKLIST.md`](./LAUNCH_CHECKLIST.md) for the full launch picture. See [`VERCEL_ENV_SETUP.md`](./VERCEL_ENV_SETUP.md) for the base env reference.
+
+> **Product note:** this app is a meetup-centric social network ("the social media app that wants to get you off your phone"). The trip-planning product was archived (`src/_archive/`) and the AI surface was fully removed (PR #65, 2026-04-23) — there are no `/api/ai/*` routes, no OpenAI/Anthropic deps. Verification steps below reference live meetup routes, not the retired AI/trip routes.
 
 ---
 
 ## 1. Sentry DSN
+
+**Status:** code instrumentation effectively complete — ~63/64 live API routes call into `src/lib/sentry.ts`. The only remaining gap is the DSN env var in Vercel production; until it is set, `captureException()` no-ops.
 
 **Why:** without a DSN, `captureException()` calls silently no-op. Production errors go uncaught.
 
@@ -39,7 +49,7 @@ See [`LAUNCH_CHECKLIST.md`](./LAUNCH_CHECKLIST.md) for the full launch picture. 
 ### Verify
 
 - Trigger a deliberate error in production (any 500 — easiest: hit a route with an intentional bad payload). Within 60s it should appear at `sentry.io/organizations/<org>/issues/`.
-- Or run the quick check against `/api/ai/chat` — but that route is gone after PR #65. Use any existing route that throws on bad input (e.g. `POST /api/meetups` with `{}`).
+- Easiest live target: `POST /api/meetups` with `{}` (fails Zod validation → 400) or any authenticated meetup/check-in route with a malformed body. The old `/api/ai/*` routes no longer exist (removed PR #65), so do not reference them in smoke checks.
 
 ---
 
@@ -110,10 +120,80 @@ See [`LAUNCH_CHECKLIST.md`](./LAUNCH_CHECKLIST.md) for the full launch picture. 
 
 ---
 
-## After all three
+## 4. NEXTAUTH_SECRET strength audit
 
-Lane A is closed. Remaining launch work rolls into Lane B (design sweep — continuing `/design-component` passes on auth'd pages) and Lane C (product depth — hero illustration, signature micro-interactions, NYC seed content). See [`LAUNCH_CHECKLIST.md`](./LAUNCH_CHECKLIST.md).
+**Why:** `NEXTAUTH_SECRET` signs the NextAuth session JWT. A weak, short, or reused secret lets an attacker forge sessions. This is a one-time audit, not a wiring task — the code already reads the env var.
+
+### Steps
+
+1. **Inspect the production value.** [Vercel dashboard](https://vercel.com/dashboard) → OutTheGroupchat project → **Settings** → **Environment Variables** → `NEXTAUTH_SECRET` (Production).
+2. **Confirm it is strong.** It should be at least 32 bytes of base64/hex randomness, generated with `openssl rand -base64 32` (or `npx auth secret`), and **not** shared with Preview/Development.
+3. **Rotate if in doubt.** If the value looks short, human-typed, or copied from `.env.example`, generate a fresh one and replace it. Rotating invalidates existing sessions (users re-login) — acceptable pre-launch.
+4. **Redeploy** after any change.
+
+### Verify
+
+- After rotation, an existing logged-in session should be rejected on next request and prompt re-login.
+- A fresh login should succeed and persist.
 
 ---
 
-**Last updated:** 2026-04-23
+## 5. Uptime / health monitor
+
+**Why:** there is currently no external monitor pinging production. If the app or database goes down, no one is paged. `/api/health` already returns DB connectivity status and is unauthenticated, so it is the natural target.
+
+**Code already wired:** `GET /api/health` (no auth, no params) returns a JSON status payload including a DB check.
+
+### Steps
+
+1. **Pick a monitor.** Vercel's built-in monitoring, UptimeRobot, BetterStack, or Checkly — any will do.
+2. **Add an HTTP check** against `https://<prod-domain>/api/health`, interval 1–5 min, expecting HTTP 200.
+3. **Wire an alert channel** (email / SMS / Slack) so a non-200 or timeout pages someone.
+
+### Verify
+
+- The monitor dashboard shows the check **green** within one interval.
+- Optionally take the DB offline in a Neon branch to confirm the alert fires (then restore).
+
+---
+
+## 6. E2E authenticated flow verification
+
+**Why:** an authenticated Playwright spec covering the core meetup loop (sign in → create/join Crew → create Meetup → RSVP / check in) has been **authored**, but has not yet been run green in a real browser against a seeded environment. Until it passes, we have no end-to-end proof the happy path works post-pivot.
+
+### Steps
+
+1. **Seed a test account + city data** in a disposable Neon branch (or the Preview DB).
+2. **Run the authenticated spec:** `npx playwright install chromium` then `npx playwright test` (the auth spec, not just the public smoke spec).
+3. **Triage failures** — these are likely fixtures/selectors drifting after the trip→meetup pivot, not product bugs. Fix the spec or the underlying UI as appropriate.
+
+### Verify
+
+- The authenticated spec passes in CI (or locally headed) end to end.
+- Mark the corresponding item in [`LAUNCH_CHECKLIST.md`](./LAUNCH_CHECKLIST.md) done only after a green browser run.
+
+---
+
+## 7. DEMO_MODE flag
+
+**Why:** `DEMO_MODE` gates the demo auth endpoint (one-click demo login). It must stay `false` in production so the demo bypass is not exposed to real users; it is flipped to `true` only for intentional investor/demo environments.
+
+### Steps
+
+1. **Confirm prod value.** Vercel → Production env → `DEMO_MODE` should be `false` (or unset, which the code treats as disabled).
+2. **For a demo build only:** set `DEMO_MODE=true` on a Preview deployment, never on the production domain.
+
+### Verify
+
+- In production, the demo auth endpoint returns 403/404 (disabled).
+- On a demo Preview with `DEMO_MODE=true`, one-click demo login works.
+
+---
+
+## After the ops blockers
+
+Once Sentry DSN, Pusher, Resend, the secret audit, the uptime monitor, the E2E green run, and the DEMO_MODE confirmation are all closed, production observability and the core meetup loop are launch-verified. Remaining launch work is product/design polish (auth'd-page design sweep, seed content for the launch city) tracked in [`LAUNCH_CHECKLIST.md`](./LAUNCH_CHECKLIST.md).
+
+---
+
+**Last updated:** 2026-06-11
