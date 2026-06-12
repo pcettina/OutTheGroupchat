@@ -2,14 +2,14 @@
 
 **Scope:** the launch blockers that live in the Vercel/Resend/Pusher dashboards (and one strength audit) for the meetup-centric OutTheGroupchat app. Most are pure ops work — the application code is already wired (Crew, Meetup, Venue, CheckIn, Intent/SubCrew, and Heatmap domains all live; ~63/64 routes have Sentry instrumentation). These steps put the keys in Vercel so production can read them, plus a couple of items that still need a human eye.
 
-**Open ops blockers (as of 2026-06-11):**
+**Open ops blockers (as of 2026-06-12):**
 
 1. [Sentry DSN](#1-sentry-dsn) — error monitoring (code instrumented, DSN not set in Vercel prod)
 2. [Pusher env vars](#2-pusher-env-vars) — real-time check-in / meetup features (env vars missing in prod)
 3. [Resend domain verification](#3-resend-domain-verification) — production email deliverability (domain unverified)
 4. [NEXTAUTH_SECRET strength audit](#4-nextauth_secret-strength-audit) — confirm the prod secret is a strong, rotated value
 5. [Uptime / health monitor](#5-uptime--health-monitor) — external ping on `/api/health`
-6. [E2E authenticated flow verification](#6-e2e-authenticated-flow-verification) — spec authored, not yet browser-verified
+6. [E2E authenticated flow verification](#6-e2e-authenticated-flow-verification) — ✅ spec passes 16/16 in a real Chromium browser (2026-06-11) and is **now wired into CI** (build-before-E2E, 2026-06-12); remaining ops step is to confirm the run stays green in CI / against a seeded preview env
 7. [DEMO_MODE flag](#7-demo_mode-flag) — `DEMO_MODE=false` in prod; flip only intentionally for demos
 
 See [`LAUNCH_CHECKLIST.md`](./LAUNCH_CHECKLIST.md) for the full launch picture. See [`VERCEL_ENV_SETUP.md`](./VERCEL_ENV_SETUP.md) for the base env reference.
@@ -159,18 +159,20 @@ See [`LAUNCH_CHECKLIST.md`](./LAUNCH_CHECKLIST.md) for the full launch picture. 
 
 ## 6. E2E authenticated flow verification
 
-**Why:** an authenticated Playwright spec covering the core meetup loop (sign in → create/join Crew → create Meetup → RSVP / check in) has been **authored**, but has not yet been run green in a real browser against a seeded environment. Until it passes, we have no end-to-end proof the happy path works post-pivot.
+**Why:** an authenticated Playwright spec covering the core meetup loop (sign in → create/join Crew → create Meetup → RSVP / check in) is now **passing 16/16 in a real Chromium browser** (`e2e/authenticated-flow.spec.ts`, verified 2026-06-11) and is **wired into CI** as of 2026-06-12. The remaining ops step is to confirm the run stays green in CI and, ideally, against a seeded preview environment.
+
+**CI wiring (2026-06-12):** `.github/workflows/ci.yml` runs `npm run build` (with `CI: 'true'`) in a `Build production bundle (for E2E webServer)` step **before** the `Run Playwright E2E tests` step. The Playwright `webServer.command` is `npm run start` (production server), which requires a prior `.next` build; CI previously never built, so the authenticated-flow suite could never start its server. With the build step in place the suite runs on every PR. (Closes prior-night recommendation #4.)
 
 ### Steps
 
-1. **Seed a test account + city data** in a disposable Neon branch (or the Preview DB).
-2. **Run the authenticated spec:** `npx playwright install chromium` then `npx playwright test` (the auth spec, not just the public smoke spec).
-3. **Triage failures** — these are likely fixtures/selectors drifting after the trip→meetup pivot, not product bugs. Fix the spec or the underlying UI as appropriate.
+1. **Confirm the CI run is green.** Open the latest PR's CI run → the `Run Playwright E2E tests` step should pass after the `Build production bundle (for E2E webServer)` step. On failure, the workflow uploads the `playwright-report` artifact.
+2. **(Optional) Run locally:** `npx playwright install chromium`, `npm run build`, then `npx playwright test` (the auth spec, not just the public smoke spec).
+3. **(Optional) Seed a preview DB.** For a fuller end-to-end run against real data, seed a disposable Neon branch (or the Preview DB) and point `PLAYWRIGHT_BASE_URL` at it.
 
 ### Verify
 
-- The authenticated spec passes in CI (or locally headed) end to end.
-- Mark the corresponding item in [`LAUNCH_CHECKLIST.md`](./LAUNCH_CHECKLIST.md) done only after a green browser run.
+- The `Run Playwright E2E tests` step passes in CI on a PR.
+- The corresponding item in [`LAUNCH_CHECKLIST.md`](./LAUNCH_CHECKLIST.md) is marked done (2026-06-11 green browser run; CI-wired 2026-06-12).
 
 ---
 
@@ -196,4 +198,4 @@ Once Sentry DSN, Pusher, Resend, the secret audit, the uptime monitor, the E2E g
 
 ---
 
-**Last updated:** 2026-06-11
+**Last updated:** 2026-06-12

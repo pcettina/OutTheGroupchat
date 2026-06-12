@@ -50,6 +50,17 @@ jobs:
         run: npx playwright install chromium --with-deps
         working-directory: outthegroupchat-travel-app
 
+      # The Playwright webServer (playwright.config.ts) launches `npm run start`,
+      # which serves the production build from `.next`. That build must exist
+      # before the E2E step runs, or `next start` exits immediately and every
+      # authenticated-flow spec fails on server start. Build here so the verified
+      # e2e/authenticated-flow.spec.ts suite (16/16 local) actually runs in CI.
+      - name: Build production bundle (for E2E webServer)
+        if: hashFiles('playwright.config.ts') != ''
+        run: npm run build
+        env:
+          CI: 'true'
+
       - name: Run Playwright E2E tests
         if: hashFiles('playwright.config.ts') != ''
         run: npx playwright test

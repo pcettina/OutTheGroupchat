@@ -17,8 +17,8 @@
 >
 > **Target Launch:** Q2 2026 (Beta) — to be re-baselined post-pivot
 > **Current Status:** Refactoring (Phase 2 in progress — domain models added, DB migration pending)
-> **Last Updated:** 2026-06-11 (nightly/2026-06-11 — **Phase 8 action #5 closed in code: E2E Playwright authenticated flows now PASS 16/16 in a real Chromium browser** via signed-JWT cookie helper; production behavior was already correct (spec assertions corrected to match intentional middleware redirects). +49 edge/security tests (check-in privacy 22, meetup authz 27) → 1863 tests / 93 files / 61 routes. 7 unused imports removed. Remaining beta gates are operational/infra-only (Sentry DSN in Vercel, Pusher vars, Resend domain, uptime monitor, NEXTAUTH_SECRET audit) — they require Vercel config, not code.)
-> **Previous:** 2026-06-10 (nightly/2026-06-10 — housekeeping pass: dead `src/lib/email-crew.ts` + `src/components/feed/ReactionPicker.tsx` removed (0 importers); stale docs content-refreshed to meetup-centric reality; `package.json` brand metadata fixed. 1814 tests / 91 files / 61 routes.)
+> **Last Updated:** 2026-06-12 (nightly/2026-06-12 — lean quality-only build. One code change: `.github/workflows/ci.yml` now runs `npm run build` (with `CI: 'true'`) **before** the Playwright E2E step, so the production `webServer` (`npm run start`) the authenticated-flow suite depends on has a `.next` build to serve. This wires the verified `e2e/authenticated-flow.spec.ts` (16/16 passing locally) into CI on every PR — closing prior-night recommendation #4. No test changes (1863 tests / 93 files / 61 routes). Remaining beta gates are operational/infra-only (Sentry DSN in Vercel, Pusher vars, Resend domain, uptime monitor, NEXTAUTH_SECRET audit) — they require Vercel config, not code.)
+> **Previous:** 2026-06-11 (nightly/2026-06-11 — **Phase 8 action #5 closed in code: E2E Playwright authenticated flows now PASS 16/16 in a real Chromium browser** via signed-JWT cookie helper; production behavior was already correct (spec assertions corrected to match intentional middleware redirects). +49 edge/security tests (check-in privacy 22, meetup authz 27) → 1863 tests / 93 files / 61 routes. 7 unused imports removed.)
 
 ---
 
@@ -102,9 +102,9 @@ These are the gates that must close before V1 beta launch.
 - [x] Service tests (recommendation, survey)
 - [x] API route tests (auth, feed, notifications, crew, meetups, checkins, intents, subcrews, topics, heatmap, users, profile, beta, search, voting, sanitize, pusher)
 - [x] Library tests (sanitize, pusher, email)
-- [x] CI: GitHub Actions runs Node 20 + TSC + lint + Vitest + Playwright
+- [x] CI: GitHub Actions runs Node 20 + TSC + lint + Vitest + **production build** + Playwright (build-before-E2E step added 2026-06-12 so the production `webServer` has a `.next` build to serve)
 - [x] E2E smoke spec (Playwright, public flows only)
-- [x] **E2E Playwright authenticated flows** — Crew → Meetup loop. `e2e/authenticated-flow.spec.ts` (16 tests) now **PASSES 16/16 in a real Chromium browser** (2026-06-11) via signed-JWT cookie helper `e2e/auth-helper.ts`; gated API routes assert intentional middleware 307-redirects. Production code unchanged. **Phase 8 action #5 complete.**
+- [x] **E2E Playwright authenticated flows** — Crew → Meetup loop. `e2e/authenticated-flow.spec.ts` (16 tests) now **PASSES 16/16 in a real Chromium browser** (2026-06-11) via signed-JWT cookie helper `e2e/auth-helper.ts`; gated API routes assert intentional middleware 307-redirects. Production code unchanged. **Phase 8 action #5 complete.** **Now wired into CI (2026-06-12):** `.github/workflows/ci.yml` builds the production bundle before the Playwright step, so this suite runs on every PR (closes prior rec #4).
 - [ ] Auth flow E2E (signup → verify → signin)
 
 ### 8.6 UI/UX
@@ -245,7 +245,7 @@ The following are **blocking** for opening V1 beta to external users:
 1. Sentry DSN live in Vercel production
 2. Pusher env vars live in Vercel production (real-time meetup + check-in updates)
 3. Resend domain verified (production emails currently bounce on unverified sandbox domain)
-4. ✅ E2E Playwright authenticated flow covering the canonical V1 loop: signup → set Intent → match into Subcrew → create Meetup → check in. **DONE 2026-06-11 — `e2e/authenticated-flow.spec.ts` (16 tests) passes 16/16 in a real Chromium browser** (signed-JWT cookie helper `e2e/auth-helper.ts`; gated API routes assert intentional middleware 307-redirects). Production code was already correct.
+4. ✅ E2E Playwright authenticated flow covering the canonical V1 loop: signup → set Intent → match into Subcrew → create Meetup → check in. **DONE 2026-06-11 — `e2e/authenticated-flow.spec.ts` (16 tests) passes 16/16 in a real Chromium browser** (signed-JWT cookie helper `e2e/auth-helper.ts`; gated API routes assert intentional middleware 307-redirects). Production code was already correct. **Wired into CI 2026-06-12** — `.github/workflows/ci.yml` builds the production bundle before the Playwright step so the suite runs on every PR (closes prior rec #4).
 5. Uptime monitor connected
 6. NEXTAUTH_SECRET audit confirmed in prod
 
