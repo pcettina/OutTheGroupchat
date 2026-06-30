@@ -87,6 +87,11 @@ beforeEach(() => {
   __resetFofCacheForTests();
   mockCheckRateLimit.mockResolvedValue(RL_PASS);
   mockGetRateLimitHeaders.mockReturnValue({});
+  // Re-arm hotness-boost lookups for /api/recommendations (route always calls
+  // heatmapContribution.findMany; crew.findMany only when weightByCrew=true).
+  // Default [] → hotnessBoost 1.0 (neutral), so base scoring assertions hold.
+  mockHeatmap.findMany.mockResolvedValue([]);
+  mockCrew.findMany.mockResolvedValue([]);
 });
 
 // ---------------------------------------------------------------------------

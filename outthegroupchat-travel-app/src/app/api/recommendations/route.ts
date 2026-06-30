@@ -9,18 +9,25 @@
  *      (e.g. `"bar in East Village"`).
  *   3. Call `searchPlaces` (Google Places Text Search) — same wrapper used
  *      by /api/venues/search.
- *   4. Score each result: `rating × hotnessBoost`. Phase 3 hotness is a
- *      stub returning 1.0; Phase 4 wires the real signal from
- *      HeatmapContribution rows.
+ *   4. Score each result: `rating × hotnessBoost`. The hotness boost is the
+ *      real V1 Phase 4 signal: it is derived from recent `HeatmapContribution`
+ *      rows in the venue's anonymized cell (see `lib/hotness/score`), weighted
+ *      toward the viewer's Crew when `weightByCrew` is enabled (R10).
  *   5. Sort by score desc, take top `limit`.
  *
  * Falls back to DB venues (matching cityArea) when Google Places is
  * unavailable or the API key isn't set.
+ *
+ * The contribution set + the viewer's Crew ids feed `computeHotnessBoost`. The
+ * contribution query (one query, not N+1 per venue) is cached in-memory per
+ * `(topicId, cityArea)` for `BOOST_CACHE_TTL_MS`; Crew ids are resolved per
+ * request (cheap, and viewer-specific so not part of the shared cache key).
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { z } from 'zod';
+import { HeatmapContributionType } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { apiLogger } from '@/lib/logger';
@@ -31,8 +38,86 @@ import {
   buildPlacesQuery,
 } from '@/lib/intent/topic-places-map';
 import { searchPlaces, mapPlaceToVenue } from '@/lib/api/places';
-import { computeHotnessBoost } from '@/lib/hotness/score';
+import {
+  computeHotnessBoost,
+  HOTNESS_CONFIG,
+  type HotnessContributionRow,
+} from '@/lib/hotness/score';
 import { NYC_NEIGHBORHOODS } from '@/lib/intent/neighborhoods';
+
+/** TTL for the per-`(topicId, cityArea)` contribution cache (5 minutes). */
+const BOOST_CACHE_TTL_MS = 5 * 60 * 1000;
+
+interface ContributionCacheEntry {
+  rows: HotnessContributionRow[];
+  expiresAt: number;
+}
+
+/**
+ * Module-level cache of recent contribution rows keyed by `(topicId, cityArea)`.
+ * Persists across requests within a single server instance; entries expire after
+ * `BOOST_CACHE_TTL_MS`. Keyed only by query-shaping params (not the viewer) so
+ * the same recent-contribution snapshot is shared across viewers — Crew-weight
+ * is applied per request from the viewer's own Crew ids, not cached.
+ */
+const contributionCache = new Map<string, ContributionCacheEntry>();
+
+function contributionCacheKey(topicId: string, cityArea: string | undefined): string {
+  return `${topicId}::${cityArea ?? ''}`;
+}
+
+/**
+ * Fetch recent INTEREST/PRESENCE contributions within the rolling window,
+ * optionally scoped to `topicId`. Returns the minimal `HotnessContributionRow`
+ * slice `computeHotnessBoost` needs. Cached per `(topicId, cityArea)` for
+ * `BOOST_CACHE_TTL_MS`. One query per cache-miss — never N+1 per venue.
+ */
+async function getRecentContributions(
+  topicId: string,
+  cityArea: string | undefined,
+  now: Date,
+): Promise<HotnessContributionRow[]> {
+  const key = contributionCacheKey(topicId, cityArea);
+  const cached = contributionCache.get(key);
+  if (cached && cached.expiresAt > now.getTime()) {
+    return cached.rows;
+  }
+
+  const cutoff = new Date(now.getTime() - HOTNESS_CONFIG.rollingWindowHours * 60 * 60 * 1000);
+  const rows = await prisma.heatmapContribution.findMany({
+    where: {
+      type: { in: [HeatmapContributionType.INTEREST, HeatmapContributionType.PRESENCE] },
+      createdAt: { gte: cutoff },
+      ...(topicId ? { topicId } : {}),
+    },
+    select: {
+      userId: true,
+      type: true,
+      cellLat: true,
+      cellLng: true,
+      createdAt: true,
+    },
+  });
+
+  contributionCache.set(key, { rows, expiresAt: now.getTime() + BOOST_CACHE_TTL_MS });
+  return rows;
+}
+
+/**
+ * Resolve the viewer's accepted-Crew partner user ids (same ACCEPTED-edge
+ * pattern used by `lib/heatmap/aggregate`). Used as `viewerCrewIds` so
+ * `weightByCrew` can boost Crew-authored contributions (R10).
+ */
+async function getViewerCrewIds(viewerId: string): Promise<string[]> {
+  const rows = await prisma.crew.findMany({
+    where: {
+      status: 'ACCEPTED',
+      OR: [{ userAId: viewerId }, { userBId: viewerId }],
+    },
+    select: { userAId: true, userBId: true },
+  });
+  return rows.map((r) => (r.userAId === viewerId ? r.userBId : r.userAId));
+}
 
 const querySchema = z.object({
   topicId: z.string().cuid(),
@@ -57,7 +142,11 @@ export interface RecommendedVenue {
   rating: number | null;
   /** Final composite score (rating × hotnessBoost). */
   score: number;
-  /** Hotness multiplier applied (1.0 in Phase 3 — see lib/hotness/score). */
+  /**
+   * Hotness multiplier applied to the base score. Derived from recent
+   * `HeatmapContribution` density in the venue's cell (see lib/hotness/score);
+   * `1.0` when the venue's cell has no recent contributions, up to `MAX_BOOST`.
+   */
   hotnessBoost: number;
 }
 
@@ -88,11 +177,24 @@ export async function GET(request: NextRequest) {
 
     const { topicId, cityArea, weightByCrew, limit } = parsed.data;
     const callerId = session.user.id;
+    const now = new Date();
 
     const categories = await getPlacesCategoriesForTopic(topicId, prisma);
     const cityAreaDisplay = cityArea
       ? NYC_NEIGHBORHOODS.find((n) => n.slug === cityArea)?.displayName ?? cityArea
       : null;
+
+    // Load the hotness inputs once: recent contributions (cached per
+    // topic+area) and the viewer's Crew ids (for the weight-by-Crew filter).
+    // The same `contributions` array is passed to every venue's boost call —
+    // computeHotnessBoost filters to each venue's cell internally (no N+1).
+    const [contributions, viewerCrewIds] = await Promise.all([
+      getRecentContributions(topicId, cityArea, now),
+      weightByCrew ? getViewerCrewIds(callerId) : Promise.resolve<string[]>([]),
+    ]);
+
+    const boostFor = (venue: { latitude: number | null; longitude: number | null }): number =>
+      computeHotnessBoost({ venue, contributions, weightByCrew, viewerCrewIds, now });
 
     // Try Google Places first.
     const query = buildPlacesQuery(categories, cityAreaDisplay);
@@ -104,11 +206,7 @@ export async function GET(request: NextRequest) {
       recommendations = placesResults.map((p) => {
         const mapped = mapPlaceToVenue(p);
         const baseScore = p.rating ?? 3.5; // mid-range fallback when Google omits a rating
-        const boost = computeHotnessBoost(mapped.id, {
-          viewerId: callerId,
-          cityArea,
-          weightByCrew,
-        });
+        const boost = boostFor(mapped);
         return {
           id: mapped.id,
           name: mapped.name,
@@ -138,11 +236,7 @@ export async function GET(request: NextRequest) {
         take: limit * 2,
       });
       recommendations = dbVenues.map((v) => {
-        const boost = computeHotnessBoost(v.id, {
-          viewerId: callerId,
-          cityArea,
-          weightByCrew,
-        });
+        const boost = boostFor(v);
         return {
           id: v.id,
           name: v.name,
@@ -168,7 +262,9 @@ export async function GET(request: NextRequest) {
         callerId,
         topicId,
         cityArea: cityArea ?? null,
+        weightByCrew,
         categoriesCount: categories.length,
+        contributionsConsidered: contributions.length,
         sourcedFromPlaces: placesResults.length > 0,
         returned: top.length,
       },

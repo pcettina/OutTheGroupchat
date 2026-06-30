@@ -47,6 +47,8 @@ import { captureException } from '@/lib/sentry';
 type MockFn = ReturnType<typeof vi.fn>;
 const mockTopic = prisma.topic as unknown as { findUnique: MockFn };
 const mockVenue = prisma.venue as unknown as { findMany: MockFn };
+const mockHeatmap = prisma.heatmapContribution as unknown as { findMany: MockFn };
+const mockCrew = prisma.crew as unknown as { findMany: MockFn };
 const mockSearchPlaces = vi.mocked(searchPlaces);
 const mockGetServerSession = vi.mocked(getServerSession);
 const mockCheckRateLimit = vi.mocked(checkRateLimit);
@@ -74,6 +76,11 @@ beforeEach(() => {
   vi.resetAllMocks();
   // Re-arm rate-limit mock — vi.resetAllMocks() wipes the factory default.
   mockCheckRateLimit.mockResolvedValue(RL_PASS);
+  // Re-arm hotness-boost lookups (route always calls heatmapContribution.findMany;
+  // crew.findMany only when weightByCrew=true). Default [] → hotnessBoost 1.0
+  // (neutral), so base scoring assertions are unaffected.
+  mockHeatmap.findMany.mockResolvedValue([]);
+  mockCrew.findMany.mockResolvedValue([]);
 });
 
 describe('GET /api/recommendations — validation edge cases', () => {
