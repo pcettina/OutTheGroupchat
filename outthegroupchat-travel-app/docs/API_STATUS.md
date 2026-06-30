@@ -1,6 +1,7 @@
 # 📡 API & Integration Status
 
-> **Last Updated: 2026-06-12** (nightly/2026-06-12: lean quality-only build — no route additions, removals, or status changes (still **61 live routes**), no test changes (93 test files, 1863 tests). One code change, in CI config (not an API route): `.github/workflows/ci.yml` now runs `npm run build` before the Playwright E2E step so the authenticated-flow suite runs on every PR — closes prior rec #4.)
+> **Last Updated: 2026-06-29** (nightly/2026-06-30 — BUILD_PLAN.md Day 1 "Hotness signal goes live": no route additions or removals (still **61 live routes**). `GET /api/recommendations` now applies a **real density-derived hotness boost** — `src/lib/hotness/score.ts`'s `computeHotnessBoost` was implemented (was a literal `return 1.0` stub) and wired into ranking with `weightByCrew` active + a 5-min cache keyed by `(topicId, cityArea)`. Tests: new `src/__tests__/lib/hotness-score.test.ts` (16) + recommendations boost-reorder (+3) + repaired fixtures → **1861 tests / 93 files**. Build PASS, lint 0/0, prisma valid. See PR https://github.com/pcettina/OutTheGroupchat/pull/134.)
+> **Previous (2026-06-12, nightly/2026-06-12):** lean quality-only build — no route additions, removals, or status changes (still **61 live routes**), no test changes (93 test files, 1863 tests). One code change, in CI config (not an API route): `.github/workflows/ci.yml` now runs `npm run build` before the Playwright E2E step so the authenticated-flow suite runs on every PR — closes prior rec #4.
 > **Previous (2026-06-11, nightly/2026-06-11):** edge/security test depth + cleanup build — no route additions or removals (still **61 live routes**), no status changes. +49 edge/security tests added (check-in privacy/stalking-mitigation 22, meetup host/RSVP/invite authz 27) → 93 test files, 1863 tests. 7 unused imports removed; `any`-types confirmed 0 in live code. **Phase 8 action #5 (E2E authenticated flows) now PASSES 16/16 in a real Chromium browser** (signed-JWT cookie helper; production behavior was already correct — spec assertions corrected to match intentional middleware redirects). Doc fix: `/api/discover` base route (GET + POST flights) corrected to ARCHIVED — its only file is `src/app/api/_archive/discover/route.ts`; the live sub-routes `/api/discover/{search,recommendations,import}` are unaffected.
 > **Previous (2026-06-10, nightly/2026-06-10):** housekeeping build — no route additions or removals (still **61 live routes**), no status changes. Dead code removed: `src/lib/email-crew.ts` (0 importers; crew emails served by `src/lib/email.ts`) + `src/components/feed/ReactionPicker.tsx`. Stale docs content-refreshed to the meetup-centric reality. 91 test files, 1814 tests.
 >
@@ -244,7 +245,7 @@ BLOCKED - Need Environment Variables:
 |----------|--------|--------|-------------------|-------|
 | `/api/topics` | GET | ✅ | 🔶 | Topic taxonomy for intent creation; Sentry ✅ |
 | `/api/heatmap` | GET | ✅ | 🔶 | Heatmap data (Crew/FoF tiers); Sentry ✅ — see PRs #86, #87 |
-| `/api/recommendations` | GET | ✅ | 🔶 | Venue + meetup recommendations; Sentry ✅ |
+| `/api/recommendations` | GET | ✅ | 🔶 | Venue + meetup recommendations; Sentry ✅; **applies a real density-derived hotness boost (`computeHotnessBoost`) — `weightByCrew` active, 5-min cache by `(topicId, cityArea)` (2026-06-29, BUILD_PLAN Day 1)** |
 | `/api/venues/search` | GET | ✅ | ✅ | Places API venue search; Sentry ✅ |
 | `/api/cron/expire-intents` | GET | ✅ | N/A | Cron — expires intents past `activeUntil`; Sentry ✅ |
 
@@ -474,7 +475,7 @@ Phase 4 closed with Session 3. Next: Phase 5 (Check-ins & live presence).
 | `/api/subcrews/[id]/commit` | POST | ✅ | **yes — 2026-05-10** | Commit attendance (writes heatmap contribution) |
 | `/api/subcrews/[id]/members/me` | PATCH | ✅ | **yes — 2026-05-10** | Update own membership state |
 | `/api/topics` | GET | ✅ | — | Discover topics; **Sentry captureException added 2026-05-10 (nightly)** |
-| `/api/recommendations` | GET | ✅ | — | Venue/topic recommendations; **Sentry captureException added 2026-05-10 (nightly)** |
+| `/api/recommendations` | GET | ✅ | — | Venue/topic recommendations; **Sentry captureException added 2026-05-10 (nightly)**; **real density-derived hotness boost wired in 2026-06-29 (`computeHotnessBoost`, `weightByCrew` active, 5-min cache by `(topicId, cityArea)`) — BUILD_PLAN Day 1** |
 | `/api/heatmap` | GET | ✅ | yes | V1 Phase 4 — Crew + FoF tier contributions (PR #86/#87, 2026-05-09) |
 | `/api/cron/expire-intents` | GET | ✅ | yes | Cron — expire intents past `endAt` |
 
@@ -524,7 +525,9 @@ All routes below were moved to `src/app/api/_archive/` on **2026-04-16** as part
 - **E2E authenticated flows (Phase 8 action #5):** `e2e/authenticated-flow.spec.ts` now **PASSES 16/16 in a real Chromium browser** (2026-06-11). Uses a signed NextAuth JWT cookie helper (`e2e/auth-helper.ts`) for authed-UI tests, and asserts the intentional middleware 307-redirects for gated API routes (`/api/meetups`, `/api/checkins/*`, `/api/notifications/*`). Production code unchanged — app behavior was already correct; spec assertions were corrected to match. `npm run test:e2e` to run. **Now wired into CI (2026-06-12):** `.github/workflows/ci.yml` runs `npm run build` before the Playwright step so the production `webServer` (`npm run start`) has a `.next` build to serve — the suite runs on every PR (closes prior rec #4).
 - **Edge/security coverage (2026-06-11):** +49 tests — `src/__tests__/checkins-privacy-edge.test.ts` (22: `activeUntil` clamping, feed expiry gate, PUBLIC/CREW/PRIVATE visibility scoping, owner-only DELETE, 401s) and `src/__tests__/api/meetups-authz-edge.test.ts` (27: host-only PATCH/DELETE, RSVP capacity/duplicate, invite authz + fan-out cap, 401/400/403/404/409).
 
-*Last Updated: 2026-06-12 (nightly/2026-06-12) — no route status changes; 61 live routes unchanged. No test changes (93 test files / 1863 tests). One CI-config change: `.github/workflows/ci.yml` now builds the production bundle before the Playwright E2E step, so the authenticated-flow suite runs on every PR (closes prior rec #4).*
+*Last Updated: 2026-06-29 (nightly/2026-06-30, BUILD_PLAN Day 1) — no route additions/removals; 61 live routes unchanged. `GET /api/recommendations` now applies a real density-derived hotness boost (`computeHotnessBoost`, `weightByCrew` active, 5-min cache by `(topicId, cityArea)`). Tests: 1861 / 93 files. See PR #134.*
+
+*Previous: 2026-06-12 (nightly/2026-06-12) — no route status changes; 61 live routes unchanged. No test changes (93 test files / 1863 tests). One CI-config change: `.github/workflows/ci.yml` now builds the production bundle before the Playwright E2E step, so the authenticated-flow suite runs on every PR (closes prior rec #4).*
 
 *Previous: 2026-06-11 (nightly/2026-06-11) — no route status changes; 61 live routes unchanged. `/api/discover` base route (GET + POST) corrected to ARCHIVED (only file is `src/app/api/_archive/discover/route.ts`); live sub-routes `/api/discover/{search,recommendations,import}` unaffected. +49 edge/security tests (check-in privacy 22, meetup authz 27) → 93 test files / 1863 tests. Phase 8 action #5 E2E authenticated flows now passing 16/16 in real Chromium.*
 

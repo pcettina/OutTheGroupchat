@@ -57,7 +57,7 @@ These are launch-blocking but **cannot be done by the nightly agent** (Vercel/DN
 
 > Each Day below is the authoritative task spec. Sizes: **L** multi-file feature, **M** single route/component, **S** tweak. "Create/Modify" are starting points — agents may add adjacent files following conventions, but must respect file ownership within a wave.
 
-### Day 1 — `nightly/2026-06-30` — **Hotness signal goes live** — Status: ⬜ PENDING
+### Day 1 — `nightly/2026-06-30` — **Hotness signal goes live** — Status: ✅ COMPLETE (https://github.com/pcettina/OutTheGroupchat/pull/134, 2026-06-29)
 **Epic:** Replace the `1.0` hotness stub with a real density-derived "currently hot" boost so recommendations stop being pure Google-Places order.
 **Goal:** A venue in a rising-density cell ranks above a higher-Places-rated cold venue; `weightByCrew` actually changes ranking.
 **Depends on:** nothing (HeatmapContribution rows are already written on commit + check-in).

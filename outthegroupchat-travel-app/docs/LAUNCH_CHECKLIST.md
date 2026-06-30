@@ -17,7 +17,8 @@
 >
 > **Target Launch:** Q2 2026 (Beta) — to be re-baselined post-pivot
 > **Current Status:** Refactoring (Phase 2 in progress — domain models added, DB migration pending)
-> **Last Updated:** 2026-06-12 (nightly/2026-06-12 — lean quality-only build. One code change: `.github/workflows/ci.yml` now runs `npm run build` (with `CI: 'true'`) **before** the Playwright E2E step, so the production `webServer` (`npm run start`) the authenticated-flow suite depends on has a `.next` build to serve. This wires the verified `e2e/authenticated-flow.spec.ts` (16/16 passing locally) into CI on every PR — closing prior-night recommendation #4. No test changes (1863 tests / 93 files / 61 routes). Remaining beta gates are operational/infra-only (Sentry DSN in Vercel, Pusher vars, Resend domain, uptime monitor, NEXTAUTH_SECRET audit) — they require Vercel config, not code.)
+> **Last Updated:** 2026-06-29 (nightly/2026-06-30 — BUILD_PLAN.md Day 1 "Hotness signal goes live". `GET /api/recommendations` now applies a real density-derived hotness boost (`computeHotnessBoost` implemented in `src/lib/hotness/score.ts`, `weightByCrew` active, 5-min cache by `(topicId, cityArea)`) — the "currently hot" venue signal is no longer a stub. New `hotness-score.test.ts` (16) + recommendations boost-reorder (+3) → 1861 tests / 93 files / 61 routes. Build PASS, lint 0/0, prisma valid. PR #134. Remaining beta gates are operational/infra-only (Sentry DSN in Vercel, Pusher vars, Resend domain, uptime monitor, NEXTAUTH_SECRET audit) — they require Vercel config, not code.)
+> **Previous:** 2026-06-12 (nightly/2026-06-12 — lean quality-only build. One code change: `.github/workflows/ci.yml` now runs `npm run build` (with `CI: 'true'`) **before** the Playwright E2E step, so the production `webServer` (`npm run start`) the authenticated-flow suite depends on has a `.next` build to serve. This wires the verified `e2e/authenticated-flow.spec.ts` (16/16 passing locally) into CI on every PR — closing prior-night recommendation #4. No test changes (1863 tests / 93 files / 61 routes). Remaining beta gates are operational/infra-only (Sentry DSN in Vercel, Pusher vars, Resend domain, uptime monitor, NEXTAUTH_SECRET audit) — they require Vercel config, not code.)
 > **Previous:** 2026-06-11 (nightly/2026-06-11 — **Phase 8 action #5 closed in code: E2E Playwright authenticated flows now PASS 16/16 in a real Chromium browser** via signed-JWT cookie helper; production behavior was already correct (spec assertions corrected to match intentional middleware redirects). +49 edge/security tests (check-in privacy 22, meetup authz 27) → 1863 tests / 93 files / 61 routes. 7 unused imports removed.)
 
 ---
@@ -80,7 +81,7 @@ These are the gates that must close before V1 beta launch.
 - [x] Privacy settings (`/settings/privacy`, `/api/users/privacy`)
 - [x] Intents → auto-grouping loop (`/api/intents/*`, `/api/subcrews/*`, `cron/expire-intents`)
 - [x] Heatmap (Crew tier PR #86, FoF tier PR #87, threshold slider PR #88, MapLibre + OpenFreeMap)
-- [x] Topics + Recommendations (`/api/topics`, `/api/recommendations`)
+- [x] Topics + Recommendations (`/api/topics`, `/api/recommendations`) — recommendations now apply a real density-derived hotness boost (`computeHotnessBoost`, `weightByCrew` active) 2026-06-29, BUILD_PLAN Day 1
 - [x] Feed (rescoped to meetup/checkin types — trip/activity items removed)
 - [x] Search (people-first ordering)
 
