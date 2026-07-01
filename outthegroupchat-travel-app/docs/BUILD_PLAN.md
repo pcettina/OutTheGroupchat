@@ -67,7 +67,7 @@ These are launch-blocking but **cannot be done by the nightly agent** (Vercel/DN
 - **[T1] Tests (Wave 1)** — *create* `src/__tests__/lib/hotness-score.test.ts` (decay, window cutoff, crew-weight, empty-cell neutral) + extend recommendations route test for boost-driven reorder.
 **Carry-over:** —
 
-### Day 2 — `nightly/2026-07-01` — **Make "hot" visible + persist the chosen venue** — Status: ⬜ PENDING
+### Day 2 — `nightly/2026-07-01` — **Make "hot" visible + persist the chosen venue** — Status: ✅ COMPLETE (PR pending, 2026-06-30)
 **Epic:** Surface the now-real hotness in the UI and stop losing the SubCrew's chosen venue.
 **Goal:** Users see "🔥 Hot now" badges + contributor counts; a frozen SubCrew remembers its venue.
 **Depends on:** Day 1 (hotness signal).

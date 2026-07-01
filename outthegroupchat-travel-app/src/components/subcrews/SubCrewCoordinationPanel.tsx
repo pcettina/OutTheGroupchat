@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, Check, Clock } from 'lucide-react';
+import { Calendar, Check, Clock, MapPin } from 'lucide-react';
 import { PrivacyPickerModal, type PrivacyChoice } from '@/components/privacy/PrivacyPickerModal';
 import type { SubCrewResponse } from '@/types/subcrew';
 import { snappySpring, triggerHaptic } from '@/lib/motion';
@@ -13,6 +13,19 @@ interface SubCrewCoordinationPanelProps {
   /** Caller's matching live INTERESTED Intent for this SubCrew, if any. */
   callerIntentId: string | null;
   onChanged?: () => void;
+}
+
+/**
+ * Minimal recommendation shape the venue selector needs (subset of the
+ * `/api/recommendations` `RecommendedVenue` payload). Only `source: 'db'`
+ * venues are selectable — the PATCH `venueId` field validates as a cuid, and
+ * Google Places hits use `gp_<place_id>` ids that would fail that check.
+ */
+interface VenueOption {
+  id: string;
+  name: string;
+  address: string | null;
+  source: 'google_places' | 'db';
 }
 
 /**
@@ -50,6 +63,91 @@ export function SubCrewCoordinationPanel({
   const [pickerOpen, setPickerOpen] = useState(false);
   const [committing, setCommitting] = useState(false);
   const [commitError, setCommitError] = useState<string | null>(null);
+
+  // ---- venue selection (seed binds SubCrew.venueId from recommendations) ----
+  const [venueOptions, setVenueOptions] = useState<VenueOption[] | null>(null);
+  const [venueLoadError, setVenueLoadError] = useState<string | null>(null);
+  const [savingVenue, setSavingVenue] = useState(false);
+  const [venueSaveError, setVenueSaveError] = useState<string | null>(null);
+
+  // Load recommendations once so the seed can pick a venue and everyone can see
+  // the chosen venue's name/address. Only fetched for members that can act on it
+  // or when a venue is already bound (to resolve its display details).
+  useEffect(() => {
+    if (!isSeed && !subCrew.venueId) {
+      setVenueOptions([]);
+      return;
+    }
+    let cancelled = false;
+    setVenueOptions(null);
+    setVenueLoadError(null);
+    (async () => {
+      try {
+        const params = new URLSearchParams({ topicId: subCrew.topicId, limit: '10' });
+        if (subCrew.cityArea) params.set('cityArea', subCrew.cityArea);
+        const res = await fetch(`/api/recommendations?${params.toString()}`);
+        const body = await res.json();
+        if (cancelled) return;
+        if (!res.ok || !body.success) {
+          setVenueLoadError(body.error ?? 'Could not load venues.');
+          setVenueOptions([]);
+          return;
+        }
+        const recs = (body.data.recommendations as VenueOption[]).map((v) => ({
+          id: v.id,
+          name: v.name,
+          address: v.address,
+          source: v.source,
+        }));
+        setVenueOptions(recs);
+      } catch {
+        if (!cancelled) {
+          setVenueLoadError('Network error.');
+          setVenueOptions([]);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isSeed, subCrew.venueId, subCrew.topicId, subCrew.cityArea]);
+
+  // Only cuid-bearing DB venues can be bound (PATCH validates venueId as a cuid).
+  const selectableVenues = useMemo(
+    () => (venueOptions ?? []).filter((v) => v.source === 'db'),
+    [venueOptions],
+  );
+
+  // Resolve the currently-bound venue's display details from the loaded list.
+  const chosenVenue = useMemo(
+    () => (subCrew.venueId ? venueOptions?.find((v) => v.id === subCrew.venueId) ?? null : null),
+    [subCrew.venueId, venueOptions],
+  );
+
+  // ---- bind venue (seed only) ----
+  const handleSelectVenue = async (venueId: string) => {
+    if (!venueId || venueId === subCrew.venueId) return;
+    setSavingVenue(true);
+    setVenueSaveError(null);
+    triggerHaptic('button-press');
+    try {
+      const res = await fetch(`/api/subcrews/${subCrew.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ venueId }),
+      });
+      const body = await res.json();
+      if (!res.ok || !body.success) {
+        setVenueSaveError(body.error ?? 'Could not set venue.');
+        return;
+      }
+      onChanged?.();
+    } catch {
+      setVenueSaveError('Network error.');
+    } finally {
+      setSavingVenue(false);
+    }
+  };
 
   // ---- proposeTime ----
   const handlePropose = async () => {
@@ -163,6 +261,72 @@ export function SubCrewCoordinationPanel({
               })}
             </span>
           </div>
+        </div>
+      )}
+
+      {/* Chosen venue (visible to everyone once the seed has bound one) */}
+      {subCrew.venueId && (
+        <div
+          className="rounded-lg border border-otg-sodium/40 bg-otg-sodium/10 p-3 text-sm"
+          data-testid="chosen-venue"
+        >
+          <div className="flex items-start gap-2 text-otg-sodium">
+            <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0" aria-hidden="true" />
+            <div className="min-w-0">
+              <p className="font-semibold">{chosenVenue?.name ?? 'Venue selected'}</p>
+              {chosenVenue?.address && (
+                <p className="truncate text-xs text-otg-text-muted">{chosenVenue.address}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Seed: choose a venue from the recommendations */}
+      {isSeed && (
+        <div data-testid="venue-select">
+          <label
+            className="mb-1 block text-sm font-medium text-otg-text-bright"
+            htmlFor="venue-select-input"
+          >
+            <MapPin className="mr-1 inline h-3 w-3" aria-hidden="true" />
+            Pick a venue
+          </label>
+          {venueOptions === null ? (
+            <p className="text-xs text-otg-text-muted">Loading venues…</p>
+          ) : selectableVenues.length === 0 ? (
+            <p className="text-xs text-otg-text-muted">
+              No bindable venues yet — check the recommendations below.
+            </p>
+          ) : (
+            <select
+              id="venue-select-input"
+              value={subCrew.venueId ?? ''}
+              onChange={(e) => handleSelectVenue(e.target.value)}
+              disabled={savingVenue}
+              className="w-full rounded-lg border border-otg-border bg-otg-bg px-3 py-2 text-sm text-otg-text-bright disabled:opacity-50"
+            >
+              <option value="" disabled>
+                {savingVenue ? 'Saving…' : 'Select a venue…'}
+              </option>
+              {selectableVenues.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.name}
+                  {v.address ? ` — ${v.address}` : ''}
+                </option>
+              ))}
+            </select>
+          )}
+          {venueLoadError && (
+            <p className="mt-1 text-xs text-red-400" role="alert">
+              {venueLoadError}
+            </p>
+          )}
+          {venueSaveError && (
+            <p className="mt-1 text-xs text-red-400" role="alert">
+              {venueSaveError}
+            </p>
+          )}
         </div>
       )}
 

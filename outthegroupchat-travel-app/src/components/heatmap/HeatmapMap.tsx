@@ -17,6 +17,7 @@
 import { useEffect, useRef } from 'react';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { HeatmapCell, HeatmapVenueMarker } from '@/types/heatmap';
+import { ContributorCountChip } from '@/components/subcrews/HotNowBadge';
 
 interface HeatmapMapProps {
   cells: HeatmapCell[];
@@ -147,14 +148,29 @@ export function HeatmapMap({
     renderData(map, cells, venueMarkers);
   }, [cells, venueMarkers]);
 
+  // Rising-density indicator derived from existing marker density — the sum of
+  // contributor counts across the venue markers already rendered on the map.
+  // No new API call: `venueMarkers[].count` is the density the parent polled.
+  const contributorTotal = venueMarkers.reduce((sum, m) => sum + (m.count ?? 0), 0);
+
   return (
-    <div
-      ref={containerRef}
-      className="w-full h-full min-h-[480px] rounded-lg overflow-hidden"
-      style={{ background: '#0E1418' }}
-      aria-label="Heatmap map"
-      role="region"
-    />
+    <div className="relative w-full h-full min-h-[480px]">
+      <div
+        ref={containerRef}
+        className="w-full h-full min-h-[480px] rounded-lg overflow-hidden"
+        style={{ background: '#0E1418' }}
+        aria-label="Heatmap map"
+        role="region"
+      />
+      {contributorTotal > 0 && (
+        <div className="pointer-events-none absolute left-3 top-3 z-10">
+          <ContributorCountChip
+            count={contributorTotal}
+            className="pointer-events-auto shadow-sm"
+          />
+        </div>
+      )}
+    </div>
   );
 }
 

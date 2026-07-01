@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { Star, MapPin, Sparkles } from 'lucide-react';
+import { HotNowBadge } from './HotNowBadge';
 
 interface RecommendedVenue {
   id: string;
@@ -114,7 +115,13 @@ export function RecommendationsList({
             </div>
 
             <div className="min-w-0 flex-1">
-              <p className="truncate font-semibold text-otg-text-bright">{v.name}</p>
+              <div className="flex items-center gap-2">
+                <p className="truncate font-semibold text-otg-text-bright">{v.name}</p>
+                {/* Rising-density signal from the real Phase 4 hotnessBoost.
+                    The recommendations API exposes no per-venue contributor
+                    count, so only the badge is rendered here (no chip). */}
+                <HotNowBadge hotnessBoost={v.hotnessBoost} className="flex-shrink-0" />
+              </div>
               <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-otg-text-muted">
                 {v.rating !== null && (
                   <span className="inline-flex items-center gap-1">
