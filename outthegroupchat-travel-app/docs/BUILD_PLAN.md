@@ -77,7 +77,7 @@ These are launch-blocking but **cannot be done by the nightly agent** (Vercel/DN
 - **[T1] Tests (Wave 1)** — *create* `src/__tests__/api/subcrews-venue.test.ts` (venue persistence, seed-only authz) + a badge render test.
 **Carry-over:** —
 
-### Day 3 — `nightly/2026-07-02` — **SubCrew graduates into a Meetup** — Status: ✅ COMPLETE (PENDING_PR_LINK, 2026-07-11)
+### Day 3 — `nightly/2026-07-02` — **SubCrew graduates into a Meetup** — Status: ✅ COMPLETE (https://github.com/pcettina/OutTheGroupchat/pull/143, 2026-07-11)
 **Epic:** Close the funnel: a coordinated SubCrew (time + venue frozen) becomes a durable Meetup with attendees.
 **Goal:** Freezing a SubCrew creates a linked Meetup; members appear as attendees; the panel links to it.
 **Depends on:** Day 2 (venue persisted).
