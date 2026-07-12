@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Calendar, Check, Clock, MapPin } from 'lucide-react';
+import { ArrowRight, Calendar, Check, Clock, MapPin, PartyPopper } from 'lucide-react';
 import { PrivacyPickerModal, type PrivacyChoice } from '@/components/privacy/PrivacyPickerModal';
 import type { SubCrewResponse } from '@/types/subcrew';
 import { snappySpring, triggerHaptic } from '@/lib/motion';
@@ -234,6 +235,40 @@ export function SubCrewCoordinationPanel({
       setCommitting(false);
     }
   };
+
+  // ---- graduated: this SubCrew has become a Meetup ----
+  // Once a SubCrew graduates it carries a linked `meetupId`. Coordination is
+  // done at that point, so replace the coordinate/commit surface with a clear
+  // graduated banner and a deep link into the Meetup detail page.
+  if (subCrew.meetupId) {
+    return (
+      <section
+        className="space-y-4 rounded-2xl border border-otg-sodium/40 bg-otg-sodium/10 p-5"
+        data-testid="subcrew-graduated"
+      >
+        <header className="flex items-start gap-2">
+          <PartyPopper className="mt-0.5 h-5 w-5 flex-shrink-0 text-otg-sodium" aria-hidden="true" />
+          <div>
+            <h2 className="text-base font-semibold text-otg-text-bright">
+              This SubCrew is now a Meetup
+            </h2>
+            <p className="text-xs text-otg-text-muted">
+              Everyone committed — coordination has moved to the Meetup.
+            </p>
+          </div>
+        </header>
+
+        <Link
+          href={`/meetups/${subCrew.meetupId}`}
+          className="flex w-full items-center justify-center gap-2 rounded-full bg-otg-sodium px-6 py-3 text-sm font-semibold text-otg-bg transition hover:bg-otg-sodium/90"
+          data-testid="view-meetup-link"
+        >
+          View Meetup
+          <ArrowRight className="h-4 w-4" aria-hidden="true" />
+        </Link>
+      </section>
+    );
+  }
 
   return (
     <section className="space-y-6 rounded-2xl border border-otg-border bg-otg-surface/60 p-5">

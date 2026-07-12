@@ -19,6 +19,7 @@ import { authOptions } from '@/lib/auth';
 import * as Sentry from '@sentry/nextjs';
 import { apiLogger } from '@/lib/logger';
 import { apiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
+import { graduateSubCrewToMeetup, type GraduateResult } from '@/lib/subcrews/graduate-to-meetup';
 
 type RouteParams = { params: { id: string } };
 
@@ -197,6 +198,7 @@ export async function PATCH(request: NextRequest, context: RouteParams) {
         endAt: true,
         venueId: true,
         cityArea: true,
+        meetupId: true,
       },
     });
 
@@ -205,7 +207,43 @@ export async function PATCH(request: NextRequest, context: RouteParams) {
       '[SUBCREW_PATCH] SubCrew updated by seed',
     );
 
-    return NextResponse.json({ success: true, data: updated });
+    // Graduate to a durable Meetup once BOTH time + venue are frozen. Idempotent:
+    // re-freezing a graduated SubCrew is a no-op that returns the existing Meetup.
+    // Graduation failure must not fail the freeze (it is retry-safe), so capture
+    // and continue rather than surfacing a 500.
+    let graduation: GraduateResult = { status: 'not_eligible' };
+    try {
+      // Only adopt a well-formed result; a falsy return degrades to not_eligible
+      // so the final response can never dereference an undefined graduation.
+      const result = await graduateSubCrewToMeetup(prisma, {
+        subCrewId: id,
+        hostId: session.user.id,
+      });
+      if (result?.status) {
+        graduation = result;
+      }
+      if (graduation.status === 'created') {
+        apiLogger.info(
+          { subCrewId: id, meetupId: graduation.meetup.id, attendees: graduation.memberCount },
+          '[SUBCREW_PATCH] SubCrew graduated to Meetup',
+        );
+      }
+    } catch (graduationError) {
+      Sentry.captureException(graduationError, {
+        tags: { route: 'api/subcrews/[id]', method: 'PATCH', phase: 'graduation' },
+      });
+      apiLogger.error(
+        { error: graduationError, subCrewId: id },
+        '[SUBCREW_PATCH] Failed to graduate SubCrew to Meetup',
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: updated,
+      meetup: graduation.status === 'not_eligible' ? null : graduation.meetup,
+      graduated: graduation.status === 'created',
+    });
   } catch (error) {
     Sentry.captureException(error, { tags: { route: 'api/subcrews/[id]', method: 'PATCH' } });
     apiLogger.error({ error }, '[SUBCREW_PATCH] Failed to update subcrew');
