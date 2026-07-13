@@ -87,7 +87,7 @@ These are launch-blocking but **cannot be done by the nightly agent** (Vercel/DN
 - **[T1] Tests (Wave 1)** — *create* `src/__tests__/api/subcrew-graduation.test.ts` (creation, idempotency, attendee linkage, authz).
 **Carry-over:** —
 
-### Day 4 — `nightly/2026-07-03` — **Per-relationship privacy defaults (the load-bearing gap)** — Status: ⬜ PENDING
+### Day 4 — `nightly/2026-07-03` — **Per-relationship privacy defaults (the load-bearing gap)** — Status: ✅ COMPLETE (https://github.com/pcettina/OutTheGroupchat/pull/144, 2026-07-13)
 **Epic:** Make R4/R20 reachable: let a user set, once per Crew member, who sees their location and at what granularity/identity.
 **Goal:** A user can open "Manage who sees my location," set BLOCK/DYNAMIC_CELL/HIDDEN + KNOWN/ANONYMOUS/CREW_ANCHORED per Crew member, and the aggregator honors it.
 **Depends on:** nothing new (`CrewRelationshipSetting` schema + aggregate-read already exist).
