@@ -52,6 +52,19 @@ export default async function PrivacySettingsPage() {
           <PrivacySettingsForm initialVisibility={initialVisibility} />
         </div>
 
+        <div className="mt-4 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <a
+            href="/settings/privacy/relationships"
+            className="flex items-center justify-between gap-3 text-sm font-medium text-teal-700 hover:text-teal-800"
+          >
+            <span>Manage who sees your location</span>
+            <span aria-hidden="true">&rarr;</span>
+          </a>
+          <p className="mt-1 text-xs text-gray-500">
+            Set precision and name visibility per Crew member.
+          </p>
+        </div>
+
         <p className="mt-4 text-xs text-gray-400 text-center">
           You can also override this on a per-check-in basis when checking in.
         </p>
