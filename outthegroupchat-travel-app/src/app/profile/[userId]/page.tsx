@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { MapPin, Calendar } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 import CrewButton from '@/components/social/CrewButton';
+import BlockButton from '@/components/safety/BlockButton';
 import type { CrewStatus } from '@prisma/client';
 
 type ResolvedStatus = CrewStatus | 'NOT_IN_CREW' | 'SELF';
@@ -117,12 +118,20 @@ export default function UserProfilePage() {
                     </div>
 
                     {!viewingSelf && session?.user?.id && (
-                      <div data-testid="crew-button-slot">
+                      <div
+                        data-testid="crew-button-slot"
+                        className="flex flex-col items-stretch gap-2"
+                      >
                         <CrewButton
                           targetUserId={profile.id}
                           initialStatus={crewStatus?.status}
                           initialCrewId={crewStatus?.crewId ?? null}
                           initialIsRequester={crewStatus?.iAmRequester ?? false}
+                        />
+                        <BlockButton
+                          targetUserId={profile.id}
+                          targetName={profile.name}
+                          initialBlocked={crewStatus?.status === 'BLOCKED'}
                         />
                       </div>
                     )}

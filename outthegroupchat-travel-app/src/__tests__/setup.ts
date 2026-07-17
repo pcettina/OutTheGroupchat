@@ -357,9 +357,24 @@ vi.mock('@/lib/prisma', () => ({
       deleteMany: vi.fn(),
       count: vi.fn(),
     },
+    userBlock: {
+      findFirst: vi.fn(),
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      upsert: vi.fn(),
+      delete: vi.fn(),
+      deleteMany: vi.fn(),
+      count: vi.fn(),
+    },
     $queryRaw: vi.fn().mockResolvedValue([{ now: new Date() }]),
     $transaction: vi.fn().mockImplementation((fn: unknown) =>
-      typeof fn === 'function' ? fn({}) : Promise.resolve(fn)
+      Array.isArray(fn)
+        ? Promise.all(fn)
+        : typeof fn === 'function'
+          ? (fn as (tx: unknown) => unknown)({})
+          : Promise.resolve(fn)
     ),
   },
 }));

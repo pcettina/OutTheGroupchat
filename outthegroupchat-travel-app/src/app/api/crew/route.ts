@@ -52,9 +52,25 @@ export async function GET(req: NextRequest) {
     const { page, pageSize } = parsed.data;
     const userId = session.user.id;
 
+    // Mutual block enforcement: hide any Crew whose other member the viewer
+    // blocked OR who blocked the viewer. One extra findMany (no N+1).
+    const blocks = await prisma.userBlock.findMany({
+      where: { OR: [{ blockerId: userId }, { blockedId: userId }] },
+      select: { blockerId: true, blockedId: true },
+    });
+    const hiddenIds = Array.from(
+      new Set((blocks ?? []).flatMap((b) => [b.blockerId, b.blockedId]))
+    ).filter((id) => id !== userId);
+
+    // Filter the "other" member on both sides of the lexicographically-ordered
+    // (userAId/userBId) pair. Empty hiddenIds → notIn: [] matches all rows, so
+    // behavior is identical to before.
     const where = {
       status: 'ACCEPTED' as const,
-      OR: [{ userAId: userId }, { userBId: userId }],
+      OR: [
+        { userAId: userId, userBId: { notIn: hiddenIds } },
+        { userBId: userId, userAId: { notIn: hiddenIds } },
+      ],
     };
 
     const [crews, total] = await Promise.all([

@@ -65,12 +65,24 @@ export async function GET(request: NextRequest) {
       row.userAId === callerId ? row.userBId : row.userAId
     );
 
+    // Mutual block enforcement: hide check-ins authored by anyone the caller has
+    // blocked, or who has blocked the caller. No partial leak — presence of a
+    // blocked user's check-in is itself a safety regression.
+    const blocks = await prisma.userBlock.findMany({
+      where: { OR: [{ blockerId: callerId }, { blockedId: callerId }] },
+      select: { blockerId: true, blockedId: true },
+    });
+    const hiddenIds = Array.from(
+      new Set((blocks ?? []).flatMap((b) => [b.blockerId, b.blockedId]))
+    ).filter((id) => id !== callerId);
+
     const now = new Date();
 
     // Include: PUBLIC check-ins from anyone in crew, CREW check-ins (already scoped to crew), own PRIVATE
     const checkIns = await prisma.checkIn.findMany({
       where: {
         activeUntil: { gt: now },
+        userId: { notIn: hiddenIds },
         OR: [
           // Own check-ins (any visibility)
           { userId: callerId },

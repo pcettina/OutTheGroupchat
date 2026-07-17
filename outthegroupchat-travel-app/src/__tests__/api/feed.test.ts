@@ -53,6 +53,13 @@ vi.mock('@/lib/prisma', async (importOriginal) => {
         create: vi.fn(),
         update: vi.fn(),
       },
+      userBlock: {
+        findMany: vi.fn().mockResolvedValue([]),
+        findUnique: vi.fn(),
+        upsert: vi.fn(),
+        deleteMany: vi.fn(),
+        count: vi.fn(),
+      },
     },
   };
 });

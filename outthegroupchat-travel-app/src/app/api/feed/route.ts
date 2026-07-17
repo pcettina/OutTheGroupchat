@@ -94,6 +94,28 @@ export async function GET(req: Request) {
     // Resolve crew partner IDs (empty when logged out)
     const crewPartnerIds: string[] = userId ? await getCrewPartnerIds(userId) : [];
 
+    // Resolve mutually-blocked user IDs (empty when logged out). Block
+    // enforcement is bidirectional: hide feed items authored by anyone the
+    // caller blocked OR who blocked the caller. Single findMany, no N+1.
+    let hiddenIds: string[] = [];
+    if (userId) {
+      const blocks = await prisma.userBlock.findMany({
+        where: { OR: [{ blockerId: userId }, { blockedId: userId }] },
+        select: { blockerId: true, blockedId: true },
+      });
+      hiddenIds = Array.from(
+        new Set((blocks ?? []).flatMap((b) => [b.blockerId, b.blockedId]))
+      ).filter((id) => id !== userId);
+    }
+
+    // Prisma filter fragments applied to each feed source's author/actor field.
+    // Empty objects when there are no blocks, keeping queries byte-identical to
+    // pre-block behavior.
+    const meetupBlockFilter: Prisma.MeetupWhereInput =
+      hiddenIds.length > 0 ? { hostId: { notIn: hiddenIds } } : {};
+    const checkInBlockFilter: Prisma.CheckInWhereInput =
+      hiddenIds.length > 0 ? { userId: { notIn: hiddenIds } } : {};
+
     const now = new Date();
     const feedItems: FeedItem[] = [];
 
@@ -107,6 +129,7 @@ export async function GET(req: Request) {
           cancelled: false,
           scheduledAt: { gte: now },
           visibility: 'PUBLIC',
+          ...meetupBlockFilter,
         },
         include: {
           host: { select: { id: true, name: true, image: true } },
@@ -166,6 +189,7 @@ export async function GET(req: Request) {
             cancelled: false,
             scheduledAt: { gte: now },
             OR: meetupOrClauses,
+            ...meetupBlockFilter,
           },
           include: {
             host: { select: { id: true, name: true, image: true } },
@@ -231,6 +255,7 @@ export async function GET(req: Request) {
           where: {
             activeUntil: { gt: now },
             OR: checkInOrClauses,
+            ...checkInBlockFilter,
           },
           include: {
             user: { select: { id: true, name: true, image: true } },

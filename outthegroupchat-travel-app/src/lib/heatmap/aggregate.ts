@@ -28,7 +28,7 @@ import { buildAnchorSummary, pickAnchor, type AnchorPick } from '@/lib/heatmap/a
 
 type PrismaLike = Pick<
   typeof defaultPrisma,
-  'crew' | 'heatmapContribution' | 'crewRelationshipSetting' | 'intent' | 'checkIn' | 'venue' | 'user' | 'subCrewMember'
+  'crew' | 'heatmapContribution' | 'crewRelationshipSetting' | 'intent' | 'checkIn' | 'venue' | 'user' | 'subCrewMember' | 'userBlock'
 >;
 
 export interface AggregateInput {
@@ -90,6 +90,27 @@ async function getCrewPartnerIds(
     select: { userAId: true, userBId: true },
   });
   return rows.map((r) => (r.userAId === viewerId ? r.userBId : r.userAId));
+}
+
+/**
+ * Resolve the set of user ids the viewer must never see on the heatmap due to a
+ * block relationship — mutual, in either direction. If the viewer blocked user
+ * X, or X blocked the viewer, X's presence/interest must be excluded (and the
+ * viewer is likewise excluded from X's view by the symmetric query run for X).
+ * Presence is a location signal, so this is a hard safety filter: no partial
+ * leak. Returns [] when there are no blocks (identical downstream behavior).
+ */
+async function getBlockedUserIds(
+  client: PrismaLike,
+  viewerId: string,
+): Promise<string[]> {
+  const blocks = await client.userBlock.findMany({
+    where: { OR: [{ blockerId: viewerId }, { blockedId: viewerId }] },
+    select: { blockerId: true, blockedId: true },
+  });
+  return Array.from(
+    new Set((blocks ?? []).flatMap((b) => [b.blockerId, b.blockedId])),
+  ).filter((id) => id !== viewerId);
 }
 
 function bucketContributions(
@@ -189,7 +210,10 @@ interface BranchInput extends AggregateInput {
 }
 
 async function aggregateCrew(input: BranchInput): Promise<AggregateOutput> {
-  const crewIds = await getCrewPartnerIds(input.client, input.viewerId);
+  const [crewIds, blockedIds] = await Promise.all([
+    getCrewPartnerIds(input.client, input.viewerId),
+    getBlockedUserIds(input.client, input.viewerId),
+  ]);
   if (crewIds.length === 0) return { cells: [], venueMarkers: [] };
 
   const contributions = await fetchContributions(input.client, {
@@ -199,6 +223,7 @@ async function aggregateCrew(input: BranchInput): Promise<AggregateOutput> {
     topicId: input.topicId,
     windowPreset: input.windowPreset,
     socialScopes: [HeatmapSocialScope.FULL_CREW, HeatmapSocialScope.SUBGROUP_ONLY],
+    excludeUserIds: blockedIds,
   });
   if (contributions.length === 0) return { cells: [], venueMarkers: [] };
 
@@ -235,8 +260,9 @@ async function aggregateFoF(input: BranchInput): Promise<AggregateOutput> {
   const fofUserIds = fofSet.map((f) => f.userId);
   const allAnchorIds = Array.from(new Set(fofSet.flatMap((f) => f.anchorIds)));
 
-  // Pre-fetch the data pickAnchor needs for each FoF user.
-  const [anchorUsers, crewEdges, subCrewMembers] = await Promise.all([
+  // Pre-fetch the data pickAnchor needs for each FoF user, plus the viewer's
+  // block set (blocked pairs must never surface on the heatmap — R-safety).
+  const [anchorUsers, crewEdges, subCrewMembers, blockedIds] = await Promise.all([
     input.client.user.findMany({
       where: { id: { in: allAnchorIds } },
       select: { id: true, name: true },
@@ -257,6 +283,7 @@ async function aggregateFoF(input: BranchInput): Promise<AggregateOutput> {
           select: { userId: true },
         })
       : Promise.resolve([] as Array<{ userId: string }>),
+    getBlockedUserIds(input.client, input.viewerId),
   ]);
 
   const nameById = new Map<string, string | null>(
@@ -290,6 +317,7 @@ async function aggregateFoF(input: BranchInput): Promise<AggregateOutput> {
     topicId: input.topicId,
     windowPreset: input.windowPreset,
     socialScopes: [HeatmapSocialScope.FULL_CREW],
+    excludeUserIds: blockedIds,
   });
   if (contributions.length === 0) return { cells: [], venueMarkers: [] };
 
@@ -313,11 +341,18 @@ async function fetchContributions(
     topicId?: string;
     windowPreset?: WindowPreset;
     socialScopes: HeatmapSocialScope[];
+    /** User ids to hard-exclude (blocked pairs — R-safety). Empty → no filter. */
+    excludeUserIds?: string[];
   },
 ): Promise<ContributionRow[]> {
   const rows = await client.heatmapContribution.findMany({
     where: {
-      userId: { in: opts.userIds },
+      userId: {
+        in: opts.userIds,
+        ...(opts.excludeUserIds && opts.excludeUserIds.length > 0
+          ? { notIn: opts.excludeUserIds }
+          : {}),
+      },
       type: opts.type,
       expiresAt: { gt: opts.now },
       socialScope: { in: opts.socialScopes },

@@ -97,7 +97,7 @@ These are launch-blocking but **cannot be done by the nightly agent** (Vercel/DN
 - **[T1] Tests (Wave 1)** — *create* `src/__tests__/api/relationship-settings.test.ts` (upsert, defaults, authz, Zod enum validation).
 **Carry-over:** —
 
-### Day 5 — `nightly/2026-07-04` — **Trust & Safety I: block a user** — Status: ⬜ PENDING
+### Day 5 — `nightly/2026-07-04` — **Trust & Safety I: block a user** — Status: ✅ COMPLETE (PR_URL_PENDING, 2026-07-16)
 **Epic:** Baseline safety for a social+location product: block a user, enforced across every surface that could leak presence.
 **Goal:** Blocking a user hides them from your Crew/feed/heatmap/check-in surfaces (and vice-versa).
 **Depends on:** nothing (additive migration). NOTE: **remove-from-Crew already exists** — `DELETE /api/crew/[id]` severs the edge today; do NOT rebuild it. This Day adds *blocking* on top.
