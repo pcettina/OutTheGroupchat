@@ -109,7 +109,7 @@ These are launch-blocking but **cannot be done by the nightly agent** (Vercel/DN
 - **[T1] Tests (Wave 1)** — *create* `src/__tests__/api/user-block.test.ts` + `src/__tests__/api/block-enforcement.test.ts` (one assertion per surface). **Wave 3** adds `userBlock` mocks to `setup.ts`.
 **Carry-over:** —
 
-### Day 6 — `nightly/2026-07-05` — **Trust & Safety II: report + anti-spam** — Status: ⬜ PENDING
+### Day 6 — `nightly/2026-07-05` — **Trust & Safety II: report + anti-spam** — Status: ✅ COMPLETE (https://github.com/pcettina/OutTheGroupchat/pull/146, 2026-07-17)
 **Epic:** Reporting flow + abuse throttles.
 **Goal:** Users can report a user/meetup; meetup creation and Crew requests are rate-limited per user.
 **Depends on:** Day 5 (T&S foundation).
