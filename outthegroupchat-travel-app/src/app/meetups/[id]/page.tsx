@@ -10,6 +10,7 @@ import { Navigation } from '@/components/Navigation';
 import { RSVPButton } from '@/components/meetups/RSVPButton';
 import AttendeeList from '@/components/meetups/AttendeeList';
 import MeetupInviteModal from '@/components/meetups/MeetupInviteModal';
+import ReportButton from '@/components/safety/ReportButton';
 import { getPusherClient } from '@/lib/pusher';
 import type { AttendeeResponse, AttendeeStatus, MeetupVisibility } from '@/types/meetup';
 
@@ -345,6 +346,17 @@ export default function MeetupDetailPage() {
         <div className="rounded-2xl border border-otg-border bg-otg-maraschino p-5">
           <h2 className="text-sm font-semibold text-otg-text-bright mb-3">Your RSVP</h2>
           <RSVPButton meetupId={meetup.id} currentStatus={meetup.myRsvpStatus} />
+        </div>
+      )}
+
+      {!isHost && session?.user?.id && (
+        <div className="flex justify-end">
+          <ReportButton
+            targetType="MEETUP"
+            targetId={meetup.id}
+            targetName={meetup.title}
+            variant="button"
+          />
         </div>
       )}
 

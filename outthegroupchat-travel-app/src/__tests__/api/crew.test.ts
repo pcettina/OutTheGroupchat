@@ -24,6 +24,7 @@ vi.mock('@/lib/rate-limit', () => ({
   apiRateLimiter: null,
   aiRateLimiter: null,
   authRateLimiter: null,
+  creationQuotaLimiter: null,
   checkRateLimit: vi
     .fn()
     .mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: 0 }),
@@ -113,6 +114,23 @@ describe('POST /api/crew/request', () => {
     mockGetServerSession.mockResolvedValue(sessionFor(USER_A));
     const res = await requestPOST(makeReq({}));
     expect(res.status).toBe(400);
+  });
+
+  it('returns 429 when daily creation quota exceeded', async () => {
+    mockGetServerSession.mockResolvedValue(sessionFor(USER_A));
+    // First checkRateLimit call (per-minute) passes; second (daily quota) fails.
+    mockCheckRateLimit
+      .mockResolvedValueOnce({ success: true, limit: 100, remaining: 99, reset: 0 })
+      .mockResolvedValueOnce({ success: false, limit: 10, remaining: 0, reset: 0 });
+
+    const res = await requestPOST(makeReq({ targetUserId: USER_B }));
+
+    expect(res.status).toBe(429);
+    const body = await res.json();
+    expect(body.success).toBe(false);
+    expect(body.error).toBe('Daily creation limit reached');
+    // The daily-quota gate short-circuits before any prisma.crew work.
+    expect(mockPrismaCrew.create).not.toHaveBeenCalled();
   });
 
   it('returns 400 when requesting self', async () => {

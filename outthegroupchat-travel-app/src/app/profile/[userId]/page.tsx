@@ -9,6 +9,7 @@ import { MapPin, Calendar } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 import CrewButton from '@/components/social/CrewButton';
 import BlockButton from '@/components/safety/BlockButton';
+import ReportButton from '@/components/safety/ReportButton';
 import type { CrewStatus } from '@prisma/client';
 
 type ResolvedStatus = CrewStatus | 'NOT_IN_CREW' | 'SELF';
@@ -132,6 +133,11 @@ export default function UserProfilePage() {
                           targetUserId={profile.id}
                           targetName={profile.name}
                           initialBlocked={crewStatus?.status === 'BLOCKED'}
+                        />
+                        <ReportButton
+                          targetType="USER"
+                          targetId={profile.id}
+                          targetName={profile.name}
                         />
                       </div>
                     )}

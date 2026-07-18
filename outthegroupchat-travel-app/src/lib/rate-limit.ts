@@ -9,6 +9,11 @@ const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
 // Check if Redis is configured
 const isRedisConfigured = !!(REDIS_URL && REDIS_TOKEN);
 
+// Coarse anti-spam cap: max content creations (meetups, crew requests, …)
+// allowed per user per rolling 24h window. Stricter than the per-minute API
+// limiter — guards against sustained low-rate spam that slips under 100/min.
+const CREATION_DAILY_LIMIT = 10;
+
 // Create Redis instance only if configured
 const redis = isRedisConfigured 
   ? new Redis({
@@ -39,6 +44,20 @@ export const apiRateLimiter = redis
       redis,
       limiter: Ratelimit.slidingWindow(100, "1 m"),
       prefix: "ratelimit:api",
+    })
+  : null;
+
+/**
+ * Coarse daily creation quota (anti-spam).
+ * Limits: CREATION_DAILY_LIMIT content creations per user per rolling 24h.
+ * Applied on TOP of the per-minute apiRateLimiter, on a distinct key/prefix.
+ */
+export const creationQuotaLimiter = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(CREATION_DAILY_LIMIT, "24 h"),
+      analytics: true,
+      prefix: "ratelimit:creation",
     })
   : null;
 

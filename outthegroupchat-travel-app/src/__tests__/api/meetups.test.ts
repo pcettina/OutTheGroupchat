@@ -20,6 +20,7 @@ vi.mock('@/lib/rate-limit', () => ({
   apiRateLimiter: null,
   aiRateLimiter: null,
   authRateLimiter: null,
+  creationQuotaLimiter: null,
   checkRateLimit: vi
     .fn()
     .mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: 0 }),
@@ -225,6 +226,23 @@ describe('POST /api/meetups', () => {
     expect(createArg?.venueName).toBe('The Rooftop Bar');
     expect(createArg?.capacity).toBe(50);
     expect(createArg?.visibility).toBe('PUBLIC');
+  });
+
+  it('returns 429 when daily creation quota exceeded', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
+    // First checkRateLimit call (per-minute) passes; second (daily quota) fails.
+    mockCheckRateLimit
+      .mockResolvedValueOnce({ success: true, limit: 100, remaining: 99, reset: 0 })
+      .mockResolvedValueOnce({ success: false, limit: 10, remaining: 0, reset: 0 });
+
+    const res = await POST(makePostReq({ title: 'Meetup', scheduledAt: futureDate() }));
+
+    expect(res.status).toBe(429);
+    const body = await res.json();
+    expect(body.success).toBe(false);
+    expect(body.error).toBe('Daily creation limit reached');
+    // The daily-quota gate short-circuits before prisma.meetup.create.
+    expect(mockPrismaMeetup.create).not.toHaveBeenCalled();
   });
 
   it('returns 500 when prisma.meetup.create throws', async () => {

@@ -5,7 +5,12 @@ import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 import { captureException } from '@/lib/sentry';
-import { apiRateLimiter, checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
+import {
+  apiRateLimiter,
+  creationQuotaLimiter,
+  checkRateLimit,
+  getRateLimitHeaders,
+} from '@/lib/rate-limit';
 import { sendCrewRequestEmail } from '@/lib/email';
 
 const requestSchema = z.object({
@@ -31,6 +36,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { success: false, error: 'Rate limit exceeded' },
         { status: 429, headers: getRateLimitHeaders(rl) }
+      );
+    }
+
+    // Stricter coarse daily creation quota (anti-spam) on top of the per-minute limit.
+    const dailyRl = await checkRateLimit(
+      creationQuotaLimiter,
+      `crew-request-daily:${session.user.id}`
+    );
+    if (!dailyRl.success) {
+      return NextResponse.json(
+        { success: false, error: 'Daily creation limit reached' },
+        { status: 429, headers: getRateLimitHeaders(dailyRl) }
+      );
+    }
+    // Flag high-frequency creators nearing the daily cap for trust & safety review.
+    if (dailyRl.remaining <= 2) {
+      logger.warn(
+        { userId: session.user.id, remaining: dailyRl.remaining },
+        '[CREW_REQUEST] high-frequency creator'
       );
     }
 

@@ -136,6 +136,10 @@ model User {
   blocksInitiated UserBlock[] @relation("BlocksInitiated")
   blocksReceived  UserBlock[] @relation("BlocksReceived")
 
+  // Trust & Safety relations (Day 6 — report a user or meetup)
+  reportsMade     Report[] @relation("ReportsMade")
+  reportsReceived Report[] @relation("ReportsReceived")
+
   @@index([email])
   @@map("users")
 }
@@ -874,6 +878,7 @@ model Meetup {
   invites   MeetupInvite[]
   polls     Poll[]
   subCrew   SubCrew? // back-relation; set when a SubCrew coordinates into this Meetup
+  reports   Report[]         @relation("MeetupReports")
 
   @@index([hostId])
   @@index([scheduledAt])
@@ -1212,4 +1217,51 @@ model UserBlock {
   @@unique([blockerId, blockedId])
   @@index([blockerId])
   @@index([blockedId])
+}
+
+enum ReportReason {
+  SPAM
+  HARASSMENT
+  INAPPROPRIATE_CONTENT
+  IMPERSONATION
+  SAFETY_CONCERN
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWED
+  ACTIONED
+  DISMISSED
+}
+
+enum ReportTargetType {
+  USER
+  MEETUP
+}
+
+/// A report filed by `reporter` against either a User or a Meetup (Day 6).
+/// Polymorphic target via `targetType` + nullable `targetUserId`/`targetMeetupId`.
+/// No composite @@unique on the nullable target columns (Postgres treats NULLs
+/// as distinct, so it would not dedupe) — dedupe is enforced at the app layer.
+model Report {
+  id             String           @id @default(cuid())
+  reporterId     String
+  targetType     ReportTargetType
+  targetUserId   String?
+  targetMeetupId String?
+  reason         ReportReason
+  details        String?
+  status         ReportStatus     @default(PENDING)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  reporter     User    @relation("ReportsMade", fields: [reporterId], references: [id], onDelete: Cascade)
+  targetUser   User?   @relation("ReportsReceived", fields: [targetUserId], references: [id], onDelete: Cascade)
+  targetMeetup Meetup? @relation("MeetupReports", fields: [targetMeetupId], references: [id], onDelete: Cascade)
+
+  @@index([reporterId])
+  @@index([targetUserId])
+  @@index([targetMeetupId])
+  @@index([status])
 }
