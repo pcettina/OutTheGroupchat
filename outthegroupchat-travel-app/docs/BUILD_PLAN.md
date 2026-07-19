@@ -119,7 +119,7 @@ These are launch-blocking but **cannot be done by the nightly agent** (Vercel/DN
 - **[T1] Tests (Wave 1)** — *create* `src/__tests__/api/reports.test.ts` + extend meetup/crew-request tests for 429. **Wave 3** adds `report` mock to `setup.ts`.
 **Carry-over:** —
 
-### Day 7 — `nightly/2026-07-06` — **Activation: real onboarding + empty/error states** — Status: ⬜ PENDING
+### Day 7 — `nightly/2026-07-06` — **Activation: real onboarding + empty/error states** — Status: ✅ COMPLETE (https://github.com/pcettina/OutTheGroupchat/pull/147, 2026-07-19)
 **Epic:** Get a brand-new user from signup to their first Intent without hitting blank surfaces.
 **Goal:** First-run flow (add Crew → post first Intent) on a real route; every core surface has an empty state + visible error banner.
 **Depends on:** nothing.
