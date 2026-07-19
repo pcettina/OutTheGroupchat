@@ -1,20 +1,22 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Users } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 import {
   SubCrewCard,
   SubCrewCoordinationPanel,
   RecommendationsList,
 } from '@/components/subcrews';
+import { EmptyState, ErrorBanner } from '@/components/ui';
 import type { SubCrewResponse } from '@/types/subcrew';
 
 export default function SubCrewDetailPage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const id = params?.id;
   const { data: session } = useSession();
   const callerUserId = session?.user?.id ?? null;
@@ -26,6 +28,8 @@ export default function SubCrewDetailPage() {
 
   const fetchSubCrew = useCallback(async () => {
     if (!id) return;
+    setError(null);
+    setLoading(true);
     try {
       const res = await fetch(`/api/subcrews/${id}`);
       const body = await res.json();
@@ -64,11 +68,7 @@ export default function SubCrewDetailPage() {
         </Link>
 
         {loading && <p className="text-sm text-otg-text-muted">Loading…</p>}
-        {error && (
-          <div role="alert" className="rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-400">
-            {error}
-          </div>
-        )}
+        {error && <ErrorBanner message={error} onRetry={fetchSubCrew} />}
         {subCrew && (
           <>
             <SubCrewCard subCrew={subCrew} linkToDetail={false} />
@@ -98,10 +98,13 @@ export default function SubCrewDetailPage() {
                 </section>
               </>
             ) : (
-              <p className="text-sm text-otg-text-muted">
-                You can see this SubCrew because you are Crew of a member. Tap I&rsquo;m in
-                from the feed to join.
-              </p>
+              <EmptyState
+                variant="compact"
+                icon={<Users className="h-5 w-5" aria-hidden="true" />}
+                title="You're seeing this because you're Crew of a member"
+                description="Tap “I'm in” from the feed to join and unlock coordination and venue recs."
+                action={{ label: 'Back to Intents', onClick: () => router.push('/intents') }}
+              />
             )}
           </>
         )}

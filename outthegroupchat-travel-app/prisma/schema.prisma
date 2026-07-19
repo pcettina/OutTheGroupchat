@@ -79,6 +79,9 @@ model User {
   passwordInitialized    Boolean   @default(false)
   betaLaunchEmailSent    Boolean   @default(false)
 
+  // Onboarding — timestamp of when the user completed the onboarding flow (null = not yet onboarded)
+  onboardedAt DateTime?
+
   // User Preferences (stored as JSON for flexibility)
   preferences Json? // { travelStyle, interests, budgetRange, currency, language }
 

@@ -30,6 +30,7 @@ export { AvatarStack } from './AvatarStack';
 export { Badge } from './Badge';
 export { Skeleton, SkeletonText, SkeletonAvatar, SkeletonCard } from './Skeleton';
 export { EmptyState, EmptyTrips, EmptyNotifications } from './EmptyState';
+export { ErrorBanner } from './ErrorBanner';
 export { Tabs, TabsList, TabsTrigger, TabsContent } from './Tabs';
 export { Switch } from './Switch';
 export { Select } from './Select';

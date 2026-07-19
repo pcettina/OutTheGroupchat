@@ -6,6 +6,7 @@ import { Navigation } from '@/components/Navigation';
 import { FeedItem, CommentThread, ShareModal } from '@/components/feed';
 import { IntentPromptCard } from '@/components/intents';
 import { EmergingSubCrewCard } from '@/components/subcrews';
+import { ErrorBanner } from '@/components/ui';
 import type { SubCrewResponse } from '@/types/subcrew';
 
 type FeedType = 'all' | 'meetups' | 'checkins' | 'crews';
@@ -75,29 +76,31 @@ export default function FeedPage() {
   }>({ isOpen: false, data: null });
 
   const [emergingSubCrews, setEmergingSubCrews] = useState<SubCrewResponse[]>([]);
+  const [subCrewsError, setSubCrewsError] = useState<string | null>(null);
+  const [feedError, setFeedError] = useState<string | null>(null);
 
   // V1 Phase 2: surface joinable SubCrews above the feed.
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch('/api/subcrews/emerging?limit=3');
-        const body = await res.json();
-        if (!cancelled && body.success) {
-          setEmergingSubCrews(body.data.subCrews as SubCrewResponse[]);
-        }
-      } catch {
-        // non-fatal — feed continues without the cards
+  const loadEmerging = useCallback(async () => {
+    setSubCrewsError(null);
+    try {
+      const res = await fetch('/api/subcrews/emerging?limit=3');
+      const body = await res.json();
+      if (body.success) {
+        setEmergingSubCrews(body.data.subCrews as SubCrewResponse[]);
       }
-    })();
-    return () => {
-      cancelled = true;
-    };
+    } catch {
+      setSubCrewsError('Could not load joinable SubCrews.');
+    }
   }, []);
+
+  useEffect(() => {
+    void loadEmerging();
+  }, [loadEmerging]);
 
   const fetchFeed = useCallback(async (page = 1, append = false) => {
     if (page === 1) {
       setIsLoading(true);
+      setFeedError(null);
     } else {
       setIsLoadingMore(true);
     }
@@ -105,15 +108,17 @@ export default function FeedPage() {
     try {
       const res = await fetch(`/api/feed?type=${feedType}&page=${page}&limit=15`);
       if (!res.ok) throw new Error('Failed to fetch feed');
-      
+
       const data = await res.json();
-      
+
       if (data.success) {
         setFeedItems(prev => append ? [...prev, ...data.data] : data.data);
         setPagination(data.pagination);
+      } else {
+        setFeedError('Could not load the feed. Please try again.');
       }
-    } catch (err) {
-      // silently handle fetch error
+    } catch {
+      setFeedError('Could not load the feed. Check your connection and try again.');
     } finally {
       setIsLoading(false);
       setIsLoadingMore(false);
@@ -184,6 +189,16 @@ export default function FeedPage() {
             <p className="text-slate-500 dark:text-slate-400">See what the community is planning</p>
           </motion.div>
 
+          {/* V1 Phase 2: joinable SubCrews failed to load — surface it */}
+          {subCrewsError && (
+            <ErrorBanner
+              message={subCrewsError}
+              onRetry={loadEmerging}
+              onDismiss={() => setSubCrewsError(null)}
+              className="mb-6"
+            />
+          )}
+
           {/* V1 Phase 2: emerging SubCrews you could join */}
           {emergingSubCrews.length > 0 && (
             <motion.div
@@ -244,7 +259,13 @@ export default function FeedPage() {
           </motion.div>
 
           {/* Feed Content */}
-          {isLoading ? (
+          {feedError ? (
+            <ErrorBanner
+              message={feedError}
+              onRetry={() => fetchFeed(1, false)}
+              className="my-4"
+            />
+          ) : isLoading ? (
             <div className="space-y-4">
               {[1, 2, 3, 4, 5].map((i) => (
                 <div key={i} className="bg-white dark:bg-slate-800 rounded-2xl p-5 animate-pulse border border-slate-200 dark:border-slate-700">

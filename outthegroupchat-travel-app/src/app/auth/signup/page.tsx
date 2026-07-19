@@ -8,6 +8,8 @@ import Image from 'next/image';
 import { ArrowRight, Loader2 } from 'lucide-react';
 
 const POST_SIGNIN_DEFAULT_PATH = '/heatmap';
+/** Brand-new signups with no explicit callbackUrl land in the onboarding flow. */
+const POST_SIGNUP_ONBOARDING_PATH = '/onboarding';
 
 interface PendingInvitation {
   id: string;
@@ -31,7 +33,9 @@ function SignUpForm() {
   const [isLoading, setIsLoading] = useState(false);
 
   const callbackParam = searchParams.get('callbackUrl') ?? searchParams.get('redirect');
-  const redirectTo = resolveCallback(callbackParam);
+  // With an explicit callbackUrl, honor it; otherwise a brand-new signup goes
+  // through onboarding rather than straight to the heatmap.
+  const redirectTo = callbackParam ? resolveCallback(callbackParam) : POST_SIGNUP_ONBOARDING_PATH;
   const isInvitation = searchParams.get('invitation') === 'true';
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {

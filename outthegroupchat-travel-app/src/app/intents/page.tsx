@@ -1,17 +1,20 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Plus } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Plus, Sparkles, Users } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 import { IntentList } from '@/components/intents';
 import { SubCrewCard, EmergingSubCrewCard } from '@/components/subcrews';
+import { EmptyState, ErrorBanner } from '@/components/ui';
 import type { IntentResponse } from '@/types/intent';
 import type { SubCrewResponse } from '@/types/subcrew';
 
 type Tab = 'mine' | 'crew' | 'subcrews';
 
 export default function IntentsPage() {
+  const router = useRouter();
   const [tab, setTab] = useState<Tab>('mine');
   const [mine, setMine] = useState<IntentResponse[] | null>(null);
   const [crew, setCrew] = useState<IntentResponse[] | null>(null);
@@ -19,33 +22,41 @@ export default function IntentsPage() {
   const [emergingSubCrews, setEmergingSubCrews] = useState<SubCrewResponse[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const load = useCallback(async () => {
+    setError(null);
+    try {
+      const [mineRes, crewRes, mySubRes, emergingRes] = await Promise.all([
+        fetch('/api/intents/mine'),
+        fetch('/api/intents/crew'),
+        fetch('/api/subcrews/mine'),
+        fetch('/api/subcrews/emerging'),
+      ]);
+      const mineBody = await mineRes.json();
+      const crewBody = await crewRes.json();
+      const mySubBody = await mySubRes.json();
+      const emergingBody = await emergingRes.json();
+
+      if (mineBody.success) setMine(mineBody.data.intents as IntentResponse[]);
+      if (crewBody.success) setCrew(crewBody.data.intents as IntentResponse[]);
+      if (mySubBody.success) setMySubCrews(mySubBody.data.subCrews as SubCrewResponse[]);
+      if (emergingBody.success) setEmergingSubCrews(emergingBody.data.subCrews as SubCrewResponse[]);
+
+      // Surface an endpoint-level failure instead of silently ignoring it.
+      if (!mineBody.success || !crewBody.success || !mySubBody.success || !emergingBody.success) {
+        setError('Some of your Intents could not be loaded. Try again.');
+      }
+    } catch {
+      setError('Could not load your Intents. Check your connection and try again.');
+    }
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
-    (async () => {
-      try {
-        const [mineRes, crewRes, mySubRes, emergingRes] = await Promise.all([
-          fetch('/api/intents/mine'),
-          fetch('/api/intents/crew'),
-          fetch('/api/subcrews/mine'),
-          fetch('/api/subcrews/emerging'),
-        ]);
-        const mineBody = await mineRes.json();
-        const crewBody = await crewRes.json();
-        const mySubBody = await mySubRes.json();
-        const emergingBody = await emergingRes.json();
-        if (cancelled) return;
-        if (mineBody.success) setMine(mineBody.data.intents as IntentResponse[]);
-        if (crewBody.success) setCrew(crewBody.data.intents as IntentResponse[]);
-        if (mySubBody.success) setMySubCrews(mySubBody.data.subCrews as SubCrewResponse[]);
-        if (emergingBody.success) setEmergingSubCrews(emergingBody.data.subCrews as SubCrewResponse[]);
-      } catch {
-        if (!cancelled) setError('Could not load.');
-      }
-    })();
+    if (!cancelled) void load();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [load]);
 
   return (
     <>
@@ -80,14 +91,24 @@ export default function IntentsPage() {
         </div>
 
         {error && (
-          <div role="alert" className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
-            {error}
-          </div>
+          <ErrorBanner
+            message={error}
+            onRetry={load}
+            onDismiss={() => setError(null)}
+            className="mb-4"
+          />
         )}
 
         {tab === 'mine' &&
           (mine === null ? (
             <p className="text-sm text-otg-text-muted">Loading…</p>
+          ) : mine.length === 0 ? (
+            <EmptyState
+              icon={<Sparkles className="h-8 w-8" aria-hidden="true" />}
+              title="You haven't signaled anything yet"
+              description="What are you up for? Post an Intent and we'll group you with Crew who want the same thing."
+              action={{ label: 'Signal an Intent', onClick: () => router.push('/intents/new') }}
+            />
           ) : (
             <IntentList intents={mine} />
           ))}
@@ -95,6 +116,13 @@ export default function IntentsPage() {
         {tab === 'crew' &&
           (crew === null ? (
             <p className="text-sm text-otg-text-muted">Loading…</p>
+          ) : crew.length === 0 ? (
+            <EmptyState
+              icon={<Users className="h-8 w-8" aria-hidden="true" />}
+              title="No Crew Intents right now"
+              description="When your Crew signals what they're up for, it'll show up here."
+              action={{ label: 'Signal your own', onClick: () => router.push('/intents/new') }}
+            />
           ) : (
             <IntentList intents={crew} showAuthor />
           ))}
@@ -108,7 +136,11 @@ export default function IntentsPage() {
               {emergingSubCrews === null ? (
                 <p className="text-sm text-otg-text-muted">Loading…</p>
               ) : emergingSubCrews.length === 0 ? (
-                <p className="text-sm text-otg-text-muted">Nothing forming around your Crew right now.</p>
+                <EmptyState
+                  variant="compact"
+                  title="Nothing forming around your Crew right now"
+                  description="SubCrews appear when two or more Crew signal the same Topic."
+                />
               ) : (
                 <ul className="space-y-3">
                   {emergingSubCrews.map((sc) => (
@@ -127,7 +159,12 @@ export default function IntentsPage() {
               {mySubCrews === null ? (
                 <p className="text-sm text-otg-text-muted">Loading…</p>
               ) : mySubCrews.length === 0 ? (
-                <p className="text-sm text-otg-text-muted">No SubCrews yet — keep posting Intents.</p>
+                <EmptyState
+                  variant="compact"
+                  title="No SubCrews yet"
+                  description="Keep posting Intents — you'll be grouped as Crew signal the same thing."
+                  action={{ label: 'Post an Intent', onClick: () => router.push('/intents/new') }}
+                />
               ) : (
                 <ul className="space-y-3">
                   {mySubCrews.map((sc) => (
