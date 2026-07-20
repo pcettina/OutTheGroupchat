@@ -129,7 +129,7 @@ These are launch-blocking but **cannot be done by the nightly agent** (Vercel/DN
 - **[T1] Tests (Wave 1)** — *create* `src/__tests__/onboarding-flow.test.ts` (step gating) + empty-state render tests.
 **Carry-over:** —
 
-### Day 8 — `nightly/2026-07-07` — **Tighten the notification loop** — Status: ⬜ PENDING
+### Day 8 — `nightly/2026-07-07` — **Tighten the notification loop** — Status: ✅ COMPLETE (https://github.com/pcettina/OutTheGroupchat/pull/148, 2026-07-20)
 **Epic:** Make the pull-back-in mechanics actually reachable and one-tap.
 **Goal:** Users can star a Crew member's intents; the daily prompt deep-links straight into a pre-filled Intent; the privacy picker tells the truth about anonymity.
 **Depends on:** nothing (per-member dispatch already runs server-side).
