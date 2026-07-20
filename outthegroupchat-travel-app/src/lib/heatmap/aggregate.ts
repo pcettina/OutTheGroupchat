@@ -25,6 +25,9 @@ import { prisma as defaultPrisma } from '@/lib/prisma';
 import type { HeatmapCell, HeatmapType, HeatmapVenueMarker } from '@/types/heatmap';
 import { getFofSet, type FofEntry } from '@/lib/heatmap/fof-graph';
 import { buildAnchorSummary, pickAnchor, type AnchorPick } from '@/lib/heatmap/anchor-select';
+// Single source of truth for the R14 floor, shared with the contributor-count
+// probe and the client-side privacy picker so they can never drift apart.
+import { ANONYMOUS_FLOOR } from '@/lib/heatmap/anonymous-floor';
 
 type PrismaLike = Pick<
   typeof defaultPrisma,
@@ -49,8 +52,6 @@ export interface AggregateOutput {
   cells: HeatmapCell[];
   venueMarkers: HeatmapVenueMarker[];
 }
-
-const ANONYMOUS_FLOOR = 3;
 
 interface ContributionRow {
   id: string;

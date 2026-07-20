@@ -463,6 +463,14 @@ export function SubCrewCoordinationPanel({
         onClose={() => setPickerOpen(false)}
         onConfirm={handleCommitConfirm}
         submitting={committing}
+        // Cell identifiers for the R14 anonymity probe. Both are nullable and the
+        // modal's props are optional — pass them through as-is so it fails safe
+        // (Anonymous stays disabled) when neither resolves to a cell.
+        venueId={subCrew.venueId ?? null}
+        cityArea={subCrew.cityArea}
+        // Committing writes an INTEREST contribution from the caller's Intent,
+        // which is the modal's default `contributionType`.
+        contributionType="interest"
       />
     </section>
   );

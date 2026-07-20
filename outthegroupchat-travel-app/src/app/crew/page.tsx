@@ -8,6 +8,7 @@ import { useSession } from 'next-auth/react';
 import { Inbox, MoreVertical, UserMinus, Users } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 import BlockButton from '@/components/safety/BlockButton';
+import { PerMemberIntentToggle } from '@/components/notifications/PerMemberIntentToggle';
 import type { CrewWithUsers } from '@/types/social';
 
 export default function CrewPage() {
@@ -178,6 +179,8 @@ function CrewMemberCard({ crew, currentUserId, onRemove }: CrewMemberCardProps) 
       </div>
 
       <div className="flex items-center gap-1 shrink-0">
+        <PerMemberIntentToggle targetUserId={other.id} targetName={other.name} variant="icon" />
+
         <button
           type="button"
           onClick={remove}

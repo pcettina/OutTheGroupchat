@@ -2,14 +2,19 @@
  * Unit tests for sendDailyPrompts (src/lib/notifications/daily-prompt.ts).
  *
  * Selects every user with the DAILY_PROMPT NotificationPreference enabled and
- * writes each a SYSTEM Notification deep-linking to /intents/new. A single
+ * writes each a SYSTEM Notification deep-linking to /intents/new with a
+ * `window` query param that pre-fills the capture form. A single
  * notification.create rejection is logged and skipped — it must NOT abort the
  * batch. Prisma + sentry mocks come from src/__tests__/setup.ts.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { prisma } from '@/lib/prisma';
-import { sendDailyPrompts } from '@/lib/notifications/daily-prompt';
+import {
+  sendDailyPrompts,
+  PROMPT_LINK,
+  PROMPT_WINDOW_PRESET,
+} from '@/lib/notifications/daily-prompt';
 import type { PrismaClient } from '@prisma/client';
 
 type MockFn = ReturnType<typeof vi.fn>;
@@ -43,7 +48,7 @@ describe('sendDailyPrompts', () => {
     expect(where).toMatchObject({ trigger: 'DAILY_PROMPT', enabled: true });
   });
 
-  it('creates a SYSTEM notification for an enabled user linking to /intents/new', async () => {
+  it('creates a SYSTEM notification for an enabled user deep-linking to a pre-filled /intents/new', async () => {
     mockNotificationPreference.findMany.mockResolvedValueOnce([{ userId: 'user-1' }]);
 
     const result = await sendDailyPrompts(prisma as unknown as PrismaClient);
@@ -54,7 +59,16 @@ describe('sendDailyPrompts', () => {
     const arg = mockNotification.create.mock.calls[0][0];
     expect(arg.data.userId).toBe('user-1');
     expect(arg.data.type).toBe('SYSTEM');
-    expect(arg.data.data.link).toBe('/intents/new');
+    expect(arg.data.data.link).toBe('/intents/new?window=EVENING');
+  });
+
+  it('exports a deep link whose window param matches PROMPT_WINDOW_PRESET', () => {
+    expect(PROMPT_WINDOW_PRESET).toBe('EVENING');
+    expect(PROMPT_LINK).toBe(`/intents/new?window=${PROMPT_WINDOW_PRESET}`);
+
+    const url = new URL(PROMPT_LINK, 'https://outthegroupchat.test');
+    expect(url.pathname).toBe('/intents/new');
+    expect(url.searchParams.get('window')).toBe(PROMPT_WINDOW_PRESET);
   });
 
   it('sent === eligible when every notification.create succeeds for multiple users', async () => {

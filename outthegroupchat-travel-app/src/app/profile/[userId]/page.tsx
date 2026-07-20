@@ -10,6 +10,7 @@ import { Navigation } from '@/components/Navigation';
 import CrewButton from '@/components/social/CrewButton';
 import BlockButton from '@/components/safety/BlockButton';
 import ReportButton from '@/components/safety/ReportButton';
+import { PerMemberIntentToggle } from '@/components/notifications/PerMemberIntentToggle';
 import type { CrewStatus } from '@prisma/client';
 
 type ResolvedStatus = CrewStatus | 'NOT_IN_CREW' | 'SELF';
@@ -129,6 +130,13 @@ export default function UserProfilePage() {
                           initialCrewId={crewStatus?.crewId ?? null}
                           initialIsRequester={crewStatus?.iAmRequester ?? false}
                         />
+                        {crewStatus?.status === 'ACCEPTED' && (
+                          <PerMemberIntentToggle
+                            targetUserId={profile.id}
+                            targetName={profile.name}
+                            variant="button"
+                          />
+                        )}
                         <BlockButton
                           targetUserId={profile.id}
                           targetName={profile.name}

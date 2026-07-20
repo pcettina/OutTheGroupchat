@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense, FormEvent } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Send, AlertCircle } from 'lucide-react';
 import type { WindowPreset } from '@prisma/client';
@@ -17,6 +17,29 @@ import { NYC_NEIGHBORHOODS } from '@/lib/intent/neighborhoods';
 interface IntentCreateFormProps {
   /** Where to redirect after a successful create. Default: /intents */
   redirectTo?: string;
+  /** Window pre-selected when no (or an invalid) `?window=` param is present. */
+  defaultWindowPreset?: WindowPreset;
+}
+
+/** Fallback window when the deep link omits or misspells `?window=`. */
+const FALLBACK_WINDOW_PRESET: WindowPreset = 'EVENING';
+
+/**
+ * Narrow an arbitrary query-param string to a real WindowPreset.
+ *
+ * Deep links (e.g. the daily-prompt notification's
+ * `/intents/new?window=EVENING`) are user-editable, so an unknown or absent
+ * value must degrade to the caller's default rather than throw.
+ */
+function parseWindowPreset(
+  value: string | null,
+  fallback: WindowPreset,
+): WindowPreset {
+  if (!value) return fallback;
+  const match = WINDOW_PRESET_ORDER.find(
+    (preset) => preset === value.toUpperCase(),
+  );
+  return match ?? fallback;
 }
 
 /**
@@ -27,12 +50,21 @@ interface IntentCreateFormProps {
  *   2. If the server returns 422 needsTopicPicker, the form swaps to a Topic
  *      dropdown (loaded lazily from GET /api/topics) and re-submits with
  *      explicit topicId.
+ *
+ * Arriving from a deep link with `?window=<WindowPreset>` pre-selects that
+ * window so the daily-prompt nudge is one tap from a posted Intent.
  */
-export function IntentCreateForm({ redirectTo = '/intents' }: IntentCreateFormProps) {
+function IntentCreateFormInner({
+  redirectTo = '/intents',
+  defaultWindowPreset = FALLBACK_WINDOW_PRESET,
+}: IntentCreateFormProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [rawText, setRawText] = useState('');
-  const [windowPreset, setWindowPreset] = useState<WindowPreset>('EVENING');
+  const [windowPreset, setWindowPreset] = useState<WindowPreset>(() =>
+    parseWindowPreset(searchParams.get('window'), defaultWindowPreset),
+  );
   const [dayOffset, setDayOffset] = useState(0);
   const [cityArea, setCityArea] = useState('');
 
@@ -241,5 +273,30 @@ export function IntentCreateForm({ redirectTo = '/intents' }: IntentCreateFormPr
         {submitting ? 'Posting…' : 'Signal Intent'}
       </motion.button>
     </form>
+  );
+}
+
+/** Static skeleton rendered while the search params resolve. */
+function IntentCreateFormFallback() {
+  return (
+    <div
+      data-testid="intent-create-form-loading"
+      aria-hidden="true"
+      className="h-96 animate-pulse rounded-2xl border border-otg-border bg-otg-surface/60"
+    />
+  );
+}
+
+/**
+ * Public entry point. `useSearchParams()` opts the subtree into client-side
+ * rendering, which Next 14 requires to sit inside a Suspense boundary — the
+ * boundary lives here so every caller (and the static `/intents/new` page)
+ * stays unchanged.
+ */
+export function IntentCreateForm(props: IntentCreateFormProps) {
+  return (
+    <Suspense fallback={<IntentCreateFormFallback />}>
+      <IntentCreateFormInner {...props} />
+    </Suspense>
   );
 }

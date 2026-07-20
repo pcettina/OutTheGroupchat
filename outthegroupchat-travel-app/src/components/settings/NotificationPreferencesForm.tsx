@@ -1,15 +1,12 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import type { NotificationPreferenceResponse } from '@/types/notification-preference';
 
-type NotificationTrigger = 'DAILY_PROMPT' | 'PER_MEMBER_INTENT' | 'GROUP_FORMATION';
+type NotificationTrigger = NotificationPreferenceResponse['trigger'];
 
-interface NotificationPreference {
-  trigger: NotificationTrigger;
-  enabled: boolean;
-  schedule: string | null;
-  perMemberTargets: string[];
-}
+/** Client-side view of a preference row — the shared API response shape. */
+type NotificationPreference = NotificationPreferenceResponse;
 
 interface TriggerMeta {
   trigger: NotificationTrigger;
@@ -47,6 +44,43 @@ function isNotificationTrigger(value: unknown): value is NotificationTrigger {
     value === 'PER_MEMBER_INTENT' ||
     value === 'GROUP_FORMATION'
   );
+}
+
+/**
+ * Unwraps the GET envelope returned by `/api/users/notification-preferences`:
+ *   `{ success: true, data: { preferences: [...] } }`
+ *
+ * Also tolerates a bare `{ preferences: [...] }` object and a bare array, so a
+ * future/legacy body shape degrades gracefully instead of silently rendering
+ * defaults. Anything unrecognised yields `undefined` (never throws), which
+ * `parsePreferencesResponse` turns into `[]` for the caller to treat as a
+ * load failure.
+ */
+function unwrapPreferences(raw: unknown): unknown {
+  if (Array.isArray(raw)) return raw;
+  if (typeof raw !== 'object' || raw === null) return undefined;
+
+  const envelope = raw as Record<string, unknown>;
+
+  // { success, data: { preferences: [...] } }
+  const data = envelope.data;
+  if (typeof data === 'object' && data !== null) {
+    const inner = (data as Record<string, unknown>).preferences;
+    if (Array.isArray(inner)) return inner;
+  }
+
+  // { preferences: [...] }
+  if (Array.isArray(envelope.preferences)) return envelope.preferences;
+
+  return undefined;
+}
+
+/**
+ * Unwraps the response envelope and parses it into preference rows.
+ * Returns `[]` for any malformed / missing body — never throws.
+ */
+export function parsePreferencesResponse(raw: unknown): NotificationPreference[] {
+  return parsePreferences(unwrapPreferences(raw));
 }
 
 function parsePreferences(raw: unknown): NotificationPreference[] {
@@ -91,8 +125,16 @@ export function NotificationPreferencesForm() {
         setLoadError('Failed to load notification preferences.');
         return;
       }
-      const data: unknown = await res.json();
-      setPrefs(parsePreferences(data));
+      const body: unknown = await res.json().catch(() => undefined);
+      const parsed = parsePreferencesResponse(body);
+      if (parsed.length === 0) {
+        // A 200 with an unrecognisable body is a load failure, not an empty state:
+        // the API always returns one entry per trigger.
+        setLoadError('Failed to load notification preferences.');
+        setPrefs([]);
+        return;
+      }
+      setPrefs(parsed);
     } catch {
       setLoadError('Network error — please try again.');
     } finally {

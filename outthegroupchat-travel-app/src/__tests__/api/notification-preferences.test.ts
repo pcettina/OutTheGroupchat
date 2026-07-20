@@ -193,6 +193,74 @@ describe('GET /api/users/notification-preferences', () => {
     expect(whereArg?.userId).toBe('user-42');
   });
 
+  it('defaults perMemberTargets to [] for every trigger without a stored row', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
+    mockPrismaNotifPref.findMany.mockResolvedValueOnce([
+      fakeRow({
+        trigger: NotificationPreferenceTrigger.PER_MEMBER_INTENT,
+        enabled: true,
+        schedule: null,
+        perMemberTargets: ['user-9'],
+      }),
+    ]);
+
+    const res = await GET(makeGetReq());
+    const body = await res.json();
+
+    const byTrigger = Object.fromEntries(
+      body.data.preferences.map((p: { trigger: string }) => [p.trigger, p])
+    );
+
+    expect(
+      byTrigger[NotificationPreferenceTrigger.PER_MEMBER_INTENT].perMemberTargets
+    ).toEqual(['user-9']);
+    // Absent rows default to an empty array (never null/undefined).
+    expect(
+      byTrigger[NotificationPreferenceTrigger.DAILY_PROMPT].perMemberTargets
+    ).toEqual([]);
+    expect(
+      byTrigger[NotificationPreferenceTrigger.GROUP_FORMATION].perMemberTargets
+    ).toEqual([]);
+  });
+
+  it('keeps each trigger enabled flag independent of the PER_MEMBER_INTENT targets', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
+    mockPrismaNotifPref.findMany.mockResolvedValueOnce([
+      fakeRow({
+        trigger: NotificationPreferenceTrigger.DAILY_PROMPT,
+        enabled: true,
+        schedule: '07:15',
+        perMemberTargets: [],
+      }),
+      fakeRow({
+        trigger: NotificationPreferenceTrigger.PER_MEMBER_INTENT,
+        enabled: true,
+        schedule: null,
+        perMemberTargets: ['user-4'],
+      }),
+      fakeRow({
+        trigger: NotificationPreferenceTrigger.GROUP_FORMATION,
+        enabled: false,
+        schedule: null,
+        perMemberTargets: [],
+      }),
+    ]);
+
+    const res = await GET(makeGetReq());
+    const body = await res.json();
+
+    expect(body.data.preferences).toHaveLength(3);
+    const byTrigger = Object.fromEntries(
+      body.data.preferences.map((p: { trigger: string }) => [p.trigger, p])
+    );
+
+    // Flagging a member does not touch the other two triggers' enabled values.
+    expect(byTrigger[NotificationPreferenceTrigger.DAILY_PROMPT].enabled).toBe(true);
+    expect(byTrigger[NotificationPreferenceTrigger.DAILY_PROMPT].schedule).toBe('07:15');
+    expect(byTrigger[NotificationPreferenceTrigger.PER_MEMBER_INTENT].enabled).toBe(true);
+    expect(byTrigger[NotificationPreferenceTrigger.GROUP_FORMATION].enabled).toBe(false);
+  });
+
   it('returns 429 when rate limited', async () => {
     mockGetServerSession.mockResolvedValueOnce(sessionFor());
     mockCheckRateLimit.mockResolvedValueOnce(RL_FAIL);
@@ -385,6 +453,226 @@ describe('PATCH /api/users/notification-preferences', () => {
     const upsertArg = mockPrismaNotifPref.upsert.mock.calls[0]?.[0];
     expect(upsertArg?.create?.schedule).toBeNull();
     expect(upsertArg?.update?.schedule).toBeUndefined();
+  });
+
+  // -------------------------------------------------------------------------
+  // Per-member intent flag loop (PerMemberIntentToggle read-modify-write)
+  // -------------------------------------------------------------------------
+
+  it('REPLACES the whole perMemberTargets array — stored values are not merged', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor('user-1'));
+    mockPrismaNotifPref.upsert.mockResolvedValueOnce(
+      fakeRow({
+        trigger: NotificationPreferenceTrigger.PER_MEMBER_INTENT,
+        enabled: true,
+        perMemberTargets: ['user-9'],
+      })
+    );
+
+    // Client sends only the one id it wants to keep; the route writes exactly
+    // that array, so a read-modify-write on the client is the only safe pattern.
+    const res = await PATCH(
+      makePatchReq({
+        trigger: NotificationPreferenceTrigger.PER_MEMBER_INTENT,
+        enabled: true,
+        perMemberTargets: ['user-9'],
+      })
+    );
+
+    expect(res.status).toBe(200);
+    const upsertArg = mockPrismaNotifPref.upsert.mock.calls[0]?.[0];
+    expect(upsertArg?.update?.perMemberTargets).toEqual(['user-9']);
+    expect(upsertArg?.create?.perMemberTargets).toEqual(['user-9']);
+  });
+
+  it('accepts an empty perMemberTargets array (unflagging the last member)', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor('user-1'));
+    mockPrismaNotifPref.upsert.mockResolvedValueOnce(
+      fakeRow({
+        trigger: NotificationPreferenceTrigger.PER_MEMBER_INTENT,
+        enabled: true,
+        perMemberTargets: [],
+      })
+    );
+
+    const res = await PATCH(
+      makePatchReq({
+        trigger: NotificationPreferenceTrigger.PER_MEMBER_INTENT,
+        enabled: true,
+        perMemberTargets: [],
+      })
+    );
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.data.perMemberTargets).toEqual([]);
+
+    // [] is a real value, not "absent" — it must clear the stored array.
+    const update = mockPrismaNotifPref.upsert.mock.calls[0]?.[0]?.update as Record<
+      string,
+      unknown
+    >;
+    expect(Object.prototype.hasOwnProperty.call(update, 'perMemberTargets')).toBe(true);
+    expect(update.perMemberTargets).toEqual([]);
+  });
+
+  it('omits perMemberTargets from the update payload entirely when the field is absent', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor('user-1'));
+    mockPrismaNotifPref.upsert.mockResolvedValueOnce(
+      fakeRow({
+        trigger: NotificationPreferenceTrigger.PER_MEMBER_INTENT,
+        enabled: false,
+        perMemberTargets: ['user-7'],
+      })
+    );
+
+    const res = await PATCH(
+      makePatchReq({
+        trigger: NotificationPreferenceTrigger.PER_MEMBER_INTENT,
+        enabled: false,
+      })
+    );
+
+    expect(res.status).toBe(200);
+
+    const upsertArg = mockPrismaNotifPref.upsert.mock.calls[0]?.[0];
+    const update = upsertArg?.update as Record<string, unknown>;
+    // The conditional spread must leave the key off so Prisma does not overwrite
+    // the stored array with undefined.
+    expect(Object.prototype.hasOwnProperty.call(update, 'perMemberTargets')).toBe(false);
+    expect(update.enabled).toBe(false);
+    // A first-time create still needs a concrete default.
+    expect(upsertArg?.create?.perMemberTargets).toEqual([]);
+  });
+
+  it('does NOT dedup perMemberTargets server-side — duplicates are persisted as sent', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor('user-1'));
+    mockPrismaNotifPref.upsert.mockResolvedValueOnce(
+      fakeRow({
+        trigger: NotificationPreferenceTrigger.PER_MEMBER_INTENT,
+        enabled: true,
+        perMemberTargets: ['user-7', 'user-7'],
+      })
+    );
+
+    const res = await PATCH(
+      makePatchReq({
+        trigger: NotificationPreferenceTrigger.PER_MEMBER_INTENT,
+        enabled: true,
+        perMemberTargets: ['user-7', 'user-7'],
+      })
+    );
+
+    expect(res.status).toBe(200);
+    // Documenting ACTUAL behavior: dedup is a client-side concern (the toggle
+    // builds the array with `Array.from(new Set(...))`).
+    const upsertArg = mockPrismaNotifPref.upsert.mock.calls[0]?.[0];
+    expect(upsertArg?.update?.perMemberTargets).toEqual(['user-7', 'user-7']);
+  });
+
+  it('persists enabled=true alongside targets without touching other triggers', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor('user-1'));
+    mockPrismaNotifPref.upsert.mockResolvedValueOnce(
+      fakeRow({
+        trigger: NotificationPreferenceTrigger.PER_MEMBER_INTENT,
+        enabled: true,
+        perMemberTargets: ['user-7'],
+      })
+    );
+
+    const res = await PATCH(
+      makePatchReq({
+        trigger: NotificationPreferenceTrigger.PER_MEMBER_INTENT,
+        enabled: true,
+        perMemberTargets: ['user-7'],
+      })
+    );
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.data.enabled).toBe(true);
+
+    // Exactly one upsert, keyed on this one trigger only.
+    expect(mockPrismaNotifPref.upsert).toHaveBeenCalledTimes(1);
+    const upsertArg = mockPrismaNotifPref.upsert.mock.calls[0]?.[0];
+    expect(upsertArg?.where?.userId_trigger).toEqual({
+      userId: 'user-1',
+      trigger: NotificationPreferenceTrigger.PER_MEMBER_INTENT,
+    });
+    expect(upsertArg?.update?.enabled).toBe(true);
+    expect(upsertArg?.create?.enabled).toBe(true);
+    // schedule is meaningless for this trigger and must not be written.
+    expect(upsertArg?.update?.schedule).toBeUndefined();
+  });
+
+  it('returns 400 when perMemberTargets is not an array (Zod)', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
+
+    const res = await PATCH(
+      makePatchReq({
+        trigger: NotificationPreferenceTrigger.PER_MEMBER_INTENT,
+        enabled: true,
+        perMemberTargets: 'user-7',
+      })
+    );
+
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.success).toBe(false);
+    expect(body.error).toBe('Validation failed');
+    expect(mockPrismaNotifPref.upsert).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when a perMemberTargets element is not a string (Zod)', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
+
+    const res = await PATCH(
+      makePatchReq({
+        trigger: NotificationPreferenceTrigger.PER_MEMBER_INTENT,
+        enabled: true,
+        perMemberTargets: ['user-7', 42],
+      })
+    );
+
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.success).toBe(false);
+    expect(body.error).toBe('Validation failed');
+    expect(body.details).toBeDefined();
+    expect(mockPrismaNotifPref.upsert).not.toHaveBeenCalled();
+  });
+
+  it('returns 401 before touching prisma for a per-member-intent write', async () => {
+    mockGetServerSession.mockResolvedValueOnce(null);
+
+    const res = await PATCH(
+      makePatchReq({
+        trigger: NotificationPreferenceTrigger.PER_MEMBER_INTENT,
+        enabled: true,
+        perMemberTargets: ['user-7'],
+      })
+    );
+
+    expect(res.status).toBe(401);
+    expect(mockPrismaNotifPref.upsert).not.toHaveBeenCalled();
+  });
+
+  it('returns 429 for a per-member-intent write without persisting anything', async () => {
+    mockGetServerSession.mockResolvedValueOnce(sessionFor());
+    mockCheckRateLimit.mockResolvedValueOnce(RL_FAIL);
+
+    const res = await PATCH(
+      makePatchReq({
+        trigger: NotificationPreferenceTrigger.PER_MEMBER_INTENT,
+        enabled: true,
+        perMemberTargets: ['user-7'],
+      })
+    );
+
+    expect(res.status).toBe(429);
+    const body = await res.json();
+    expect(body.error).toBe('Rate limit exceeded');
+    expect(mockPrismaNotifPref.upsert).not.toHaveBeenCalled();
   });
 
   it('returns 429 when rate limited', async () => {
