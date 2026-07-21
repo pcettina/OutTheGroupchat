@@ -3,175 +3,140 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
+import type { ReactNode } from 'react';
+import { Calendar, ChevronRight, MapPin, Users } from 'lucide-react';
 import { Skeleton } from '@/components/ui/Skeleton';
-import { EmptyState } from '@/components/ui/EmptyState';
-
-interface SearchResult {
-  id: string;
-  type: 'trip' | 'activity' | 'user';
-  title: string;
-  subtitle: string;
-  image?: string;
-  metadata?: Record<string, unknown>;
-}
+import {
+  searchResultHref,
+  type SearchResultItem,
+  type SearchResultKind,
+} from '@/app/search/searchPageLogic';
 
 interface SearchResultsProps {
-  results: SearchResult[];
-  isLoading: boolean;
-  query: string;
-  onResultClick?: (result: SearchResult) => void;
+  results: SearchResultItem[];
+  onResultClick?: (result: SearchResultItem) => void;
 }
 
-export function SearchResults({
-  results,
-  isLoading,
-  query,
-  onResultClick,
-}: SearchResultsProps) {
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="bg-white dark:bg-slate-800 rounded-xl p-4 animate-pulse">
-            <div className="flex items-center gap-4">
-              <Skeleton variant="rounded" width={64} height={64} />
-              <div className="flex-1 space-y-2">
-                <Skeleton variant="text" width="60%" />
-                <Skeleton variant="text" width="40%" />
-              </div>
+const KIND_ORDER: readonly SearchResultKind[] = ['user', 'meetup', 'venue'];
+
+const KIND_LABELS: Record<SearchResultKind, string> = {
+  user: 'People',
+  meetup: 'Meetups',
+  venue: 'Venues',
+};
+
+function kindIcon(kind: SearchResultKind): ReactNode {
+  switch (kind) {
+    case 'user':
+      return <Users className="h-4 w-4" aria-hidden="true" />;
+    case 'meetup':
+      return <Calendar className="h-4 w-4" aria-hidden="true" />;
+    case 'venue':
+    default:
+      return <MapPin className="h-4 w-4" aria-hidden="true" />;
+  }
+}
+
+export function SearchResultsSkeleton() {
+  return (
+    <div className="space-y-3">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="rounded-xl border border-otg-border p-4">
+          <div className="flex items-center gap-4">
+            <Skeleton variant="rounded" width={56} height={56} />
+            <div className="flex-1 space-y-2">
+              <Skeleton variant="text" width="60%" />
+              <Skeleton variant="text" width="40%" />
             </div>
           </div>
-        ))}
-      </div>
-    );
-  }
+        </div>
+      ))}
+    </div>
+  );
+}
 
-  if (results.length === 0 && query) {
-    return (
-      <EmptyState
-        icon={
-          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-        }
-        title="No results found"
-        description={`We couldn't find anything matching "${query}". Try different keywords or filters.`}
-      />
-    );
-  }
-
-  // Group results by type
-  const groupedResults = results.reduce((groups, result) => {
-    if (!groups[result.type]) {
-      groups[result.type] = [];
-    }
-    groups[result.type].push(result);
-    return groups;
-  }, {} as Record<string, SearchResult[]>);
-
-  const typeLabels = {
-    trip: { label: 'Trips', icon: '✈️' },
-    activity: { label: 'Activities', icon: '📍' },
-    user: { label: 'People', icon: '👥' },
-  };
-
+export function SearchResults({ results, onResultClick }: SearchResultsProps) {
   return (
     <div className="space-y-6">
-      {(['trip', 'activity', 'user'] as const).map((type) => {
-        const typeResults = groupedResults[type];
-        if (!typeResults?.length) return null;
-
-        const config = typeLabels[type];
+      {KIND_ORDER.map((kind) => {
+        const group = results.filter((result) => result.kind === kind);
+        if (group.length === 0) return null;
 
         return (
-          <div key={type}>
-            <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-3 flex items-center gap-2">
-              <span>{config.icon}</span>
-              <span>{config.label}</span>
-              <span className="text-xs">({typeResults.length})</span>
-            </h3>
+          <section key={kind}>
+            <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-otg-text-muted">
+              {kindIcon(kind)}
+              <span>{KIND_LABELS[kind]}</span>
+              <span className="text-xs font-normal">({group.length})</span>
+            </h2>
 
-            <div className="space-y-2">
+            <ul className="space-y-2">
               <AnimatePresence>
-                {typeResults.map((result, index) => (
-                  <motion.div
-                    key={result.id}
+                {group.map((result, index) => (
+                  <motion.li
+                    key={`${result.kind}-${result.id}`}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    transition={{ delay: index * 0.05 }}
+                    transition={{ delay: index * 0.04 }}
                   >
-                    <SearchResultItem
-                      result={result}
-                      onClick={() => onResultClick?.(result)}
-                    />
-                  </motion.div>
+                    <SearchResultRow result={result} onClick={() => onResultClick?.(result)} />
+                  </motion.li>
                 ))}
               </AnimatePresence>
-            </div>
-          </div>
+            </ul>
+          </section>
         );
       })}
     </div>
   );
 }
 
-function SearchResultItem({
+function SearchResultRow({
   result,
   onClick,
 }: {
-  result: SearchResult;
+  result: SearchResultItem;
   onClick?: () => void;
 }) {
-  const href = result.type === 'trip'
-    ? `/trips/${result.id}`
-    : result.type === 'activity'
-    ? `/activities/${result.id}`
-    : `/profile/${result.id}`;
+  const href = searchResultHref(result);
+
+  const body = (
+    <div className="flex items-center gap-4 rounded-xl border border-otg-border p-4 transition-colors hover:border-otg-sodium">
+      <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-otg-bg text-otg-text-muted">
+        {result.image ? (
+          <Image
+            src={result.image}
+            alt=""
+            width={56}
+            height={56}
+            className="h-full w-full object-cover"
+          />
+        ) : result.kind === 'user' ? (
+          <span className="text-xl text-otg-text-bright">{result.title.charAt(0)}</span>
+        ) : (
+          kindIcon(result.kind)
+        )}
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <h3 className="truncate font-semibold text-otg-text-bright">{result.title}</h3>
+        {result.subtitle && (
+          <p className="truncate text-sm text-otg-text-muted">{result.subtitle}</p>
+        )}
+      </div>
+
+      {href && <ChevronRight className="h-5 w-5 text-otg-text-muted" aria-hidden="true" />}
+    </div>
+  );
+
+  if (!href) {
+    return body;
+  }
 
   return (
-    <Link href={href} onClick={onClick}>
-      <motion.div
-        whileHover={{ x: 4 }}
-        className="flex items-center gap-4 p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors"
-      >
-        {/* Image */}
-        <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 overflow-hidden flex-shrink-0">
-          {result.image ? (
-            <Image src={result.image} alt={result.title} width={56} height={56} className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-white text-xl">
-              {result.type === 'trip' ? '✈️' : result.type === 'activity' ? '📍' : result.title.charAt(0)}
-            </div>
-          )}
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          <h4 className="font-semibold text-slate-900 dark:text-white truncate">
-            {result.title}
-          </h4>
-          <p className="text-sm text-slate-500 dark:text-slate-400 truncate">
-            {result.subtitle}
-          </p>
-        </div>
-
-        {/* Type Badge */}
-        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-          result.type === 'trip'
-            ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
-            : result.type === 'activity'
-            ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400'
-            : 'bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-400'
-        }`}>
-          {result.type}
-        </span>
-
-        {/* Arrow */}
-        <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-        </svg>
-      </motion.div>
+    <Link href={href} onClick={onClick} className="block">
+      {body}
     </Link>
   );
 }

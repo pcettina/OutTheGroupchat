@@ -316,6 +316,7 @@ vi.mock('@/lib/prisma', () => ({
       delete: vi.fn(),
       deleteMany: vi.fn(),
       count: vi.fn(),
+      groupBy: vi.fn(),
     },
     subCrew: {
       findFirst: vi.fn(),

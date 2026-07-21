@@ -140,7 +140,7 @@ These are launch-blocking but **cannot be done by the nightly agent** (Vercel/DN
 - **[T1] Tests (Wave 1)** — extend notification-preferences + privacy-picker tests.
 **Carry-over:** —
 
-### Day 9 — `nightly/2026-07-08` — **Search comes alive + Topic discovery** — Status: ⬜ PENDING
+### Day 9 — `nightly/2026-07-08` — **Search comes alive + Topic discovery** — Status: ✅ COMPLETE (https://github.com/pcettina/OutTheGroupchat/pull/149, 2026-07-20)
 **Epic:** Mount the orphaned search surface and add a browse-by-Topic discovery page.
 **Goal:** `/search` works against `/api/search`; users browse Topics with live "N Crew signaled" counts.
 **Depends on:** nothing (search route + components already exist, unmounted).
@@ -148,7 +148,7 @@ These are launch-blocking but **cannot be done by the nightly agent** (Vercel/DN
 - **[M1] Search page** — *create* `src/app/search/page.tsx` mounting `SearchResults`/`SearchFilters`/`FilterChip` wired to `GET /api/search`; add nav entry. *Acceptance:* people-first results render; filters work; empty state present.
 - **[M2] Topic discovery** — *create* `src/app/topics/page.tsx` + extend `GET /api/topics` (or add a counts query) to return live signaled-Intent counts per Topic. *Acceptance:* topics list with counts; tapping a Topic deep-links to recommendations/intent.
 - **[T1] Tests (Wave 1)** — *create* `src/__tests__/api/topics-counts.test.ts` + search page mount test.
-**Carry-over:** —
+**Carry-over:** Topic tiles deep-link to `/intents/new` **without topic prefill** — `IntentCreateForm` currently reads only `?window=`; no topic query param exists. Href is centralized in `buildTopicIntentHref()` (`src/app/topics/topicsPageLogic.ts`) for a one-line fix once the form accepts a topic param. Venue results in `/search` render non-navigable (no venue route exists yet).
 
 ### Day 10 — `nightly/2026-07-09` — **Growth: FoF Crew suggestions + ping nearby** — Status: ⬜ PENDING
 **Epic:** Reuse the FoF graph for friend suggestions; let users nudge nearby checked-in Crew.
