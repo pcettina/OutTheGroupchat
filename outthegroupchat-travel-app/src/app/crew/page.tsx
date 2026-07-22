@@ -3,12 +3,13 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
-import { Inbox, MoreVertical, UserMinus, Users } from 'lucide-react';
+import { Inbox, MoreVertical, UserMinus, UserPlus, Users } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 import BlockButton from '@/components/safety/BlockButton';
 import { PerMemberIntentToggle } from '@/components/notifications/PerMemberIntentToggle';
+import SuggestionCard, { type CrewSuggestion } from '@/components/crew/SuggestionCard';
 import type { CrewWithUsers } from '@/types/social';
 
 export default function CrewPage() {
@@ -40,6 +41,52 @@ export default function CrewPage() {
     enabled: !!session?.user?.id,
   });
 
+  const suggestionsQuery = useQuery({
+    queryKey: ['crew-suggestions'],
+    queryFn: async () => {
+      const res = await fetch('/api/crew/suggestions');
+      if (!res.ok) throw new Error('Failed to load suggestions');
+      const body = await res.json();
+      return (body.data?.items ?? []) as CrewSuggestion[];
+    },
+    enabled: !!session?.user?.id,
+  });
+
+  const [pendingAddIds, setPendingAddIds] = useState<Set<string>>(new Set());
+
+  const addSuggestion = useMutation({
+    mutationFn: async (targetUserId: string) => {
+      const res = await fetch('/api/crew/request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetUserId }),
+      });
+      const body = await res.json();
+      if (!res.ok || !body.success) throw new Error(body.error || 'Failed to add to Crew');
+      return body;
+    },
+    onMutate: (id: string) => {
+      setPendingAddIds((prev) => {
+        const next = new Set(prev);
+        next.add(id);
+        return next;
+      });
+    },
+    onSettled: (_data, _error, id: string) => {
+      setPendingAddIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    },
+    onSuccess: () => {
+      // Refetch so the added person drops off (now has a PENDING edge) and the
+      // requests badge stays in sync.
+      queryClient.invalidateQueries({ queryKey: ['crew-suggestions'] });
+      queryClient.invalidateQueries({ queryKey: ['crew-requests-count'] });
+    },
+  });
+
   const handleRemove = (crewId: string) => {
     queryClient.setQueryData<CrewWithUsers[]>(['crew'], (prev) =>
       prev ? prev.filter((c) => c.id !== crewId) : prev
@@ -50,6 +97,7 @@ export default function CrewPage() {
     (session?.user as { crewLabel?: string | null } | undefined)?.crewLabel?.trim() || 'Crew';
 
   const crews = crewQuery.data ?? [];
+  const suggestions = suggestionsQuery.data ?? [];
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
@@ -79,6 +127,25 @@ export default function CrewPage() {
               )}
             </Link>
           </div>
+
+          {session?.user?.id && suggestions.length > 0 && (
+            <section className="mb-8">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                <UserPlus className="w-5 h-5 text-emerald-500" />
+                People you may know
+              </h2>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {suggestions.map((s) => (
+                  <SuggestionCard
+                    key={s.id}
+                    suggestion={s}
+                    onAdd={(id) => addSuggestion.mutate(id)}
+                    pending={pendingAddIds.has(s.id)}
+                  />
+                ))}
+              </ul>
+            </section>
+          )}
 
           {!session?.user?.id ? (
             <div className="rounded-2xl border border-slate-200 dark:border-slate-700 p-10 text-center">

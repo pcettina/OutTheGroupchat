@@ -26,6 +26,12 @@ const getCommentsSchema = z.object({
 // Get comments for an item (activity or trip)
 export async function GET(req: Request) {
   try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(req.url);
     const getResult = getCommentsSchema.safeParse({
       itemId: searchParams.get('itemId'),

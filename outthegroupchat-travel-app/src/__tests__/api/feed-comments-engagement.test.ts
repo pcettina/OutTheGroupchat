@@ -198,7 +198,25 @@ beforeEach(() => {
 // GET /api/feed/comments
 // ===========================================================================
 describe('GET /api/feed/comments', () => {
+  // Regression: the GET handler now requires authentication. Previously it was
+  // unguarded, allowing anonymous enumeration of activity/trip comments.
+  it('returns 401 when not authenticated', async () => {
+    mockGetServerSession.mockResolvedValueOnce(null);
+
+    const res = await commentsGET(
+      makeRequest(`/api/feed/comments?itemId=${MOCK_ACTIVITY_ID}&itemType=activity`)
+    );
+    const body = await parseJson(res);
+
+    expect(res.status).toBe(401);
+    expect(body.error).toBe('Unauthorized');
+    // The auth guard must short-circuit before any DB query runs.
+    expect(mockPrismaActivityComment.findMany).not.toHaveBeenCalled();
+  });
+
   it('returns 400 when itemId is missing', async () => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+
     const res = await commentsGET(
       makeRequest('/api/feed/comments?itemType=activity')
     );
@@ -209,6 +227,8 @@ describe('GET /api/feed/comments', () => {
   });
 
   it('returns 400 when itemType is missing', async () => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
+
     const res = await commentsGET(
       makeRequest('/api/feed/comments?itemId=activity-123')
     );
@@ -219,6 +239,7 @@ describe('GET /api/feed/comments', () => {
   });
 
   it('returns 200 with activity comments', async () => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
     mockPrismaActivityComment.findMany.mockResolvedValueOnce([
       MOCK_ACTIVITY_COMMENT_ROW,
     ] as unknown as Awaited<ReturnType<typeof prisma.activityComment.findMany>>);
@@ -239,6 +260,7 @@ describe('GET /api/feed/comments', () => {
   });
 
   it('returns 200 with trip comments', async () => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
     mockPrismaTripComment.findMany.mockResolvedValueOnce([
       MOCK_TRIP_COMMENT_ROW,
     ]);
@@ -255,6 +277,7 @@ describe('GET /api/feed/comments', () => {
   });
 
   it('returns 200 with empty comments array when no comments exist', async () => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
     mockPrismaActivityComment.findMany.mockResolvedValueOnce([]);
 
     const res = await commentsGET(
@@ -268,6 +291,7 @@ describe('GET /api/feed/comments', () => {
   });
 
   it('returns 500 on database error', async () => {
+    mockGetServerSession.mockResolvedValueOnce(MOCK_SESSION);
     mockPrismaActivityComment.findMany.mockRejectedValueOnce(
       new Error('DB connection lost')
     );

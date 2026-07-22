@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { MapPin, RefreshCw } from 'lucide-react';
+import { MapPin, RefreshCw, Send } from 'lucide-react';
 import LiveActivityCard from './LiveActivityCard';
 import { getPusherClient, getCityCheckinChannel } from '@/lib/pusher';
 
@@ -35,22 +35,63 @@ function SkeletonCard() {
   );
 }
 
+type PingResult = { pinged: number };
+
 export default function NearbyCrewList({ className, cityId }: NearbyCrewListProps) {
   const [checkIns, setCheckIns] = useState<CheckInFeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pinging, setPinging] = useState(false);
+  const [pingError, setPingError] = useState<string | null>(null);
+  const [pingSuccess, setPingSuccess] = useState<string | null>(null);
+  const [pingedUserIds, setPingedUserIds] = useState<Set<string>>(new Set());
 
   const fetchFeed = useCallback(async () => {
     try {
       setError(null);
       const res = await fetch('/api/checkins/feed');
       if (!res.ok) throw new Error('Failed to load check-in feed');
-      const body = await res.json();
-      setCheckIns((body.data?.items ?? []) as CheckInFeedItem[]);
+      const body: unknown = await res.json();
+      // The feed route returns `data` as a bare array; be defensive within this
+      // file for the historical `data.items` shape without editing the route.
+      const raw = (body as { data?: unknown })?.data;
+      const items = Array.isArray(raw)
+        ? raw
+        : ((raw as { items?: unknown })?.items ?? []);
+      setCheckIns(items as CheckInFeedItem[]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
       setLoading(false);
+    }
+  }, []);
+
+  const pingNearby = useCallback(async (targetUserId?: string) => {
+    setPinging(true);
+    setPingError(null);
+    setPingSuccess(null);
+    try {
+      const res = await fetch('/api/checkins/ping', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(targetUserId ? { targetUserId } : {}),
+      });
+      const body: unknown = await res.json();
+      if (!res.ok) {
+        const message = (body as { error?: string })?.error ?? 'Failed to send ping';
+        throw new Error(message);
+      }
+      const pinged = (body as { data?: PingResult })?.data?.pinged ?? 0;
+      if (targetUserId) {
+        setPingedUserIds((prev) => new Set(prev).add(targetUserId));
+      }
+      setPingSuccess(
+        pinged === 1 ? 'Pinged 1 person' : `Pinged ${pinged} people`
+      );
+    } catch (err) {
+      setPingError(err instanceof Error ? err.message : 'Failed to send ping');
+    } finally {
+      setPinging(false);
     }
   }, []);
 
@@ -134,12 +175,46 @@ export default function NearbyCrewList({ className, cityId }: NearbyCrewListProp
   }
 
   return (
-    <ul className={`space-y-3 ${className ?? ''}`}>
-      {checkIns.map((checkIn) => (
-        <li key={checkIn.id}>
-          <LiveActivityCard checkIn={checkIn} />
-        </li>
-      ))}
-    </ul>
+    <div className={`space-y-3 ${className ?? ''}`}>
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          {pingSuccess && (
+            <p className="text-otg-sodium text-sm font-medium truncate">{pingSuccess}</p>
+          )}
+          {pingError && (
+            <p className="text-otg-danger text-sm truncate">{pingError}</p>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={() => pingNearby()}
+          disabled={pinging}
+          className="inline-flex shrink-0 items-center gap-2 rounded-full bg-otg-sodium px-4 py-2 text-sm font-semibold text-otg-bg-dark transition-colors hover:bg-otg-sodium/90 disabled:opacity-50"
+        >
+          <Send className="w-4 h-4" aria-hidden="true" />
+          {pinging ? 'Pinging…' : 'Ping nearby Crew'}
+        </button>
+      </div>
+
+      <ul className="space-y-3">
+        {checkIns.map((checkIn) => (
+          <li key={checkIn.id} className="flex items-start gap-2">
+            <div className="min-w-0 flex-1">
+              <LiveActivityCard checkIn={checkIn} />
+            </div>
+            <button
+              type="button"
+              onClick={() => pingNearby(checkIn.user.id)}
+              disabled={pinging || pingedUserIds.has(checkIn.user.id)}
+              className="mt-1 inline-flex shrink-0 items-center gap-1 rounded-full border border-otg-border px-3 py-1.5 text-xs font-medium text-otg-text-dim transition-colors hover:text-otg-sodium disabled:opacity-50"
+              aria-label={`Ping ${checkIn.user.name ?? 'this Crew member'}`}
+            >
+              <Send className="w-3 h-3" aria-hidden="true" />
+              {pingedUserIds.has(checkIn.user.id) ? 'Pinged' : 'Ping'}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
