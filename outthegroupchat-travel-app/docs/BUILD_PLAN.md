@@ -150,7 +150,7 @@ These are launch-blocking but **cannot be done by the nightly agent** (Vercel/DN
 - **[T1] Tests (Wave 1)** — *create* `src/__tests__/api/topics-counts.test.ts` + search page mount test.
 **Carry-over:** Topic tiles deep-link to `/intents/new` **without topic prefill** — `IntentCreateForm` currently reads only `?window=`; no topic query param exists. Href is centralized in `buildTopicIntentHref()` (`src/app/topics/topicsPageLogic.ts`) for a one-line fix once the form accepts a topic param. Venue results in `/search` render non-navigable (no venue route exists yet).
 
-### Day 10 — `nightly/2026-07-09` — **Growth: FoF Crew suggestions + ping nearby** — Status: ⬜ PENDING
+### Day 10 — `nightly/2026-07-09` — **Growth: FoF Crew suggestions + ping nearby** — Status: ✅ COMPLETE (https://github.com/pcettina/OutTheGroupchat/pull/150, 2026-07-21)
 **Epic:** Reuse the FoF graph for friend suggestions; let users nudge nearby checked-in Crew.
 **Goal:** "People you may know" from the FoF graph; one-tap ping to nearby active Crew.
 **Depends on:** FoF graph lib + check-ins exist. **Day 5 (`UserBlock`)** for the blocked-exclusion clause — if `UserBlock` is somehow absent (Day 5 slipped), degrade gracefully (skip the blocked filter, don't fail).
@@ -158,7 +158,7 @@ These are launch-blocking but **cannot be done by the nightly agent** (Vercel/DN
 - **[M1] Crew suggestions** — *create* `src/app/api/crew/suggestions/route.ts` reusing `src/lib/heatmap/fof-graph.ts` (rank by mutual count; exclude existing Crew + blocked users) + a suggestions block on `src/app/crew/page.tsx`. *Acceptance:* returns ranked FoF, excludes existing Crew and (if Day 5 landed) blocked users, sends Crew request inline.
 - **[M2] Ping nearby Crew** — *create* `src/app/api/checkins/ping/route.ts` (notify active checked-in Crew near the caller) + a button on `src/components/checkins/NearbyCrewList.tsx`. Rate-limit via the existing `checkRateLimit` (`src/lib/rate-limit.ts`). *Acceptance:* ping creates notifications for nearby active Crew only; rate-limited.
 - **[T1] Tests (Wave 1)** — *create* `src/__tests__/api/crew-suggestions.test.ts` + `checkins-ping.test.ts`.
-**Carry-over:** —
+**Carry-over:** — (all 3 tasks landed green, no functional carry-over). Also carried a security fix — added a `getServerSession` 401 guard to the previously-unauthenticated `GET /api/feed/comments`. Follow-up: `GET /api/checkins/feed` returns a bare array while consumers expect `{ items }`; patched defensively in `NearbyCrewList` but should be normalized (see §3 / Day-10 report recommendation).
 
 ### Day 11 — `nightly/2026-07-10` — **Meetup depth: edit/cancel + .ics + @mentions** — Status: ⬜ PENDING
 **Epic:** Round out the durable Meetup surface.
