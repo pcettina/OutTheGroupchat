@@ -69,7 +69,7 @@ describe('GET /api/topics — per-user rate limit', () => {
       { id: 't1', slug: 'brunch', displayName: 'Brunch' },
     ]);
 
-    const res = await GET();
+    const res = await GET(new Request('http://localhost/api/topics'));
 
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -89,7 +89,7 @@ describe('GET /api/topics — per-user rate limit', () => {
       reset: 1234,
     });
 
-    const res = await GET();
+    const res = await GET(new Request('http://localhost/api/topics'));
 
     expect(res.status).toBe(429);
     const body = await res.json();
@@ -108,7 +108,7 @@ describe('GET /api/topics — per-user rate limit', () => {
       'X-RateLimit-Reset': '99999',
     });
 
-    const res = await GET();
+    const res = await GET(new Request('http://localhost/api/topics'));
 
     expect(res.status).toBe(429);
     // getRateLimitHeaders is called with the result object from checkRateLimit.
@@ -122,7 +122,7 @@ describe('GET /api/topics — per-user rate limit', () => {
     mockGetServerSession.mockResolvedValueOnce(sessionFor('user-abc-123'));
     mockPrismaTopic.findMany.mockResolvedValueOnce([]);
 
-    await GET();
+    await GET(new Request('http://localhost/api/topics'));
 
     expect(mockCheckRateLimit).toHaveBeenCalledTimes(1);
     const [, identifier] = mockCheckRateLimit.mock.calls[0];
@@ -132,11 +132,11 @@ describe('GET /api/topics — per-user rate limit', () => {
   it('distinct users get distinct rate-limit keys', async () => {
     mockGetServerSession.mockResolvedValueOnce(sessionFor('alice'));
     mockPrismaTopic.findMany.mockResolvedValueOnce([]);
-    await GET();
+    await GET(new Request('http://localhost/api/topics'));
 
     mockGetServerSession.mockResolvedValueOnce(sessionFor('bob'));
     mockPrismaTopic.findMany.mockResolvedValueOnce([]);
-    await GET();
+    await GET(new Request('http://localhost/api/topics'));
 
     expect(mockCheckRateLimit.mock.calls[0][1]).toBe('topics-list:alice');
     expect(mockCheckRateLimit.mock.calls[1][1]).toBe('topics-list:bob');
@@ -146,7 +146,7 @@ describe('GET /api/topics — per-user rate limit', () => {
     mockGetServerSession.mockResolvedValueOnce(sessionFor());
     mockPrismaTopic.findMany.mockResolvedValueOnce([]);
 
-    await GET();
+    await GET(new Request('http://localhost/api/topics'));
 
     // apiRateLimiter is mocked to null here; the route forwards it as arg 0.
     expect(mockCheckRateLimit.mock.calls[0][0]).toBeNull();
@@ -155,7 +155,7 @@ describe('GET /api/topics — per-user rate limit', () => {
   it('unauthenticated: 401 before the rate-limit check runs', async () => {
     mockGetServerSession.mockResolvedValueOnce(null);
 
-    const res = await GET();
+    const res = await GET(new Request('http://localhost/api/topics'));
 
     expect(res.status).toBe(401);
     const body = await res.json();
@@ -172,7 +172,7 @@ describe('GET /api/topics — per-user rate limit', () => {
       expires: '2099-01-01',
     } as unknown as Awaited<ReturnType<typeof getServerSession>>);
 
-    const res = await GET();
+    const res = await GET(new Request('http://localhost/api/topics'));
 
     expect(res.status).toBe(401);
     expect(mockCheckRateLimit).not.toHaveBeenCalled();
@@ -186,7 +186,7 @@ describe('GET /api/topics — per-user rate limit', () => {
       { id: 't2', slug: 'drinks', displayName: 'Drinks' },
     ]);
 
-    const res = await GET();
+    const res = await GET(new Request('http://localhost/api/topics'));
 
     expect(res.status).toBe(200);
     const body = await res.json();

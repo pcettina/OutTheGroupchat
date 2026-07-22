@@ -103,7 +103,7 @@ describe('GET /api/topics — auxiliary coverage', () => {
     mockTopic.findMany.mockResolvedValueOnce([]);
 
     const { GET } = await import('@/app/api/topics/route');
-    const res = await GET();
+    const res = await GET(new Request('http://localhost/api/topics'));
 
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -118,7 +118,7 @@ describe('GET /api/topics — auxiliary coverage', () => {
     ]);
 
     const { GET } = await import('@/app/api/topics/route');
-    const res = await GET();
+    const res = await GET(new Request('http://localhost/api/topics'));
     const body = await res.json();
 
     expect(body.data.topics[0]).toEqual({
@@ -132,7 +132,7 @@ describe('GET /api/topics — auxiliary coverage', () => {
     mockGetServerSession.mockResolvedValueOnce(null);
 
     const { GET } = await import('@/app/api/topics/route');
-    const res = await GET();
+    const res = await GET(new Request('http://localhost/api/topics'));
     const body = await res.json();
 
     expect(res.status).toBe(401);
@@ -147,7 +147,7 @@ describe('GET /api/topics — auxiliary coverage', () => {
     } as unknown as Awaited<ReturnType<typeof getServerSession>>);
 
     const { GET } = await import('@/app/api/topics/route');
-    const res = await GET();
+    const res = await GET(new Request('http://localhost/api/topics'));
     expect(res.status).toBe(401);
   });
 
@@ -156,7 +156,7 @@ describe('GET /api/topics — auxiliary coverage', () => {
     mockTopic.findMany.mockRejectedValueOnce(new Error('connection refused'));
 
     const { GET } = await import('@/app/api/topics/route');
-    const res = await GET();
+    const res = await GET(new Request('http://localhost/api/topics'));
 
     expect(res.status).toBe(500);
     expect(mockCaptureException).toHaveBeenCalledTimes(1);
@@ -169,7 +169,7 @@ describe('GET /api/topics — auxiliary coverage', () => {
     );
 
     const { GET } = await import('@/app/api/topics/route');
-    const res = await GET();
+    const res = await GET(new Request('http://localhost/api/topics'));
     const body = await res.json();
 
     expect(body.error).toBe('Failed to list topics');

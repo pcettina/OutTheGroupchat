@@ -83,14 +83,14 @@ async function loadLiveIntentCounts(): Promise<TopicIntentCountRow[] | null> {
   }
 }
 
-// `req` has a DEFAULT (not `?`) so its type stays `Request`, not `Request |
-// undefined`: Next's route-type validator rejects an optional first argument
-// (`next build` fails with "Type 'Request | undefined' is not a valid type for
-// the function's first argument"), but `tsc --noEmit` does not run that check —
-// so an optional param compiles locally yet breaks the Vercel build. The default
-// keeps the handler callable bare (`GET()`) for the unit tests; at runtime Next
-// always passes a real Request, so the default is never evaluated in production.
-export async function GET(req: Request = new Request('http://localhost/api/topics')) {
+// `req` MUST be a required, non-optional `Request` (NOT `req?:` and NOT a default
+// value). Next's route-type validator checks `Parameters<typeof GET>[0]`, and
+// BOTH `req?: Request` and `req: Request = ...` make that tuple element optional,
+// so it resolves to `Request | undefined` — which the validator rejects ("not a
+// valid type for the function's first argument"). `tsc --noEmit` does not run
+// this check, so an optional param compiles locally yet fails every Vercel/Linux
+// `next build`. Every caller (including the unit tests) must pass a Request.
+export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {

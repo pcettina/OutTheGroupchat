@@ -44,7 +44,7 @@ beforeEach(() => {
 describe('GET /api/topics', () => {
   it('401 when unauthenticated', async () => {
     mockGetServerSession.mockResolvedValueOnce(null);
-    const res = await GET();
+    const res = await GET(new Request('http://localhost/api/topics'));
     expect(res.status).toBe(401);
   });
 
@@ -55,7 +55,7 @@ describe('GET /api/topics', () => {
       { id: 't2', slug: 'drinks', displayName: 'Drinks' },
     ]);
 
-    const res = await GET();
+    const res = await GET(new Request('http://localhost/api/topics'));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);
@@ -71,7 +71,7 @@ describe('GET /api/topics', () => {
     mockGetServerSession.mockResolvedValueOnce(sessionFor());
     mockPrismaTopic.findMany.mockRejectedValueOnce(new Error('db down'));
 
-    const res = await GET();
+    const res = await GET(new Request('http://localhost/api/topics'));
     expect(res.status).toBe(500);
   });
 
@@ -84,7 +84,7 @@ describe('GET /api/topics', () => {
       reset: 0,
     });
 
-    const res = await GET();
+    const res = await GET(new Request('http://localhost/api/topics'));
     expect(res.status).toBe(429);
     // Topic query must not run once rate-limited.
     expect(mockPrismaTopic.findMany).not.toHaveBeenCalled();

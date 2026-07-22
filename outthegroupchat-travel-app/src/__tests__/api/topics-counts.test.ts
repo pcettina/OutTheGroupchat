@@ -136,11 +136,13 @@ describe('GET /api/topics?withCounts=true', () => {
 });
 
 describe('GET /api/topics — counts stay opt-in', () => {
-  it('bare GET() does not query counts and omits `count`', async () => {
+  it('a param-less request does not query counts and omits `count`', async () => {
     mockGetServerSession.mockResolvedValueOnce(sessionFor());
     mockPrismaTopic.findMany.mockResolvedValueOnce(TOPICS);
 
-    const res = await GET();
+    // GET's first arg is a REQUIRED Request (Next's route-type validator rejects
+    // an optional first param); pass an empty-query request for the no-counts path.
+    const res = await GET(req());
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(mockPrismaIntent.groupBy).not.toHaveBeenCalled();
