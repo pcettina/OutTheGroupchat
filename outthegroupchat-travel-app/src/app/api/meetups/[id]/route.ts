@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { z } from 'zod';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { logger } from '@/lib/logger';
@@ -201,6 +202,34 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     // Broadcast updated meetup to subscribers. Helper swallows errors internally.
     await broadcastToMeetup(id, events.MEETUP_UPDATED, updated);
 
+    // Fail-soft: notify every attendee (except the host) that the meetup
+    // changed. There is no dedicated NotificationType for this — the established
+    // convention (see lib/notifications/per-member-intent.ts) is a SYSTEM
+    // notification whose `data.kind` carries the semantic. A failure here must
+    // never fail the update itself.
+    try {
+      const attendees = await prisma.meetupAttendee.findMany({
+        where: { meetupId: id },
+        select: { userId: true },
+      });
+      const recipients = attendees.filter((a) => a.userId !== meetup.hostId);
+      if (recipients.length > 0) {
+        const data: Prisma.NotificationCreateManyInput[] = recipients.map((a) => ({
+          userId: a.userId,
+          type: 'SYSTEM',
+          title: 'Meetup updated',
+          message: `"${updated.title}" was updated`,
+          data: { kind: 'MEETUP_UPDATED', meetupId: id } as Prisma.InputJsonValue,
+        }));
+        await prisma.notification.createMany({ data });
+      }
+    } catch (notifyError) {
+      logger.error(
+        { error: notifyError, meetupId: id },
+        '[MEETUP_PATCH] Failed to notify attendees of update',
+      );
+    }
+
     return NextResponse.json({ success: true, data: updated });
   } catch (error) {
     captureException(error);
@@ -251,6 +280,32 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
 
     // Broadcast cancellation to subscribers. Helper swallows errors internally.
     await broadcastToMeetup(id, events.MEETUP_CANCELLED, { meetupId: id });
+
+    // Fail-soft: notify every attendee (except the host) that the meetup was
+    // cancelled. SYSTEM + `data.kind` convention, same as PATCH above. A failure
+    // here must never fail the cancellation itself.
+    try {
+      const attendees = await prisma.meetupAttendee.findMany({
+        where: { meetupId: id },
+        select: { userId: true },
+      });
+      const recipients = attendees.filter((a) => a.userId !== meetup.hostId);
+      if (recipients.length > 0) {
+        const data: Prisma.NotificationCreateManyInput[] = recipients.map((a) => ({
+          userId: a.userId,
+          type: 'SYSTEM',
+          title: 'Meetup cancelled',
+          message: `"${meetup.title}" was cancelled`,
+          data: { kind: 'MEETUP_CANCELLED', meetupId: id } as Prisma.InputJsonValue,
+        }));
+        await prisma.notification.createMany({ data });
+      }
+    } catch (notifyError) {
+      logger.error(
+        { error: notifyError, meetupId: id },
+        '[MEETUP_DELETE] Failed to notify attendees of cancellation',
+      );
+    }
 
     return NextResponse.json({ success: true, message: 'Meetup cancelled' });
   } catch (error) {

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
 import Image from 'next/image';
+import { tokenizeWithMentions } from '@/lib/mentions';
 
 interface Comment {
   id: string;
@@ -202,7 +203,15 @@ export function CommentThread({
             {comment.user.name || 'Anonymous'}
           </p>
           <p className="text-slate-700 dark:text-slate-300 text-sm whitespace-pre-wrap">
-            {comment.text}
+            {tokenizeWithMentions(comment.text).map((part, i) =>
+              part.type === 'mention' ? (
+                <span key={i} className="text-indigo-600 dark:text-indigo-400 font-medium">
+                  {part.value}
+                </span>
+              ) : (
+                <span key={i}>{part.value}</span>
+              )
+            )}
           </p>
         </div>
 

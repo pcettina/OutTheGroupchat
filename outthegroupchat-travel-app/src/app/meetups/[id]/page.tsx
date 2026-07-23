@@ -5,11 +5,12 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { Calendar, MapPin, Users, Eye, Mail, XCircle } from 'lucide-react';
+import { Calendar, CalendarPlus, MapPin, Users, Eye, Mail, Pencil, XCircle } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 import { RSVPButton } from '@/components/meetups/RSVPButton';
 import AttendeeList from '@/components/meetups/AttendeeList';
 import MeetupInviteModal from '@/components/meetups/MeetupInviteModal';
+import EditMeetupModal from '@/components/meetups/EditMeetupModal';
 import ReportButton from '@/components/safety/ReportButton';
 import { getPusherClient } from '@/lib/pusher';
 import type { AttendeeResponse, AttendeeStatus, MeetupVisibility } from '@/types/meetup';
@@ -87,6 +88,7 @@ export default function MeetupDetailPage() {
   const [errorStatus, setErrorStatus] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [cancelling, setCancelling] = useState(false);
 
   const fetchMeetup = useCallback(async () => {
@@ -234,6 +236,10 @@ export default function MeetupDetailPage() {
   };
   const venueLabel = meetup.venueName ?? meetup.venue?.name ?? null;
   const attendeeCount = meetup.attendees.length;
+  // Host + anyone who has RSVP'd can export the meetup to their calendar.
+  const isAttendee = meetup.myRsvpStatus !== null;
+  const canAddToCalendar = (isHost || isAttendee) && !meetup.cancelled;
+  const icsHref = `/api/meetups/${meetup.id}/ics`;
 
   // The route returns user shape {id, name, image} — AttendeeList expects
   // UserPreview which also has `city`. Map to the richer shape with city=null.
@@ -364,6 +370,14 @@ export default function MeetupDetailPage() {
         <div className="rounded-2xl border border-otg-border bg-otg-maraschino p-5 flex flex-wrap items-center gap-3">
           <button
             type="button"
+            onClick={() => setEditOpen(true)}
+            className="inline-flex items-center gap-2 rounded-full border border-otg-border bg-otg-bg-dark hover:border-otg-text-dim text-otg-text-bright px-4 py-2 text-sm font-medium transition-colors"
+          >
+            <Pencil className="w-4 h-4" aria-hidden="true" />
+            Edit
+          </button>
+          <button
+            type="button"
             onClick={() => setInviteOpen(true)}
             className="inline-flex items-center gap-2 rounded-full bg-otg-sodium hover:bg-otg-sodium-400 active:bg-otg-brick text-otg-bg-dark px-4 py-2 text-sm font-medium transition-colors"
           >
@@ -385,6 +399,20 @@ export default function MeetupDetailPage() {
         </div>
       )}
 
+      {/* Add to calendar \u2014 host + attendees, active meetups only */}
+      {canAddToCalendar && (
+        <div className="flex justify-start">
+          <a
+            href={icsHref}
+            download
+            className="inline-flex items-center gap-2 rounded-full border border-otg-border bg-otg-maraschino hover:border-otg-text-dim text-otg-text-bright px-4 py-2 text-sm font-medium transition-colors"
+          >
+            <CalendarPlus className="w-4 h-4" aria-hidden="true" />
+            Add to calendar
+          </a>
+        </div>
+      )}
+
       {/* Attendees */}
       <div className="rounded-2xl border border-otg-border bg-otg-maraschino p-5">
         <h2 className="text-sm font-semibold text-otg-text-bright mb-4">Attendees</h2>
@@ -396,6 +424,14 @@ export default function MeetupDetailPage() {
           meetupId={meetup.id}
           isOpen={inviteOpen}
           onClose={() => setInviteOpen(false)}
+        />
+      )}
+
+      {isHost && editOpen && (
+        <EditMeetupModal
+          meetup={meetup}
+          onClose={() => setEditOpen(false)}
+          onUpdated={() => void fetchMeetup()}
         />
       )}
     </Shell>

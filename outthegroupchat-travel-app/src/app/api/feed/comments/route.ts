@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { logError } from '@/lib/logger';
 import { captureException } from '@/lib/sentry';
+import { extractMentionTokens } from '@/lib/mentions';
 import { z } from 'zod';
 
 const postCommentSchema = z.object({
@@ -121,6 +122,8 @@ export async function POST(req: Request) {
 
     let comment;
     let notificationData: { ownerId: string; title: string } | null = null;
+    // Track the item owner already notified above so the mention step can skip them.
+    let notifiedOwnerId: string | null = null;
 
     if (itemType === 'activity') {
       // Check if activity exists
@@ -164,7 +167,8 @@ export async function POST(req: Request) {
           ownerId: activity.trip.ownerId,
           title: activity.trip.title,
         };
-        
+        notifiedOwnerId = activity.trip.ownerId;
+
         await prisma.notification.create({
           data: {
             userId: notificationData.ownerId,
@@ -214,6 +218,7 @@ export async function POST(req: Request) {
 
       // Create notification for trip owner
       if (trip.ownerId !== session.user.id) {
+        notifiedOwnerId = trip.ownerId;
         await prisma.notification.create({
           data: {
             userId: trip.ownerId,
@@ -232,6 +237,62 @@ export async function POST(req: Request) {
         { error: 'Comments only supported for activities and trips' },
         { status: 400 }
       );
+    }
+
+    // Fail-soft @mention notifications. Never let this fail the request.
+    try {
+      const tokens = extractMentionTokens(text);
+      if (tokens.length > 0) {
+        // No handle/username column exists, so resolve tokens against User.name
+        // (case-insensitive), also matching the name with whitespace removed.
+        const tokenSet = new Set(tokens);
+        const candidates = await prisma.user.findMany({
+          where: {
+            OR: tokens.map((t) => ({
+              name: { equals: t, mode: 'insensitive' as const },
+            })),
+          },
+          select: { id: true, name: true },
+        });
+
+        const authorId = session.user.id;
+        const seen = new Set<string>();
+        const snippet =
+          text.trim().length > 120 ? `${text.trim().slice(0, 117)}...` : text.trim();
+
+        const mentionNotifications = candidates
+          .filter((u) => {
+            // Guard against name-with-spaces collisions that the OR did not intend.
+            const normalized = (u.name ?? '').replace(/\s+/g, '').toLowerCase();
+            const exact = (u.name ?? '').toLowerCase();
+            return tokenSet.has(exact) || tokenSet.has(normalized);
+          })
+          .filter((u) => u.id !== authorId && u.id !== notifiedOwnerId)
+          .filter((u) => {
+            if (seen.has(u.id)) return false;
+            seen.add(u.id);
+            return true;
+          })
+          .map((u) => ({
+            userId: u.id,
+            type: 'SYSTEM' as const,
+            title: 'You were mentioned',
+            message: `${session.user.name || 'Someone'} mentioned you: "${snippet}"`,
+            data: {
+              kind: 'MENTION',
+              itemId,
+              itemType,
+              commentId: comment.id,
+            },
+          }));
+
+        if (mentionNotifications.length > 0) {
+          await prisma.notification.createMany({ data: mentionNotifications });
+        }
+      }
+    } catch (mentionError) {
+      captureException(mentionError);
+      logError('COMMENTS_POST_MENTIONS', mentionError);
     }
 
     return NextResponse.json({
