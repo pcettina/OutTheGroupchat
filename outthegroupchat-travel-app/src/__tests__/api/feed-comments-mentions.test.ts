@@ -134,7 +134,7 @@ describe('POST /api/feed/comments — @mention notifications', () => {
 
     // A mention notification was written for Bob with the right shape.
     expect(mockPrismaNotification.createMany).toHaveBeenCalledOnce();
-    const arg = mockPrismaNotification.createMany.mock.calls[0][0] as {
+    const arg = mockPrismaNotification.createMany.mock.calls[0][0] as unknown as {
       data: Array<{
         userId: string;
         type: string;

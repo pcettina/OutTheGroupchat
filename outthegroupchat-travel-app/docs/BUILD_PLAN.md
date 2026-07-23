@@ -160,7 +160,7 @@ These are launch-blocking but **cannot be done by the nightly agent** (Vercel/DN
 - **[T1] Tests (Wave 1)** — *create* `src/__tests__/api/crew-suggestions.test.ts` + `checkins-ping.test.ts`.
 **Carry-over:** — (all 3 tasks landed green, no functional carry-over). Also carried a security fix — added a `getServerSession` 401 guard to the previously-unauthenticated `GET /api/feed/comments`. Follow-up: `GET /api/checkins/feed` returns a bare array while consumers expect `{ items }`; patched defensively in `NearbyCrewList` but should be normalized (see §3 / Day-10 report recommendation).
 
-### Day 11 — `nightly/2026-07-10` — **Meetup depth: edit/cancel + .ics + @mentions** — Status: ⬜ PENDING
+### Day 11 — `nightly/2026-07-10` — **Meetup depth: edit/cancel + .ics + @mentions** — Status: ✅ COMPLETE (https://github.com/pcettina/OutTheGroupchat/pull/151, 2026-07-22)
 **Epic:** Round out the durable Meetup surface.
 **Goal:** Hosts edit/cancel (attendees notified); attendees add to calendar; comments support @mentions.
 **Depends on:** Meetup PATCH/DELETE already exist; feed comments already exist.
