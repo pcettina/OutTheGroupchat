@@ -7,11 +7,16 @@ import { logger } from '@/lib/logger';
 import { captureException } from '@/lib/sentry';
 import { z } from 'zod';
 
+// Kept in lockstep with the sibling schema in /api/users/[userId] so the two
+// write paths cannot diverge on what a valid profile field is.
+// `image` is additionally `.nullable()` here because GET now returns `image`
+// and the profile page round-trips the whole object back on save — a user with
+// no avatar would otherwise send `image: null` and get a 400.
 const updateProfileSchema = z.object({
-  name: z.string().optional(),
-  bio: z.string().optional(),
-  city: z.string().optional(),
-  image: z.string().optional(),
+  name: z.string().min(1).max(100).optional(),
+  bio: z.string().max(500).optional(),
+  city: z.string().max(100).optional(),
+  image: z.string().url().nullable().optional(),
   preferences: z.record(z.unknown()).optional(),
 });
 
@@ -36,6 +41,7 @@ export async function GET() {
         email: true,
         city: true,
         bio: true,
+        image: true,
         preferences: true,
       },
     });
@@ -87,6 +93,7 @@ export async function PUT(req: Request) {
         email: true,
         city: true,
         bio: true,
+        image: true,
         preferences: true,
       },
     });

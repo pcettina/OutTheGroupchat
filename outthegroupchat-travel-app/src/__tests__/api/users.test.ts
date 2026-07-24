@@ -2,7 +2,10 @@
  * Unit tests for the Users API route handlers.
  *
  * Routes:
- *  - GET   /api/users/[userId]   — fetch public user profile (with crewCount)
+ *  - GET   /api/users/[userId]   — fetch member profile (with crewCount).
+ *                                  Members-only: 401 without a session. Never
+ *                                  returns `preferences`; returns `email` only
+ *                                  to the owner.
  *  - PATCH /api/users/[userId]   — owner updates name / bio / city / crewLabel
  *  - GET   /api/health           — health check endpoint
  *
@@ -54,6 +57,48 @@ function makePatchRequest(userId: string, body: unknown): Request {
 
 const mockSession = { user: { id: 'user-1', name: 'Tester', email: 'test@test.com' } };
 
+// ---------------------------------------------------------------------------
+// Prisma `select` simulation.
+//
+// The global prisma mock ignores the `select` argument, so a naive
+// mockResolvedValue would hand the handler columns it never asked for and the
+// "field X is not exposed" assertions would be vacuous. These helpers apply the
+// handler's own select to a full row the way Prisma would (`true` -> include,
+// `false` -> omit, nested object -> include), so response-shape assertions
+// actually exercise the route's select.
+// ---------------------------------------------------------------------------
+type PrismaSelect = Record<string, unknown>;
+
+function applySelect(
+  row: Record<string, unknown>,
+  select: PrismaSelect
+): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(select)) {
+    if (value === true || (value !== null && typeof value === 'object')) {
+      out[key] = row[key];
+    }
+  }
+  return out;
+}
+
+function mockFindUniqueApplyingSelect(row: Record<string, unknown>): void {
+  vi.mocked(prisma.user.findUnique).mockImplementationOnce((((args: {
+    select?: PrismaSelect;
+  }) =>
+    Promise.resolve(
+      applySelect(row, args?.select ?? {})
+    )) as unknown) as typeof prisma.user.findUnique);
+}
+
+/** The `select` object the handler passed to prisma.user.findUnique. */
+function capturedSelect(): PrismaSelect {
+  const call = vi.mocked(prisma.user.findUnique).mock.calls[0]?.[0] as
+    | { select?: PrismaSelect }
+    | undefined;
+  return call?.select ?? {};
+}
+
 const mockUser = {
   id: 'user-2',
   name: 'Target User',
@@ -77,6 +122,15 @@ const mockUser = {
   _count: { ownedTrips: 10 },
 };
 
+// Same row, but owned by the signed-in caller (self view).
+const mockSelfUser = {
+  ...mockUser,
+  id: 'user-1',
+  name: 'Tester',
+  email: 'test@test.com',
+  preferences: { theme: 'dark' },
+};
+
 // ---------------------------------------------------------------------------
 // GET /api/users/[userId]
 // ---------------------------------------------------------------------------
@@ -87,8 +141,30 @@ describe('GET /api/users/[userId]', () => {
     vi.clearAllMocks();
   });
 
-  it('returns 404 when user does not exist', async () => {
+  // SECURITY: profiles are members-only. An anonymous caller must never be able
+  // to enumerate users by id. If this test ever fails, the auth gate on GET has
+  // been removed — restore it rather than relaxing the expectation.
+  it('returns 401 when unauthenticated', async () => {
     vi.mocked(getServerSession).mockResolvedValue(null);
+
+    const res = await GET(makeGetRequest('user-2'), { params: { userId: 'user-2' } });
+    expect(res.status).toBe(401);
+    expect(prisma.user.findUnique).not.toHaveBeenCalled();
+    expect(prisma.crew.count).not.toHaveBeenCalled();
+  });
+
+  it('returns 401 when the session carries no user id', async () => {
+    vi.mocked(getServerSession).mockResolvedValue(
+      { user: {} } as unknown as typeof mockSession
+    );
+
+    const res = await GET(makeGetRequest('user-2'), { params: { userId: 'user-2' } });
+    expect(res.status).toBe(401);
+    expect(prisma.user.findUnique).not.toHaveBeenCalled();
+  });
+
+  it('returns 404 when user does not exist', async () => {
+    vi.mocked(getServerSession).mockResolvedValue(mockSession);
     vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
 
     const res = await GET(makeGetRequest('nonexistent'), { params: { userId: 'nonexistent' } });
@@ -97,8 +173,8 @@ describe('GET /api/users/[userId]', () => {
     expect(json.success).toBe(false);
   });
 
-  it('returns 200 with user data and crewCount when found (unauthenticated)', async () => {
-    vi.mocked(getServerSession).mockResolvedValue(null);
+  it('returns 200 with user data and crewCount when found', async () => {
+    vi.mocked(getServerSession).mockResolvedValue(mockSession);
     vi.mocked(prisma.user.findUnique).mockResolvedValue(
       mockUser as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>
     );
@@ -113,7 +189,7 @@ describe('GET /api/users/[userId]', () => {
   });
 
   it('crew.count filters by ACCEPTED status and either side of the pair', async () => {
-    vi.mocked(getServerSession).mockResolvedValue(null);
+    vi.mocked(getServerSession).mockResolvedValue(mockSession);
     vi.mocked(prisma.user.findUnique).mockResolvedValue(
       mockUser as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>
     );
@@ -143,7 +219,7 @@ describe('GET /api/users/[userId]', () => {
   });
 
   it('exposes crewLabel field on the response', async () => {
-    vi.mocked(getServerSession).mockResolvedValue(null);
+    vi.mocked(getServerSession).mockResolvedValue(mockSession);
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       ...mockUser,
       crewLabel: 'Squad',
@@ -156,11 +232,74 @@ describe('GET /api/users/[userId]', () => {
   });
 
   it('returns 500 on database error', async () => {
-    vi.mocked(getServerSession).mockResolvedValue(null);
+    vi.mocked(getServerSession).mockResolvedValue(mockSession);
     vi.mocked(prisma.user.findUnique).mockRejectedValue(new Error('DB error'));
 
     const res = await GET(makeGetRequest('user-2'), { params: { userId: 'user-2' } });
     expect(res.status).toBe(500);
+  });
+
+  // -------------------------------------------------------------------------
+  // SECURITY INVARIANT: the free-form, client-writable `preferences` JSON blob
+  // is never selected by this route — not for other members, not for the owner.
+  // A member's own preferences are served by the 401-gated /api/users/me.
+  // -------------------------------------------------------------------------
+  it('never selects or returns preferences when viewing another member', async () => {
+    vi.mocked(getServerSession).mockResolvedValue(mockSession);
+    mockFindUniqueApplyingSelect(mockUser);
+    vi.mocked(prisma.crew.count).mockResolvedValue(0);
+
+    const res = await GET(makeGetRequest('user-2'), { params: { userId: 'user-2' } });
+    expect(res.status).toBe(200);
+    const json = await res.json();
+
+    expect(capturedSelect()).not.toHaveProperty('preferences');
+    expect(Object.keys(json.data)).not.toContain('preferences');
+    expect('preferences' in json.data).toBe(false);
+  });
+
+  it('never selects or returns preferences on the self view', async () => {
+    vi.mocked(getServerSession).mockResolvedValue(mockSession);
+    mockFindUniqueApplyingSelect(mockSelfUser);
+    vi.mocked(prisma.crew.count).mockResolvedValue(0);
+
+    const res = await GET(makeGetRequest('user-1'), { params: { userId: 'user-1' } });
+    expect(res.status).toBe(200);
+    const json = await res.json();
+
+    expect(capturedSelect()).not.toHaveProperty('preferences');
+    expect(Object.keys(json.data)).not.toContain('preferences');
+    expect('preferences' in json.data).toBe(false);
+  });
+
+  // -------------------------------------------------------------------------
+  // SECURITY INVARIANT: email is owner-only.
+  // -------------------------------------------------------------------------
+  it('returns email on the self view (session.user.id === userId)', async () => {
+    vi.mocked(getServerSession).mockResolvedValue(mockSession);
+    mockFindUniqueApplyingSelect(mockSelfUser);
+    vi.mocked(prisma.crew.count).mockResolvedValue(1);
+
+    const res = await GET(makeGetRequest('user-1'), { params: { userId: 'user-1' } });
+    expect(res.status).toBe(200);
+    const json = await res.json();
+
+    expect(capturedSelect().email).toBe(true);
+    expect(json.data.email).toBe('test@test.com');
+  });
+
+  it('omits email when viewing another member', async () => {
+    vi.mocked(getServerSession).mockResolvedValue(mockSession);
+    mockFindUniqueApplyingSelect(mockUser);
+    vi.mocked(prisma.crew.count).mockResolvedValue(1);
+
+    const res = await GET(makeGetRequest('user-2'), { params: { userId: 'user-2' } });
+    expect(res.status).toBe(200);
+    const json = await res.json();
+
+    expect(capturedSelect().email).toBe(false);
+    expect(Object.keys(json.data)).not.toContain('email');
+    expect('email' in json.data).toBe(false);
   });
 });
 

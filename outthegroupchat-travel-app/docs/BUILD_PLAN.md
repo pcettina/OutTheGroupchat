@@ -171,7 +171,7 @@ These are launch-blocking but **cannot be done by the nightly agent** (Vercel/DN
 - **[T1] Tests (Wave 1)** — *create* `src/__tests__/api/meetup-ics.test.ts` + mention-parse + edit/cancel-notify tests.
 **Carry-over:** —
 
-### Day 12 — `nightly/2026-07-11` — **Profile + auth depth** — Status: ⬜ PENDING
+### Day 12 — `nightly/2026-07-11` — **Profile + auth depth** — Status: ✅ COMPLETE (PR_URL_PLACEHOLDER, 2026-07-23)
 **Epic:** Avatars, stronger sessions, and login abuse protection.
 **Goal:** Users upload an avatar (degrades gracefully without storage env); sessions have explicit timeout; failed logins back off.
 **Depends on:** nothing code-side (avatar needs a storage env to fully activate — build to degrade gracefully + flag the env need).

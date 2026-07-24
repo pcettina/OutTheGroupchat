@@ -20,7 +20,13 @@ const patchUserSchema = z.object({
     .optional(),
 });
 
-// Get user profile (public view)
+// Get user profile (signed-in members only).
+//
+// SECURITY: this route previously called getServerSession() but never enforced
+// it, so an anonymous caller could enumerate any user by id. It now 401s like
+// PATCH does. The free-form `preferences` JSON blob (client-writable via
+// PUT /api/profile and PATCH /api/users/me) is deliberately NOT selected here —
+// a member's own preferences are served by GET /api/users/me.
 export async function GET(
   req: Request,
   { params }: { params: { userId: string } }
@@ -29,17 +35,21 @@ export async function GET(
     const session = await getServerSession(authOptions);
     const { userId } = params;
 
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
         id: true,
         name: true,
-        email: session?.user?.id === userId ? true : false,
+        // Only the owner ever sees their own email.
+        email: session.user.id === userId,
         image: true,
         bio: true,
         city: true,
         crewLabel: true,
-        preferences: true,
         createdAt: true,
         _count: {
           select: {

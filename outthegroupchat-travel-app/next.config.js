@@ -38,6 +38,13 @@ const nextConfig = {
         hostname: 'api.dicebear.com',
         pathname: '/**',
       },
+      // Uploaded avatars (Vercel Blob). Store-scoped subdomain, hence the
+      // wildcard — without this next/image throws when rendering an upload.
+      {
+        protocol: 'https',
+        hostname: '**.public.blob.vercel-storage.com',
+        pathname: '/**',
+      },
     ],
   },
 
